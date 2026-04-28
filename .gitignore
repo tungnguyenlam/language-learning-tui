@@ -1,0 +1,24 @@
+# Go
+/bin/
+/dist/
+*.test
+*.out
+coverage.txt
+
+# Local app data
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# Logs and temporary files
+*.log
+.DS_Store
+/tmp/
+/.cache/
+
+# Editor
+.idea/
+.vscode/
+*.swp

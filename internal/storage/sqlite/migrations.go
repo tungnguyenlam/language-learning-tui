@@ -1,0 +1,66 @@
+package sqlite
+
+type migration struct {
+	ID  int
+	SQL string
+}
+
+var migrations = []migration{
+	{
+		ID: 1,
+		SQL: `CREATE TABLE IF NOT EXISTS decks (
+		id TEXT PRIMARY KEY,
+		name TEXT NOT NULL,
+		description TEXT NOT NULL DEFAULT ''
+	)`,
+	},
+	{
+		ID: 2,
+		SQL: `CREATE TABLE IF NOT EXISTS notes (
+		id TEXT PRIMARY KEY,
+		deck_id TEXT NOT NULL REFERENCES decks(id) ON DELETE CASCADE,
+		front TEXT NOT NULL,
+		back TEXT NOT NULL,
+		extra TEXT NOT NULL DEFAULT ''
+	)`,
+	},
+	{
+		ID: 3,
+		SQL: `CREATE TABLE IF NOT EXISTS cards (
+		id TEXT PRIMARY KEY,
+		note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,
+		deck_id TEXT NOT NULL REFERENCES decks(id) ON DELETE CASCADE,
+		kind TEXT NOT NULL,
+		prompt TEXT NOT NULL,
+		answer TEXT NOT NULL
+	)`,
+	},
+	{
+		ID: 4,
+		SQL: `CREATE TABLE IF NOT EXISTS review_states (
+		card_id TEXT PRIMARY KEY REFERENCES cards(id) ON DELETE CASCADE,
+		due_at TIMESTAMP NOT NULL,
+		interval_seconds INTEGER NOT NULL DEFAULT 0,
+		ease REAL NOT NULL DEFAULT 2.5,
+		reviews INTEGER NOT NULL DEFAULT 0,
+		lapses INTEGER NOT NULL DEFAULT 0
+	)`,
+	},
+	{
+		ID: 5,
+		SQL: `CREATE TABLE IF NOT EXISTS reviews (
+		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		card_id TEXT NOT NULL REFERENCES cards(id) ON DELETE CASCADE,
+		grade TEXT NOT NULL,
+		reviewed_at TIMESTAMP NOT NULL,
+		due_at TIMESTAMP NOT NULL,
+		interval_seconds INTEGER NOT NULL,
+		ease REAL NOT NULL,
+		reviews INTEGER NOT NULL,
+		lapses INTEGER NOT NULL
+	)`,
+	},
+	{ID: 6, SQL: `CREATE INDEX IF NOT EXISTS idx_cards_deck ON cards(deck_id)`},
+	{ID: 7, SQL: `CREATE INDEX IF NOT EXISTS idx_review_states_due ON review_states(due_at)`},
+	{ID: 8, SQL: `CREATE INDEX IF NOT EXISTS idx_reviews_card_reviewed ON reviews(card_id, reviewed_at)`},
+}
