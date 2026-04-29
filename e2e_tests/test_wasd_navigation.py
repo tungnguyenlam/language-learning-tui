@@ -32,6 +32,10 @@ def test_wasd_view_switching():
             
             agent.act('s')
             agent.wait_until_stable()
+            agent.assert_text("Statistics")
+            
+            agent.act('s')
+            agent.wait_until_stable()
             agent.assert_text("Import / Export")
             
             agent.act('s')
@@ -51,6 +55,11 @@ def test_wasd_view_switching():
             agent.wait_until_stable()
             agent.assert_text("Import / Export")
             
+            agent.act('w')
+            agent.wait_until_stable()
+            agent.assert_text("Statistics")
+            
+            # Test 'w' key for previous view (like left arrow)
             agent.act('w')
             agent.wait_until_stable()
             agent.assert_text("Review 1/")
@@ -85,8 +94,8 @@ def test_wasd_navigation_preserves_existing_functions():
             agent.wait_until_stable()
             agent.assert_text("5 cards due")
             
-            # Go to AI view
-            agent.act('5')
+            # Go to AI view (shortcut 6)
+            agent.act('6')
             agent.wait_until_stable()
             agent.assert_text("AI Drafts")
             
@@ -106,14 +115,15 @@ def test_wasd_navigation_preserves_existing_functions():
             agent.wait_until_stable()
             agent.assert_text("der Kaffee -> German prompt for der")
             
-            # 'd' should discard, not switch to Settings (view 6)
+            # 'd' should discard, not switch to Statistics (view 4) or Import (view 5)
             agent.act('d')
             agent.wait_until_stable()
             agent.assert_text("AI Drafts") # Should still be in AI drafts
             agent.assert_text("Topic: der Kaffee") # Should have discarded the generated draft and returned to input
             
-            # Verify we didn't switch to Settings
-            agent.assert_not_text("AI Provider:")
+            # Verify we didn't switch
+            agent.assert_not_text("Total Cards:")
+            agent.assert_not_text("Import / Export")
         finally:
             agent.close()
 

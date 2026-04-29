@@ -67,7 +67,7 @@ def test_ai_draft_approval_persists_across_restart():
         agent = start_agent(tmpdir)
 
         try:
-            agent.act('5')
+            agent.act('6')
             agent.wait_until_stable()
             agent.assert_text("AI Drafts")
             agent.assert_text("Topic: der Kaffee")
@@ -105,7 +105,7 @@ def test_import_tsv_adds_reviewable_deck_and_export_writes_file():
         agent = start_agent(tmpdir, columns=110, lines=30)
 
         try:
-            agent.act('4')
+            agent.act('5')
             agent.wait_until_stable()
             agent.assert_text("Import / Export")
             agent.assert_text("Press i to import TSV.")
@@ -122,7 +122,7 @@ def test_import_tsv_adds_reviewable_deck_and_export_writes_file():
             agent.wait_until_stable()
             agent.assert_text("die Bahn")
 
-            agent.act('4')
+            agent.act('5')
             agent.wait_until_stable()
             agent.act('x')
             agent.wait_until_stable()
@@ -140,7 +140,7 @@ def test_settings_and_template_drafting():
         agent = start_agent(tmpdir)
         try:
             # Go to Settings
-            agent.act('6')
+            agent.act('7')
             agent.wait_until_stable()
             agent.assert_text("Settings")
             agent.assert_text("AI Provider: disabled")
@@ -171,7 +171,7 @@ def test_settings_and_template_drafting():
             agent.assert_text("Front Template: {{.Topic}}P: ")
 
             # Go to AI Drafts and verify template is used
-            agent.act('5')
+            agent.act('6')
             agent.wait_until_stable()
             agent.act('<Enter>') # Generate
             agent.wait_until_stable()
@@ -183,7 +183,7 @@ def test_settings_persistence():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
-            agent.act('6')
+            agent.act('7')
             agent.wait_until_stable()
             
             # Switch to offline, then template provider
@@ -200,12 +200,11 @@ def test_settings_persistence():
         # Restart and verify
         restarted = start_agent(tmpdir)
         try:
-            restarted.act('6')
+            restarted.act('7')
             restarted.wait_until_stable()
             restarted.assert_text("AI Provider: template")
         finally:
             restarted.close()
-
 def test_all_core_views_render_with_keyboard_navigation():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir, columns=90, lines=28)
@@ -214,9 +213,10 @@ def test_all_core_views_render_with_keyboard_navigation():
                 ('1', "Dashboard"),
                 ('2', "Decks"),
                 ('3', "Review 1/6"),
-                ('4', "Import / Export"),
-                ('5', "AI Drafts"),
-                ('6', "Settings"),
+                ('4', "Statistics"),
+                ('5', "Import / Export"),
+                ('6', "AI Drafts"),
+                ('7', "Settings"),
             ]
             for key, text in expected_views:
                 agent.act(key)
@@ -236,9 +236,10 @@ def test_compact_layout_renders_all_core_views():
                 ('1', "Dashboard"),
                 ('2', "Decks"),
                 ('3', "Review 1/6"),
-                ('4', "Import / Export"),
-                ('5', "AI Drafts"),
-                ('6', "Settings"),
+                ('4', "Statistics"),
+                ('5', "Import / Export"),
+                ('6', "AI Drafts"),
+                ('7', "Settings"),
             ]:
                 agent.act(key)
                 agent.wait_for_text(text)
@@ -269,15 +270,22 @@ def test_mouse_tabs_open_import_ai_and_settings_views():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
+            # Stats tab (new)
             agent.click(31, 3)
+            agent.wait_for_text("Statistics")
+            
+            # Import tab
+            agent.click(38, 3)
             agent.wait_for_text("Import / Export")
             agent.assert_text("Press i to import TSV.")
 
-            agent.click(40, 3)
+            # AI tab
+            agent.click(48, 3)
             agent.wait_for_text("AI Drafts")
             agent.assert_text("Topic: der Kaffee")
 
-            agent.click(45, 3)
+            # Settings tab
+            agent.click(53, 3)
             agent.wait_for_text("Settings")
             agent.assert_text("AI Provider: disabled")
         finally:
@@ -357,7 +365,7 @@ def test_deck_navigation_with_up_down_arrows():
 
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
-            agent.act('4')
+            agent.act('5')
             agent.wait_for_text("Press i to import TSV.")
             agent.act('i')
             agent.wait_for_text("Imported 1 notes")
@@ -379,7 +387,7 @@ def test_settings_navigation_with_up_down_arrows():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
-            agent.act('6')
+            agent.act('7')
             agent.wait_for_text("AI Provider: disabled")
             
             agent.act('<Down>')

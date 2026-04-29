@@ -74,6 +74,16 @@ type ReviewResult struct {
 	Next     ReviewState
 }
 
+type Statistics struct {
+	TotalCards   int
+	NewCards     int
+	YoungCards   int
+	MatureCards  int
+	TotalReviews int
+	SuccessRate  float64
+	Grades       map[ReviewGrade]int
+}
+
 type Repository interface {
 	UpsertDeck(ctx context.Context, deck Deck) error
 	GetDeck(ctx context.Context, id string) (Deck, error)
@@ -81,6 +91,7 @@ type Repository interface {
 	RecordReview(ctx context.Context, result ReviewResult) error
 	DueCards(ctx context.Context, now time.Time, limit int) ([]Card, error)
 	GetReviewState(ctx context.Context, cardID string) (ReviewState, error)
+	Statistics(ctx context.Context) (Statistics, error)
 }
 
 type Scheduler interface {

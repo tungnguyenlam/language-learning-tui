@@ -344,6 +344,65 @@ func (s *Store) DueCards(ctx context.Context, now time.Time, limit int) ([]core.
 	return cards, rows.Err()
 }
 
+func (s *Store) Statistics(ctx context.Context) (core.Statistics, error) {
+	var stats core.Statistics
+	stats.Grades = make(map[core.ReviewGrade]int)
+
+	// Total cards
+	err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM cards`).Scan(&stats.TotalCards)
+	if err != nil {
+		return stats, err
+	}
+
+	// Card maturity: New (no reviews), Young (interval < 21 days), Mature (interval >= 21 days)
+	// 21 days is a common threshold in Anki.
+	err = s.db.QueryRowContext(ctx, `
+		SELECT 
+			SUM(CASE WHEN rs.reviews = 0 OR rs.reviews IS NULL THEN 1 ELSE 0 END) as new,
+			SUM(CASE WHEN rs.reviews > 0 AND rs.interval_seconds < 1814400 THEN 1 ELSE 0 END) as young,
+			SUM(CASE WHEN rs.reviews > 0 AND rs.interval_seconds >= 1814400 THEN 1 ELSE 0 END) as mature
+		FROM cards c
+		LEFT JOIN review_states rs ON rs.card_id = c.id
+	`).Scan(&stats.NewCards, &stats.YoungCards, &stats.MatureCards)
+	if err != nil {
+		return stats, err
+	}
+
+	// Total reviews
+	err = s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM reviews`).Scan(&stats.TotalReviews)
+	if err != nil {
+		return stats, err
+	}
+
+	// Success rate (Grade != Again)
+	if stats.TotalReviews > 0 {
+		var successCount int
+		err = s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM reviews WHERE grade != ?`, string(core.GradeAgain)).Scan(&successCount)
+		if err != nil {
+			return stats, err
+		}
+		stats.SuccessRate = float64(successCount) / float64(stats.TotalReviews)
+	}
+
+	// Reviews by grade
+	rows, err := s.db.QueryContext(ctx, `SELECT grade, COUNT(*) FROM reviews GROUP BY grade`)
+	if err != nil {
+		return stats, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var grade string
+		var count int
+		if err := rows.Scan(&grade, &count); err != nil {
+			return stats, err
+		}
+		stats.Grades[core.ReviewGrade(grade)] = count
+	}
+
+	return stats, nil
+}
+
 func (s *Store) GetReviewState(ctx context.Context, cardID string) (core.ReviewState, error) {
 	var state core.ReviewState
 	var intervalSec int64

@@ -52,6 +52,9 @@ func (m *mockRepo) DueCards(ctx context.Context, now time.Time, limit int) ([]co
 func (m *mockRepo) GetReviewState(ctx context.Context, cardID string) (core.ReviewState, error) {
 	return core.ReviewState{CardID: cardID}, nil
 }
+func (m *mockRepo) Statistics(ctx context.Context) (core.Statistics, error) {
+	return core.Statistics{}, nil
+}
 
 type mockScheduler struct{}
 

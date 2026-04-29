@@ -19,12 +19,13 @@ import (
 type View string
 
 const (
-	ViewDashboard View = "dashboard"
-	ViewDecks     View = "decks"
-	ViewReview    View = "review"
-	ViewImport    View = "import"
-	ViewAI        View = "ai"
-	ViewSettings  View = "settings"
+	ViewDashboard  View = "dashboard"
+	ViewDecks      View = "decks"
+	ViewReview     View = "review"
+	ViewStatistics View = "statistics"
+	ViewImport     View = "import"
+	ViewAI         View = "ai"
+	ViewSettings   View = "settings"
 )
 
 type Breakpoint string
@@ -70,6 +71,7 @@ type Model struct {
 	aiProvider      ai.Provider
 	aiProviderName  string
 	aiTemplates     map[string]string
+	stats           core.Statistics
 	settingsCursor  int
 	editingTemplate bool
 	aiInput         string
@@ -150,6 +152,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 
 type dueCardsMsg []core.Card
 type decksMsg []core.Deck
+type statsMsg core.Statistics
 type draftsMsg []ai.Draft
 type draftApprovedMsg struct {
 	noteID string
@@ -167,7 +170,7 @@ type exportDoneMsg struct {
 }
 
 func (m *Model) Init() tea.Cmd {
-	return tea.Batch(m.loadDueCards, m.loadDecks)
+	return tea.Batch(m.loadDueCards, m.loadDecks, m.loadStatistics)
 }
 
 func (m *Model) loadDueCards() tea.Msg {
@@ -190,6 +193,16 @@ func (m *Model) loadDecks() tea.Msg {
 	return decksMsg(decks)
 }
 
+func (m *Model) loadStatistics() tea.Msg {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	stats, err := m.repo.Statistics(ctx)
+	if err != nil {
+		return err
+	}
+	return statsMsg(stats)
+}
+
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -207,6 +220,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case dueCardsMsg:
 		m.allDue = []core.Card(msg)
 		m.applyDeckFilter()
+	case statsMsg:
+		m.stats = core.Statistics(msg)
 	case draftsMsg:
 		m.drafts = []ai.Draft(msg)
 		m.draftCursor = 0
@@ -255,21 +270,23 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "tab":
 		m.nextView()
 	case "1":
-		m.activeView = ViewDashboard
+		return m, m.updateView(ViewDashboard)
 	case "2":
-		m.activeView = ViewDecks
+		return m, m.updateView(ViewDecks)
 	case "3":
-		m.activeView = ViewReview
+		return m, m.updateView(ViewReview)
 	case "4":
-		m.activeView = ViewImport
+		return m, m.updateView(ViewStatistics)
 	case "5":
-		m.activeView = ViewAI
+		return m, m.updateView(ViewImport)
 	case "6":
-		m.activeView = ViewSettings
+		return m, m.updateView(ViewAI)
+	case "7":
+		return m, m.updateView(ViewSettings)
 	case "left", "shift+tab", "w":
-		m.previousView()
+		return m, m.previousViewCmd()
 	case "right", "s":
-		m.nextView()
+		return m, m.nextViewCmd()
 	case "[":
 		m.previousDeck()
 	case "]":
@@ -713,7 +730,7 @@ func (m *Model) render() string {
 		b.WriteString(m.renderCompact())
 	}
 
-	footer := fmt.Sprintf("arrows/tab views | 1-6 views | q quit | mouse %d,%d | %s", m.mouseX, m.mouseY, m.status)
+	footer := fmt.Sprintf("arrows/tab views | 1-7 views | q quit | mouse %d,%d | %s", m.mouseX, m.mouseY, m.status)
 	b.WriteString("\n")
 	b.WriteString(statusStyle.Width(maxInt(20, m.width)).Render(footer))
 	return b.String()
@@ -743,9 +760,10 @@ func (m *Model) renderNav(x, y int) string {
 		{"nav-dashboard", ViewDashboard, "1 Dashboard"},
 		{"nav-decks", ViewDecks, "2 Decks"},
 		{"nav-review", ViewReview, "3 Review"},
-		{"nav-import", ViewImport, "4 Import"},
-		{"nav-ai", ViewAI, "5 AI Drafts"},
-		{"nav-settings", ViewSettings, "6 Settings"},
+		{"nav-statistics", ViewStatistics, "4 Statistics"},
+		{"nav-import", ViewImport, "5 Import"},
+		{"nav-ai", ViewAI, "6 AI Drafts"},
+		{"nav-settings", ViewSettings, "7 Settings"},
 	}
 	lines := make([]string, 0, len(labels))
 	for i, label := range labels {
@@ -760,8 +778,8 @@ func (m *Model) renderNav(x, y int) string {
 }
 
 func (m *Model) renderTabs(x, y int) string {
-	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewImport, ViewAI, ViewSettings}
-	labels := []string{"Dashboard", "Decks", "Review", "Import", "AI", "Settings"}
+	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings}
+	labels := []string{"Dashboard", "Decks", "Review", "Stats", "Import", "AI", "Settings"}
 	parts := make([]string, 0, len(views))
 	offset := x
 	for i, view := range views {
@@ -792,6 +810,8 @@ func (m *Model) renderActiveViewPlain(x, y int) string {
 		return m.renderDecks(x, y)
 	case ViewReview:
 		return m.renderReview(x, y)
+	case ViewStatistics:
+		return m.renderStatistics()
 	case ViewImport:
 		return m.renderImport()
 	case ViewAI:
@@ -801,6 +821,28 @@ func (m *Model) renderActiveViewPlain(x, y int) string {
 	default:
 		return fmt.Sprintf("Dashboard\n\nDeck: %s\nDue cards: %d\n\nUse [ and ] to switch decks.\nUse Review to start studying.", m.deckLabel(), len(m.dueCards))
 	}
+}
+
+func (m *Model) renderStatistics() string {
+	var b strings.Builder
+	b.WriteString("Statistics\n\n")
+
+	b.WriteString(fmt.Sprintf("Total Cards:   %d\n", m.stats.TotalCards))
+	b.WriteString(fmt.Sprintf("  New:         %d\n", m.stats.NewCards))
+	b.WriteString(fmt.Sprintf("  Young:       %d\n", m.stats.YoungCards))
+	b.WriteString(fmt.Sprintf("  Mature:      %d\n\n", m.stats.MatureCards))
+
+	b.WriteString(fmt.Sprintf("Total Reviews: %d\n", m.stats.TotalReviews))
+	b.WriteString(fmt.Sprintf("Success Rate:  %.1f%%\n\n", m.stats.SuccessRate*100))
+
+	b.WriteString("Reviews by Grade:\n")
+	grades := []core.ReviewGrade{core.GradeAgain, core.GradeHard, core.GradeGood, core.GradeEasy}
+	for _, g := range grades {
+		count := m.stats.Grades[g]
+		b.WriteString(fmt.Sprintf("  %-5s: %d\n", g, count))
+	}
+
+	return b.String()
 }
 
 func (m *Model) renderDecks(x, y int) string {
@@ -868,26 +910,40 @@ func (m *Model) renderReview(x, y int) string {
 	return fmt.Sprintf("Review %d/%d\n\n%s\n\n%s", m.cursor+1, len(m.dueCards), card.Prompt, answer)
 }
 
-func (m *Model) previousView() {
-	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewImport, ViewAI, ViewSettings}
+func (m *Model) nextViewCmd() tea.Cmd {
+	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings}
 	for i, view := range views {
 		if m.activeView == view {
-			m.activeView = views[(i-1+len(views))%len(views)]
-			return
+			return m.updateView(views[(i+1)%len(views)])
 		}
 	}
-	m.activeView = ViewDashboard
+	return m.updateView(ViewDashboard)
+}
+
+func (m *Model) previousViewCmd() tea.Cmd {
+	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings}
+	for i, view := range views {
+		if m.activeView == view {
+			return m.updateView(views[(i-1+len(views))%len(views)])
+		}
+	}
+	return m.updateView(ViewDashboard)
 }
 
 func (m *Model) nextView() {
-	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewImport, ViewAI, ViewSettings}
-	for i, view := range views {
-		if m.activeView == view {
-			m.activeView = views[(i+1)%len(views)]
-			return
-		}
+	m.nextViewCmd()
+}
+
+func (m *Model) previousView() {
+	m.previousViewCmd()
+}
+
+func (m *Model) updateView(view View) tea.Cmd {
+	m.activeView = view
+	if view == ViewStatistics {
+		return m.loadStatistics
 	}
-	m.activeView = ViewDashboard
+	return nil
 }
 
 func (m *Model) previousDeck() {
@@ -959,9 +1015,9 @@ func (m *Model) hitboxAt(x, y int) (Hitbox, bool) {
 func (m *Model) activateHitbox(id string) tea.Cmd {
 	switch {
 	case strings.HasPrefix(id, "nav-"):
-		m.activeView = View(strings.TrimPrefix(id, "nav-"))
+		return m.updateView(View(strings.TrimPrefix(id, "nav-")))
 	case strings.HasPrefix(id, "tab-"):
-		m.activeView = View(strings.TrimPrefix(id, "tab-"))
+		return m.updateView(View(strings.TrimPrefix(id, "tab-")))
 	case id == "grade-again":
 		return m.gradeCard(core.GradeAgain)
 	case id == "grade-hard":

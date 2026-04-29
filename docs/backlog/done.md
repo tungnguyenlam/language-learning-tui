@@ -8,7 +8,28 @@
 - Verified the new E2E tests with `tui_tester/venv/bin/python -m pytest e2e_tests/test_recertification.py -q`.
 - Final verification passed with `./scripts/verify.sh`, including gofmt, all Go tests, go vet, smoke launch, and 22 E2E tests.
 
+## Statistics View Implementation (2026-04-29)
+
+Implemented a dedicated Statistics view to provide insights into learning progress and card maturity.
+
+### Implementation
+- Added `Statistics` struct and `Repository` method to core domain.
+- Implemented `Statistics` fetching in SQLite store with aggregate queries for card maturity (New, Young, Mature) and review success rates.
+- Integrated `ViewStatistics` into TUI with dedicated rendering and navigation.
+- Refactored TUI navigation to ensure statistics are re-loaded when switching to the view.
+- Updated all navigation controls (Tab, Arrows, Number keys 1-7) to support the new 7-view structure.
+
+### Testing
+- Created `e2e_tests/test_statistics.py` to verify rendering and real-time updates after reviews.
+- Updated all existing E2E tests (`test_tui.py`, `test_wasd_navigation.py`, `test_robustness.py`, `test_recertification.py`) to align with the new view indices and shortcut keys.
+- Fixed `mockRepo` in TUI tests to implement the new `Statistics` interface method.
+
+### Verification
+- All 24 E2E tests pass.
+- `./scripts/verify.sh` passes with zero errors or warnings.
+
 ## Navigation Bug Fix and Robustness Enhancement (2026-04-29)
+
 
 Fixed a conflict between WASD navigation and AI draft discarding, and added new robustness tests.
 

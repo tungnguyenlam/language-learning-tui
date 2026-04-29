@@ -21,7 +21,7 @@ def test_settings_template_editing_cancel():
         agent = start_agent(tmpdir)
         try:
             # Go to Settings
-            agent.act('6')
+            agent.act('7')
             agent.wait_for_text("Settings")
             
             # Move to Front Template (index 1)
@@ -65,7 +65,7 @@ def test_import_nonexistent_file_shows_error():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
-            agent.act('4')
+            agent.act('5')
             agent.wait_for_text("Import / Export")
             
             # 'i' triggers import of 'import.tsv' (default)

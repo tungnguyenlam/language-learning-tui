@@ -8,7 +8,7 @@ End-to-end deutsch-tui stabilization.
 
 ## Next Action
 
-End-to-end stabilization is complete and committed. Resume the next roadmap milestone by implementing the Statistics view unless a newer user request supersedes it.
+End-to-end deutsch-tui stabilization and Statistics view are complete. Resume the next roadmap milestone by implementing .apkg import/export or Audio/media support unless a newer user request supersedes it.
 
 ## Blockers
 
@@ -16,7 +16,7 @@ End-to-end stabilization is complete and committed. Resume the next roadmap mile
 
 ## Last Verified
 
-- 2026-04-29: `./scripts/verify.sh` passed with 22 E2E tests, all Go tests, smoke test, gofmt, and go vet.
+- 2026-04-29: `./scripts/verify.sh` passed with 24 E2E tests (including new tests for Statistics view and updated navigation).
 - 2026-04-29: `tui_tester/venv/bin/python -m pytest e2e_tests/test_recertification.py -q` passed with 3 new E2E tests.
 - 2026-04-29: Added three recertification E2E tests for Tab view cycling, Hard grade SQLite persistence, and Settings provider persistence.
 - 2026-04-29: `tui_tester/venv/bin/python -m pytest e2e_tests -q` passed with 19 E2E tests.

@@ -21,6 +21,7 @@ def test_tab_cycles_through_all_primary_views_and_wraps():
             for text in [
                 "Press enter to select deck.",
                 "Review 1/6",
+                "Statistics",
                 "Import / Export",
                 "AI Drafts",
                 "Settings",
@@ -61,7 +62,7 @@ def test_settings_provider_toggle_persists_after_restart():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
-            agent.act("6")
+            agent.act("7")
             agent.wait_for_text("AI Provider: disabled")
             agent.act("<Enter>")
             agent.wait_for_text("AI Provider: offline")
@@ -70,7 +71,7 @@ def test_settings_provider_toggle_persists_after_restart():
 
         restarted = start_agent(tmpdir)
         try:
-            restarted.act("6")
+            restarted.act("7")
             restarted.wait_for_text("AI Provider: offline")
         finally:
             restarted.close()
