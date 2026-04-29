@@ -226,6 +226,63 @@ def test_all_core_views_render_with_keyboard_navigation():
         finally:
             agent.close()
 
+def test_compact_layout_renders_all_core_views():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir, columns=60, lines=24)
+        try:
+            agent.assert_text("deutsch-tui compact")
+
+            for key, text in [
+                ('1', "Dashboard"),
+                ('2', "Decks"),
+                ('3', "Review 1/6"),
+                ('4', "Import / Export"),
+                ('5', "AI Drafts"),
+                ('6', "Settings"),
+            ]:
+                agent.act(key)
+                agent.wait_for_text(text)
+                agent.wait_until_stable()
+                agent.assert_text(text)
+        finally:
+            agent.close()
+
+def test_space_reveal_and_again_grade_keyboard_flow():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir, columns=90, lines=28)
+        try:
+            agent.act('3')
+            agent.wait_for_text("Review 1/6")
+
+            agent.act('<Space>')
+            agent.wait_for_text("Grade: a Again")
+            agent.assert_text("apple")
+
+            agent.act('a')
+            agent.wait_for_text("Review 1/5")
+            agent.assert_text("5 cards due")
+            agent.assert_text("Press space or enter to reveal.")
+        finally:
+            agent.close()
+
+def test_mouse_tabs_open_import_ai_and_settings_views():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir, columns=90, lines=28)
+        try:
+            agent.click(31, 3)
+            agent.wait_for_text("Import / Export")
+            agent.assert_text("Press i to import TSV.")
+
+            agent.click(40, 3)
+            agent.wait_for_text("AI Drafts")
+            agent.assert_text("Topic: der Kaffee")
+
+            agent.click(45, 3)
+            agent.wait_for_text("Settings")
+            agent.assert_text("AI Provider: disabled")
+        finally:
+            agent.close()
+
 def test_review_grade_persists_to_sqlite_across_restart():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)

@@ -1,3 +1,13 @@
+## 2026-04-29 End-to-end stabilization recertification kickoff
+
+- Reopened the end-to-end deutsch-tui stabilization milestone for the current autonomous pass.
+- Confirmed `./scripts/tui_smoke.sh` launches successfully.
+- Confirmed direct `TUIAgent` dashboard rendering with `cmd/deutsch-tui --data-dir <tmp>`.
+- Verified `go test ./...` and the existing 11 tui-tester E2E tests pass before adding fresh coverage.
+- Added three fresh tui-tester E2E tests for compact view rendering, space-key reveal plus Again grading, and mouse tab navigation to Import, AI, and Settings.
+- Verified the expanded tui-tester suite passes with 14 tests.
+- Final verification passed with `./scripts/verify.sh`, including formatting, `go test ./...`, `go vet ./...`, smoke launch, and all 14 E2E tests.
+
 ## 2026-04-29 End-to-end deutsch-tui stabilization
 
 - Fixed E2E startup synchronization by waiting for the Dashboard text instead of treating a quiet PTY as a ready screen.

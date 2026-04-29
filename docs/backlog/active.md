@@ -27,5 +27,8 @@ End-to-end stabilization is complete. Resume the next roadmap milestone by imple
 ## Last Verified
 
 - 2026-04-29: `go test ./...` passed.
+- 2026-04-29: `./scripts/tui_smoke.sh` passed.
+- 2026-04-29: direct `TUIAgent` launch/render of `cmd/deutsch-tui --data-dir <tmp>` showed the Dashboard.
 - 2026-04-29: `tui_tester/venv/bin/python -m pytest e2e_tests/test_tui.py -q` passed with 11 tests.
-- 2026-04-29: `./scripts/verify.sh` passed with 11 E2E tests.
+- 2026-04-29: `tui_tester/venv/bin/python -m pytest e2e_tests/test_tui.py -q` passed with 14 tests after adding three fresh E2E tests.
+- 2026-04-29: `./scripts/verify.sh` passed with 14 E2E tests.
