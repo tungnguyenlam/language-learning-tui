@@ -10,7 +10,7 @@ Last updated: 2026-04-29
 
 ## Notices
 
-- No active notices yet.
+- `docs/agent/notices/2026-04-29-bubbletea-v2-space-key.md`: Bubble Tea v2 uses "space" string for the space bar.
 
 ## Decisions
 

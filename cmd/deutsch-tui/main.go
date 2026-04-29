@@ -7,8 +7,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"deutsch-tui/internal/ai"
 	"deutsch-tui/internal/app"
 	"deutsch-tui/internal/content"
+	"deutsch-tui/internal/srs"
 	"deutsch-tui/internal/storage/sqlite"
 	"deutsch-tui/internal/tui"
 
@@ -61,7 +63,21 @@ func main() {
 		return
 	}
 
-	program := tea.NewProgram(tui.NewModel())
+	scheduler := srs.NewScheduler()
+	var provider ai.Provider
+	switch cfg.AIProvider {
+	case "template":
+		provider = ai.TemplateProvider{Templates: cfg.AITemplates}
+	case "offline":
+		provider = ai.OfflineProvider{}
+	default:
+		provider = ai.OfflineProvider{}
+	}
+	program := tea.NewProgram(tui.NewModelWithOptions(store, scheduler, tui.ModelOptions{
+		AIProvider: provider,
+		ImportPath: filepath.Join(dir, "import.tsv"),
+		ExportPath: filepath.Join(dir, "export.tsv"),
+	}))
 	if _, err := program.Run(); err != nil {
 		logger.Printf("program run: %v", err)
 		fmt.Fprintln(os.Stderr, err)

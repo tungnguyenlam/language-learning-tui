@@ -33,6 +33,9 @@ func TestExportAnkiTSVRoundTrip(t *testing.T) {
 	if notes[0].ID != deck.Notes[0].ID {
 		t.Fatalf("id = %q, want %q", notes[0].ID, deck.Notes[0].ID)
 	}
+	if notes[0].DeckID != deck.Notes[0].DeckID {
+		t.Fatalf("deck id = %q, want %q", notes[0].DeckID, deck.Notes[0].DeckID)
+	}
 }
 
 func TestImportAnkiFixture(t *testing.T) {

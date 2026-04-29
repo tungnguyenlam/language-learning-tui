@@ -63,4 +63,13 @@ var migrations = []migration{
 	{ID: 6, SQL: `CREATE INDEX IF NOT EXISTS idx_cards_deck ON cards(deck_id)`},
 	{ID: 7, SQL: `CREATE INDEX IF NOT EXISTS idx_review_states_due ON review_states(due_at)`},
 	{ID: 8, SQL: `CREATE INDEX IF NOT EXISTS idx_reviews_card_reviewed ON reviews(card_id, reviewed_at)`},
+	{
+		ID: 9,
+		SQL: `
+		ALTER TABLE review_states ADD COLUMN stability REAL NOT NULL DEFAULT 0;
+		ALTER TABLE review_states ADD COLUMN difficulty REAL NOT NULL DEFAULT 0;
+		ALTER TABLE reviews ADD COLUMN stability REAL NOT NULL DEFAULT 0;
+		ALTER TABLE reviews ADD COLUMN difficulty REAL NOT NULL DEFAULT 0;
+	`,
+	},
 }

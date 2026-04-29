@@ -1,6 +1,42 @@
-# Done
+## 2026-04-29 Milestone 5: Deeper Deck Browser
 
-## 2026-04-29
+- Implemented a dedicated "Decks" view (`ViewDecks`) to list all available decks with total and due card counts.
+- Added keyboard-driven navigation (`j`/`k`, `up`/`down`) for browsing the deck list and `Enter` for selection.
+- Updated the SQLite repository to efficiently fetch deck statistics (total/due cards) using a JOIN query.
+- Integrated the Decks view into the main TUI navigation, including `Tab` rotation and shortcut key `2`.
+- Synchronized deck selection between the new Decks view and existing cycling (`[`/`]`) shortcuts.
+- Added unit tests for Decks view rendering, navigation, and storage-layer statistics calculation.
+- Verified with `./scripts/verify.sh` and new unit tests.
+
+## 2026-04-29 Milestone 4: TUI Anki TSV Import/Export
+
+- Added Import view actions for importing `import.tsv` and exporting the selected deck to `export.tsv` in the app data directory.
+- Preserved exported deck IDs during TSV re-import.
+- Loaded full deck notes/cards from SQLite so selected decks can be exported through the repository boundary.
+- Added unit coverage for TSV deck-column roundtrip, deck export loading, Import view import/export commands, and mock repository behavior.
+- Added E2E coverage for importing a TSV deck, switching to it, reviewing its card, and exporting it back to TSV.
+- Verified with `go test ./internal/content ./internal/storage/sqlite ./internal/tui ./cmd/deutsch-tui`, `tui_tester/venv/bin/python -m pytest e2e_tests/test_tui.py -q`, and `./scripts/verify.sh`.
+
+## 2026-04-29 Milestone 3: AI Drafting And Deck Selection
+
+- Added an offline AI drafting provider that generates validated draft notes and cards without network access.
+- Wired AI draft generation, review, discard, and approval into the TUI.
+- Added keyboard deck switching with deck-scoped due-card filtering.
+- Added unit coverage for offline draft generation, deck switching, draft approval persistence through the repository boundary, and AI error handling.
+- Added E2E coverage for AI draft approval and persistence across restart.
+- Verified with `go test ./internal/ai ./internal/tui ./cmd/deutsch-tui`, `tui_tester/venv/bin/python -m pytest e2e_tests/test_tui.py -q`, and `./scripts/verify.sh`.
+
+## 2026-04-29 Milestone 2: Review Session Flow
+
+- Implemented full FSRS-backed review session flow.
+- Updated SQLite schema with `stability` and `difficulty` fields for FSRS.
+- Added `GetDeck` and `Decks` methods to `core.Repository` and `sqlite` store.
+- Enhanced TUI Dashboard to load and display deck information.
+- Implemented card advancement and status feedback in TUI Review view.
+- Added mouse support for grading (Again, Hard, Good, Easy hitboxes).
+- Fixed space key binding for `bubbletea/v2`.
+- Updated unit and E2E tests to cover the complete review flow.
+- Verified with `./scripts/verify.sh` and `pytest e2e_tests/test_tui.py`.
 
 - Bootstrapped Go module, Bubble Tea v2 TUI shell, core domain, content import/export, SQLite storage, SRS adapter, AI draft validation, and agent continuity docs.
 - Verified with `GOCACHE=/tmp/deutsch-tui-gocache go test ./...` and `GOCACHE=/tmp/deutsch-tui-gocache go vet ./...`.

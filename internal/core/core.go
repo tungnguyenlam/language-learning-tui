@@ -1,6 +1,7 @@
 package core
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"time"
@@ -28,6 +29,8 @@ type Deck struct {
 	Description string
 	Tags        []string
 	Notes       []Note
+	TotalCards  int
+	DueCards    int
 }
 
 type Note struct {
@@ -69,6 +72,15 @@ type ReviewResult struct {
 	Grade    ReviewGrade
 	Reviewed time.Time
 	Next     ReviewState
+}
+
+type Repository interface {
+	UpsertDeck(ctx context.Context, deck Deck) error
+	GetDeck(ctx context.Context, id string) (Deck, error)
+	Decks(ctx context.Context) ([]Deck, error)
+	RecordReview(ctx context.Context, result ReviewResult) error
+	DueCards(ctx context.Context, now time.Time, limit int) ([]Card, error)
+	GetReviewState(ctx context.Context, cardID string) (ReviewState, error)
 }
 
 type Scheduler interface {

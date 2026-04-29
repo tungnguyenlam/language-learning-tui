@@ -131,6 +131,54 @@ func (s *Store) UpsertDeck(ctx context.Context, deck core.Deck) error {
 	return nil
 }
 
+func (s *Store) GetDeck(ctx context.Context, id string) (core.Deck, error) {
+	var deck core.Deck
+	err := s.db.QueryRowContext(ctx, `SELECT id, name, description FROM decks WHERE id = ?`, id).Scan(&deck.ID, &deck.Name, &deck.Description)
+	if errors.Is(err, sql.ErrNoRows) {
+		return core.Deck{}, fmt.Errorf("deck not found: %s", id)
+	}
+	if err != nil {
+		return core.Deck{}, err
+	}
+	notes, err := s.notesForDeck(ctx, id)
+	if err != nil {
+		return core.Deck{}, err
+	}
+	deck.Notes = notes
+	return deck, nil
+}
+
+func (s *Store) Decks(ctx context.Context) ([]core.Deck, error) {
+	now := time.Now().UTC()
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT d.id, d.name, d.description,
+		       COUNT(c.id) as total_cards,
+		       SUM(CASE WHEN rs.due_at IS NULL OR rs.due_at <= ? THEN 1 ELSE 0 END) as due_cards
+		FROM decks d
+		LEFT JOIN cards c ON c.deck_id = d.id
+		LEFT JOIN review_states rs ON rs.card_id = c.id
+		GROUP BY d.id
+		ORDER BY d.name
+	`, now)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var decks []core.Deck
+	for rows.Next() {
+		var deck core.Deck
+		var total, due sql.NullInt64
+		if err := rows.Scan(&deck.ID, &deck.Name, &deck.Description, &total, &due); err != nil {
+			return nil, err
+		}
+		deck.TotalCards = int(total.Int64)
+		deck.DueCards = int(due.Int64)
+		decks = append(decks, deck)
+	}
+	return decks, rows.Err()
+}
+
 func (s *Store) UpsertNote(ctx context.Context, note core.Note) error {
 	if note.ID == "" {
 		return errors.New("note id is required")
@@ -161,6 +209,68 @@ func (s *Store) UpsertNote(ctx context.Context, note core.Note) error {
 	return nil
 }
 
+func (s *Store) notesForDeck(ctx context.Context, deckID string) ([]core.Note, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT id, deck_id, front, back, extra
+		FROM notes
+		WHERE deck_id = ?
+		ORDER BY id
+	`, deckID)
+	if err != nil {
+		return nil, err
+	}
+
+	var notes []core.Note
+	for rows.Next() {
+		var note core.Note
+		if err := rows.Scan(&note.ID, &note.DeckID, &note.Front, &note.Back, &note.Extra); err != nil {
+			_ = rows.Close()
+			return nil, err
+		}
+		notes = append(notes, note)
+	}
+	if err := rows.Err(); err != nil {
+		_ = rows.Close()
+		return nil, err
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	for i := range notes {
+		cards, err := s.cardsForNote(ctx, notes[i].ID)
+		if err != nil {
+			return nil, err
+		}
+		notes[i].Cards = cards
+	}
+	return notes, nil
+}
+
+func (s *Store) cardsForNote(ctx context.Context, noteID string) ([]core.Card, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT id, note_id, deck_id, kind, prompt, answer
+		FROM cards
+		WHERE note_id = ?
+		ORDER BY id
+	`, noteID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var cards []core.Card
+	for rows.Next() {
+		var card core.Card
+		var kind string
+		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer); err != nil {
+			return nil, err
+		}
+		card.Kind = core.CardKind(kind)
+		cards = append(cards, card)
+	}
+	return cards, rows.Err()
+}
+
 func (s *Store) UpsertCard(ctx context.Context, card core.Card) error {
 	if err := core.ValidateCard(card); err != nil {
 		return err
@@ -183,22 +293,24 @@ func (s *Store) RecordReview(ctx context.Context, result core.ReviewResult) erro
 		return errors.New("card id is required")
 	}
 	_, err := s.db.ExecContext(ctx, `
-		INSERT INTO reviews (card_id, grade, reviewed_at, due_at, interval_seconds, ease, reviews, lapses)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-	`, result.CardID, string(result.Grade), result.Reviewed.UTC(), result.Next.Due.UTC(), int64(result.Next.Interval.Seconds()), result.Next.Ease, result.Next.Reviews, result.Next.Lapses)
+		INSERT INTO reviews (card_id, grade, reviewed_at, due_at, interval_seconds, stability, difficulty, ease, reviews, lapses)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+	`, result.CardID, string(result.Grade), result.Reviewed.UTC(), result.Next.Due.UTC(), int64(result.Next.Interval.Seconds()), result.Next.Stability, result.Next.Difficulty, result.Next.Ease, result.Next.Reviews, result.Next.Lapses)
 	if err != nil {
 		return err
 	}
 	_, err = s.db.ExecContext(ctx, `
-		INSERT INTO review_states (card_id, due_at, interval_seconds, ease, reviews, lapses)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO review_states (card_id, due_at, interval_seconds, stability, difficulty, ease, reviews, lapses)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(card_id) DO UPDATE SET
 			due_at = excluded.due_at,
 			interval_seconds = excluded.interval_seconds,
+			stability = excluded.stability,
+			difficulty = excluded.difficulty,
 			ease = excluded.ease,
 			reviews = excluded.reviews,
 			lapses = excluded.lapses
-	`, result.CardID, result.Next.Due.UTC(), int64(result.Next.Interval.Seconds()), result.Next.Ease, result.Next.Reviews, result.Next.Lapses)
+	`, result.CardID, result.Next.Due.UTC(), int64(result.Next.Interval.Seconds()), result.Next.Stability, result.Next.Difficulty, result.Next.Ease, result.Next.Reviews, result.Next.Lapses)
 	return err
 }
 
@@ -230,4 +342,22 @@ func (s *Store) DueCards(ctx context.Context, now time.Time, limit int) ([]core.
 		cards = append(cards, card)
 	}
 	return cards, rows.Err()
+}
+
+func (s *Store) GetReviewState(ctx context.Context, cardID string) (core.ReviewState, error) {
+	var state core.ReviewState
+	var intervalSec int64
+	err := s.db.QueryRowContext(ctx, `
+		SELECT card_id, due_at, interval_seconds, stability, difficulty, ease, reviews, lapses
+		FROM review_states
+		WHERE card_id = ?
+	`, cardID).Scan(&state.CardID, &state.Due, &intervalSec, &state.Stability, &state.Difficulty, &state.Ease, &state.Reviews, &state.Lapses)
+	if errors.Is(err, sql.ErrNoRows) {
+		return core.NewReviewState(cardID, time.Now()), nil
+	}
+	if err != nil {
+		return core.ReviewState{}, err
+	}
+	state.Interval = time.Duration(intervalSec) * time.Second
+	return state, nil
 }

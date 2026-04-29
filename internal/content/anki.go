@@ -60,9 +60,13 @@ func ImportAnkiTSV(r io.Reader, opts ImportOptions) ([]core.Note, error) {
 		if id == "" {
 			return nil, fmt.Errorf("record %d has empty id", i+1)
 		}
+		noteDeck := deck
+		if len(record) > 5 && strings.TrimSpace(record[5]) != "" {
+			noteDeck = strings.TrimSpace(record[5])
+		}
 		note := core.Note{
 			ID:     id,
-			DeckID: deck,
+			DeckID: noteDeck,
 			Front:  record[1],
 			Back:   record[2],
 		}

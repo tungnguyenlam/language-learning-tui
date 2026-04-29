@@ -4,25 +4,25 @@ Last updated: 2026-04-29
 
 ## Current Milestone
 
-Milestone 2: build the full review session flow on top of the stable scaffold.
+Milestone 6: AI Provider Configuration and Prompt Templates.
 
 ## Next Action
 
-Continue Milestone 2: build the full review session flow on top of the current scaffold.
+Implement a configurable AI provider that supports prompt templates.
 
 ## Acceptance Criteria
 
-- Review session records FSRS-backed grades into SQLite.
-- Due card list updates after grading.
-- Review flow is usable with keyboard and mouse.
-- Compact, medium, and wide layouts remain covered by tests.
+- Settings view displays currently selected AI provider and allows switching (e.g., between "Offline" and "Template").
+- New `TemplateProvider` in `internal/ai` supports customizable prompt templates.
+- Prompt templates can be used to control how `Front`, `Back`, and `Examples` are generated.
+- Settings view allows viewing and basic editing of these templates.
+- Unit tests cover template substitution and provider switching logic.
 
 ## Blockers
 
-- None recorded.
+- None.
 
 ## Last Verified
 
-- 2026-04-29: `GOCACHE=/tmp/deutsch-tui-gocache go test ./...`
-- 2026-04-29: `GOCACHE=/tmp/deutsch-tui-gocache go vet ./...`
-- 2026-04-29: `./scripts/verify.sh`
+- 2026-04-29 13:25 +07: `./scripts/verify.sh`
+- 2026-04-29 13:15 +07: `go test ./internal/tui ./internal/storage/sqlite`
