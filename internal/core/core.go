@@ -111,6 +111,7 @@ type Repository interface {
 	SetCardSuspended(ctx context.Context, cardID string, suspended bool) error
 	SetDailyGoal(ctx context.Context, goal int) error
 	Statistics(ctx context.Context) (Statistics, error)
+	Cards(ctx context.Context, deckID string, search string) ([]Card, error)
 }
 
 type Scheduler interface {

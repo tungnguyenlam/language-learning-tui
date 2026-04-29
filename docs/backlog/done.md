@@ -1,5 +1,17 @@
 # Completed Work
 
+## 2026-04-30 Autonomous Feature Pass 4 - Card Browser, Session Stats, Help Overlay
+
+- Implemented Card Browser View: `8` opens browser showing all cards in current deck with type (FC/MCQ), prompt, and status flags (B/L/S).
+- Added real-time search filtering by prompt/answer text; `j`/`k` navigation; `[`/`]` deck switching.
+- Extended `core.Repository` with `Cards(ctx, deckID, search)` method; implemented in SQLite store with optional deck filter and search.
+- Added session statistics tracking: `sessionReviewed`, `sessionCorrect`, accuracy % displayed in Statistics view.
+- Implemented Keyboard Shortcut Help Overlay: `?` toggles overlay showing all shortcuts grouped by view.
+- Added `showHelp` bool field in TUI model; renders help text with `renderHelp()`.
+- Added 3 Go unit tests: `TestCards_DeckFilter`, `TestCards_SearchFilter`, `TestSessionStatsTracking`, `TestHelpOverlayToggle`, `TestBrowserViewNavigation`, `TestBrowserSearchFilter`.
+- Added 3 tui-tester E2E tests: `test_card_browser_search_filter`, `test_session_stats_show_in_statistics`, `test_help_overlay_shows_and_dismisses`.
+- All 36 E2E tests pass; all Go tests pass; `./scripts/verify.sh` passes with zero errors.
+
 ## 2026-04-29 Autonomous Feature Pass 3 - Review Control, Habit Goal, Deck Insights
 
 - Implemented suspended review cards: `x` in Review suspends the current card, suspended cards are filtered from normal/bookmarked due queues, Dashboard/Statistics show suspended counts, and SQLite persists the flag via migration 13.

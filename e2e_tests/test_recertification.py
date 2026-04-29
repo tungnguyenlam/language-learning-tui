@@ -25,6 +25,7 @@ def test_tab_cycles_through_all_primary_views_and_wraps():
                 "Import / Export",
                 "AI Drafts",
                 "Settings",
+                "Card Browser",
                 "Use Review to start studying.",
             ]:
                 agent.act("<Tab>")

@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"strings"
 	"time"
 
 	"deutsch-tui/internal/core"
@@ -129,6 +130,25 @@ func (m *mockRepo) Statistics(ctx context.Context) (core.Statistics, error) {
 		}
 	}
 	return stats, nil
+}
+func (m *mockRepo) Cards(ctx context.Context, deckID string, search string) ([]core.Card, error) {
+	var cards []core.Card
+	for _, card := range m.dueCards {
+		if deckID != "" && card.DeckID != deckID {
+			continue
+		}
+		if search != "" && !containsIgnoreCase(card.Prompt, search) && !containsIgnoreCase(card.Answer, search) {
+			continue
+		}
+		cards = append(cards, card)
+	}
+	return cards, nil
+}
+
+func containsIgnoreCase(s, substr string) bool {
+	s = strings.ToLower(s)
+	substr = strings.ToLower(substr)
+	return strings.Contains(s, substr)
 }
 
 type mockScheduler struct{}

@@ -150,3 +150,61 @@ def test_decks_view_shows_progress_metrics_after_review():
             agent.assert_text("100% success")
         finally:
             agent.close()
+
+
+def test_card_browser_search_filter():
+    """Card Browser filters cards by search term."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir)
+        try:
+            agent.act("8")
+            agent.wait_for_text("Card Browser")
+            agent.wait_for_text("6 cards found")
+
+            agent.act("Ap")
+            agent.wait_for_text("der Apfel")
+            # Verify only matching cards shown (2 cards with "Ap" in prompt)
+            agent.wait_for_text("2 cards found")
+        finally:
+            agent.close()
+
+
+def test_session_stats_show_in_statistics():
+    """Session statistics update after reviewing cards."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir)
+        try:
+            agent.act("3")
+            agent.wait_for_text("Review 1/6")
+            agent.act("<Space>")
+            agent.wait_for_text("Grade: a Again")
+            agent.act("a")
+            agent.wait_for_text("cards due")
+
+            agent.act("4")
+            agent.wait_for_text("Statistics")
+            agent.assert_text("Session Stats:")
+            agent.assert_text("Reviewed:    1")
+            agent.assert_text("Correct:     0")
+            agent.assert_text("Accuracy:     0.0%")
+        finally:
+            agent.close()
+
+
+def test_help_overlay_shows_and_dismisses():
+    """Pressing ? shows help overlay, pressing ? again dismisses it."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir)
+        try:
+            agent.act("?")
+            agent.wait_for_text("Keyboard Shortcuts")
+            agent.assert_text("Global:")
+
+            agent.act("?")
+            # Wait for the help overlay to disappear
+            import time
+            time.sleep(1)
+            agent.wait_until_stable()
+            agent.assert_not_text("Keyboard Shortcuts")
+        finally:
+            agent.close()

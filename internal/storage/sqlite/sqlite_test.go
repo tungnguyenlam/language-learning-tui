@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -653,5 +654,63 @@ func TestStatisticsBookmarkedDueCount(t *testing.T) {
 	}
 	if stats.BookmarkedDue < 1 {
 		t.Fatalf("bookmarked due = %d, want at least 1", stats.BookmarkedDue)
+	}
+}
+
+func TestCards_DeckFilter(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	deck := content.StarterDeck()
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+
+	cards, err := store.Cards(ctx, deck.ID, "")
+	if err != nil {
+		t.Fatalf("cards: %v", err)
+	}
+	if len(cards) == 0 {
+		t.Fatal("expected cards for deck")
+	}
+	for _, card := range cards {
+		if card.DeckID != deck.ID {
+			t.Fatalf("expected deck %s, got %s", deck.ID, card.DeckID)
+		}
+	}
+}
+
+func TestCards_SearchFilter(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	deck := content.StarterDeck()
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+	firstCard := deck.Notes[0].Cards[0]
+	searchTerm := firstCard.Prompt[:5]
+
+	cards, err := store.Cards(ctx, "", searchTerm)
+	if err != nil {
+		t.Fatalf("cards: %v", err)
+	}
+	if len(cards) == 0 {
+		t.Fatal("expected cards containing search term")
+	}
+	for _, card := range cards {
+		promptMatch := strings.Contains(strings.ToLower(card.Prompt), strings.ToLower(searchTerm))
+		answerMatch := strings.Contains(strings.ToLower(card.Answer), strings.ToLower(searchTerm))
+		if !promptMatch && !answerMatch {
+			t.Fatalf("card %s does not contain search term %s", card.ID, searchTerm)
+		}
 	}
 }

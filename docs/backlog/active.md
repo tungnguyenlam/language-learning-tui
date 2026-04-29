@@ -4,7 +4,13 @@ Last updated: 2026-04-29
 
 ## Current Milestone
 
-Autonomous product feature pass 3: ship 2-3 vertical learning features that improve review control, habit tracking, and deck insight.
+Autonomous product feature pass 4: ship 2-3 vertical learning features that improve card browsing, session tracking, and keyboard UX.
+
+## Feature Candidates
+
+- Card Browser View: high impact / medium effort. Lets learners browse all cards in a deck with search, see card status (bookmarked/leech/suspended), and understand deck composition.
+- Session Statistics: medium-high impact / low effort. Shows learners how many cards they've reviewed this session and accuracy rate.
+- Keyboard Shortcut Help Overlay: medium impact / low effort. UX polish that helps new users discover keyboard commands.
 
 ## Feature Candidates
 
@@ -23,9 +29,74 @@ Autonomous product feature pass 3: ship 2-3 vertical learning features that impr
 - Filtered review mode: high impact / high effort. Needs careful session state and deck/card queries.
 - APKG import/export: high impact / high effort. Already on roadmap but larger than a safe 2-3 feature vertical pass.
 
-## Selected Features
+## Next Action
 
-### Feature 7: Suspend Review Cards
+Autonomous feature pass 4 is complete. Shipped 3 features: Card Browser View, Session Statistics, and Keyboard Help Overlay.
+Resume next roadmap milestone by implementing `.apkg` import/export, audio/media support, or a focused unsuspend/card-browser workflow unless a newer user request supersedes it.
+
+## Feature Specs
+
+### Feature 10: Card Browser View (SHIPPED)
+
+User story: As a learner, I can browse all cards in a deck with search so I can inspect card content, status, and deck composition.
+
+Acceptance criteria:
+- `8` (or click "Browser" tab) opens the Card Browser view.
+- Cards are listed with type (FC/MCQ), prompt, and status flags (B/L/S).
+- Typing in Browser view filters cards by prompt/answer text in real time.
+- `j`/`k` or up/down arrows navigate the card list.
+- `Backspace` clears search characters.
+- `[` or left/right switches deck filter to current TUI deck.
+- Browser view shows card count and search query.
+- Card status (bookmarked/leech/suspended) is visible inline.
+- No schema changes needed (uses existing `cards` and `card_flags` tables).
+
+UI/UX and components:
+- `internal/tui/model.go`: add `browserCards`, `browserCursor`, `browserSearch`, `browserDeckID` fields; add `ViewBrowser` constant; add `loadBrowserCards()`, `updateBrowserKey()`, `renderBrowser()`; update navigation to include Browser tab.
+- `internal/core/core.go`: extend `Repository` with `Cards(ctx, deckID, search) ([]Card, error)` method.
+- `internal/storage/sqlite`: implement `Cards()` with optional deck filter and search.
+
+Test plan:
+- Go unit tests for `Cards()` with deck filter, search filter, and combined filters.
+- tui-tester E2E: navigate to Browser, type search, verify filtering; clear search, verify all cards shown.
+
+### Feature 11: Session Statistics Tracking (SHIPPED)
+
+User story: As a learner, I can see session review stats (cards reviewed, accuracy) so I understand my real-time performance.
+
+Acceptance criteria:
+- TUI tracks session stats: cards reviewed, correct (non-Again) grades, accuracy %.
+- Stats reset when app restarts (in-memory only).
+- Statistics view shows session stats section.
+- After each review grade, session counts update immediately.
+- No schema changes needed (session data is ephemeral).
+
+UI/UX and components:
+- `internal/tui/model.go`: add `sessionReviewed`, `sessionCorrect` fields; increment on review; render in Statistics view.
+- `internal/tui/model_test.go`: test session stat tracking.
+
+Test plan:
+- Go unit tests for session stat increment on grade.
+- tui-tester E2E: review cards, check session stats update in Statistics view.
+
+### Feature 12: Keyboard Shortcut Help Overlay (SHIPPED)
+
+User story: As a learner, I can press `?` to see a help overlay of all keyboard shortcuts so I can learn the app faster.
+
+Acceptance criteria:
+- `?` toggles a help overlay showing all keyboard shortcuts grouped by view.
+- Overlay covers part of the screen with help text.
+- `?` again dismisses the overlay.
+- Overlay is non-blocking; app continues running beneath.
+- No persistence needed (ephemeral overlay).
+
+UI/UX and components:
+- `internal/tui/model.go`: add `showHelp` bool field; add help rendering; handle `?` key globally.
+- Create help content mapping views to their shortcuts.
+
+Test plan:
+- Go unit tests for help toggle state.
+- tui-tester E2E: press `?`, verify overlay appears; press `?`, verify overlay disappears.
 
 User story: As a learner, I can suspend a problematic card during review so it no longer appears in my due queue until I decide to unsuspend it later.
 

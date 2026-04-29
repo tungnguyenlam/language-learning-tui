@@ -889,3 +889,127 @@ func TestMCQFlashcardFlowUnchanged(t *testing.T) {
 		t.Fatalf("flashcard should be revealed after space, revealed=%v", model.revealed)
 	}
 }
+
+func TestSessionStatsTracking(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Prompt: "P1", Answer: "A1"},
+			{ID: "c2", DeckID: "deck-1", Prompt: "P2", Answer: "A2"},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.Update(dueCardsMsg(repo.dueCards))
+	model.activeView = ViewReview
+	model.revealed = true
+
+	if model.sessionReviewed != 0 {
+		t.Fatalf("sessionReviewed = %d, want 0", model.sessionReviewed)
+	}
+
+	// Simulate grade by sending reviewRecordedMsg
+	model.Update(reviewRecordedMsg{cardID: "c1", cards: repo.dueCards, decks: repo.decks, stats: core.Statistics{}, grade: core.GradeAgain})
+	if model.sessionReviewed != 1 {
+		t.Fatalf("sessionReviewed = %d, want 1", model.sessionReviewed)
+	}
+	if model.sessionCorrect != 0 {
+		t.Fatalf("sessionCorrect = %d, want 0", model.sessionCorrect)
+	}
+
+	model.Update(reviewRecordedMsg{cardID: "c2", cards: repo.dueCards, decks: repo.decks, stats: core.Statistics{}, grade: core.GradeGood})
+	if model.sessionReviewed != 2 {
+		t.Fatalf("sessionReviewed = %d, want 2", model.sessionReviewed)
+	}
+	if model.sessionCorrect != 1 {
+		t.Fatalf("sessionCorrect = %d, want 1", model.sessionCorrect)
+	}
+}
+
+func TestHelpOverlayToggle(t *testing.T) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+
+	if model.showHelp {
+		t.Fatal("help should be hidden initially")
+	}
+
+	model.Update(tea.KeyPressMsg{Code: '?'})
+	if !model.showHelp {
+		t.Fatal("help should be shown after pressing ?")
+	}
+
+	view := model.View().Content
+	if !strings.Contains(view, "Keyboard Shortcuts") {
+		t.Fatal("help overlay should be visible in view")
+	}
+
+	model.Update(tea.KeyPressMsg{Code: '?'})
+	if model.showHelp {
+		t.Fatal("help should be hidden after pressing ? again")
+	}
+}
+
+func TestBrowserViewNavigation(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Prompt: "Apple", Answer: "Apfel"},
+			{ID: "c2", DeckID: "deck-1", Prompt: "Banana", Answer: "Banane"},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.Update(dueCardsMsg(repo.dueCards))
+
+	model.activeView = ViewBrowser
+	model.browserDeckID = "deck-1"
+	// Execute the cmd to load browser cards
+	cmd := model.loadBrowserCards()
+	if cmd != nil {
+		msg := cmd()
+		model.Update(msg)
+	}
+
+	if len(model.browserCards) == 0 {
+		t.Fatal("browser should have cards")
+	}
+
+	model.updateBrowserKey(tea.KeyPressMsg{Code: 'j'})
+	if model.browserCursor != 1 {
+		t.Fatalf("browserCursor = %d, want 1", model.browserCursor)
+	}
+
+	model.updateBrowserKey(tea.KeyPressMsg{Code: 'k'})
+	if model.browserCursor != 0 {
+		t.Fatalf("browserCursor = %d, want 0", model.browserCursor)
+	}
+}
+
+func TestBrowserSearchFilter(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Prompt: "Apple", Answer: "Apfel"},
+			{ID: "c2", DeckID: "deck-1", Prompt: "Banana", Answer: "Banane"},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewBrowser
+	model.browserDeckID = "deck-1"
+
+	model.updateBrowserKey(tea.KeyPressMsg{Code: 'A'})
+	model.updateBrowserKey(tea.KeyPressMsg{Code: 'p'})
+	// Execute the cmd to load browser cards with search
+	cmd := model.loadBrowserCards()
+	if cmd != nil {
+		msg := cmd()
+		model.Update(msg)
+	}
+
+	if len(model.browserCards) != 1 {
+		t.Fatalf("browserCards = %d, want 1 after search", len(model.browserCards))
+	}
+	if model.browserCards[0].Prompt != "Apple" {
+		t.Fatalf("expected Apple, got %s", model.browserCards[0].Prompt)
+	}
+}

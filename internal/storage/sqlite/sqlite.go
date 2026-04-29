@@ -758,3 +758,47 @@ func parseChoices(raw string) []string {
 	}
 	return strings.Split(raw, "|||")
 }
+
+func (s *Store) Cards(ctx context.Context, deckID string, search string) ([]core.Card, error) {
+	query := `
+		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0)
+		FROM cards c
+		LEFT JOIN card_flags cf ON cf.card_id = c.id
+		WHERE 1=1
+	`
+	args := []interface{}{}
+	if deckID != "" {
+		query += ` AND c.deck_id = ?`
+		args = append(args, deckID)
+	}
+	if search != "" {
+		query += ` AND (c.prompt LIKE ? OR c.answer LIKE ?)`
+		searchPattern := "%" + search + "%"
+		args = append(args, searchPattern, searchPattern)
+	}
+	query += ` ORDER BY c.id LIMIT 100`
+
+	rows, err := s.db.QueryContext(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var cards []core.Card
+	for rows.Next() {
+		var card core.Card
+		var kind string
+		var choicesStr string
+		var bookmarked, leech, suspended int
+		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &bookmarked, &leech, &suspended); err != nil {
+			return nil, err
+		}
+		card.Kind = core.CardKind(kind)
+		card.Bookmarked = bookmarked != 0
+		card.Leech = leech != 0
+		card.Suspended = suspended != 0
+		card.Choices = parseChoices(choicesStr)
+		cards = append(cards, card)
+	}
+	return cards, rows.Err()
+}

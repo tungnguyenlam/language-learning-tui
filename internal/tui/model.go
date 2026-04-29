@@ -26,6 +26,7 @@ const (
 	ViewImport     View = "import"
 	ViewAI         View = "ai"
 	ViewSettings   View = "settings"
+	ViewBrowser    View = "browser"
 )
 
 type Breakpoint string
@@ -85,6 +86,13 @@ type Model struct {
 	mcqChoice          int
 	mcqAnswered        bool
 	mcqCorrect         bool
+	browserCards       []core.Card
+	browserCursor      int
+	browserSearch      string
+	browserDeckID      string
+	sessionReviewed    int
+	sessionCorrect     int
+	showHelp           bool
 }
 
 func NewModel(repo core.Repository, scheduler core.Scheduler) *Model {
@@ -179,6 +187,7 @@ type reviewRecordedMsg struct {
 	cards  []core.Card
 	decks  []core.Deck
 	stats  core.Statistics
+	grade  core.ReviewGrade
 }
 type bookmarkToggledMsg struct {
 	cardID     string
@@ -197,9 +206,22 @@ type reviewUndoMsg struct {
 	decks  []core.Deck
 	stats  core.Statistics
 }
+type browserCardsMsg []core.Card
 
 func (m *Model) Init() tea.Cmd {
-	return tea.Batch(m.loadDueCards, m.loadDecks, m.loadStatistics)
+	return tea.Batch(m.loadDueCards, m.loadDecks, m.loadStatistics())
+}
+
+func (m *Model) loadBrowserCards() tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		cards, err := m.repo.Cards(ctx, m.browserDeckID, m.browserSearch)
+		if err != nil {
+			return err
+		}
+		return browserCardsMsg(cards)
+	}
 }
 
 func (m *Model) loadDueCards() tea.Msg {
@@ -232,14 +254,16 @@ func (m *Model) loadDecks() tea.Msg {
 	return decksMsg(decks)
 }
 
-func (m *Model) loadStatistics() tea.Msg {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	stats, err := m.repo.Statistics(ctx)
-	if err != nil {
-		return err
+func (m *Model) loadStatistics() tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		stats, err := m.repo.Statistics(ctx)
+		if err != nil {
+			return err
+		}
+		return statsMsg(stats)
 	}
-	return statsMsg(stats)
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -302,6 +326,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.stats = msg.stats
 		m.allDue = msg.cards
 		m.applyDeckFilter()
+		// Track session stats
+		m.sessionReviewed++
+		if msg.grade != core.GradeAgain {
+			m.sessionCorrect++
+		}
 	case bookmarkToggledMsg:
 		m.setCardBookmarkLocal(msg.cardID, msg.bookmarked)
 		if msg.bookmarked {
@@ -325,6 +354,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.allDue = msg.cards
 		m.applyDeckFilter()
 		m.status = "Last review undone"
+	case browserCardsMsg:
+		m.browserCards = []core.Card(msg)
+		if len(m.browserCards) == 0 {
+			m.status = "No cards found"
+		} else {
+			m.status = fmt.Sprintf("%d cards found", len(m.browserCards))
+		}
 	case tea.KeyMsg:
 		return m.updateKey(msg)
 	case tea.MouseMsg:
@@ -343,6 +379,13 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
 	case "ctrl+c", "q":
 		return m, tea.Quit
+	case "?":
+		m.showHelp = !m.showHelp
+		if m.showHelp {
+			m.status = "Help overlay shown. Press ? to close."
+		} else {
+			m.status = "Help overlay closed."
+		}
 	case "tab":
 		m.nextView()
 	case "1":
@@ -375,6 +418,8 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		return m, m.updateView(ViewAI)
 	case "7":
 		return m, m.updateView(ViewSettings)
+	case "8":
+		return m, m.updateView(ViewBrowser)
 	case "left", "shift+tab", "w":
 		return m, m.previousViewCmd()
 	case "right", "s":
@@ -405,6 +450,13 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		if m.activeView == ViewSettings {
 			cmd, handled := m.updateSettingsKey(msg)
+			if handled {
+				return m, cmd
+			}
+		}
+
+		if m.activeView == ViewBrowser {
+			cmd, handled := m.updateBrowserKey(msg)
 			if handled {
 				return m, cmd
 			}
@@ -545,6 +597,38 @@ func (m *Model) updateSettingsKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 			m.editingTemplate = true
 			return nil, true
 		}
+	}
+	return nil, false
+}
+
+func (m *Model) updateBrowserKey(msg tea.KeyMsg) (tea.Cmd, bool) {
+	switch msg.String() {
+	case "up", "k":
+		if m.browserCursor > 0 {
+			m.browserCursor--
+		}
+		return nil, true
+	case "down", "j":
+		if m.browserCursor < len(m.browserCards)-1 {
+			m.browserCursor++
+		}
+		return nil, true
+	case "left", "right", "[":
+		if len(m.browserCards) > 0 {
+			m.browserSearch = ""
+			m.browserCards = nil
+			m.browserCursor = 0
+			return m.loadBrowserCards(), true
+		}
+	case "backspace":
+		if len(m.browserSearch) > 0 {
+			m.browserSearch = m.browserSearch[:len(m.browserSearch)-1]
+			return m.loadBrowserCards(), true
+		}
+	}
+	if len(msg.String()) == 1 && msg.String() >= " " && msg.String() <= "~" {
+		m.browserSearch += msg.String()
+		return m.loadBrowserCards(), true
 	}
 	return nil, false
 }
@@ -847,7 +931,7 @@ func (m *Model) gradeCard(grade core.ReviewGrade) tea.Cmd {
 		if err != nil {
 			return err
 		}
-		return reviewRecordedMsg{cardID: card.ID, cards: cards, decks: decks, stats: stats}
+		return reviewRecordedMsg{cardID: card.ID, cards: cards, decks: decks, stats: stats, grade: grade}
 	}
 }
 
@@ -1014,9 +1098,14 @@ func (m *Model) render() string {
 		b.WriteString(m.renderCompact())
 	}
 
-	footer := fmt.Sprintf("arrows/tab views | 1-7 views | q quit | mouse %d,%d | %s", m.mouseX, m.mouseY, m.status)
+	footer := fmt.Sprintf("arrows/tab views | 1-8 views | ? help | q quit | mouse %d,%d | %s", m.mouseX, m.mouseY, m.status)
 	b.WriteString("\n")
 	b.WriteString(statusStyle.Width(maxInt(20, m.width)).Render(footer))
+
+	if m.showHelp {
+		b.WriteString("\n\n")
+		b.WriteString(m.renderHelp())
+	}
 	return b.String()
 }
 
@@ -1048,6 +1137,7 @@ func (m *Model) renderNav(x, y int) string {
 		{"nav-import", ViewImport, "5 Import"},
 		{"nav-ai", ViewAI, "6 AI Drafts"},
 		{"nav-settings", ViewSettings, "7 Settings"},
+		{"nav-browser", ViewBrowser, "8 Browser"},
 	}
 	lines := make([]string, 0, len(labels))
 	for i, label := range labels {
@@ -1062,8 +1152,8 @@ func (m *Model) renderNav(x, y int) string {
 }
 
 func (m *Model) renderTabs(x, y int) string {
-	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings}
-	labels := []string{"Dashboard", "Decks", "Review", "Stats", "Import", "AI", "Settings"}
+	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser}
+	labels := []string{"Dashboard", "Decks", "Review", "Stats", "Import", "AI", "Settings", "Browser"}
 	parts := make([]string, 0, len(views))
 	offset := x
 	for i, view := range views {
@@ -1102,6 +1192,8 @@ func (m *Model) renderActiveViewPlain(x, y int) string {
 		return m.renderAI(x, y)
 	case ViewSettings:
 		return m.renderSettings(x, y)
+	case ViewBrowser:
+		return m.renderBrowser()
 	default:
 		return fmt.Sprintf("Dashboard\n\nDeck: %s\nDue cards: %d\nBookmarked: %d (%d due)\nLeech: %d\nSuspended: %d\nReviews today: %d/%d\n\nUse [ and ] to switch decks.\nUse Review to start studying.", m.deckLabel(), len(m.dueCards), m.stats.BookmarkedCards, m.stats.BookmarkedDue, m.stats.LeechCards, m.stats.SuspendedCards, m.stats.ReviewsToday, m.stats.DailyGoal)
 	}
@@ -1123,6 +1215,15 @@ func (m *Model) renderStatistics() string {
 	b.WriteString(fmt.Sprintf("Reviews Today: %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal))
 	b.WriteString(fmt.Sprintf("Current Streak: %d days\n", m.stats.CurrentStreak))
 	b.WriteString(fmt.Sprintf("Success Rate:  %.1f%%\n\n", m.stats.SuccessRate*100))
+
+	b.WriteString("Session Stats:\n")
+	b.WriteString(fmt.Sprintf("  Reviewed:    %d\n", m.sessionReviewed))
+	if m.sessionReviewed > 0 {
+		b.WriteString(fmt.Sprintf("  Correct:     %d\n", m.sessionCorrect))
+		b.WriteString(fmt.Sprintf("  Accuracy:     %.1f%%\n\n", float64(m.sessionCorrect)/float64(m.sessionReviewed)*100))
+	} else {
+		b.WriteString("  (no reviews yet)\n\n")
+	}
 
 	b.WriteString("Reviews by Grade:\n")
 	grades := []core.ReviewGrade{core.GradeAgain, core.GradeHard, core.GradeGood, core.GradeEasy}
@@ -1178,6 +1279,82 @@ func (m *Model) renderAI(x, y int) string {
 		}
 		fmt.Fprintf(&b, "\n%s%s -> %s", prefix, draft.Note.Front, draft.Note.Back)
 	}
+	return b.String()
+}
+
+func (m *Model) renderBrowser() string {
+	var b strings.Builder
+	b.WriteString("Card Browser\n\n")
+	b.WriteString(fmt.Sprintf("Search: %s_\n\n", m.browserSearch))
+	if len(m.browserCards) == 0 {
+		b.WriteString("No cards found. Type to search.\n\n")
+		b.WriteString("Use left/right/[ to change deck filter.\n")
+		return b.String()
+	}
+	for i, card := range m.browserCards {
+		prefix := "  "
+		style := lipgloss.NewStyle()
+		if i == m.browserCursor {
+			prefix = "> "
+			style = style.Bold(true).Foreground(lipgloss.Color("212"))
+		}
+		kind := "FC"
+		if card.Kind == core.CardKindMCQ {
+			kind = "MCQ"
+		}
+		bookmark := ""
+		if card.Bookmarked {
+			bookmark = " [B]"
+		}
+		leech := ""
+		if card.Leech {
+			leech = " [L]"
+		}
+		suspended := ""
+		if card.Suspended {
+			suspended = " [S]"
+		}
+		label := fmt.Sprintf("%s[%s] %s%s%s%s", prefix, kind, card.Prompt, bookmark, leech, suspended)
+		b.WriteString(style.Render(label))
+		b.WriteString("\n")
+	}
+	b.WriteString("\nUse j/k to navigate, type to search, backspace to delete.\n")
+	return b.String()
+}
+
+func (m *Model) renderHelp() string {
+	var b strings.Builder
+	b.WriteString(panelStyle.Width(60).Render(""))
+	b.WriteString("Keyboard Shortcuts\n\n")
+	b.WriteString("Global:\n")
+	b.WriteString("  1-8         Switch to view\n")
+	b.WriteString("  Tab/arrows   Cycle views\n")
+	b.WriteString("  w/s          Previous/next view\n")
+	b.WriteString("  ?            Toggle this help\n")
+	b.WriteString("  q/Ctrl+c     Quit\n\n")
+
+	b.WriteString("Dashboard/Decks:\n")
+	b.WriteString("  [ ]          Previous/next deck\n")
+	b.WriteString("  Enter        Select deck (Decks view)\n\n")
+
+	b.WriteString("Review:\n")
+	b.WriteString("  Space/Enter  Reveal answer\n")
+	b.WriteString("  a/h/g/e      Grade Again/Hard/Good/Easy\n")
+	b.WriteString("  b            Toggle bookmark\n")
+	b.WriteString("  B            Toggle bookmarked-only mode\n")
+	b.WriteString("  x            Suspend card\n")
+	b.WriteString("  u            Undo last review\n")
+	b.WriteString("  1-4          Select MCQ choice\n\n")
+
+	b.WriteString("Browser:\n")
+	b.WriteString("  j/k          Navigate cards\n")
+	b.WriteString("  Type         Search cards\n")
+	b.WriteString("  Backspace    Delete search char\n\n")
+
+	b.WriteString("Settings:\n")
+	b.WriteString("  j/k          Navigate options\n")
+	b.WriteString("  +/-          Adjust daily goal\n")
+	b.WriteString("  Enter        Toggle AI provider / edit template\n")
 	return b.String()
 }
 
@@ -1259,7 +1436,7 @@ func renderMCQChoices(choices []string, selected int) string {
 }
 
 func (m *Model) nextViewCmd() tea.Cmd {
-	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings}
+	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser}
 	for i, view := range views {
 		if m.activeView == view {
 			return m.updateView(views[(i+1)%len(views)])
@@ -1269,7 +1446,7 @@ func (m *Model) nextViewCmd() tea.Cmd {
 }
 
 func (m *Model) previousViewCmd() tea.Cmd {
-	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings}
+	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser}
 	for i, view := range views {
 		if m.activeView == view {
 			return m.updateView(views[(i-1+len(views))%len(views)])
@@ -1289,7 +1466,13 @@ func (m *Model) previousView() {
 func (m *Model) updateView(view View) tea.Cmd {
 	m.activeView = view
 	if view == ViewStatistics {
-		return m.loadStatistics
+		return m.loadStatistics()
+	}
+	if view == ViewBrowser {
+		m.browserSearch = ""
+		m.browserDeckID = m.deck.ID
+		m.browserCursor = 0
+		return m.loadBrowserCards()
 	}
 	return nil
 }
