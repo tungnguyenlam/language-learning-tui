@@ -4,10 +4,17 @@ Last updated: 2026-04-29
 
 ## Current Milestone
 
-Autonomous product feature pass: polish deutsch-tui with 2-3 vertical learning features.
+Autonomous product feature pass 3: ship 2-3 vertical learning features that improve review control, habit tracking, and deck insight.
 
 ## Feature Candidates
 
+- Suspend cards: high impact / medium effort. Lets learners remove broken, duplicate, or temporarily unwanted cards from the review queue without deleting deck content.
+- Editable daily goal: high impact / low-medium effort. Turns the existing daily progress into a learner-controlled habit target persisted in SQLite.
+- Deck-level progress insights: medium-high impact / low effort. Helps learners choose what to study by showing per-deck review activity and success rate.
+- Cram all bookmarked cards: high impact / high effort. Useful, but overlaps with bookmarked-only due mode and needs careful non-SRS session semantics.
+- Card browser/search: high impact / high effort. Valuable later, but a new view and edit workflow would be larger than a safe vertical pass.
+- Per-card review history popover: medium impact / medium effort. Useful diagnostics, but less important than queue control and goal configuration.
+- Keyboard shortcut help overlay: medium impact / low effort. UX polish, but less learning-impactful than persistence-backed study features.
 - Bookmarked cards: high impact / medium effort. Lets learners mark hard or important cards during review and see saved-card counts.
 - Undo last review: high impact / medium effort. Fixes accidental grading without manual SQLite edits.
 - Daily progress and streak stats: high impact / low effort. Makes the Statistics view actionable by showing today, goal progress, and current streak.
@@ -17,6 +24,75 @@ Autonomous product feature pass: polish deutsch-tui with 2-3 vertical learning f
 - APKG import/export: high impact / high effort. Already on roadmap but larger than a safe 2-3 feature vertical pass.
 
 ## Selected Features
+
+### Feature 7: Suspend Review Cards
+
+User story: As a learner, I can suspend a problematic card during review so it no longer appears in my due queue until I decide to unsuspend it later.
+
+Acceptance criteria:
+- `x` toggles suspension for the current review card.
+- Suspended cards are excluded from normal and bookmarked review queues.
+- Review view clearly shows suspension state before the card disappears.
+- Dashboard/Statistics show total suspended cards.
+- Suspension persists in SQLite across app restarts.
+
+UI/UX and components:
+- `internal/tui/model.go`: Review key handling, queue refresh, status message, Dashboard/Statistics counts.
+- `internal/core/core.go`: add card/statistics fields and repository method.
+- `internal/storage/sqlite`: migration adding `card_flags.suspended`; due queries filter it out.
+
+Data/model changes:
+- Add migration 13: `ALTER TABLE card_flags ADD COLUMN suspended INTEGER NOT NULL DEFAULT 0`.
+- Add `SetCardSuspended(ctx, cardID, suspended)` repository method.
+
+Test plan:
+- Go unit tests for suspension persistence, due filtering, stats count, and TUI key flow.
+- tui-tester E2E: suspend a card, restart, confirm due count remains reduced and Statistics shows suspended count.
+
+### Feature 8: SQLite-backed Daily Goal Setting
+
+User story: As a learner, I can adjust my daily review goal inside Settings so progress tracking reflects my actual study target.
+
+Acceptance criteria:
+- Settings view shows the current daily review goal.
+- `+`/`=` increases the goal and `-` decreases it with a floor of 1.
+- Statistics and Dashboard immediately reflect the updated goal.
+- Goal persists in SQLite across app restarts.
+
+UI/UX and components:
+- `internal/tui/model.go`: Settings key handling, goal rendering, stats refresh after updates.
+- `internal/core/core.go`: repository methods for setting the daily goal.
+- `internal/storage/sqlite`: app settings table and Statistics daily goal lookup.
+
+Data/model changes:
+- Add migration 14: `app_settings(key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP)`.
+- Store `daily_goal` as an integer string with default `10`.
+
+Test plan:
+- Go unit tests for migration/default, setter bounds, Statistics goal value, and TUI setting updates.
+- tui-tester E2E: change goal in Settings, restart, confirm Dashboard/Statistics retain the new goal.
+
+### Feature 9: Deck Progress Insights
+
+User story: As a learner, I can compare decks by today's review volume and success rate so I know which deck needs attention.
+
+Acceptance criteria:
+- Decks view shows each deck's reviews today and success percentage.
+- Values derive from persisted review history.
+- Metrics update after grading and survive restart.
+- Existing deck selection/navigation remains unchanged.
+
+UI/UX and components:
+- `internal/core/core.go`: extend `Deck` with `ReviewsToday` and `SuccessRate`.
+- `internal/storage/sqlite`: aggregate review metrics in `Decks()`.
+- `internal/tui/model.go`: render concise metrics in Decks view.
+
+Data/model changes:
+- No new schema; derived from `reviews` joined to `cards`.
+
+Test plan:
+- Go unit tests for deck metrics after mixed reviews.
+- tui-tester E2E: grade a card, open Decks, confirm today's review count/success appears.
 
 ### Feature 1: Bookmarked Review Cards
 
@@ -87,7 +163,7 @@ Test plan:
 
 ## Next Action
 
-Autonomous feature pass is complete. Resume the next roadmap milestone by implementing `.apkg` import/export or audio/media support unless a newer user request supersedes it.
+Autonomous feature pass 3 is complete. Resume the next roadmap milestone by implementing `.apkg` import/export, audio/media support, or a focused unsuspend/card-browser workflow unless a newer user request supersedes it.
 
 ## Feature Specs
 
@@ -158,6 +234,12 @@ Test plan:
 
 ## Last Verified
 
+- 2026-04-29: `./scripts/verify.sh` passed with all Go tests, go vet, smoke launch, and 33 tui-tester E2E tests after autonomous feature pass 3.
+- 2026-04-29: `go test ./internal/tui ./internal/storage/sqlite ./internal/core` and `tui_tester/venv/bin/python -m pytest e2e_tests/test_new_features.py -q` passed with 6 E2E tests after adding pass 3 coverage.
+- 2026-04-29: Feature 9 targeted `go test ./internal/storage/sqlite ./internal/tui ./internal/core` passed after adding deck progress metrics.
+- 2026-04-29: Feature 8 targeted `go test ./internal/storage/sqlite ./internal/tui ./internal/core` passed after adding SQLite-backed daily goal settings.
+- 2026-04-29: Feature 7 targeted `go test ./internal/storage/sqlite ./internal/tui ./internal/core` passed after adding suspended-card persistence, filtering, and TUI handling.
+- 2026-04-29: New feature pass 3 baseline `./scripts/tui_smoke.sh` and `go test ./...` passed before edits.
 - 2026-04-29: `./scripts/verify.sh` passed with 27 E2E tests after the autonomous feature pass.
 - 2026-04-29: `tui_tester/venv/bin/python -m pytest e2e_tests/test_learning_features.py -q` passed with 3 new E2E tests covering bookmark persistence, undo persistence, and daily Statistics progress.
 - 2026-04-29: `go test ./...` passed after adding core/SQLite/TUI support for bookmarks, undo-last-review, and daily progress/streak statistics.

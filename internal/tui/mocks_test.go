@@ -12,7 +12,9 @@ type mockRepo struct {
 	dueCards     []core.Card
 	upsertedDeck core.Deck
 	bookmarks    map[string]bool
+	suspended    map[string]bool
 	reviews      []core.ReviewResult
+	dailyGoal    int
 }
 
 func (m *mockRepo) UpsertDeck(ctx context.Context, deck core.Deck) error {
@@ -59,12 +61,18 @@ func (m *mockRepo) UndoLastReview(ctx context.Context, cardID string) error {
 	return nil
 }
 func (m *mockRepo) DueCards(ctx context.Context, now time.Time, limit int) ([]core.Card, error) {
-	return m.dueCards, nil
+	var cards []core.Card
+	for _, card := range m.dueCards {
+		if !card.Suspended {
+			cards = append(cards, card)
+		}
+	}
+	return cards, nil
 }
 func (m *mockRepo) DueCardsBookmarked(ctx context.Context, now time.Time, limit int) ([]core.Card, error) {
 	var bookmarked []core.Card
 	for _, card := range m.dueCards {
-		if card.Bookmarked {
+		if card.Bookmarked && !card.Suspended {
 			bookmarked = append(bookmarked, card)
 		}
 	}
@@ -85,11 +93,39 @@ func (m *mockRepo) SetCardBookmark(ctx context.Context, cardID string, bookmarke
 	}
 	return nil
 }
+func (m *mockRepo) SetCardSuspended(ctx context.Context, cardID string, suspended bool) error {
+	if m.suspended == nil {
+		m.suspended = make(map[string]bool)
+	}
+	m.suspended[cardID] = suspended
+	for i := range m.dueCards {
+		if m.dueCards[i].ID == cardID {
+			m.dueCards[i].Suspended = suspended
+		}
+	}
+	return nil
+}
+func (m *mockRepo) SetDailyGoal(ctx context.Context, goal int) error {
+	if goal < 1 {
+		goal = 1
+	}
+	m.dailyGoal = goal
+	return nil
+}
 func (m *mockRepo) Statistics(ctx context.Context) (core.Statistics, error) {
-	stats := core.Statistics{DailyGoal: 10, Grades: map[core.ReviewGrade]int{}}
+	goal := m.dailyGoal
+	if goal == 0 {
+		goal = 10
+	}
+	stats := core.Statistics{DailyGoal: goal, Grades: map[core.ReviewGrade]int{}}
 	for _, bookmarked := range m.bookmarks {
 		if bookmarked {
 			stats.BookmarkedCards++
+		}
+	}
+	for _, suspended := range m.suspended {
+		if suspended {
+			stats.SuspendedCards++
 		}
 	}
 	return stats, nil

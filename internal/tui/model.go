@@ -177,11 +177,20 @@ type exportDoneMsg struct {
 type reviewRecordedMsg struct {
 	cardID string
 	cards  []core.Card
+	decks  []core.Deck
+	stats  core.Statistics
 }
 type bookmarkToggledMsg struct {
 	cardID     string
 	bookmarked bool
 }
+type cardSuspendedMsg struct {
+	cardID string
+	cards  []core.Card
+	decks  []core.Deck
+	stats  core.Statistics
+}
+type dailyGoalSetMsg core.Statistics
 type reviewUndoMsg struct {
 	cardID string
 	cards  []core.Card
@@ -289,6 +298,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.status = fmt.Sprintf("Exported %d notes to %s", msg.count, filepath.Base(msg.path))
 	case reviewRecordedMsg:
 		m.lastReviewedCardID = msg.cardID
+		m.decks = msg.decks
+		m.stats = msg.stats
 		m.allDue = msg.cards
 		m.applyDeckFilter()
 	case bookmarkToggledMsg:
@@ -298,6 +309,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.status = "Card bookmark removed"
 		}
+	case cardSuspendedMsg:
+		m.decks = msg.decks
+		m.stats = msg.stats
+		m.allDue = msg.cards
+		m.applyDeckFilter()
+		m.status = "Card suspended"
+	case dailyGoalSetMsg:
+		m.stats = core.Statistics(msg)
+		m.status = fmt.Sprintf("Daily goal set to %d", m.stats.DailyGoal)
 	case reviewUndoMsg:
 		m.lastReviewedCardID = ""
 		m.decks = msg.decks
@@ -412,6 +432,8 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				return m, m.toggleBookmark()
 			case "B":
 				return m, m.toggleBookmarkFilter()
+			case "x":
+				return m, m.suspendCard()
 			case "u":
 				return m, m.undoLastReview()
 			case "a":
@@ -493,10 +515,14 @@ func (m *Model) updateSettingsKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "down", "j":
-		if m.settingsCursor < 3 {
+		if m.settingsCursor < 4 {
 			m.settingsCursor++
 		}
 		return nil, true
+	case "+", "=":
+		return m.setDailyGoal(m.stats.DailyGoal + 1), true
+	case "-":
+		return m.setDailyGoal(m.stats.DailyGoal - 1), true
 	case "enter":
 		if m.settingsCursor == 0 {
 			switch m.aiProviderName {
@@ -515,7 +541,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 				m.onConfigChange(m.aiProviderName, m.aiTemplates)
 			}
 			return nil, true
-		} else {
+		} else if m.settingsCursor > 0 && m.settingsCursor < 4 {
 			m.editingTemplate = true
 			return nil, true
 		}
@@ -545,6 +571,7 @@ func (m *Model) renderSettings(x, y int) string {
 		fmt.Sprintf("Front Template: %s", m.aiTemplates["front"]),
 		fmt.Sprintf("Back Template: %s", m.aiTemplates["back"]),
 		fmt.Sprintf("Example Template: %s", m.aiTemplates["example"]),
+		fmt.Sprintf("Daily Goal: %d", m.stats.DailyGoal),
 	}
 
 	for i, opt := range options {
@@ -564,9 +591,28 @@ func (m *Model) renderSettings(x, y int) string {
 	if m.editingTemplate {
 		b.WriteString("\nEDITING - Enter to save, Esc to cancel.")
 	} else {
-		b.WriteString("\nUse j/k to move, Enter to toggle provider or edit template.")
+		b.WriteString("\nUse j/k to move, +/- to adjust daily goal, Enter to toggle provider or edit template.")
 	}
 	return b.String()
+}
+
+func (m *Model) setDailyGoal(goal int) tea.Cmd {
+	if goal < 1 {
+		goal = 1
+	}
+	m.status = "Saving daily goal..."
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if err := m.repo.SetDailyGoal(ctx, goal); err != nil {
+			return err
+		}
+		stats, err := m.repo.Statistics(ctx)
+		if err != nil {
+			return err
+		}
+		return dailyGoalSetMsg(stats)
+	}
 }
 
 func (m *Model) updateAIKey(msg tea.KeyMsg) (tea.Cmd, bool) {
@@ -793,7 +839,15 @@ func (m *Model) gradeCard(grade core.ReviewGrade) tea.Cmd {
 		if err != nil {
 			return err
 		}
-		return reviewRecordedMsg{cardID: card.ID, cards: cards}
+		decks, err := m.repo.Decks(ctx)
+		if err != nil {
+			return err
+		}
+		stats, err := m.repo.Statistics(ctx)
+		if err != nil {
+			return err
+		}
+		return reviewRecordedMsg{cardID: card.ID, cards: cards, decks: decks, stats: stats}
 	}
 }
 
@@ -811,6 +865,40 @@ func (m *Model) toggleBookmark() tea.Cmd {
 			return err
 		}
 		return bookmarkToggledMsg{cardID: card.ID, bookmarked: next}
+	}
+}
+
+func (m *Model) suspendCard() tea.Cmd {
+	if m.activeView != ViewReview || len(m.dueCards) == 0 {
+		return nil
+	}
+	card := m.dueCards[m.cursor]
+	m.status = "Suspending card..."
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if err := m.repo.SetCardSuspended(ctx, card.ID, true); err != nil {
+			return err
+		}
+		var cards []core.Card
+		var err error
+		if m.bookmarkFilter {
+			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
+		} else {
+			cards, err = m.repo.DueCards(ctx, time.Now(), 50)
+		}
+		if err != nil {
+			return err
+		}
+		decks, err := m.repo.Decks(ctx)
+		if err != nil {
+			return err
+		}
+		stats, err := m.repo.Statistics(ctx)
+		if err != nil {
+			return err
+		}
+		return cardSuspendedMsg{cardID: card.ID, cards: cards, decks: decks, stats: stats}
 	}
 }
 
@@ -1015,7 +1103,7 @@ func (m *Model) renderActiveViewPlain(x, y int) string {
 	case ViewSettings:
 		return m.renderSettings(x, y)
 	default:
-		return fmt.Sprintf("Dashboard\n\nDeck: %s\nDue cards: %d\nBookmarked: %d (%d due)\nLeech: %d\nReviews today: %d/%d\n\nUse [ and ] to switch decks.\nUse Review to start studying.", m.deckLabel(), len(m.dueCards), m.stats.BookmarkedCards, m.stats.BookmarkedDue, m.stats.LeechCards, m.stats.ReviewsToday, m.stats.DailyGoal)
+		return fmt.Sprintf("Dashboard\n\nDeck: %s\nDue cards: %d\nBookmarked: %d (%d due)\nLeech: %d\nSuspended: %d\nReviews today: %d/%d\n\nUse [ and ] to switch decks.\nUse Review to start studying.", m.deckLabel(), len(m.dueCards), m.stats.BookmarkedCards, m.stats.BookmarkedDue, m.stats.LeechCards, m.stats.SuspendedCards, m.stats.ReviewsToday, m.stats.DailyGoal)
 	}
 }
 
@@ -1028,7 +1116,8 @@ func (m *Model) renderStatistics() string {
 	b.WriteString(fmt.Sprintf("  Young:       %d\n", m.stats.YoungCards))
 	b.WriteString(fmt.Sprintf("  Mature:      %d\n", m.stats.MatureCards))
 	b.WriteString(fmt.Sprintf("  Bookmarked:  %d (%d due)\n", m.stats.BookmarkedCards, m.stats.BookmarkedDue))
-	b.WriteString(fmt.Sprintf("  Leech:       %d\n\n", m.stats.LeechCards))
+	b.WriteString(fmt.Sprintf("  Leech:       %d\n", m.stats.LeechCards))
+	b.WriteString(fmt.Sprintf("  Suspended:   %d\n\n", m.stats.SuspendedCards))
 
 	b.WriteString(fmt.Sprintf("Total Reviews: %d\n", m.stats.TotalReviews))
 	b.WriteString(fmt.Sprintf("Reviews Today: %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal))
@@ -1059,7 +1148,7 @@ func (m *Model) renderDecks(x, y int) string {
 			prefix = "> "
 			style = style.Bold(true).Foreground(lipgloss.Color("212"))
 		}
-		label := fmt.Sprintf("%s%s (%d total, %d due)", prefix, deck.Name, deck.TotalCards, deck.DueCards)
+		label := fmt.Sprintf("%s%s (%d total, %d due, today %d, %.0f%% success)", prefix, deck.Name, deck.TotalCards, deck.DueCards, deck.ReviewsToday, deck.SuccessRate*100)
 		b.WriteString(style.Render(label))
 		b.WriteString("\n")
 		if deck.Description != "" {
@@ -1108,13 +1197,17 @@ func (m *Model) renderReview(x, y int) string {
 	if card.Leech {
 		leech = " | LEECH"
 	}
+	suspended := ""
+	if card.Suspended {
+		suspended = " | SUSPENDED"
+	}
 	filterBanner := ""
 	if m.bookmarkFilter {
 		filterBanner = " (Bookmarked)"
 	}
-	keys := "b toggle | B filter | u undo"
+	keys := "b toggle | x suspend | B filter | u undo"
 	if m.bookmarkFilter {
-		keys = "b toggle | B all cards | u undo"
+		keys = "b toggle | x suspend | B all cards | u undo"
 	}
 
 	var answer string
@@ -1149,7 +1242,7 @@ func (m *Model) renderReview(x, y int) string {
 	} else {
 		answer = "Press space or enter to reveal."
 	}
-	return fmt.Sprintf("Review%s %d/%d\n%s | %s\n%s\n\n%s\n\n%s", filterBanner, m.cursor+1, len(m.dueCards), bookmark, keys, leech, card.Prompt, answer)
+	return fmt.Sprintf("Review%s %d/%d\n%s | %s\n%s%s\n\n%s\n\n%s", filterBanner, m.cursor+1, len(m.dueCards), bookmark, keys, leech, suspended, card.Prompt, answer)
 }
 
 func renderMCQChoices(choices []string, selected int) string {

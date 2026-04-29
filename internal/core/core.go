@@ -26,13 +26,15 @@ const (
 )
 
 type Deck struct {
-	ID          string
-	Name        string
-	Description string
-	Tags        []string
-	Notes       []Note
-	TotalCards  int
-	DueCards    int
+	ID           string
+	Name         string
+	Description  string
+	Tags         []string
+	Notes        []Note
+	TotalCards   int
+	DueCards     int
+	ReviewsToday int
+	SuccessRate  float64
 }
 
 type Note struct {
@@ -57,6 +59,7 @@ type Card struct {
 	Tags       []string
 	Bookmarked bool
 	Leech      bool
+	Suspended  bool
 }
 
 type ReviewState struct {
@@ -86,6 +89,7 @@ type Statistics struct {
 	BookmarkedCards int
 	BookmarkedDue   int
 	LeechCards      int
+	SuspendedCards  int
 	TotalReviews    int
 	ReviewsToday    int
 	DailyGoal       int
@@ -104,6 +108,8 @@ type Repository interface {
 	DueCardsBookmarked(ctx context.Context, now time.Time, limit int) ([]Card, error)
 	GetReviewState(ctx context.Context, cardID string) (ReviewState, error)
 	SetCardBookmark(ctx context.Context, cardID string, bookmarked bool) error
+	SetCardSuspended(ctx context.Context, cardID string, suspended bool) error
+	SetDailyGoal(ctx context.Context, goal int) error
 	Statistics(ctx context.Context) (Statistics, error)
 }
 

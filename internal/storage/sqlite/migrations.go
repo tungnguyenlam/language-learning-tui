@@ -91,4 +91,16 @@ var migrations = []migration{
 		ID:  12,
 		SQL: `ALTER TABLE cards ADD COLUMN choices TEXT NOT NULL DEFAULT ''`,
 	},
+	{
+		ID:  13,
+		SQL: `ALTER TABLE card_flags ADD COLUMN suspended INTEGER NOT NULL DEFAULT 0`,
+	},
+	{
+		ID: 14,
+		SQL: `CREATE TABLE IF NOT EXISTS app_settings (
+			key TEXT PRIMARY KEY,
+			value TEXT NOT NULL,
+			updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+		)`,
+	},
 }

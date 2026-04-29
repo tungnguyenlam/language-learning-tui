@@ -356,7 +356,7 @@ func TestAIGenerateErrorFromProvider(t *testing.T) {
 func TestDecksViewNavigationAndSelection(t *testing.T) {
 	repo := &mockRepo{
 		decks: []core.Deck{
-			{ID: "deck-1", Name: "Deck One", TotalCards: 10, DueCards: 5},
+			{ID: "deck-1", Name: "Deck One", TotalCards: 10, DueCards: 5, ReviewsToday: 3, SuccessRate: 0.75},
 			{ID: "deck-2", Name: "Deck Two", TotalCards: 20, DueCards: 2},
 		},
 	}
@@ -372,6 +372,10 @@ func TestDecksViewNavigationAndSelection(t *testing.T) {
 	// Initial cursor should be at index 0 (matching deckIndex)
 	if model.deckCursor != 0 {
 		t.Fatalf("deckCursor = %d, want 0", model.deckCursor)
+	}
+	view := model.renderDecks(0, 0)
+	if !strings.Contains(view, "today 3") || !strings.Contains(view, "75% success") {
+		t.Fatalf("deck view missing progress metrics: %s", view)
 	}
 
 	// Move cursor down
@@ -390,8 +394,8 @@ func TestDecksViewNavigationAndSelection(t *testing.T) {
 	}
 
 	// Check rendering contains stats
-	view := model.renderDecks(0, 0)
-	if !strings.Contains(view, "Deck Two (20 total, 2 due)") {
+	view = model.renderDecks(0, 0)
+	if !strings.Contains(view, "Deck Two (20 total, 2 due") {
 		t.Fatalf("decks view rendering missing stats: %s", view)
 	}
 }
@@ -583,6 +587,82 @@ func TestReviewViewShowsBookmarkFilterBanner(t *testing.T) {
 	view := model.renderReview(0, 0)
 	if !strings.Contains(view, "(Bookmarked)") {
 		t.Fatalf("review view should show bookmark filter banner: %s", view)
+	}
+}
+
+func TestSuspendCardRefreshesQueueAndStats(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Kind: core.CardKindFlashcard, Prompt: "P1", Answer: "A1"},
+			{ID: "c2", DeckID: "deck-1", Kind: core.CardKindFlashcard, Prompt: "P2", Answer: "A2"},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One", TotalCards: 2, DueCards: 2}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.Update(dueCardsMsg(repo.dueCards))
+	model.activeView = ViewReview
+
+	cmd := model.suspendCard()
+	if cmd == nil {
+		t.Fatal("suspendCard should return command")
+	}
+	msg := cmd()
+	updated, _ := model.Update(msg)
+	model = updated.(*Model)
+
+	if len(model.dueCards) != 1 {
+		t.Fatalf("due cards = %d, want 1", len(model.dueCards))
+	}
+	if model.dueCards[0].ID != "c2" {
+		t.Fatalf("remaining card = %s, want c2", model.dueCards[0].ID)
+	}
+	if model.stats.SuspendedCards != 1 {
+		t.Fatalf("suspended cards = %d, want 1", model.stats.SuspendedCards)
+	}
+	if !strings.Contains(model.status, "suspended") {
+		t.Fatalf("status = %q, want suspended", model.status)
+	}
+}
+
+func TestSettingsDailyGoalAdjustsAndRenders(t *testing.T) {
+	repo := &mockRepo{dailyGoal: 10}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(statsMsg(core.Statistics{DailyGoal: 10, Grades: map[core.ReviewGrade]int{}}))
+	model.activeView = ViewSettings
+	model.settingsCursor = 1
+
+	if !strings.Contains(model.renderSettings(0, 0), "Daily Goal: 10") {
+		t.Fatalf("settings should show daily goal: %s", model.renderSettings(0, 0))
+	}
+
+	updated, cmd := model.Update(tea.KeyPressMsg{Code: '+'})
+	model = updated.(*Model)
+	if cmd == nil {
+		t.Fatal("daily goal increase should return command")
+	}
+	msg := cmd()
+	updated, _ = model.Update(msg)
+	model = updated.(*Model)
+
+	if model.stats.DailyGoal != 11 {
+		t.Fatalf("daily goal = %d, want 11", model.stats.DailyGoal)
+	}
+	if !strings.Contains(model.status, "11") {
+		t.Fatalf("status = %q, want goal value", model.status)
+	}
+
+	model.stats.DailyGoal = 1
+	updated, cmd = model.Update(tea.KeyPressMsg{Code: '-'})
+	model = updated.(*Model)
+	if cmd == nil {
+		t.Fatal("daily goal decrease should return command")
+	}
+	msg = cmd()
+	updated, _ = model.Update(msg)
+	model = updated.(*Model)
+	if model.stats.DailyGoal != 1 {
+		t.Fatalf("daily goal floor = %d, want 1", model.stats.DailyGoal)
 	}
 }
 

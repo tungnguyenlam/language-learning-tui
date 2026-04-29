@@ -177,6 +177,38 @@ func TestDecksWithStats(t *testing.T) {
 	if d.DueCards != totalCards-1 {
 		t.Fatalf("due cards after review = %d, want %d", d.DueCards, totalCards-1)
 	}
+	if d.ReviewsToday != 1 {
+		t.Fatalf("reviews today = %d, want 1", d.ReviewsToday)
+	}
+	if d.SuccessRate != 1 {
+		t.Fatalf("success rate = %.2f, want 1", d.SuccessRate)
+	}
+
+	if err := store.RecordReview(ctx, core.ReviewResult{
+		CardID:   deck.Notes[1].Cards[0].ID,
+		Grade:    core.GradeAgain,
+		Reviewed: now.Add(time.Minute),
+		Next: core.ReviewState{
+			CardID:   deck.Notes[1].Cards[0].ID,
+			Due:      now,
+			Interval: 0,
+			Ease:     2.5,
+			Reviews:  1,
+		},
+	}); err != nil {
+		t.Fatalf("record second review: %v", err)
+	}
+	decks, err = store.Decks(ctx)
+	if err != nil {
+		t.Fatalf("decks after second review: %v", err)
+	}
+	d = decks[0]
+	if d.ReviewsToday != 2 {
+		t.Fatalf("reviews today after second review = %d, want 2", d.ReviewsToday)
+	}
+	if d.SuccessRate != 0.5 {
+		t.Fatalf("success rate after again = %.2f, want 0.50", d.SuccessRate)
+	}
 }
 
 func TestCardBookmarkPersistsAndCountsInStats(t *testing.T) {
@@ -350,6 +382,45 @@ func TestStatisticsDailyProgressAndStreak(t *testing.T) {
 	}
 }
 
+func TestDailyGoalPersistsInStatistics(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	stats, err := store.Statistics(ctx)
+	if err != nil {
+		t.Fatalf("statistics: %v", err)
+	}
+	if stats.DailyGoal != 10 {
+		t.Fatalf("default daily goal = %d, want 10", stats.DailyGoal)
+	}
+
+	if err := store.SetDailyGoal(ctx, 25); err != nil {
+		t.Fatalf("set daily goal: %v", err)
+	}
+	stats, err = store.Statistics(ctx)
+	if err != nil {
+		t.Fatalf("statistics after set: %v", err)
+	}
+	if stats.DailyGoal != 25 {
+		t.Fatalf("daily goal = %d, want 25", stats.DailyGoal)
+	}
+
+	if err := store.SetDailyGoal(ctx, -3); err != nil {
+		t.Fatalf("set daily goal floor: %v", err)
+	}
+	stats, err = store.Statistics(ctx)
+	if err != nil {
+		t.Fatalf("statistics after floor: %v", err)
+	}
+	if stats.DailyGoal != 1 {
+		t.Fatalf("daily goal floor = %d, want 1", stats.DailyGoal)
+	}
+}
+
 func TestLeechDetectionAfterThreeAgainGrades(t *testing.T) {
 	ctx := context.Background()
 	store, err := OpenMemory()
@@ -491,6 +562,70 @@ func TestDueCardsBookmarkedReturnsOnlyBookmarked(t *testing.T) {
 	}
 	if len(allCards) < 2 {
 		t.Fatalf("all due cards = %d, want at least 2", len(allCards))
+	}
+}
+
+func TestSuspendedCardsAreFilteredAndCounted(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	deck := content.StarterDeck()
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+	card := deck.Notes[0].Cards[0]
+	initialDue, err := store.DueCards(ctx, time.Now(), 100)
+	if err != nil {
+		t.Fatalf("initial due cards: %v", err)
+	}
+	if err := store.SetCardBookmark(ctx, card.ID, true); err != nil {
+		t.Fatalf("set bookmark: %v", err)
+	}
+	if err := store.SetCardSuspended(ctx, card.ID, true); err != nil {
+		t.Fatalf("set suspended: %v", err)
+	}
+
+	cards, err := store.DueCards(ctx, time.Now(), 100)
+	if err != nil {
+		t.Fatalf("due cards: %v", err)
+	}
+	for _, due := range cards {
+		if due.ID == card.ID {
+			t.Fatal("suspended card should be excluded from normal due cards")
+		}
+	}
+
+	bookmarked, err := store.DueCardsBookmarked(ctx, time.Now(), 100)
+	if err != nil {
+		t.Fatalf("bookmarked due cards: %v", err)
+	}
+	for _, due := range bookmarked {
+		if due.ID == card.ID {
+			t.Fatal("suspended card should be excluded from bookmarked due cards")
+		}
+	}
+
+	stats, err := store.Statistics(ctx)
+	if err != nil {
+		t.Fatalf("statistics: %v", err)
+	}
+	if stats.SuspendedCards != 1 {
+		t.Fatalf("suspended cards = %d, want 1", stats.SuspendedCards)
+	}
+
+	decks, err := store.Decks(ctx)
+	if err != nil {
+		t.Fatalf("decks: %v", err)
+	}
+	if len(decks) == 0 {
+		t.Fatal("expected decks")
+	}
+	if decks[0].DueCards != len(initialDue)-1 {
+		t.Fatalf("deck due cards = %d, want %d", decks[0].DueCards, len(initialDue)-1)
 	}
 }
 

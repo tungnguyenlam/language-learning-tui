@@ -1,5 +1,18 @@
 # Completed Work
 
+## 2026-04-29 Autonomous Feature Pass 3 - Review Control, Habit Goal, Deck Insights
+
+- Implemented suspended review cards: `x` in Review suspends the current card, suspended cards are filtered from normal/bookmarked due queues, Dashboard/Statistics show suspended counts, and SQLite persists the flag via migration 13.
+- Added targeted Go coverage for suspended-card persistence/filtering/statistics and TUI queue refresh.
+- Implemented SQLite-backed daily goal settings: migration 14 adds `app_settings`, Statistics reads the persisted daily goal, and Settings supports `+`/`-` adjustments with a floor of 1.
+- Fixed fresh-install Statistics aggregation so empty card tables report zero maturity counts instead of surfacing NULL scan errors.
+- Added targeted Go coverage for daily goal persistence/defaults/flooring and Settings rendering/updates.
+- Implemented deck progress insights: Decks view now shows per-deck reviews today and all-time success rate derived from persisted review history.
+- Added targeted Go coverage for deck progress aggregation and Decks rendering.
+- Added 3 tui-tester E2E scenarios covering suspended-card persistence/statistics, daily-goal persistence, and deck progress metrics after review.
+- Fixed post-grade aggregate refresh so Decks, Dashboard, and Statistics receive fresh persisted counts immediately after a review.
+- Final verification passed with `./scripts/verify.sh`, including all Go tests, go vet, smoke launch, and 33 tui-tester E2E tests.
+
 ## 2026-04-29 Autonomous Feature Pass 2 - Bookmark Filter, MCQ Review, Leech Detection
 
 - Added bookmarked-only review mode: `B` (shift+b) in Review toggles a filter showing only bookmarked cards, with a banner indicator and updated Dashboard/Statistics counts.

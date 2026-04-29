@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -151,16 +152,37 @@ func (s *Store) GetDeck(ctx context.Context, id string) (core.Deck, error) {
 
 func (s *Store) Decks(ctx context.Context) ([]core.Deck, error) {
 	now := time.Now().UTC()
+	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	tomorrowStart := todayStart.AddDate(0, 0, 1)
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT d.id, d.name, d.description,
 		       COUNT(c.id) as total_cards,
-		       SUM(CASE WHEN rs.due_at IS NULL OR rs.due_at <= ? THEN 1 ELSE 0 END) as due_cards
+		       SUM(CASE WHEN (rs.due_at IS NULL OR rs.due_at <= ?) AND COALESCE(cf.suspended, 0) = 0 THEN 1 ELSE 0 END) as due_cards,
+		       (
+		           SELECT COUNT(*)
+		           FROM reviews r
+		           INNER JOIN cards rc ON rc.id = r.card_id
+		           WHERE rc.deck_id = d.id AND r.reviewed_at >= ? AND r.reviewed_at < ?
+		       ) as reviews_today,
+		       (
+		           SELECT COUNT(*)
+		           FROM reviews r
+		           INNER JOIN cards rc ON rc.id = r.card_id
+		           WHERE rc.deck_id = d.id
+		       ) as review_count,
+		       (
+		           SELECT COUNT(*)
+		           FROM reviews r
+		           INNER JOIN cards rc ON rc.id = r.card_id
+		           WHERE rc.deck_id = d.id AND r.grade != ?
+		       ) as successful_reviews
 		FROM decks d
 		LEFT JOIN cards c ON c.deck_id = d.id
 		LEFT JOIN review_states rs ON rs.card_id = c.id
+		LEFT JOIN card_flags cf ON cf.card_id = c.id
 		GROUP BY d.id
 		ORDER BY d.name
-	`, now)
+	`, now, todayStart, tomorrowStart, string(core.GradeAgain))
 	if err != nil {
 		return nil, err
 	}
@@ -169,12 +191,16 @@ func (s *Store) Decks(ctx context.Context) ([]core.Deck, error) {
 	var decks []core.Deck
 	for rows.Next() {
 		var deck core.Deck
-		var total, due sql.NullInt64
-		if err := rows.Scan(&deck.ID, &deck.Name, &deck.Description, &total, &due); err != nil {
+		var total, due, reviewsToday, reviewCount, successfulReviews sql.NullInt64
+		if err := rows.Scan(&deck.ID, &deck.Name, &deck.Description, &total, &due, &reviewsToday, &reviewCount, &successfulReviews); err != nil {
 			return nil, err
 		}
 		deck.TotalCards = int(total.Int64)
 		deck.DueCards = int(due.Int64)
+		deck.ReviewsToday = int(reviewsToday.Int64)
+		if reviewCount.Int64 > 0 {
+			deck.SuccessRate = float64(successfulReviews.Int64) / float64(reviewCount.Int64)
+		}
 		decks = append(decks, deck)
 	}
 	return decks, rows.Err()
@@ -249,7 +275,7 @@ func (s *Store) notesForDeck(ctx context.Context, deckID string) ([]core.Note, e
 
 func (s *Store) cardsForNote(ctx context.Context, noteID string) ([]core.Card, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0)
+		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0)
 		FROM cards c
 		LEFT JOIN card_flags cf ON cf.card_id = c.id
 		WHERE c.note_id = ?
@@ -265,13 +291,14 @@ func (s *Store) cardsForNote(ctx context.Context, noteID string) ([]core.Card, e
 		var card core.Card
 		var kind string
 		var choicesStr string
-		var bookmarked, leech int
-		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &bookmarked, &leech); err != nil {
+		var bookmarked, leech, suspended int
+		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &bookmarked, &leech, &suspended); err != nil {
 			return nil, err
 		}
 		card.Kind = core.CardKind(kind)
 		card.Bookmarked = bookmarked != 0
 		card.Leech = leech != 0
+		card.Suspended = suspended != 0
 		card.Choices = parseChoices(choicesStr)
 		cards = append(cards, card)
 	}
@@ -424,11 +451,12 @@ func (s *Store) DueCards(ctx context.Context, now time.Time, limit int) ([]core.
 		limit = 20
 	}
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0)
+		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0)
 		FROM cards c
 		LEFT JOIN review_states rs ON rs.card_id = c.id
 		LEFT JOIN card_flags cf ON cf.card_id = c.id
-		WHERE rs.due_at IS NULL OR rs.due_at <= ?
+		WHERE (rs.due_at IS NULL OR rs.due_at <= ?)
+		  AND COALESCE(cf.suspended, 0) = 0
 		ORDER BY COALESCE(rs.due_at, '1970-01-01T00:00:00Z'), c.id
 		LIMIT ?
 	`, now.UTC(), limit)
@@ -442,13 +470,14 @@ func (s *Store) DueCards(ctx context.Context, now time.Time, limit int) ([]core.
 		var card core.Card
 		var kind string
 		var choicesStr string
-		var bookmarked, leech int
-		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &bookmarked, &leech); err != nil {
+		var bookmarked, leech, suspended int
+		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &bookmarked, &leech, &suspended); err != nil {
 			return nil, err
 		}
 		card.Kind = core.CardKind(kind)
 		card.Bookmarked = bookmarked != 0
 		card.Leech = leech != 0
+		card.Suspended = suspended != 0
 		card.Choices = parseChoices(choicesStr)
 		cards = append(cards, card)
 	}
@@ -460,11 +489,12 @@ func (s *Store) DueCardsBookmarked(ctx context.Context, now time.Time, limit int
 		limit = 20
 	}
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0)
+		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0)
 		FROM cards c
 		INNER JOIN card_flags cf ON cf.card_id = c.id AND cf.bookmarked = 1
 		LEFT JOIN review_states rs ON rs.card_id = c.id
-		WHERE rs.due_at IS NULL OR rs.due_at <= ?
+		WHERE (rs.due_at IS NULL OR rs.due_at <= ?)
+		  AND COALESCE(cf.suspended, 0) = 0
 		ORDER BY COALESCE(rs.due_at, '1970-01-01T00:00:00Z'), c.id
 		LIMIT ?
 	`, now.UTC(), limit)
@@ -478,13 +508,14 @@ func (s *Store) DueCardsBookmarked(ctx context.Context, now time.Time, limit int
 		var card core.Card
 		var kind string
 		var choicesStr string
-		var bookmarked, leech int
-		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &bookmarked, &leech); err != nil {
+		var bookmarked, leech, suspended int
+		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &bookmarked, &leech, &suspended); err != nil {
 			return nil, err
 		}
 		card.Kind = core.CardKind(kind)
 		card.Bookmarked = bookmarked != 0
 		card.Leech = leech != 0
+		card.Suspended = suspended != 0
 		card.Choices = parseChoices(choicesStr)
 		cards = append(cards, card)
 	}
@@ -509,6 +540,54 @@ func (s *Store) SetCardBookmark(ctx context.Context, cardID string, bookmarked b
 	return err
 }
 
+func (s *Store) SetCardSuspended(ctx context.Context, cardID string, suspended bool) error {
+	if cardID == "" {
+		return errors.New("card id is required")
+	}
+	value := 0
+	if suspended {
+		value = 1
+	}
+	_, err := s.db.ExecContext(ctx, `
+		INSERT INTO card_flags (card_id, suspended, updated_at)
+		VALUES (?, ?, ?)
+		ON CONFLICT(card_id) DO UPDATE SET
+			suspended = excluded.suspended,
+			updated_at = excluded.updated_at
+	`, cardID, value, time.Now().UTC())
+	return err
+}
+
+func (s *Store) SetDailyGoal(ctx context.Context, goal int) error {
+	if goal < 1 {
+		goal = 1
+	}
+	_, err := s.db.ExecContext(ctx, `
+		INSERT INTO app_settings (key, value, updated_at)
+		VALUES ('daily_goal', ?, ?)
+		ON CONFLICT(key) DO UPDATE SET
+			value = excluded.value,
+			updated_at = excluded.updated_at
+	`, strconv.Itoa(goal), time.Now().UTC())
+	return err
+}
+
+func (s *Store) dailyGoal(ctx context.Context) (int, error) {
+	var raw string
+	err := s.db.QueryRowContext(ctx, `SELECT value FROM app_settings WHERE key = 'daily_goal'`).Scan(&raw)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 10, nil
+	}
+	if err != nil {
+		return 0, err
+	}
+	goal, err := strconv.Atoi(strings.TrimSpace(raw))
+	if err != nil || goal < 1 {
+		return 10, nil
+	}
+	return goal, nil
+}
+
 func (s *Store) Statistics(ctx context.Context) (core.Statistics, error) {
 	var stats core.Statistics
 	stats.Grades = make(map[core.ReviewGrade]int)
@@ -522,10 +601,10 @@ func (s *Store) Statistics(ctx context.Context) (core.Statistics, error) {
 	// Card maturity: New (no reviews), Young (interval < 21 days), Mature (interval >= 21 days)
 	// 21 days is a common threshold in Anki.
 	err = s.db.QueryRowContext(ctx, `
-		SELECT 
-			SUM(CASE WHEN rs.reviews = 0 OR rs.reviews IS NULL THEN 1 ELSE 0 END) as new,
-			SUM(CASE WHEN rs.reviews > 0 AND rs.interval_seconds < 1814400 THEN 1 ELSE 0 END) as young,
-			SUM(CASE WHEN rs.reviews > 0 AND rs.interval_seconds >= 1814400 THEN 1 ELSE 0 END) as mature
+		SELECT
+			COALESCE(SUM(CASE WHEN rs.reviews = 0 OR rs.reviews IS NULL THEN 1 ELSE 0 END), 0) as new,
+			COALESCE(SUM(CASE WHEN rs.reviews > 0 AND rs.interval_seconds < 1814400 THEN 1 ELSE 0 END), 0) as young,
+			COALESCE(SUM(CASE WHEN rs.reviews > 0 AND rs.interval_seconds >= 1814400 THEN 1 ELSE 0 END), 0) as mature
 		FROM cards c
 		LEFT JOIN review_states rs ON rs.card_id = c.id
 	`).Scan(&stats.NewCards, &stats.YoungCards, &stats.MatureCards)
@@ -538,7 +617,10 @@ func (s *Store) Statistics(ctx context.Context) (core.Statistics, error) {
 	if err != nil {
 		return stats, err
 	}
-	stats.DailyGoal = 10
+	stats.DailyGoal, err = s.dailyGoal(ctx)
+	if err != nil {
+		return stats, err
+	}
 
 	now := time.Now().UTC()
 	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
@@ -568,6 +650,11 @@ func (s *Store) Statistics(ctx context.Context) (core.Statistics, error) {
 	}
 
 	err = s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM card_flags WHERE leech = 1`).Scan(&stats.LeechCards)
+	if err != nil {
+		return stats, err
+	}
+
+	err = s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM card_flags WHERE suspended = 1`).Scan(&stats.SuspendedCards)
 	if err != nil {
 		return stats, err
 	}
