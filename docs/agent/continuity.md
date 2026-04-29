@@ -15,6 +15,16 @@ At the start of a new session:
 
 If the user switches chats mid-task, treat `docs/backlog/active.md` as the handoff source of truth.
 
+## Continuous Documentation
+
+Agents MUST NOT wait until the very end of a session to document changes. As soon as a logical sub-task or feature is completed, or a plan changes:
+
+1. Instantly update `docs/backlog/active.md` to reflect the current state and exact next action.
+2. If new knowledge was gained, immediately add a notice or update an ADR.
+3. Record completed tasks in `docs/backlog/done.md`.
+
+Documenting as you go prevents context loss if a session ends abruptly and ensures the user stays informed of the agent's progress.
+
 ## Notices
 
 Write a notice when future agents need durable context that is not executable backlog:
