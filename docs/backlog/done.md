@@ -65,3 +65,11 @@
 - Added config/logging contracts, numbered SQLite migration tracking, architecture boundary tests, Anki fixture tests, dependency policy, migration policy, release checklist, and fixture documentation.
 - Initialized the directory as a Git repository.
 - Verified with `./scripts/verify.sh`.
+
+## 2026-04-29 Arrow Key Navigation
+
+- Implemented left and right arrow keys (along with Shift+Tab) to navigate between application views (Dashboard, Decks, Review, Import, AI, Settings).
+- Restricted deck switching strictly to `[` and `]` to avoid key mapping conflicts.
+- Updated the application footer to clarify arrow key support and account for all 6 views.
+- Added 3 new tui-tester E2E tests to verify arrow key navigation across tabs, decks, and settings views.
+- Verified with full E2E testing suite and `./scripts/verify.sh` to meet the completion criteria.

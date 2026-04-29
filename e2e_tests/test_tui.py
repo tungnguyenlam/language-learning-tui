@@ -266,5 +266,81 @@ def test_mouse_tab_navigation_and_grade_button():
         finally:
             agent.close()
 
+def test_view_navigation_with_arrow_keys():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir, columns=90, lines=28)
+        try:
+            agent.assert_text("Dashboard")
+            
+            agent.act('<Right>')
+            agent.wait_for_text("Press enter to select deck.")
+            agent.wait_until_stable()
+            
+            agent.act('<Right>')
+            agent.wait_for_text("Review 1/")
+            agent.wait_until_stable()
+            
+            agent.act('<Left>')
+            agent.wait_for_text("Press enter to select deck.")
+            agent.wait_until_stable()
+            
+            agent.act('<Left>')
+            agent.wait_for_text("Use Review to start studying.")
+            agent.wait_until_stable()
+            agent.assert_text("Dashboard")
+        finally:
+            agent.close()
+
+def test_deck_navigation_with_up_down_arrows():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        import_path = os.path.join(tmpdir, "import.tsv")
+        with open(import_path, "w", encoding="utf-8") as handle:
+            handle.write("#separator:tab\n")
+            handle.write("import-1\tA\tB\t\t\tZ-Imported\n")
+
+        agent = start_agent(tmpdir, columns=90, lines=28)
+        try:
+            agent.act('4')
+            agent.wait_for_text("Press i to import TSV.")
+            agent.act('i')
+            agent.wait_for_text("Imported 1 notes")
+            
+            agent.act('2')
+            agent.wait_for_text("Press enter to select deck.")
+            
+            agent.act('<Down>')
+            agent.wait_for_text("> Z-Imported")
+            
+            agent.act('<Enter>')
+            agent.wait_for_text("Use Review to start studying.")
+            agent.wait_until_stable()
+            agent.assert_text("Deck: Z-Imported")
+        finally:
+            agent.close()
+
+def test_settings_navigation_with_up_down_arrows():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir, columns=90, lines=28)
+        try:
+            agent.act('6')
+            agent.wait_for_text("AI Provider: disabled")
+            
+            agent.act('<Down>')
+            agent.wait_until_stable()
+            
+            agent.act('<Enter>')
+            agent.wait_for_text("EDITING")
+            
+            agent.act('<Esc>')
+            agent.wait_until_stable()
+            
+            agent.act('<Up>')
+            agent.wait_until_stable()
+            
+            agent.act('<Enter>')
+            agent.wait_for_text("AI Provider: offline")
+        finally:
+            agent.close()
+
 if __name__ == "__main__":
     pytest.main(["-v", __file__])

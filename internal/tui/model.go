@@ -266,9 +266,13 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.activeView = ViewAI
 	case "6":
 		m.activeView = ViewSettings
-	case "left", "[":
+	case "left", "shift+tab":
+		m.previousView()
+	case "right":
+		m.nextView()
+	case "[":
 		m.previousDeck()
-	case "right", "]":
+	case "]":
 		m.nextDeck()
 	default:
 		if m.activeView == ViewAI {
@@ -709,7 +713,7 @@ func (m *Model) render() string {
 		b.WriteString(m.renderCompact())
 	}
 
-	footer := fmt.Sprintf("tab switch | 1-5 views | q quit | mouse %d,%d | %s", m.mouseX, m.mouseY, m.status)
+	footer := fmt.Sprintf("arrows/tab views | 1-6 views | q quit | mouse %d,%d | %s", m.mouseX, m.mouseY, m.status)
 	b.WriteString("\n")
 	b.WriteString(statusStyle.Width(maxInt(20, m.width)).Render(footer))
 	return b.String()
@@ -862,6 +866,17 @@ func (m *Model) renderReview(x, y int) string {
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + 35, Y: y + 6, Width: 4, Height: 1})
 	}
 	return fmt.Sprintf("Review %d/%d\n\n%s\n\n%s", m.cursor+1, len(m.dueCards), card.Prompt, answer)
+}
+
+func (m *Model) previousView() {
+	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewImport, ViewAI, ViewSettings}
+	for i, view := range views {
+		if m.activeView == view {
+			m.activeView = views[(i-1+len(views))%len(views)]
+			return
+		}
+	}
+	m.activeView = ViewDashboard
 }
 
 func (m *Model) nextView() {
