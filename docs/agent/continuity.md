@@ -7,11 +7,10 @@ Use this workflow to make development continuous across chat sessions without du
 At the start of a new session:
 
 1. Read root `AGENTS.md`.
-2. Read `docs/agent/start-here.md`.
-3. Read `docs/backlog/active.md` and continue the `Next Action` unless the user gives a newer instruction.
-4. Read `docs/agent/index.md` and any active notices linked there.
-5. Read only the package README and nearest subtree `AGENTS.md` for files you will touch.
-6. Use `rg` to inspect the relevant symbols before editing.
+2. Read `docs/backlog/active.md` and continue the `Next Action` unless the user gives a newer instruction.
+3. Read `docs/agent/index.md` and any active notices linked there.
+4. Read only the package README and nearest subtree `AGENTS.md` for files you will touch.
+5. Use `rg` to inspect the relevant symbols before editing.
 
 If the user switches chats mid-task, treat `docs/backlog/active.md` as the handoff source of truth.
 
@@ -108,3 +107,4 @@ Before ending work, update continuity state:
 6. Run targeted tests and `./scripts/verify.sh` when feasible, then record the latest relevant verification command.
 
 Do not leave important context only in chat.
+chat.

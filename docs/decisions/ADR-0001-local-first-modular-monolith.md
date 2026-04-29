@@ -14,6 +14,6 @@ Use small indexed continuity docs instead of a large root `AGENTS.md`.
 
 ## Consequences
 
-- Future agents can start from `docs/agent/start-here.md` and inspect only the relevant package.
+- Future agents can start from `AGENTS.md` and inspect only the relevant package.
 - Feature work stays easier to test without launching the full TUI.
 - Cross-package contracts must be documented when they change.
