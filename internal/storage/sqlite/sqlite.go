@@ -248,10 +248,11 @@ func (s *Store) notesForDeck(ctx context.Context, deckID string) ([]core.Note, e
 
 func (s *Store) cardsForNote(ctx context.Context, noteID string) ([]core.Card, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT id, note_id, deck_id, kind, prompt, answer
-		FROM cards
-		WHERE note_id = ?
-		ORDER BY id
+		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, COALESCE(cf.bookmarked, 0)
+		FROM cards c
+		LEFT JOIN card_flags cf ON cf.card_id = c.id
+		WHERE c.note_id = ?
+		ORDER BY c.id
 	`, noteID)
 	if err != nil {
 		return nil, err
@@ -262,10 +263,12 @@ func (s *Store) cardsForNote(ctx context.Context, noteID string) ([]core.Card, e
 	for rows.Next() {
 		var card core.Card
 		var kind string
-		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer); err != nil {
+		var bookmarked int
+		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &bookmarked); err != nil {
 			return nil, err
 		}
 		card.Kind = core.CardKind(kind)
+		card.Bookmarked = bookmarked != 0
 		cards = append(cards, card)
 	}
 	return cards, rows.Err()
@@ -314,14 +317,78 @@ func (s *Store) RecordReview(ctx context.Context, result core.ReviewResult) erro
 	return err
 }
 
+func (s *Store) UndoLastReview(ctx context.Context, cardID string) error {
+	if cardID == "" {
+		return errors.New("card id is required")
+	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	var reviewID int64
+	err = tx.QueryRowContext(ctx, `
+		SELECT id
+		FROM reviews
+		WHERE card_id = ?
+		ORDER BY reviewed_at DESC, id DESC
+		LIMIT 1
+	`, cardID).Scan(&reviewID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return core.ErrNoReviewToUndo
+	}
+	if err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, `DELETE FROM reviews WHERE id = ?`, reviewID); err != nil {
+		return err
+	}
+
+	var state core.ReviewState
+	var intervalSec int64
+	err = tx.QueryRowContext(ctx, `
+		SELECT card_id, due_at, interval_seconds, stability, difficulty, ease, reviews, lapses
+		FROM reviews
+		WHERE card_id = ?
+		ORDER BY reviewed_at DESC, id DESC
+		LIMIT 1
+	`, cardID).Scan(&state.CardID, &state.Due, &intervalSec, &state.Stability, &state.Difficulty, &state.Ease, &state.Reviews, &state.Lapses)
+	if errors.Is(err, sql.ErrNoRows) {
+		if _, err := tx.ExecContext(ctx, `DELETE FROM review_states WHERE card_id = ?`, cardID); err != nil {
+			return err
+		}
+		return tx.Commit()
+	}
+	if err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, `
+		INSERT INTO review_states (card_id, due_at, interval_seconds, stability, difficulty, ease, reviews, lapses)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		ON CONFLICT(card_id) DO UPDATE SET
+			due_at = excluded.due_at,
+			interval_seconds = excluded.interval_seconds,
+			stability = excluded.stability,
+			difficulty = excluded.difficulty,
+			ease = excluded.ease,
+			reviews = excluded.reviews,
+			lapses = excluded.lapses
+	`, state.CardID, state.Due.UTC(), intervalSec, state.Stability, state.Difficulty, state.Ease, state.Reviews, state.Lapses); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
 func (s *Store) DueCards(ctx context.Context, now time.Time, limit int) ([]core.Card, error) {
 	if limit <= 0 {
 		limit = 20
 	}
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer
+		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, COALESCE(cf.bookmarked, 0)
 		FROM cards c
 		LEFT JOIN review_states rs ON rs.card_id = c.id
+		LEFT JOIN card_flags cf ON cf.card_id = c.id
 		WHERE rs.due_at IS NULL OR rs.due_at <= ?
 		ORDER BY COALESCE(rs.due_at, '1970-01-01T00:00:00Z'), c.id
 		LIMIT ?
@@ -335,13 +402,33 @@ func (s *Store) DueCards(ctx context.Context, now time.Time, limit int) ([]core.
 	for rows.Next() {
 		var card core.Card
 		var kind string
-		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer); err != nil {
+		var bookmarked int
+		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &bookmarked); err != nil {
 			return nil, err
 		}
 		card.Kind = core.CardKind(kind)
+		card.Bookmarked = bookmarked != 0
 		cards = append(cards, card)
 	}
 	return cards, rows.Err()
+}
+
+func (s *Store) SetCardBookmark(ctx context.Context, cardID string, bookmarked bool) error {
+	if cardID == "" {
+		return errors.New("card id is required")
+	}
+	value := 0
+	if bookmarked {
+		value = 1
+	}
+	_, err := s.db.ExecContext(ctx, `
+		INSERT INTO card_flags (card_id, bookmarked, updated_at)
+		VALUES (?, ?, ?)
+		ON CONFLICT(card_id) DO UPDATE SET
+			bookmarked = excluded.bookmarked,
+			updated_at = excluded.updated_at
+	`, cardID, value, time.Now().UTC())
+	return err
 }
 
 func (s *Store) Statistics(ctx context.Context) (core.Statistics, error) {
@@ -373,6 +460,29 @@ func (s *Store) Statistics(ctx context.Context) (core.Statistics, error) {
 	if err != nil {
 		return stats, err
 	}
+	stats.DailyGoal = 10
+
+	now := time.Now().UTC()
+	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	err = s.db.QueryRowContext(ctx, `
+		SELECT COUNT(*)
+		FROM reviews
+		WHERE reviewed_at >= ? AND reviewed_at < ?
+	`, todayStart, todayStart.AddDate(0, 0, 1)).Scan(&stats.ReviewsToday)
+	if err != nil {
+		return stats, err
+	}
+
+	err = s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM card_flags WHERE bookmarked = 1`).Scan(&stats.BookmarkedCards)
+	if err != nil {
+		return stats, err
+	}
+
+	streak, err := s.currentStreak(ctx, now)
+	if err != nil {
+		return stats, err
+	}
+	stats.CurrentStreak = streak
 
 	// Success rate (Grade != Again)
 	if stats.TotalReviews > 0 {
@@ -401,6 +511,46 @@ func (s *Store) Statistics(ctx context.Context) (core.Statistics, error) {
 	}
 
 	return stats, nil
+}
+
+func (s *Store) currentStreak(ctx context.Context, now time.Time) (int, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT reviewed_at
+		FROM reviews
+		ORDER BY reviewed_at DESC
+	`)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+
+	dates := make(map[string]bool)
+	for rows.Next() {
+		var reviewed time.Time
+		if err := rows.Scan(&reviewed); err != nil {
+			return 0, err
+		}
+		day := reviewed.UTC()
+		dates[time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC).Format("2006-01-02")] = true
+	}
+	if err := rows.Err(); err != nil {
+		return 0, err
+	}
+
+	day := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	if !dates[day.Format("2006-01-02")] {
+		yesterday := day.AddDate(0, 0, -1)
+		if !dates[yesterday.Format("2006-01-02")] {
+			return 0, nil
+		}
+		day = yesterday
+	}
+	streak := 0
+	for dates[day.Format("2006-01-02")] {
+		streak++
+		day = day.AddDate(0, 0, -1)
+	}
+	return streak, nil
 }
 
 func (s *Store) GetReviewState(ctx context.Context, cardID string) (core.ReviewState, error) {

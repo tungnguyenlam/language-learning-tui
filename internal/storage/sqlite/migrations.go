@@ -72,4 +72,12 @@ var migrations = []migration{
 		ALTER TABLE reviews ADD COLUMN difficulty REAL NOT NULL DEFAULT 0;
 	`,
 	},
+	{
+		ID: 10,
+		SQL: `CREATE TABLE IF NOT EXISTS card_flags (
+		card_id TEXT PRIMARY KEY REFERENCES cards(id) ON DELETE CASCADE,
+		bookmarked INTEGER NOT NULL DEFAULT 0,
+		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+	)`,
+	},
 }

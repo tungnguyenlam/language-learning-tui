@@ -50,36 +50,37 @@ func (h Hitbox) Contains(x, y int) bool {
 }
 
 type Model struct {
-	repo            core.Repository
-	scheduler       core.Scheduler
-	width           int
-	height          int
-	activeView      View
-	breakpoint      Breakpoint
-	decks           []core.Deck
-	deckIndex       int
-	deck            core.Deck
-	deckCursor      int
-	allDue          []core.Card
-	dueCards        []core.Card
-	cursor          int
-	revealed        bool
-	status          string
-	mouseX          int
-	mouseY          int
-	hitboxes        []Hitbox
-	aiProvider      ai.Provider
-	aiProviderName  string
-	aiTemplates     map[string]string
-	stats           core.Statistics
-	settingsCursor  int
-	editingTemplate bool
-	aiInput         string
-	drafts          []ai.Draft
-	draftCursor     int
-	importPath      string
-	exportPath      string
-	onConfigChange  func(string, map[string]string)
+	repo               core.Repository
+	scheduler          core.Scheduler
+	width              int
+	height             int
+	activeView         View
+	breakpoint         Breakpoint
+	decks              []core.Deck
+	deckIndex          int
+	deck               core.Deck
+	deckCursor         int
+	allDue             []core.Card
+	dueCards           []core.Card
+	cursor             int
+	revealed           bool
+	lastReviewedCardID string
+	status             string
+	mouseX             int
+	mouseY             int
+	hitboxes           []Hitbox
+	aiProvider         ai.Provider
+	aiProviderName     string
+	aiTemplates        map[string]string
+	stats              core.Statistics
+	settingsCursor     int
+	editingTemplate    bool
+	aiInput            string
+	drafts             []ai.Draft
+	draftCursor        int
+	importPath         string
+	exportPath         string
+	onConfigChange     func(string, map[string]string)
 }
 
 func NewModel(repo core.Repository, scheduler core.Scheduler) *Model {
@@ -168,6 +169,20 @@ type exportDoneMsg struct {
 	count int
 	path  string
 }
+type reviewRecordedMsg struct {
+	cardID string
+	cards  []core.Card
+}
+type bookmarkToggledMsg struct {
+	cardID     string
+	bookmarked bool
+}
+type reviewUndoMsg struct {
+	cardID string
+	cards  []core.Card
+	decks  []core.Deck
+	stats  core.Statistics
+}
 
 func (m *Model) Init() tea.Cmd {
 	return tea.Batch(m.loadDueCards, m.loadDecks, m.loadStatistics)
@@ -249,6 +264,24 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.status = fmt.Sprintf("Imported %d notes from %s", msg.count, filepath.Base(msg.path))
 	case exportDoneMsg:
 		m.status = fmt.Sprintf("Exported %d notes to %s", msg.count, filepath.Base(msg.path))
+	case reviewRecordedMsg:
+		m.lastReviewedCardID = msg.cardID
+		m.allDue = msg.cards
+		m.applyDeckFilter()
+	case bookmarkToggledMsg:
+		m.setCardBookmarkLocal(msg.cardID, msg.bookmarked)
+		if msg.bookmarked {
+			m.status = "Card bookmarked"
+		} else {
+			m.status = "Card bookmark removed"
+		}
+	case reviewUndoMsg:
+		m.lastReviewedCardID = ""
+		m.decks = msg.decks
+		m.stats = msg.stats
+		m.allDue = msg.cards
+		m.applyDeckFilter()
+		m.status = "Last review undone"
 	case tea.KeyMsg:
 		return m.updateKey(msg)
 	case tea.MouseMsg:
@@ -332,6 +365,10 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				}
 			case "enter", "space":
 				m.revealed = !m.revealed
+			case "b":
+				return m, m.toggleBookmark()
+			case "u":
+				return m, m.undoLastReview()
 			case "a":
 				return m, m.gradeCard(core.GradeAgain)
 			case "h":
@@ -702,7 +739,70 @@ func (m *Model) gradeCard(grade core.ReviewGrade) tea.Cmd {
 			return err
 		}
 
-		return m.loadDueCards()
+		cards, err := m.repo.DueCards(ctx, time.Now(), 50)
+		if err != nil {
+			return err
+		}
+		return reviewRecordedMsg{cardID: card.ID, cards: cards}
+	}
+}
+
+func (m *Model) toggleBookmark() tea.Cmd {
+	if m.activeView != ViewReview || len(m.dueCards) == 0 {
+		return nil
+	}
+	card := m.dueCards[m.cursor]
+	next := !card.Bookmarked
+	m.status = "Saving bookmark..."
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if err := m.repo.SetCardBookmark(ctx, card.ID, next); err != nil {
+			return err
+		}
+		return bookmarkToggledMsg{cardID: card.ID, bookmarked: next}
+	}
+}
+
+func (m *Model) undoLastReview() tea.Cmd {
+	if strings.TrimSpace(m.lastReviewedCardID) == "" {
+		m.status = "No review to undo"
+		return nil
+	}
+	cardID := m.lastReviewedCardID
+	m.status = "Undoing last review..."
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if err := m.repo.UndoLastReview(ctx, cardID); err != nil {
+			return err
+		}
+		cards, err := m.repo.DueCards(ctx, time.Now(), 50)
+		if err != nil {
+			return err
+		}
+		decks, err := m.repo.Decks(ctx)
+		if err != nil {
+			return err
+		}
+		stats, err := m.repo.Statistics(ctx)
+		if err != nil {
+			return err
+		}
+		return reviewUndoMsg{cardID: cardID, cards: cards, decks: decks, stats: stats}
+	}
+}
+
+func (m *Model) setCardBookmarkLocal(cardID string, bookmarked bool) {
+	for i := range m.allDue {
+		if m.allDue[i].ID == cardID {
+			m.allDue[i].Bookmarked = bookmarked
+		}
+	}
+	for i := range m.dueCards {
+		if m.dueCards[i].ID == cardID {
+			m.dueCards[i].Bookmarked = bookmarked
+		}
 	}
 }
 
@@ -819,7 +919,7 @@ func (m *Model) renderActiveViewPlain(x, y int) string {
 	case ViewSettings:
 		return m.renderSettings(x, y)
 	default:
-		return fmt.Sprintf("Dashboard\n\nDeck: %s\nDue cards: %d\n\nUse [ and ] to switch decks.\nUse Review to start studying.", m.deckLabel(), len(m.dueCards))
+		return fmt.Sprintf("Dashboard\n\nDeck: %s\nDue cards: %d\nBookmarked: %d\nReviews today: %d/%d\n\nUse [ and ] to switch decks.\nUse Review to start studying.", m.deckLabel(), len(m.dueCards), m.stats.BookmarkedCards, m.stats.ReviewsToday, m.stats.DailyGoal)
 	}
 }
 
@@ -830,9 +930,12 @@ func (m *Model) renderStatistics() string {
 	b.WriteString(fmt.Sprintf("Total Cards:   %d\n", m.stats.TotalCards))
 	b.WriteString(fmt.Sprintf("  New:         %d\n", m.stats.NewCards))
 	b.WriteString(fmt.Sprintf("  Young:       %d\n", m.stats.YoungCards))
-	b.WriteString(fmt.Sprintf("  Mature:      %d\n\n", m.stats.MatureCards))
+	b.WriteString(fmt.Sprintf("  Mature:      %d\n", m.stats.MatureCards))
+	b.WriteString(fmt.Sprintf("  Bookmarked:  %d\n\n", m.stats.BookmarkedCards))
 
 	b.WriteString(fmt.Sprintf("Total Reviews: %d\n", m.stats.TotalReviews))
+	b.WriteString(fmt.Sprintf("Reviews Today: %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal))
+	b.WriteString(fmt.Sprintf("Current Streak: %d days\n", m.stats.CurrentStreak))
 	b.WriteString(fmt.Sprintf("Success Rate:  %.1f%%\n\n", m.stats.SuccessRate*100))
 
 	b.WriteString("Reviews by Grade:\n")
@@ -897,6 +1000,10 @@ func (m *Model) renderReview(x, y int) string {
 		return "Review\n\nNo cards due."
 	}
 	card := m.dueCards[m.cursor]
+	bookmark := "Bookmark: off"
+	if card.Bookmarked {
+		bookmark = "Bookmark: on"
+	}
 	answer := "Press space or enter to reveal."
 	if m.revealed {
 		answer = card.Answer + "\n\nGrade: a Again | h Hard | g Good | e Easy"
@@ -907,7 +1014,7 @@ func (m *Model) renderReview(x, y int) string {
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: x + 26, Y: y + 6, Width: 4, Height: 1})
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + 35, Y: y + 6, Width: 4, Height: 1})
 	}
-	return fmt.Sprintf("Review %d/%d\n\n%s\n\n%s", m.cursor+1, len(m.dueCards), card.Prompt, answer)
+	return fmt.Sprintf("Review %d/%d\n%s | b toggle | u undo\n\n%s\n\n%s", m.cursor+1, len(m.dueCards), bookmark, card.Prompt, answer)
 }
 
 func (m *Model) nextViewCmd() tea.Cmd {

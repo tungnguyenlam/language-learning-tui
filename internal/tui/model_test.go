@@ -102,6 +102,63 @@ func TestReviewFlow(t *testing.T) {
 	}
 }
 
+func TestReviewBookmarkToggleUpdatesCardAndRendering(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{{ID: "c1", DeckID: "deck-1", Prompt: "P1", Answer: "A1"}},
+		decks:    []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.Update(dueCardsMsg(repo.dueCards))
+	model.activeView = ViewReview
+
+	if !strings.Contains(model.renderReview(0, 0), "Bookmark: off") {
+		t.Fatalf("initial review should show bookmark off: %s", model.renderReview(0, 0))
+	}
+	cmd := model.toggleBookmark()
+	if cmd == nil {
+		t.Fatal("toggleBookmark should return command")
+	}
+	model.Update(cmd())
+	if !model.dueCards[0].Bookmarked {
+		t.Fatal("card should be bookmarked after toggle")
+	}
+	if !strings.Contains(model.renderReview(0, 0), "Bookmark: on") {
+		t.Fatalf("review should show bookmark on: %s", model.renderReview(0, 0))
+	}
+}
+
+func TestUndoLastReviewReloadsDueCards(t *testing.T) {
+	repo := &mockRepo{
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Prompt: "P1", Answer: "A1"},
+			{ID: "c2", DeckID: "deck-1", Prompt: "P2", Answer: "A2"},
+		},
+		reviews: []core.ReviewResult{{CardID: "c1"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.Update(dueCardsMsg(repo.dueCards[:1]))
+	model.activeView = ViewReview
+	model.lastReviewedCardID = "c1"
+
+	cmd := model.undoLastReview()
+	if cmd == nil {
+		t.Fatal("undoLastReview should return command")
+	}
+	model.Update(cmd())
+	if model.lastReviewedCardID != "" {
+		t.Fatalf("lastReviewedCardID = %q, want empty", model.lastReviewedCardID)
+	}
+	if len(model.dueCards) != 2 {
+		t.Fatalf("due cards after undo = %d, want 2", len(model.dueCards))
+	}
+	if !strings.Contains(model.status, "Last review undone") {
+		t.Fatalf("status = %q, want undo confirmation", model.status)
+	}
+}
+
 func TestDeckSwitchingFiltersDueCards(t *testing.T) {
 	repo := &mockRepo{
 		decks: []core.Deck{

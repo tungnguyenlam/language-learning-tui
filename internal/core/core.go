@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+var ErrNoReviewToUndo = errors.New("no review to undo")
+
 type CardKind string
 
 const (
@@ -45,14 +47,15 @@ type Note struct {
 }
 
 type Card struct {
-	ID      string
-	NoteID  string
-	DeckID  string
-	Kind    CardKind
-	Prompt  string
-	Answer  string
-	Choices []string
-	Tags    []string
+	ID         string
+	NoteID     string
+	DeckID     string
+	Kind       CardKind
+	Prompt     string
+	Answer     string
+	Choices    []string
+	Tags       []string
+	Bookmarked bool
 }
 
 type ReviewState struct {
@@ -75,13 +78,17 @@ type ReviewResult struct {
 }
 
 type Statistics struct {
-	TotalCards   int
-	NewCards     int
-	YoungCards   int
-	MatureCards  int
-	TotalReviews int
-	SuccessRate  float64
-	Grades       map[ReviewGrade]int
+	TotalCards      int
+	NewCards        int
+	YoungCards      int
+	MatureCards     int
+	BookmarkedCards int
+	TotalReviews    int
+	ReviewsToday    int
+	DailyGoal       int
+	CurrentStreak   int
+	SuccessRate     float64
+	Grades          map[ReviewGrade]int
 }
 
 type Repository interface {
@@ -89,8 +96,10 @@ type Repository interface {
 	GetDeck(ctx context.Context, id string) (Deck, error)
 	Decks(ctx context.Context) ([]Deck, error)
 	RecordReview(ctx context.Context, result ReviewResult) error
+	UndoLastReview(ctx context.Context, cardID string) error
 	DueCards(ctx context.Context, now time.Time, limit int) ([]Card, error)
 	GetReviewState(ctx context.Context, cardID string) (ReviewState, error)
+	SetCardBookmark(ctx context.Context, cardID string, bookmarked bool) error
 	Statistics(ctx context.Context) (Statistics, error)
 }
 

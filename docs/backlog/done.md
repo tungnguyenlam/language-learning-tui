@@ -1,5 +1,14 @@
 # Completed Work
 
+## 2026-04-29 Autonomous Feature Pass - Review Bookmarks, Undo, and Daily Progress
+
+- Added SQLite-backed card bookmarks through a new `card_flags` migration, repository contract support, Review `b` key handling, and Dashboard/Statistics bookmark counts.
+- Added undo-last-review support through the repository boundary and Review `u` key handling; SQLite now deletes the newest review and restores the previous review state or returns the card to new.
+- Extended Statistics with persisted review-history aggregates for Reviews Today, Daily Goal progress, and Current Streak.
+- Added unit coverage for bookmark persistence/counting, undo rollback behavior, daily progress/streak aggregation, and TUI bookmark/undo model flows.
+- Added 3 tui-tester E2E tests covering bookmark persistence across restart, undo persistence across restart, and daily Statistics progress after review.
+- Final verification passed with `./scripts/verify.sh`, including gofmt, all Go tests, go vet, smoke launch, and 27 E2E tests.
+
 ## 2026-04-29 End-to-end stabilization recertification and commit
 
 - Re-ran app launch smoke coverage and `go test ./...`; both passed.
