@@ -1,5 +1,13 @@
 # Completed Work
 
+## 2026-04-29 End-to-end stabilization recertification and commit
+
+- Re-ran app launch smoke coverage and `go test ./...`; both passed.
+- Re-ran the existing tui-tester E2E suite before changes; all 19 tests passed.
+- Added 3 new tui-tester E2E recertification tests covering Tab navigation across all primary views, Hard grading with SQLite persistence across restart, and Settings provider persistence across restart.
+- Verified the new E2E tests with `tui_tester/venv/bin/python -m pytest e2e_tests/test_recertification.py -q`.
+- Final verification passed with `./scripts/verify.sh`, including gofmt, all Go tests, go vet, smoke launch, and 22 E2E tests.
+
 ## Navigation Bug Fix and Robustness Enhancement (2026-04-29)
 
 Fixed a conflict between WASD navigation and AI draft discarding, and added new robustness tests.
