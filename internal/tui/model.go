@@ -49,34 +49,35 @@ func (h Hitbox) Contains(x, y int) bool {
 }
 
 type Model struct {
-	repo        core.Repository
-	scheduler   core.Scheduler
-	width       int
-	height      int
-	activeView  View
-	breakpoint  Breakpoint
-	decks       []core.Deck
-	deckIndex   int
-	deck        core.Deck
-	deckCursor  int
-	allDue      []core.Card
-	dueCards    []core.Card
-	cursor      int
-	revealed    bool
-	status      string
-	mouseX      int
-	mouseY      int
-	hitboxes    []Hitbox
-	aiProvider  ai.Provider
-	aiProviderName string
-	aiTemplates    map[string]string
-	settingsCursor int
+	repo            core.Repository
+	scheduler       core.Scheduler
+	width           int
+	height          int
+	activeView      View
+	breakpoint      Breakpoint
+	decks           []core.Deck
+	deckIndex       int
+	deck            core.Deck
+	deckCursor      int
+	allDue          []core.Card
+	dueCards        []core.Card
+	cursor          int
+	revealed        bool
+	status          string
+	mouseX          int
+	mouseY          int
+	hitboxes        []Hitbox
+	aiProvider      ai.Provider
+	aiProviderName  string
+	aiTemplates     map[string]string
+	settingsCursor  int
 	editingTemplate bool
-	aiInput     string
-	drafts      []ai.Draft
-	draftCursor int
-	importPath  string
-	exportPath  string
+	aiInput         string
+	drafts          []ai.Draft
+	draftCursor     int
+	importPath      string
+	exportPath      string
+	onConfigChange  func(string, map[string]string)
 }
 
 func NewModel(repo core.Repository, scheduler core.Scheduler) *Model {
@@ -85,7 +86,7 @@ func NewModel(repo core.Repository, scheduler core.Scheduler) *Model {
 
 func NewModelWithAI(repo core.Repository, scheduler core.Scheduler, provider ai.Provider) *Model {
 	return NewModelWithOptions(repo, scheduler, ModelOptions{
-		AIProvider: provider,
+		AIProvider:     provider,
 		AIProviderName: "offline",
 	})
 }
@@ -96,6 +97,7 @@ type ModelOptions struct {
 	AITemplates    map[string]string
 	ImportPath     string
 	ExportPath     string
+	OnConfigChange func(string, map[string]string)
 }
 
 func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts ModelOptions) *Model {
@@ -142,6 +144,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		aiInput:        "der Kaffee",
 		importPath:     filepath.Clean(importPath),
 		exportPath:     filepath.Clean(exportPath),
+		onConfigChange: opts.OnConfigChange,
 	}
 }
 
@@ -361,6 +364,9 @@ func (m *Model) updateSettingsKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 			if m.aiProviderName == "template" {
 				m.aiProvider = ai.TemplateProvider{Templates: m.aiTemplates}
 			}
+			if m.onConfigChange != nil {
+				m.onConfigChange(m.aiProviderName, m.aiTemplates)
+			}
 			return nil, true
 		case "backspace":
 			key := m.templateKeyAtCursor()
@@ -390,14 +396,21 @@ func (m *Model) updateSettingsKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 		return nil, true
 	case "enter":
 		if m.settingsCursor == 0 {
-			if m.aiProviderName == "offline" {
+			switch m.aiProviderName {
+			case "offline":
 				m.aiProviderName = "template"
 				m.aiProvider = ai.TemplateProvider{Templates: m.aiTemplates}
-			} else {
+			case "template":
+				m.aiProviderName = "disabled"
+				m.aiProvider = nil
+			default:
 				m.aiProviderName = "offline"
 				m.aiProvider = ai.OfflineProvider{}
 			}
 			m.status = fmt.Sprintf("Switched to %s AI provider", m.aiProviderName)
+			if m.onConfigChange != nil {
+				m.onConfigChange(m.aiProviderName, m.aiTemplates)
+			}
 			return nil, true
 		} else {
 			m.editingTemplate = true

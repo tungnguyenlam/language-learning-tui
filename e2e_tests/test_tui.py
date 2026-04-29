@@ -145,9 +145,13 @@ def test_settings_and_template_drafting():
             agent.act('6')
             agent.wait_until_stable()
             agent.assert_text("Settings")
-            agent.assert_text("AI Provider: offline")
+            agent.assert_text("AI Provider: disabled")
 
-            # Switch to template provider
+            # Switch to offline, then template provider
+            agent.act('<Enter>')
+            agent.wait_until_stable()
+            agent.assert_text("AI Provider: offline")
+            
             agent.act('<Enter>')
             agent.wait_until_stable()
             agent.assert_text("AI Provider: template")
@@ -176,6 +180,35 @@ def test_settings_and_template_drafting():
             agent.assert_text("> der KaffeeP: ")
         finally:
             agent.close()
+
+def test_settings_persistence():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = TUIAgent(f'go run ./cmd/deutsch-tui -data-dir {tmpdir}', columns=100, lines=30)
+        try:
+            agent.wait_until_stable(timeout=10.0)
+            agent.act('6')
+            agent.wait_until_stable()
+            
+            # Switch to offline, then template provider
+            agent.act('<Enter>')
+            agent.wait_until_stable()
+            agent.assert_text("AI Provider: offline")
+
+            agent.act('<Enter>')
+            agent.wait_until_stable()
+            agent.assert_text("AI Provider: template")
+        finally:
+            agent.close()
+
+        # Restart and verify
+        restarted = TUIAgent(f'go run ./cmd/deutsch-tui -data-dir {tmpdir}', columns=100, lines=30)
+        try:
+            restarted.wait_until_stable(timeout=10.0)
+            restarted.act('6')
+            restarted.wait_until_stable()
+            restarted.assert_text("AI Provider: template")
+        finally:
+            restarted.close()
 
 if __name__ == "__main__":
     pytest.main(["-v", __file__])

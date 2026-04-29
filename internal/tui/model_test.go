@@ -346,18 +346,28 @@ func TestSettingsProviderSwitching(t *testing.T) {
 		t.Fatalf("initial provider = %q, want offline", model.aiProviderName)
 	}
 
-	// Cursor is at 0 (AI Provider)
+	// Cycle: offline -> template
 	model.Update(tea.KeyPressMsg{Code: '\r'}) // Enter
 	if model.aiProviderName != "template" {
-		t.Fatalf("provider after toggle = %q, want template", model.aiProviderName)
+		t.Fatalf("provider after toggle 1 = %q, want template", model.aiProviderName)
 	}
 	if _, ok := model.aiProvider.(ai.TemplateProvider); !ok {
 		t.Fatal("aiProvider should be TemplateProvider")
 	}
 
-	model.Update(tea.KeyPressMsg{Code: '\r'}) // Toggle back
+	// Cycle: template -> disabled
+	model.Update(tea.KeyPressMsg{Code: '\r'})
+	if model.aiProviderName != "disabled" {
+		t.Fatalf("provider after toggle 2 = %q, want disabled", model.aiProviderName)
+	}
+	if model.aiProvider != nil {
+		t.Fatal("aiProvider should be nil when disabled")
+	}
+
+	// Cycle: disabled -> offline
+	model.Update(tea.KeyPressMsg{Code: '\r'})
 	if model.aiProviderName != "offline" {
-		t.Fatalf("provider after toggle back = %q, want offline", model.aiProviderName)
+		t.Fatalf("provider after toggle 3 = %q, want offline", model.aiProviderName)
 	}
 	if _, ok := model.aiProvider.(ai.OfflineProvider); !ok {
 		t.Fatal("aiProvider should be OfflineProvider")
@@ -377,10 +387,10 @@ func TestSettingsTemplateEditing(t *testing.T) {
 
 	// Backspace to clear (partially)
 	model.Update(tea.KeyPressMsg{Code: tea.KeyBackspace})
-	
+
 	// Add text
 	model.Update(tea.KeyPressMsg{Code: 'X'})
-	
+
 	// Save
 	model.Update(tea.KeyPressMsg{Code: '\r'})
 	if model.editingTemplate {

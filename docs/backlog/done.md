@@ -1,3 +1,14 @@
+## 2026-04-29 Milestone 6: AI Provider Configuration and Prompt Templates
+
+- Implemented `TemplateProvider` in `internal/ai` to support customizable prompt templates using `{{.Topic}}` substitution.
+- Enhanced `Settings` view to allow toggling between "offline" and "template" AI providers.
+- Added support for basic template editing (Front, Back, Example) directly in the `Settings` view.
+- Updated `Config` struct to persist `AIProvider` and `AITemplates`.
+- Updated `main.go` to initialize the AI provider from the user's configuration.
+- Fixed outdated E2E shortcut keys and added a new E2E test for settings and template-based drafting.
+- Updated `scripts/verify.sh` to include E2E tests for more comprehensive verification.
+- Verified with unit tests, E2E tests, and `./scripts/verify.sh`.
+
 ## 2026-04-29 Milestone 5: Deeper Deck Browser
 
 - Implemented a dedicated "Decks" view (`ViewDecks`) to list all available decks with total and due card counts.

@@ -74,9 +74,18 @@ func main() {
 		provider = ai.OfflineProvider{}
 	}
 	program := tea.NewProgram(tui.NewModelWithOptions(store, scheduler, tui.ModelOptions{
-		AIProvider: provider,
-		ImportPath: filepath.Join(dir, "import.tsv"),
-		ExportPath: filepath.Join(dir, "export.tsv"),
+		AIProvider:     provider,
+		AIProviderName: cfg.AIProvider,
+		AITemplates:    cfg.AITemplates,
+		ImportPath:     filepath.Join(dir, "import.tsv"),
+		ExportPath:     filepath.Join(dir, "export.tsv"),
+		OnConfigChange: func(name string, tmpls map[string]string) {
+			cfg.AIProvider = name
+			cfg.AITemplates = tmpls
+			if err := app.SaveConfig(dir, cfg); err != nil {
+				logger.Printf("save config: %v", err)
+			}
+		},
 	}))
 	if _, err := program.Run(); err != nil {
 		logger.Printf("program run: %v", err)
