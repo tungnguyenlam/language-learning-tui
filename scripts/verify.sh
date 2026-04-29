@@ -18,6 +18,6 @@ if [ -d "tui_tester/venv" ]; then
 	# Use a subshell to avoid affecting the current shell's environment
 	(
 		. tui_tester/venv/bin/activate
-		python3 -m pytest e2e_tests/test_tui.py -q
+		python3 -m pytest e2e_tests/ -q
 	)
 fi

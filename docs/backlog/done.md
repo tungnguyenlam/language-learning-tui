@@ -1,3 +1,48 @@
+# Completed Work
+
+## Navigation Bug Fix and Robustness Enhancement (2026-04-29)
+
+Fixed a conflict between WASD navigation and AI draft discarding, and added new robustness tests.
+
+### Bug Fix
+- Removed 'd' key from global view switching to resolve conflict with 'discard' in AI Drafts view.
+- Ensured 's' and arrow keys remain available for view navigation.
+- Verified fix with targeted E2E tests.
+
+### Testing
+- Added `e2e_tests/test_robustness.py` with 3 new tests:
+  - `test_settings_template_editing_cancel`: Verifies template edit behavior.
+  - `test_import_nonexistent_file_shows_error`: Verifies error handling for missing files.
+  - `test_review_grade_updates_dashboard_count`: Verifies end-to-end review and dashboard sync.
+- Expanded `e2e_tests/test_wasd_navigation.py` to verify function preservation for 'a' and 'd' keys.
+- Updated `scripts/verify.sh` to run the full E2E test suite.
+
+### Verification
+- All 19 E2E tests pass.
+- `./scripts/verify.sh` passes with zero errors.
+
+## WASD Key Navigation Support (2026-04-29)
+
+Added WASD key support to the deutsch-tui application to improve keyboard navigation:
+
+### Implementation
+- Added 'w' key to switch to previous view (like left arrow)
+- Added 's' key to switch to next view (like right arrow)
+- Preserved 'a' and 'd' keys for existing functions
+- Modified `internal/tui/model.go` to handle WASD keys
+- Ensured no conflicts with existing functionality
+
+### Testing
+- Created comprehensive E2E tests in `e2e_tests/test_wasd_navigation.py`
+- Verified all existing tests still pass
+- Confirmed WASD keys work correctly for view switching
+- Confirmed existing 'a'/'d' functions are preserved
+
+### Verification
+- All 16 E2E tests pass including new WASD tests
+- `./scripts/verify.sh` passes with zero errors
+- No regressions in existing functionality
+
 ## 2026-04-29 End-to-end stabilization recertification kickoff
 
 - Reopened the end-to-end deutsch-tui stabilization milestone for the current autonomous pass.

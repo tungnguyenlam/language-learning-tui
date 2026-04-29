@@ -11,6 +11,7 @@ Last updated: 2026-04-29
 ## Notices
 
 - `docs/agent/notices/2026-04-29-bubbletea-v2-space-key.md`: Bubble Tea v2 uses "space" string for the space bar.
+- `docs/agent/notices/2026-04-29-wasd-navigation.md`: WASD key navigation support implementation.
 
 ## Decisions
 

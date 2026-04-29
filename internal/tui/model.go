@@ -266,15 +266,16 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.activeView = ViewAI
 	case "6":
 		m.activeView = ViewSettings
-	case "left", "shift+tab":
+	case "left", "shift+tab", "w":
 		m.previousView()
-	case "right":
+	case "right", "s":
 		m.nextView()
 	case "[":
 		m.previousDeck()
 	case "]":
 		m.nextDeck()
 	default:
+		// Handle view-specific keys
 		if m.activeView == ViewAI {
 			cmd, handled := m.updateAIKey(msg)
 			if handled {
@@ -299,34 +300,33 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				return m, cmd
 			}
 		}
+
+		// Handle remaining keys based on active view
+		switch m.activeView {
+		case ViewReview:
+			switch msg.String() {
+			case "up", "k":
+				if m.cursor > 0 {
+					m.cursor--
+				}
+			case "down", "j":
+				if m.cursor < len(m.dueCards)-1 {
+					m.cursor++
+				}
+			case "enter", "space":
+				m.revealed = !m.revealed
+			case "a":
+				return m, m.gradeCard(core.GradeAgain)
+			case "h":
+				return m, m.gradeCard(core.GradeHard)
+			case "g":
+				return m, m.gradeCard(core.GradeGood)
+			case "e":
+				return m, m.gradeCard(core.GradeEasy)
+			}
+		}
 	}
 
-	if m.activeView == ViewAI || m.activeView == ViewImport || m.activeView == ViewDecks || m.activeView == ViewSettings {
-		return m, nil
-	}
-
-	switch msg.String() {
-	case "up", "k":
-		if m.cursor > 0 {
-			m.cursor--
-		}
-	case "down", "j":
-		if m.cursor < len(m.dueCards)-1 {
-			m.cursor++
-		}
-	case "enter", "space":
-		if m.activeView == ViewReview {
-			m.revealed = !m.revealed
-		}
-	case "a":
-		return m, m.gradeCard(core.GradeAgain)
-	case "h":
-		return m, m.gradeCard(core.GradeHard)
-	case "g":
-		return m, m.gradeCard(core.GradeGood)
-	case "e":
-		return m, m.gradeCard(core.GradeEasy)
-	}
 	return m, nil
 }
 

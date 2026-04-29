@@ -31,4 +31,7 @@ End-to-end stabilization is complete. Resume the next roadmap milestone by imple
 - 2026-04-29: direct `TUIAgent` launch/render of `cmd/deutsch-tui --data-dir <tmp>` showed the Dashboard.
 - 2026-04-29: `tui_tester/venv/bin/python -m pytest e2e_tests/test_tui.py -q` passed with 11 tests.
 - 2026-04-29: `tui_tester/venv/bin/python -m pytest e2e_tests/test_tui.py -q` passed with 14 tests after adding three fresh E2E tests.
-- 2026-04-29: `./scripts/verify.sh` passed with 14 E2E tests.
+- 2026-04-29: `tui_tester/venv/bin/python -m pytest e2e_tests/` passed with 16 tests including WASD navigation support.
+- 2026-04-29: `./scripts/verify.sh` passed with 16 E2E tests.
+- 2026-04-29: port 8765 was free; manual `tui_tester` daemon start/observe/act/stop against `cmd/deutsch-tui` passed.
+- 2026-04-29: `./scripts/verify.sh` passed with 19 E2E tests (including 5 new tests for WASD and robustness).
