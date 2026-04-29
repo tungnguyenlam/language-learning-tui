@@ -61,6 +61,15 @@ func (m *mockRepo) UndoLastReview(ctx context.Context, cardID string) error {
 func (m *mockRepo) DueCards(ctx context.Context, now time.Time, limit int) ([]core.Card, error) {
 	return m.dueCards, nil
 }
+func (m *mockRepo) DueCardsBookmarked(ctx context.Context, now time.Time, limit int) ([]core.Card, error) {
+	var bookmarked []core.Card
+	for _, card := range m.dueCards {
+		if card.Bookmarked {
+			bookmarked = append(bookmarked, card)
+		}
+	}
+	return bookmarked, nil
+}
 func (m *mockRepo) GetReviewState(ctx context.Context, cardID string) (core.ReviewState, error) {
 	return core.ReviewState{CardID: cardID}, nil
 }

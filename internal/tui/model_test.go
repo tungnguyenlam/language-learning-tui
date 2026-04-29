@@ -483,3 +483,329 @@ func TestAIDraftWithTemplateProvider(t *testing.T) {
 		t.Fatalf("draft front = %q, want %q", model.drafts[0].Note.Front, "Prefix: test")
 	}
 }
+
+func TestBookmarkFilterToggle(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Prompt: "P1", Answer: "A1", Bookmarked: true},
+			{ID: "c2", DeckID: "deck-1", Prompt: "P2", Answer: "A2", Bookmarked: false},
+			{ID: "c3", DeckID: "deck-1", Prompt: "P3", Answer: "A3", Bookmarked: true},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.Update(dueCardsMsg(repo.dueCards))
+	model.activeView = ViewReview
+
+	if model.bookmarkFilter {
+		t.Fatal("bookmark filter should be off initially")
+	}
+
+	cmd := model.toggleBookmarkFilter()
+	if cmd == nil {
+		t.Fatal("toggleBookmarkFilter should return command")
+	}
+	msg := cmd()
+	model.Update(msg)
+
+	if !model.bookmarkFilter {
+		t.Fatal("bookmark filter should be on after toggle")
+	}
+	if len(model.dueCards) != 2 {
+		t.Fatalf("due cards = %d, want 2 bookmarked", len(model.dueCards))
+	}
+	if !strings.Contains(model.status, "bookmarked") {
+		t.Fatalf("status = %q, want bookmarked message", model.status)
+	}
+}
+
+func TestBookmarkFilterToggleOff(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Prompt: "P1", Answer: "A1"},
+			{ID: "c2", DeckID: "deck-1", Prompt: "P2", Answer: "A2"},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.Update(dueCardsMsg(repo.dueCards))
+	model.activeView = ViewReview
+	model.bookmarkFilter = true
+
+	cmd := model.toggleBookmarkFilter()
+	if cmd == nil {
+		t.Fatal("toggleBookmarkFilter should return command")
+	}
+	msg := cmd()
+	model.Update(msg)
+
+	if model.bookmarkFilter {
+		t.Fatal("bookmark filter should be off after second toggle")
+	}
+	if len(model.dueCards) != 2 {
+		t.Fatalf("due cards = %d, want 2", len(model.dueCards))
+	}
+}
+
+func TestReviewViewShowsLeechIndicator(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Prompt: "P1", Answer: "A1", Leech: true},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.Update(dueCardsMsg(repo.dueCards))
+	model.activeView = ViewReview
+
+	view := model.renderReview(0, 0)
+	if !strings.Contains(view, "LEECH") {
+		t.Fatalf("review view should show LEECH indicator: %s", view)
+	}
+}
+
+func TestReviewViewShowsBookmarkFilterBanner(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Prompt: "P1", Answer: "A1", Bookmarked: true},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.Update(dueCardsMsg(repo.dueCards))
+	model.activeView = ViewReview
+	model.bookmarkFilter = true
+
+	view := model.renderReview(0, 0)
+	if !strings.Contains(view, "(Bookmarked)") {
+		t.Fatalf("review view should show bookmark filter banner: %s", view)
+	}
+}
+
+func TestDashboardShowsBookmarkedDueAndLeech(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Prompt: "P1", Answer: "A1", Bookmarked: true, Leech: true},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.Update(dueCardsMsg(repo.dueCards))
+	model.stats = core.Statistics{
+		BookmarkedCards: 1,
+		BookmarkedDue:   1,
+		LeechCards:      1,
+		ReviewsToday:    3,
+		DailyGoal:       10,
+	}
+
+	dash := model.renderActiveViewPlain(0, 0)
+	if !strings.Contains(dash, "1 due)") {
+		t.Fatalf("dashboard should show bookmarked due count: %s", dash)
+	}
+	if !strings.Contains(dash, "Leech: 1") {
+		t.Fatalf("dashboard should show leech count: %s", dash)
+	}
+}
+
+func TestStatisticsShowsLeechAndBookmarkedDue(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{{ID: "c1", DeckID: "deck-1", Prompt: "P1", Answer: "A1"}},
+		decks:    []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.stats = core.Statistics{
+		TotalCards:      20,
+		NewCards:        5,
+		YoungCards:      10,
+		MatureCards:     5,
+		BookmarkedCards: 3,
+		BookmarkedDue:   2,
+		LeechCards:      1,
+		TotalReviews:    50,
+		ReviewsToday:    5,
+		DailyGoal:       10,
+		CurrentStreak:   3,
+		SuccessRate:     0.85,
+		Grades:          map[core.ReviewGrade]int{core.GradeGood: 40, core.GradeAgain: 10},
+	}
+
+	view := model.renderStatistics()
+	if !strings.Contains(view, "Bookmarked:  3 (2 due)") {
+		t.Fatalf("statistics should show bookmarked due: %s", view)
+	}
+	if !strings.Contains(view, "Leech:       1") {
+		t.Fatalf("statistics should show leech count: %s", view)
+	}
+}
+
+func TestMCQCardRendersChoicesAfterReveal(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Kind: core.CardKindMCQ, Prompt: "Was ist 'der Apfel'?", Answer: "the apple", Choices: []string{"the apple", "the banana", "the pear", "the grape"}},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.Update(dueCardsMsg(repo.dueCards))
+	model.activeView = ViewReview
+
+	view := model.renderReview(0, 0)
+	if !strings.Contains(view, "reveal choices") {
+		t.Fatalf("MCQ view should show reveal prompt: %s", view)
+	}
+
+	model.revealed = true
+	view = model.renderReview(0, 0)
+	if !strings.Contains(view, "1:") {
+		t.Fatalf("MCQ view should show choice 1 after reveal: %s", view)
+	}
+	if !strings.Contains(view, "2:") {
+		t.Fatalf("MCQ view should show choice 2 after reveal: %s", view)
+	}
+	if !strings.Contains(view, "3:") {
+		t.Fatalf("MCQ view should show choice 3 after reveal: %s", view)
+	}
+	if !strings.Contains(view, "4:") {
+		t.Fatalf("MCQ view should show choice 4 after reveal: %s", view)
+	}
+}
+
+func TestMCQChoiceSelectionCorrect(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Kind: core.CardKindMCQ, Prompt: "Was ist 'der Apfel'?", Answer: "the apple", Choices: []string{"the apple", "the banana", "the pear", "the grape"}},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.Update(dueCardsMsg(repo.dueCards))
+	model.activeView = ViewReview
+	model.revealed = true
+
+	model.selectMCQChoice("1")
+	if !model.mcqAnswered {
+		t.Fatal("MCQ should be answered after choice selection")
+	}
+	if !model.mcqCorrect {
+		t.Fatal("Choice 1 should be correct")
+	}
+	if model.mcqChoice != 0 {
+		t.Fatalf("mcqChoice = %d, want 0", model.mcqChoice)
+	}
+}
+
+func TestMCQChoiceSelectionIncorrect(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Kind: core.CardKindMCQ, Prompt: "Was ist 'der Apfel'?", Answer: "the apple", Choices: []string{"the apple", "the banana", "the pear", "the grape"}},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.Update(dueCardsMsg(repo.dueCards))
+	model.activeView = ViewReview
+	model.revealed = true
+
+	model.selectMCQChoice("2")
+	if !model.mcqAnswered {
+		t.Fatal("MCQ should be answered after choice selection")
+	}
+	if model.mcqCorrect {
+		t.Fatal("Choice 2 should be incorrect")
+	}
+
+	view := model.renderReview(0, 0)
+	if !strings.Contains(view, "Incorrect") {
+		t.Fatalf("MCQ view should show incorrect feedback: %s", view)
+	}
+}
+
+func TestMCQChoiceSelectionShowsCorrectAnswer(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Kind: core.CardKindMCQ, Prompt: "Was ist 'der Apfel'?", Answer: "the apple", Choices: []string{"the apple", "the banana", "the pear", "the grape"}},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.Update(dueCardsMsg(repo.dueCards))
+	model.activeView = ViewReview
+	model.revealed = true
+
+	model.selectMCQChoice("3")
+
+	view := model.renderReview(0, 0)
+	if !strings.Contains(view, "the apple") {
+		t.Fatalf("MCQ view should show correct answer after wrong choice: %s", view)
+	}
+	if strings.Contains(view, "Correct") {
+		t.Fatal("MCQ view should not show Correct for wrong choice")
+	}
+}
+
+func TestMCQStateResetsOnCardNavigation(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Kind: core.CardKindMCQ, Prompt: "Q1", Answer: "A1", Choices: []string{"A1", "B1"}},
+			{ID: "c2", DeckID: "deck-1", Kind: core.CardKindMCQ, Prompt: "Q2", Answer: "A2", Choices: []string{"A2", "B2"}},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.Update(dueCardsMsg(repo.dueCards))
+	model.activeView = ViewReview
+	model.revealed = true
+
+	model.selectMCQChoice("1")
+	if !model.mcqAnswered {
+		t.Fatal("MCQ should be answered")
+	}
+
+	var updated tea.Model
+	updated, _ = model.Update(tea.KeyPressMsg{Code: 'j'})
+	model = updated.(*Model)
+	if model.mcqAnswered {
+		t.Fatal("MCQ state should be reset after navigation")
+	}
+	if model.mcqChoice != -1 {
+		t.Fatalf("mcqChoice = %d, want -1", model.mcqChoice)
+	}
+}
+
+func TestMCQFlashcardFlowUnchanged(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Kind: core.CardKindFlashcard, Prompt: "P1", Answer: "A1"},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.Update(dueCardsMsg(repo.dueCards))
+	model.activeView = ViewReview
+
+	if model.revealed {
+		t.Fatal("flashcard should not be revealed initially")
+	}
+
+	view := model.renderReview(0, 0)
+	if strings.Contains(view, "1:") {
+		t.Fatalf("flashcard view should not show MCQ choices: %s", view)
+	}
+
+	model.Update(tea.KeyPressMsg{Code: ' '})
+	if !model.revealed {
+		t.Fatalf("flashcard should be revealed after space, revealed=%v", model.revealed)
+	}
+}

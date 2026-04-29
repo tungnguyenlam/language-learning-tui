@@ -349,3 +349,174 @@ func TestStatisticsDailyProgressAndStreak(t *testing.T) {
 		t.Fatalf("current streak = %d, want at least 2", stats.CurrentStreak)
 	}
 }
+
+func TestLeechDetectionAfterThreeAgainGrades(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	deck := content.StarterDeck()
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+	card := deck.Notes[0].Cards[0]
+	now := time.Date(2026, 4, 29, 10, 0, 0, 0, time.UTC)
+
+	for i := 0; i < 3; i++ {
+		if err := store.RecordReview(ctx, core.ReviewResult{
+			CardID:   card.ID,
+			Grade:    core.GradeAgain,
+			Reviewed: now.Add(time.Duration(i) * time.Minute),
+			Next:     core.ReviewState{CardID: card.ID, Due: now, Interval: 0, Reviews: i + 1, Ease: 2.5},
+		}); err != nil {
+			t.Fatalf("record review %d: %v", i+1, err)
+		}
+	}
+
+	cards, err := store.DueCards(ctx, now, 100)
+	if err != nil {
+		t.Fatalf("due cards: %v", err)
+	}
+	found := false
+	for _, due := range cards {
+		if due.ID == card.ID {
+			found = true
+			if !due.Leech {
+				t.Fatal("card should be flagged as leech after 3 Again grades")
+			}
+		}
+	}
+	if !found {
+		t.Fatalf("card %s not found in due cards", card.ID)
+	}
+
+	stats, err := store.Statistics(ctx)
+	if err != nil {
+		t.Fatalf("statistics: %v", err)
+	}
+	if stats.LeechCards != 1 {
+		t.Fatalf("leech cards = %d, want 1", stats.LeechCards)
+	}
+}
+
+func TestLeechResetOnGoodGrade(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	deck := content.StarterDeck()
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+	card := deck.Notes[0].Cards[0]
+	now := time.Date(2026, 4, 29, 10, 0, 0, 0, time.UTC)
+
+	for i := 0; i < 3; i++ {
+		if err := store.RecordReview(ctx, core.ReviewResult{
+			CardID:   card.ID,
+			Grade:    core.GradeAgain,
+			Reviewed: now.Add(time.Duration(i) * time.Minute),
+			Next:     core.ReviewState{CardID: card.ID, Due: now, Interval: 0, Reviews: i + 1, Ease: 2.5},
+		}); err != nil {
+			t.Fatalf("record again %d: %v", i+1, err)
+		}
+	}
+
+	if err := store.RecordReview(ctx, core.ReviewResult{
+		CardID:   card.ID,
+		Grade:    core.GradeGood,
+		Reviewed: now.Add(4 * time.Minute),
+		Next:     core.ReviewState{CardID: card.ID, Due: now.Add(24 * time.Hour), Interval: 24 * time.Hour, Reviews: 4, Ease: 2.5},
+	}); err != nil {
+		t.Fatalf("record good: %v", err)
+	}
+
+	cards, err := store.DueCards(ctx, now.Add(25*time.Hour), 100)
+	if err != nil {
+		t.Fatalf("due cards: %v", err)
+	}
+	for _, due := range cards {
+		if due.ID == card.ID && due.Leech {
+			t.Fatal("card should not be leech after Good grade")
+		}
+	}
+
+	stats, err := store.Statistics(ctx)
+	if err != nil {
+		t.Fatalf("statistics: %v", err)
+	}
+	if stats.LeechCards != 0 {
+		t.Fatalf("leech cards = %d, want 0", stats.LeechCards)
+	}
+}
+
+func TestDueCardsBookmarkedReturnsOnlyBookmarked(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	deck := content.StarterDeck()
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+	cardA := deck.Notes[0].Cards[0]
+
+	if err := store.SetCardBookmark(ctx, cardA.ID, true); err != nil {
+		t.Fatalf("set bookmark: %v", err)
+	}
+
+	bookmarked, err := store.DueCardsBookmarked(ctx, time.Now(), 100)
+	if err != nil {
+		t.Fatalf("due cards bookmarked: %v", err)
+	}
+	if len(bookmarked) != 1 {
+		t.Fatalf("bookmarked due cards = %d, want 1", len(bookmarked))
+	}
+	if bookmarked[0].ID != cardA.ID {
+		t.Fatalf("bookmarked card = %s, want %s", bookmarked[0].ID, cardA.ID)
+	}
+
+	allCards, err := store.DueCards(ctx, time.Now(), 100)
+	if err != nil {
+		t.Fatalf("due cards: %v", err)
+	}
+	if len(allCards) < 2 {
+		t.Fatalf("all due cards = %d, want at least 2", len(allCards))
+	}
+}
+
+func TestStatisticsBookmarkedDueCount(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	deck := content.StarterDeck()
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+	cardA := deck.Notes[0].Cards[0]
+
+	if err := store.SetCardBookmark(ctx, cardA.ID, true); err != nil {
+		t.Fatalf("set bookmark: %v", err)
+	}
+
+	stats, err := store.Statistics(ctx)
+	if err != nil {
+		t.Fatalf("statistics: %v", err)
+	}
+	if stats.BookmarkedDue < 1 {
+		t.Fatalf("bookmarked due = %d, want at least 1", stats.BookmarkedDue)
+	}
+}

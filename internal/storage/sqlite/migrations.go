@@ -80,4 +80,15 @@ var migrations = []migration{
 		updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 	)`,
 	},
+	{
+		ID: 11,
+		SQL: `
+		ALTER TABLE card_flags ADD COLUMN leech INTEGER NOT NULL DEFAULT 0;
+		ALTER TABLE card_flags ADD COLUMN lapse_streak INTEGER NOT NULL DEFAULT 0;
+	`,
+	},
+	{
+		ID:  12,
+		SQL: `ALTER TABLE cards ADD COLUMN choices TEXT NOT NULL DEFAULT ''`,
+	},
 }

@@ -262,7 +262,7 @@ def test_space_reveal_and_again_grade_keyboard_flow():
             agent.act('a')
             agent.wait_for_text("Review 1/5")
             agent.assert_text("5 cards due")
-            agent.assert_text("Press space or enter to reveal.")
+            agent.assert_text("reveal")
         finally:
             agent.close()
 

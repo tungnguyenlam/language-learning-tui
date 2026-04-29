@@ -81,6 +81,10 @@ type Model struct {
 	importPath         string
 	exportPath         string
 	onConfigChange     func(string, map[string]string)
+	bookmarkFilter     bool
+	mcqChoice          int
+	mcqAnswered        bool
+	mcqCorrect         bool
 }
 
 func NewModel(repo core.Repository, scheduler core.Scheduler) *Model {
@@ -152,6 +156,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 }
 
 type dueCardsMsg []core.Card
+type bookmarkedDueCardsMsg []core.Card
 type decksMsg []core.Deck
 type statsMsg core.Statistics
 type draftsMsg []ai.Draft
@@ -198,6 +203,16 @@ func (m *Model) loadDueCards() tea.Msg {
 	return dueCardsMsg(cards)
 }
 
+func (m *Model) loadBookmarkedDueCards() tea.Msg {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	cards, err := m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
+	if err != nil {
+		return err
+	}
+	return bookmarkedDueCardsMsg(cards)
+}
+
 func (m *Model) loadDecks() tea.Msg {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -235,6 +250,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case dueCardsMsg:
 		m.allDue = []core.Card(msg)
 		m.applyDeckFilter()
+	case bookmarkedDueCardsMsg:
+		m.allDue = []core.Card(msg)
+		m.applyDeckFilter()
+		if len(m.allDue) == 0 {
+			m.status = "No bookmarked cards due"
+		} else {
+			m.status = fmt.Sprintf("%d bookmarked cards due", len(m.allDue))
+		}
 	case statsMsg:
 		m.stats = core.Statistics(msg)
 	case draftsMsg:
@@ -303,12 +326,28 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "tab":
 		m.nextView()
 	case "1":
+		if m.activeView == ViewReview && len(m.dueCards) > 0 && m.dueCards[m.cursor].Kind == core.CardKindMCQ && m.revealed && !m.mcqAnswered {
+			m.selectMCQChoice(msg.String())
+			return m, nil
+		}
 		return m, m.updateView(ViewDashboard)
 	case "2":
+		if m.activeView == ViewReview && len(m.dueCards) > 0 && m.dueCards[m.cursor].Kind == core.CardKindMCQ && m.revealed && !m.mcqAnswered {
+			m.selectMCQChoice(msg.String())
+			return m, nil
+		}
 		return m, m.updateView(ViewDecks)
 	case "3":
+		if m.activeView == ViewReview && len(m.dueCards) > 0 && m.dueCards[m.cursor].Kind == core.CardKindMCQ && m.revealed && !m.mcqAnswered {
+			m.selectMCQChoice(msg.String())
+			return m, nil
+		}
 		return m, m.updateView(ViewReview)
 	case "4":
+		if m.activeView == ViewReview && len(m.dueCards) > 0 && m.dueCards[m.cursor].Kind == core.CardKindMCQ && m.revealed && !m.mcqAnswered {
+			m.selectMCQChoice(msg.String())
+			return m, nil
+		}
 		return m, m.updateView(ViewStatistics)
 	case "5":
 		return m, m.updateView(ViewImport)
@@ -358,15 +397,21 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			case "up", "k":
 				if m.cursor > 0 {
 					m.cursor--
+					m.resetMCQState()
 				}
 			case "down", "j":
 				if m.cursor < len(m.dueCards)-1 {
 					m.cursor++
+					m.resetMCQState()
 				}
 			case "enter", "space":
 				m.revealed = !m.revealed
+				m.mcqChoice = -1
+				m.mcqAnswered = false
 			case "b":
 				return m, m.toggleBookmark()
+			case "B":
+				return m, m.toggleBookmarkFilter()
 			case "u":
 				return m, m.undoLastReview()
 			case "a":
@@ -739,7 +784,12 @@ func (m *Model) gradeCard(grade core.ReviewGrade) tea.Cmd {
 			return err
 		}
 
-		cards, err := m.repo.DueCards(ctx, time.Now(), 50)
+		var cards []core.Card
+		if m.bookmarkFilter {
+			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
+		} else {
+			cards, err = m.repo.DueCards(ctx, time.Now(), 50)
+		}
 		if err != nil {
 			return err
 		}
@@ -777,7 +827,13 @@ func (m *Model) undoLastReview() tea.Cmd {
 		if err := m.repo.UndoLastReview(ctx, cardID); err != nil {
 			return err
 		}
-		cards, err := m.repo.DueCards(ctx, time.Now(), 50)
+		var cards []core.Card
+		var err error
+		if m.bookmarkFilter {
+			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
+		} else {
+			cards, err = m.repo.DueCards(ctx, time.Now(), 50)
+		}
 		if err != nil {
 			return err
 		}
@@ -791,6 +847,46 @@ func (m *Model) undoLastReview() tea.Cmd {
 		}
 		return reviewUndoMsg{cardID: cardID, cards: cards, decks: decks, stats: stats}
 	}
+}
+
+func (m *Model) toggleBookmarkFilter() tea.Cmd {
+	m.bookmarkFilter = !m.bookmarkFilter
+	m.revealed = false
+	m.cursor = 0
+	if m.bookmarkFilter {
+		m.status = "Loading bookmarked cards..."
+		return m.loadBookmarkedDueCards
+	}
+	m.status = "Loading all cards..."
+	return m.loadDueCards
+}
+
+func (m *Model) selectMCQChoice(key string) {
+	choiceIdx := -1
+	switch key {
+	case "1":
+		choiceIdx = 0
+	case "2":
+		choiceIdx = 1
+	case "3":
+		choiceIdx = 2
+	case "4":
+		choiceIdx = 3
+	}
+	if choiceIdx < 0 || choiceIdx >= len(m.dueCards[m.cursor].Choices) {
+		return
+	}
+	m.mcqChoice = choiceIdx
+	m.mcqAnswered = true
+	m.revealed = true
+	chosen := m.dueCards[m.cursor].Choices[choiceIdx]
+	m.mcqCorrect = chosen == m.dueCards[m.cursor].Answer
+}
+
+func (m *Model) resetMCQState() {
+	m.mcqChoice = -1
+	m.mcqAnswered = false
+	m.mcqCorrect = false
 }
 
 func (m *Model) setCardBookmarkLocal(cardID string, bookmarked bool) {
@@ -919,7 +1015,7 @@ func (m *Model) renderActiveViewPlain(x, y int) string {
 	case ViewSettings:
 		return m.renderSettings(x, y)
 	default:
-		return fmt.Sprintf("Dashboard\n\nDeck: %s\nDue cards: %d\nBookmarked: %d\nReviews today: %d/%d\n\nUse [ and ] to switch decks.\nUse Review to start studying.", m.deckLabel(), len(m.dueCards), m.stats.BookmarkedCards, m.stats.ReviewsToday, m.stats.DailyGoal)
+		return fmt.Sprintf("Dashboard\n\nDeck: %s\nDue cards: %d\nBookmarked: %d (%d due)\nLeech: %d\nReviews today: %d/%d\n\nUse [ and ] to switch decks.\nUse Review to start studying.", m.deckLabel(), len(m.dueCards), m.stats.BookmarkedCards, m.stats.BookmarkedDue, m.stats.LeechCards, m.stats.ReviewsToday, m.stats.DailyGoal)
 	}
 }
 
@@ -931,7 +1027,8 @@ func (m *Model) renderStatistics() string {
 	b.WriteString(fmt.Sprintf("  New:         %d\n", m.stats.NewCards))
 	b.WriteString(fmt.Sprintf("  Young:       %d\n", m.stats.YoungCards))
 	b.WriteString(fmt.Sprintf("  Mature:      %d\n", m.stats.MatureCards))
-	b.WriteString(fmt.Sprintf("  Bookmarked:  %d\n\n", m.stats.BookmarkedCards))
+	b.WriteString(fmt.Sprintf("  Bookmarked:  %d (%d due)\n", m.stats.BookmarkedCards, m.stats.BookmarkedDue))
+	b.WriteString(fmt.Sprintf("  Leech:       %d\n\n", m.stats.LeechCards))
 
 	b.WriteString(fmt.Sprintf("Total Reviews: %d\n", m.stats.TotalReviews))
 	b.WriteString(fmt.Sprintf("Reviews Today: %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal))
@@ -997,6 +1094,9 @@ func (m *Model) renderAI(x, y int) string {
 
 func (m *Model) renderReview(x, y int) string {
 	if len(m.dueCards) == 0 {
+		if m.bookmarkFilter {
+			return "Review (Bookmarked)\n\nNo bookmarked cards due."
+		}
 		return "Review\n\nNo cards due."
 	}
 	card := m.dueCards[m.cursor]
@@ -1004,17 +1104,65 @@ func (m *Model) renderReview(x, y int) string {
 	if card.Bookmarked {
 		bookmark = "Bookmark: on"
 	}
-	answer := "Press space or enter to reveal."
-	if m.revealed {
+	leech := ""
+	if card.Leech {
+		leech = " | LEECH"
+	}
+	filterBanner := ""
+	if m.bookmarkFilter {
+		filterBanner = " (Bookmarked)"
+	}
+	keys := "b toggle | B filter | u undo"
+	if m.bookmarkFilter {
+		keys = "b toggle | B all cards | u undo"
+	}
+
+	var answer string
+	if card.Kind == core.CardKindMCQ && len(card.Choices) > 0 {
+		if m.revealed {
+			if m.mcqAnswered {
+				feedback := "Incorrect"
+				if m.mcqCorrect {
+					feedback = "Correct"
+				}
+				answer = fmt.Sprintf("%s: %s\n\n%s\n\nGrade: a Again | h Hard | g Good | e Easy", feedback, card.Answer, renderMCQChoices(card.Choices, m.mcqChoice))
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: x + 7, Y: y + 10, Width: 5, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: x + 17, Y: y + 10, Width: 4, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: x + 26, Y: y + 10, Width: 4, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + 35, Y: y + 10, Width: 4, Height: 1})
+			} else {
+				answer = fmt.Sprintf("1-4 select answer\n\n%s\n\nGrade: a Again | h Hard | g Good | e Easy", renderMCQChoices(card.Choices, m.mcqChoice))
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: x + 7, Y: y + 8, Width: 5, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: x + 17, Y: y + 8, Width: 4, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: x + 26, Y: y + 8, Width: 4, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + 35, Y: y + 8, Width: 4, Height: 1})
+			}
+		} else {
+			answer = "Press space or enter to reveal choices."
+		}
+	} else if m.revealed {
 		answer = card.Answer + "\n\nGrade: a Again | h Hard | g Good | e Easy"
-		// Add hitboxes for grades. These are approximate but should work for basic interaction.
-		// "Again" is around offset 7, "Hard" around 17, "Good" around 26, "Easy" around 35
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: x + 7, Y: y + 6, Width: 5, Height: 1})
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: x + 17, Y: y + 6, Width: 4, Height: 1})
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: x + 26, Y: y + 6, Width: 4, Height: 1})
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + 35, Y: y + 6, Width: 4, Height: 1})
+	} else {
+		answer = "Press space or enter to reveal."
 	}
-	return fmt.Sprintf("Review %d/%d\n%s | b toggle | u undo\n\n%s\n\n%s", m.cursor+1, len(m.dueCards), bookmark, card.Prompt, answer)
+	return fmt.Sprintf("Review%s %d/%d\n%s | %s\n%s\n\n%s\n\n%s", filterBanner, m.cursor+1, len(m.dueCards), bookmark, keys, leech, card.Prompt, answer)
+}
+
+func renderMCQChoices(choices []string, selected int) string {
+	var b strings.Builder
+	for i, choice := range choices {
+		prefix := "  "
+		mark := " "
+		if i == selected {
+			mark = ">"
+		}
+		b.WriteString(fmt.Sprintf("%s%d: %s%s\n", prefix, i+1, mark, choice))
+	}
+	return strings.TrimRight(b.String(), "\n")
 }
 
 func (m *Model) nextViewCmd() tea.Cmd {

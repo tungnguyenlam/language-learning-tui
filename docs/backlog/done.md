@@ -1,6 +1,15 @@
 # Completed Work
 
-## 2026-04-29 Autonomous Feature Pass - Review Bookmarks, Undo, and Daily Progress
+## 2026-04-29 Autonomous Feature Pass 2 - Bookmark Filter, MCQ Review, Leech Detection
+
+- Added bookmarked-only review mode: `B` (shift+b) in Review toggles a filter showing only bookmarked cards, with a banner indicator and updated Dashboard/Statistics counts.
+- Added MCQ card review support: MCQ cards now render numbered choices after Space reveal, accept 1-4 key selection, show Correct/Incorrect feedback, and grade normally. Choices persist in SQLite via new migration 12.
+- Added leech detection: cards with 3+ consecutive "Again" grades are auto-flagged as "leech", shown with a LEECH indicator during review, and counted in Dashboard/Statistics. Reset on Hard/Good/Easy grades.
+- Added SQLite migration 11 for `card_flags.leech` and `lapse_streak` columns; migration 12 for `cards.choices` column to persist MCQ choices.
+- Extended `core.Repository` with `DueCardsBookmarked` method; extended `Statistics` with `BookmarkedDue` and `LeechCards` fields.
+- Added 9 Go unit tests covering bookmark filter toggle, MCQ rendering/selection/reset, leech detection/persistence/reset, and Statistics updates.
+- Added 3 tui-tester E2E tests covering bookmark filter toggle, leech detection across restart, and MCQ choice selection feedback.
+- Final verification passed with `./scripts/verify.sh`, including gofmt, all Go tests, go vet, smoke launch, and 30 E2E tests.
 
 - Added SQLite-backed card bookmarks through a new `card_flags` migration, repository contract support, Review `b` key handling, and Dashboard/Statistics bookmark counts.
 - Added undo-last-review support through the repository boundary and Review `u` key handling; SQLite now deletes the newest review and restores the previous review state or returns the card to new.

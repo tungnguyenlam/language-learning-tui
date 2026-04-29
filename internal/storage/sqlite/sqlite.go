@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"deutsch-tui/internal/core"
@@ -248,7 +249,7 @@ func (s *Store) notesForDeck(ctx context.Context, deckID string) ([]core.Note, e
 
 func (s *Store) cardsForNote(ctx context.Context, noteID string) ([]core.Card, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, COALESCE(cf.bookmarked, 0)
+		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0)
 		FROM cards c
 		LEFT JOIN card_flags cf ON cf.card_id = c.id
 		WHERE c.note_id = ?
@@ -263,12 +264,15 @@ func (s *Store) cardsForNote(ctx context.Context, noteID string) ([]core.Card, e
 	for rows.Next() {
 		var card core.Card
 		var kind string
-		var bookmarked int
-		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &bookmarked); err != nil {
+		var choicesStr string
+		var bookmarked, leech int
+		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &bookmarked, &leech); err != nil {
 			return nil, err
 		}
 		card.Kind = core.CardKind(kind)
 		card.Bookmarked = bookmarked != 0
+		card.Leech = leech != 0
+		card.Choices = parseChoices(choicesStr)
 		cards = append(cards, card)
 	}
 	return cards, rows.Err()
@@ -278,16 +282,18 @@ func (s *Store) UpsertCard(ctx context.Context, card core.Card) error {
 	if err := core.ValidateCard(card); err != nil {
 		return err
 	}
+	choices := strings.Join(card.Choices, "|||")
 	_, err := s.db.ExecContext(ctx, `
-		INSERT INTO cards (id, note_id, deck_id, kind, prompt, answer)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO cards (id, note_id, deck_id, kind, prompt, answer, choices)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
 			note_id = excluded.note_id,
 			deck_id = excluded.deck_id,
 			kind = excluded.kind,
 			prompt = excluded.prompt,
-			answer = excluded.answer
-	`, card.ID, card.NoteID, card.DeckID, string(card.Kind), card.Prompt, card.Answer)
+			answer = excluded.answer,
+			choices = excluded.choices
+	`, card.ID, card.NoteID, card.DeckID, string(card.Kind), card.Prompt, card.Answer, choices)
 	return err
 }
 
@@ -295,14 +301,20 @@ func (s *Store) RecordReview(ctx context.Context, result core.ReviewResult) erro
 	if result.CardID == "" {
 		return errors.New("card id is required")
 	}
-	_, err := s.db.ExecContext(ctx, `
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	_, err = tx.ExecContext(ctx, `
 		INSERT INTO reviews (card_id, grade, reviewed_at, due_at, interval_seconds, stability, difficulty, ease, reviews, lapses)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`, result.CardID, string(result.Grade), result.Reviewed.UTC(), result.Next.Due.UTC(), int64(result.Next.Interval.Seconds()), result.Next.Stability, result.Next.Difficulty, result.Next.Ease, result.Next.Reviews, result.Next.Lapses)
 	if err != nil {
 		return err
 	}
-	_, err = s.db.ExecContext(ctx, `
+	_, err = tx.ExecContext(ctx, `
 		INSERT INTO review_states (card_id, due_at, interval_seconds, stability, difficulty, ease, reviews, lapses)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(card_id) DO UPDATE SET
@@ -314,7 +326,34 @@ func (s *Store) RecordReview(ctx context.Context, result core.ReviewResult) erro
 			reviews = excluded.reviews,
 			lapses = excluded.lapses
 	`, result.CardID, result.Next.Due.UTC(), int64(result.Next.Interval.Seconds()), result.Next.Stability, result.Next.Difficulty, result.Next.Ease, result.Next.Reviews, result.Next.Lapses)
-	return err
+	if err != nil {
+		return err
+	}
+
+	if result.Grade == core.GradeAgain {
+		_, err = tx.ExecContext(ctx, `
+			INSERT INTO card_flags (card_id, bookmarked, lapse_streak, leech, updated_at)
+			VALUES (?, 0, 1, 0, ?)
+			ON CONFLICT(card_id) DO UPDATE SET
+				lapse_streak = card_flags.lapse_streak + 1,
+				leech = CASE WHEN card_flags.lapse_streak + 1 >= 3 THEN 1 ELSE 0 END,
+				updated_at = ?
+		`, result.CardID, time.Now().UTC(), time.Now().UTC())
+	} else {
+		_, err = tx.ExecContext(ctx, `
+			INSERT INTO card_flags (card_id, bookmarked, lapse_streak, leech, updated_at)
+			VALUES (?, 0, 0, 0, ?)
+			ON CONFLICT(card_id) DO UPDATE SET
+				lapse_streak = 0,
+				leech = 0,
+				updated_at = ?
+		`, result.CardID, time.Now().UTC(), time.Now().UTC())
+	}
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func (s *Store) UndoLastReview(ctx context.Context, cardID string) error {
@@ -385,7 +424,7 @@ func (s *Store) DueCards(ctx context.Context, now time.Time, limit int) ([]core.
 		limit = 20
 	}
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, COALESCE(cf.bookmarked, 0)
+		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0)
 		FROM cards c
 		LEFT JOIN review_states rs ON rs.card_id = c.id
 		LEFT JOIN card_flags cf ON cf.card_id = c.id
@@ -402,12 +441,51 @@ func (s *Store) DueCards(ctx context.Context, now time.Time, limit int) ([]core.
 	for rows.Next() {
 		var card core.Card
 		var kind string
-		var bookmarked int
-		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &bookmarked); err != nil {
+		var choicesStr string
+		var bookmarked, leech int
+		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &bookmarked, &leech); err != nil {
 			return nil, err
 		}
 		card.Kind = core.CardKind(kind)
 		card.Bookmarked = bookmarked != 0
+		card.Leech = leech != 0
+		card.Choices = parseChoices(choicesStr)
+		cards = append(cards, card)
+	}
+	return cards, rows.Err()
+}
+
+func (s *Store) DueCardsBookmarked(ctx context.Context, now time.Time, limit int) ([]core.Card, error) {
+	if limit <= 0 {
+		limit = 20
+	}
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0)
+		FROM cards c
+		INNER JOIN card_flags cf ON cf.card_id = c.id AND cf.bookmarked = 1
+		LEFT JOIN review_states rs ON rs.card_id = c.id
+		WHERE rs.due_at IS NULL OR rs.due_at <= ?
+		ORDER BY COALESCE(rs.due_at, '1970-01-01T00:00:00Z'), c.id
+		LIMIT ?
+	`, now.UTC(), limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var cards []core.Card
+	for rows.Next() {
+		var card core.Card
+		var kind string
+		var choicesStr string
+		var bookmarked, leech int
+		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &bookmarked, &leech); err != nil {
+			return nil, err
+		}
+		card.Kind = core.CardKind(kind)
+		card.Bookmarked = bookmarked != 0
+		card.Leech = leech != 0
+		card.Choices = parseChoices(choicesStr)
 		cards = append(cards, card)
 	}
 	return cards, rows.Err()
@@ -474,6 +552,22 @@ func (s *Store) Statistics(ctx context.Context) (core.Statistics, error) {
 	}
 
 	err = s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM card_flags WHERE bookmarked = 1`).Scan(&stats.BookmarkedCards)
+	if err != nil {
+		return stats, err
+	}
+
+	err = s.db.QueryRowContext(ctx, `
+		SELECT COUNT(*)
+		FROM cards c
+		INNER JOIN card_flags cf ON cf.card_id = c.id AND cf.bookmarked = 1
+		LEFT JOIN review_states rs ON rs.card_id = c.id
+		WHERE rs.due_at IS NULL OR rs.due_at <= ?
+	`, now).Scan(&stats.BookmarkedDue)
+	if err != nil {
+		return stats, err
+	}
+
+	err = s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM card_flags WHERE leech = 1`).Scan(&stats.LeechCards)
 	if err != nil {
 		return stats, err
 	}
@@ -569,4 +663,11 @@ func (s *Store) GetReviewState(ctx context.Context, cardID string) (core.ReviewS
 	}
 	state.Interval = time.Duration(intervalSec) * time.Second
 	return state, nil
+}
+
+func parseChoices(raw string) []string {
+	if strings.TrimSpace(raw) == "" {
+		return nil
+	}
+	return strings.Split(raw, "|||")
 }

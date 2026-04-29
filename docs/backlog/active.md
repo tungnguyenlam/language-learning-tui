@@ -89,6 +89,69 @@ Test plan:
 
 Autonomous feature pass is complete. Resume the next roadmap milestone by implementing `.apkg` import/export or audio/media support unless a newer user request supersedes it.
 
+## Feature Specs
+
+### Feature 4: Bookmarked Cards Review Mode
+
+User story: As a learner, I can filter my review queue to only bookmarked cards so I can focus on difficult or important material.
+
+Acceptance criteria:
+- `B` (shift+b) in Review view toggles bookmarked-only filter mode.
+- When active, only bookmarked cards appear in the review queue.
+- A banner shows "Bookmarked mode: ON" in the review view.
+- Dashboard shows "X bookmarked due" alongside normal due count.
+- Statistics view shows bookmarked mode count if applicable.
+- No schema changes (uses existing card_flags table).
+
+UI/UX and components:
+- `internal/tui/model.go`: add `bookmarkFilter` bool field, `B` key handler, filtered due cards, banner rendering.
+- `internal/core/core.go`: extend `Statistics` with `BookmarkedDue` count.
+- `internal/storage/sqlite`: add `DueCardsByBookmark(ctx, now, limit, bookmarked bool)` method.
+
+Test plan:
+- Go unit tests for filter toggle, card filtering, and Statistics bookmarked-due count.
+- tui-tester E2E: toggle bookmark filter, verify only bookmarked cards shown.
+
+### Feature 5: MCQ Card Review Flow
+
+User story: As a learner, I can answer multiple-choice cards by selecting a numbered option so I can practice recognition alongside recall.
+
+Acceptance criteria:
+- MCQ cards render their choices as numbered options (1-4) in the Review view.
+- Pressing `1`-`4` selects the corresponding choice and reveals whether it's correct.
+- After selection, grading keys work as normal.
+- Flashcard flow is unchanged for non-MCQ cards.
+- Correct/incorrect feedback shown immediately after choice selection.
+
+UI/UX and components:
+- `internal/tui/model.go`: add MCQ rendering branch, choice selection state, correct/incorrect feedback.
+- No schema changes (MCQ choices already stored in `cards.kind = 'mcq'` and `core.Card.Choices`).
+- Content layer needs to populate `Choices` during TSV import for MCQ notes.
+
+Test plan:
+- Go unit tests for MCQ rendering, choice selection, and correctness check.
+- tui-tester E2E: review MCQ card, select correct choice, verify feedback.
+
+### Feature 6: Leech Detection
+
+User story: As a learner, I can see which cards I repeatedly fail so I can focus extra effort or suspend them.
+
+Acceptance criteria:
+- Cards with 3+ consecutive "Again" grades are automatically flagged as "leech".
+- Leech cards show a `LEECH` indicator during review.
+- Statistics view shows total leech count.
+- Leech flag is persisted in SQLite (new migration for `card_flags.leech` column or separate table).
+- Reset leech count when card is graded Hard/Good/Easy.
+
+UI/UX and components:
+- `internal/tui/model.go`: leech indicator in Review rendering, leech count in Statistics.
+- `internal/storage/sqlite`: migration to add `leech` or `lapse_streak` to `card_flags`, update on review recording.
+- `internal/core/core.go`: extend `Statistics` with `LeechCards` count.
+
+Test plan:
+- Go unit tests for leech flagging, reset on success, and Statistics count.
+- tui-tester E2E: grade card "Again" 3 times, verify leech indicator appears.
+
 ## Blockers
 
 - None.

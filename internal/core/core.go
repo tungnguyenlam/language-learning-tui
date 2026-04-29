@@ -56,6 +56,7 @@ type Card struct {
 	Choices    []string
 	Tags       []string
 	Bookmarked bool
+	Leech      bool
 }
 
 type ReviewState struct {
@@ -83,6 +84,8 @@ type Statistics struct {
 	YoungCards      int
 	MatureCards     int
 	BookmarkedCards int
+	BookmarkedDue   int
+	LeechCards      int
 	TotalReviews    int
 	ReviewsToday    int
 	DailyGoal       int
@@ -98,6 +101,7 @@ type Repository interface {
 	RecordReview(ctx context.Context, result ReviewResult) error
 	UndoLastReview(ctx context.Context, cardID string) error
 	DueCards(ctx context.Context, now time.Time, limit int) ([]Card, error)
+	DueCardsBookmarked(ctx context.Context, now time.Time, limit int) ([]Card, error)
 	GetReviewState(ctx context.Context, cardID string) (ReviewState, error)
 	SetCardBookmark(ctx context.Context, cardID string, bookmarked bool) error
 	Statistics(ctx context.Context) (Statistics, error)
