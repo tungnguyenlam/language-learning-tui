@@ -46,6 +46,10 @@ class TUIAgent:
         """Send a control character to the TUI. Prefer act('<C-c>') instead."""
         self.actions.send_ctrl(char)
 
+    def click(self, x: int, y: int, button: int = 0) -> None:
+        """Send a mouse click at 1-based terminal coordinates."""
+        self.actions.click(x, y, button)
+
     def wait_until_stable(self, timeout: float = 5.0, min_stable_duration: float = 0.5) -> None:
         """Wait for the screen to stabilize after an action."""
         self.waiter.wait_for_stable(timeout, min_stable_duration)

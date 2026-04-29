@@ -8,16 +8,19 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../t
 
 from tui_tester import TUIAgent
 
+def start_agent(tmpdir, columns=100, lines=30):
+    agent = TUIAgent(f'go run ./cmd/deutsch-tui -data-dir {tmpdir}', columns=columns, lines=lines)
+    agent.wait_for_text("Dashboard", timeout=15.0)
+    agent.wait_until_stable()
+    return agent
+
 def test_dashboard_and_review_flow():
     # Use a temporary directory for data to ensure a clean state
     with tempfile.TemporaryDirectory() as tmpdir:
         # Start the Go app using the agent
-        agent = TUIAgent(f'go run ./cmd/deutsch-tui -data-dir {tmpdir}', columns=100, lines=30)
+        agent = start_agent(tmpdir)
 
         try:
-            # Wait for the dashboard to load and become stable
-            agent.wait_until_stable(timeout=10.0)
-
             # Verify dashboard content
             agent.assert_text("Dashboard")
             agent.assert_text("Deck: German A1 Survival")
@@ -61,10 +64,9 @@ def test_dashboard_and_review_flow():
 
 def test_ai_draft_approval_persists_across_restart():
     with tempfile.TemporaryDirectory() as tmpdir:
-        agent = TUIAgent(f'go run ./cmd/deutsch-tui -data-dir {tmpdir}', columns=100, lines=30)
+        agent = start_agent(tmpdir)
 
         try:
-            agent.wait_until_stable(timeout=10.0)
             agent.act('5')
             agent.wait_until_stable()
             agent.assert_text("AI Drafts")
@@ -85,9 +87,8 @@ def test_ai_draft_approval_persists_across_restart():
         finally:
             agent.close()
 
-        restarted = TUIAgent(f'go run ./cmd/deutsch-tui -data-dir {tmpdir}', columns=100, lines=30)
+        restarted = start_agent(tmpdir)
         try:
-            restarted.wait_until_stable(timeout=10.0)
             restarted.assert_text("Dashboard")
             restarted.assert_text("Due cards: 8")
         finally:
@@ -101,10 +102,9 @@ def test_import_tsv_adds_reviewable_deck_and_export_writes_file():
             handle.write("#separator:tab\n")
             handle.write("import-1\tdie Bahn\ttrain\t\ttransport\tImported A1\tBasic\n")
 
-        agent = TUIAgent(f'go run ./cmd/deutsch-tui -data-dir {tmpdir}', columns=110, lines=30)
+        agent = start_agent(tmpdir, columns=110, lines=30)
 
         try:
-            agent.wait_until_stable(timeout=10.0)
             agent.act('4')
             agent.wait_until_stable()
             agent.assert_text("Import / Export")
@@ -137,10 +137,8 @@ def test_import_tsv_adds_reviewable_deck_and_export_writes_file():
 
 def test_settings_and_template_drafting():
     with tempfile.TemporaryDirectory() as tmpdir:
-        agent = TUIAgent(f'go run ./cmd/deutsch-tui -data-dir {tmpdir}', columns=100, lines=30)
+        agent = start_agent(tmpdir)
         try:
-            agent.wait_until_stable(timeout=10.0)
-            
             # Go to Settings
             agent.act('6')
             agent.wait_until_stable()
@@ -183,9 +181,8 @@ def test_settings_and_template_drafting():
 
 def test_settings_persistence():
     with tempfile.TemporaryDirectory() as tmpdir:
-        agent = TUIAgent(f'go run ./cmd/deutsch-tui -data-dir {tmpdir}', columns=100, lines=30)
+        agent = start_agent(tmpdir)
         try:
-            agent.wait_until_stable(timeout=10.0)
             agent.act('6')
             agent.wait_until_stable()
             
@@ -201,14 +198,73 @@ def test_settings_persistence():
             agent.close()
 
         # Restart and verify
-        restarted = TUIAgent(f'go run ./cmd/deutsch-tui -data-dir {tmpdir}', columns=100, lines=30)
+        restarted = start_agent(tmpdir)
         try:
-            restarted.wait_until_stable(timeout=10.0)
             restarted.act('6')
             restarted.wait_until_stable()
             restarted.assert_text("AI Provider: template")
         finally:
             restarted.close()
+
+def test_all_core_views_render_with_keyboard_navigation():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir, columns=90, lines=28)
+        try:
+            expected_views = [
+                ('1', "Dashboard"),
+                ('2', "Decks"),
+                ('3', "Review 1/6"),
+                ('4', "Import / Export"),
+                ('5', "AI Drafts"),
+                ('6', "Settings"),
+            ]
+            for key, text in expected_views:
+                agent.act(key)
+                agent.wait_for_text(text)
+                agent.wait_until_stable()
+                agent.assert_text(text)
+        finally:
+            agent.close()
+
+def test_review_grade_persists_to_sqlite_across_restart():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir)
+        try:
+            agent.act('3')
+            agent.wait_for_text("Review 1/6")
+            agent.act('<Enter>')
+            agent.wait_for_text("Grade: a Again")
+            agent.act('e')
+            agent.wait_for_text("5 cards due")
+            agent.act('1')
+            agent.wait_for_text("Due cards: 5")
+        finally:
+            agent.close()
+
+        restarted = start_agent(tmpdir)
+        try:
+            restarted.assert_text("Due cards: 5")
+            restarted.act('3')
+            restarted.wait_for_text("Review 1/5")
+        finally:
+            restarted.close()
+
+def test_mouse_tab_navigation_and_grade_button():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir, columns=90, lines=28)
+        try:
+            # Medium layout tab row starts on terminal row 3; Review tab spans columns 21-28.
+            agent.click(22, 3)
+            agent.wait_for_text("Review 1/6")
+            agent.act('<Enter>')
+            agent.wait_for_text("Grade: a Again")
+
+            # In the medium review panel, the Good grade hitbox is on terminal row 11.
+            agent.click(30, 11)
+            agent.wait_for_text("5 cards due")
+            agent.assert_text("Review 1/5")
+        finally:
+            agent.close()
 
 if __name__ == "__main__":
     pytest.main(["-v", __file__])

@@ -62,6 +62,16 @@ class Actions:
         char = char.upper()
         if not ('A' <= char <= 'Z' or char in ('[', '\\', ']', '^', '_')):
             raise ValueError(f"Invalid control character: {char}")
-            
+
         ctrl_code = chr(ord(char) - ord('A') + 1)
         self.driver.write(ctrl_code)
+
+    def click(self, x: int, y: int, button: int = 0) -> None:
+        """
+        Send an xterm SGR mouse click at 1-based terminal coordinates.
+        Button 0 is the primary mouse button.
+        """
+        if x < 1 or y < 1:
+            raise ValueError("mouse coordinates are 1-based and must be positive")
+        self.driver.write(f"\x1b[<{button};{x};{y}M")
+        self.driver.write(f"\x1b[<{button};{x};{y}m")

@@ -1,3 +1,10 @@
+## 2026-04-29 End-to-end deutsch-tui stabilization
+
+- Fixed E2E startup synchronization by waiting for the Dashboard text instead of treating a quiet PTY as a ready screen.
+- Added tui-tester mouse click support using xterm SGR mouse events.
+- Added E2E coverage for all core views, persisted review grading across restart, and mouse-driven Review tab plus grade interaction.
+- Verified with `go test ./...`, `tui_tester/venv/bin/python -m pytest e2e_tests/test_tui.py -q`, and `./scripts/verify.sh`.
+
 ## 2026-04-29 Milestone 6: AI Provider Configuration and Prompt Templates
 
 - Implemented `TemplateProvider` in `internal/ai` to support customizable prompt templates using `{{.Topic}}` substitution.

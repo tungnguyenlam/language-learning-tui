@@ -4,18 +4,21 @@ Last updated: 2026-04-29
 
 ## Current Milestone
 
-Milestone 7: Statistics and Progress Visualization.
+End-to-end deutsch-tui stabilization.
 
 ## Next Action
 
-Implement a Statistics view showing learning progress (e.g., retention rate, cards learned over time).
+End-to-end stabilization is complete. Resume the next roadmap milestone by implementing the Statistics view unless a newer user request supersedes it.
 
 ## Acceptance Criteria
 
-- New "Stats" view accessible via Tab or shortcut '7'.
-- SQLite repository provides methods to fetch historical review data.
-- Stats view displays retention rate and a simple bar chart of reviews per day (text-based).
-- Unit tests cover stats calculation logic.
+- `cmd/deutsch-tui` launches without errors.
+- Dashboard, Review, Import, AI, and Settings views render correctly.
+- Core keyboard and mouse interactions respond, including flashcard reveal, grading, and navigation.
+- Review state persists to SQLite across app restarts.
+- Existing tests and at least 3 tui-tester E2E tests pass.
+- `./scripts/verify.sh` passes with zero errors or warnings.
+- Completed milestone summary is recorded in `docs/backlog/done.md`.
 
 ## Blockers
 
@@ -23,4 +26,6 @@ Implement a Statistics view showing learning progress (e.g., retention rate, car
 
 ## Last Verified
 
-- 2026-04-29: `./scripts/verify.sh` (includes Go tests, smoke tests, and E2E tests)
+- 2026-04-29: `go test ./...` passed.
+- 2026-04-29: `tui_tester/venv/bin/python -m pytest e2e_tests/test_tui.py -q` passed with 8 tests.
+- 2026-04-29: `./scripts/verify.sh` passed with 8 E2E tests.
