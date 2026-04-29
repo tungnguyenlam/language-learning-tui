@@ -1,6 +1,9 @@
-.PHONY: verify test vet fmt-check smoke
+.PHONY: verify test vet fmt-check smoke run
 
 GOCACHE ?= /tmp/deutsch-tui-gocache
+
+run:
+	go run ./cmd/deutsch-tui
 
 verify: fmt-check test vet smoke
 
