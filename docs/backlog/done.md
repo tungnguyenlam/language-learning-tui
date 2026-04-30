@@ -1,5 +1,18 @@
 # Completed Work
 
+## 2026-04-30 Autonomous Feature Pass 8 - Streak Indicator and Dashboard Refinements
+
+- Implemented "Streak visual indicator" on the Dashboard and Statistics views.
+- Added visual fire emoji 🔥 when streak > 0 to motivate learners.
+- Modified `internal/tui/model.go` to surface the streak indicator in `renderActiveViewPlain` (Dashboard default branch).
+- Updated unit test `TestDashboardShowsBookmarkedDueAndLeech` to verify the streak indicator.
+- Created `e2e_tests/test_dashboard_features.py` with 3 new tui-tester E2E regressions:
+  - `test_help_overlay_toggle`: tests the '?' shortcut.
+  - `test_dashboard_deck_switching_updates_view`: tests using `[` and `]` to navigate decks gracefully.
+  - `test_streak_persists_across_sessions`: verifies streak state loads correctly upon restart.
+- Updated `e2e_tests/test_statistics.py` to check for streak indicator in both Dashboard and Statistics.
+- Final verification passed with `./scripts/verify.sh`: Go tests, smoke launch, and 53 tui-tester E2E tests.
+
 ## 2026-04-30 Agent Instruction Maintenance
 
 - Added explicit root guidance that agents may update root/subtree instructions and continuity docs when needed to make future work safer or easier.

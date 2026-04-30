@@ -705,6 +705,7 @@ func TestDashboardShowsBookmarkedDueAndLeech(t *testing.T) {
 		LeechCards:      1,
 		ReviewsToday:    3,
 		DailyGoal:       10,
+		CurrentStreak:   3,
 	}
 
 	dash := model.renderActiveViewPlain(0, 0)
@@ -713,6 +714,9 @@ func TestDashboardShowsBookmarkedDueAndLeech(t *testing.T) {
 	}
 	if !strings.Contains(dash, "Leech: 1") {
 		t.Fatalf("dashboard should show leech count: %s", dash)
+	}
+	if !strings.Contains(dash, "Current Streak: 3 days 🔥") {
+		t.Fatalf("dashboard should show current streak with fire emoji: %s", dash)
 	}
 }
 

@@ -4,7 +4,7 @@ Last updated: 2026-04-30
 
 ## Current Milestone
 
-Autonomous Feature Pass 7: Status Stability and Browser Reload
+Autonomous Feature Pass 8: Streak Indicator and Dashboard Refinements
 
 ## Planned Features
 
@@ -58,38 +58,22 @@ Top blockers for this run:
 
 ## Next Action
 
-Await next implementation pass; start by reading the indexed notices, especially TUI status-line and Browser reload contracts.
+Await next implementation pass; consider tackling "Per-card review history popover" or "Deck tags and filtering".
 
 ## Current Session Notes
 
-- 2026-04-30: Started Autonomous Feature Pass 6. Root and TUI agent instructions read; `go run ./cmd/deutsch-tui --help` launches successfully. One untracked generated binary `deutsch-tui` exists in the repo root and should not be committed.
-- 2026-04-30: Fresh baseline `./scripts/verify.sh` passed with Go tests, smoke launch, and 38 E2E tests. Found that `Tab` calls `nextView()` and discards `updateView` load commands, leaving command-backed views stale when reached via Tab.
-- 2026-04-30: Fixed Tab navigation to return `nextViewCmd()`. Added `TestTabNavigationReturnsViewLoadCommand` and 3 E2E tests covering Tab-loaded Statistics, Browser, and Cram. Targeted checks passed: `go test ./internal/tui` and `python3 -m pytest e2e_tests/test_tab_load_commands.py -q`.
-- 2026-04-30: Full verification passed with `./scripts/verify.sh`: Go tests, go vet, smoke launch, and 41 tui-tester E2E tests.
-- 2026-04-30: Implemented Feature 15 (Review History Visualizations) with ASCII bar chart in Statistics view.
-- Added `ReviewsPerDay` method to repository interface and SQLite implementation.
-- Extended TUI model to load and display 14-day review activity chart.
-- All tests pass: Go tests, E2E tests, and verify.sh.
-- 2026-04-30: Added 3 new E2E tests for uncovered UX behaviors:
-  - Cram Mode filter types (suspended, leech, flagged, all)
-  - Browser view deck switching functionality
-  - Settings view daily goal adjustment
-- 2026-04-30: Added contextual help hints to status bar based on active view to improve UX.
-- 2026-04-30: Fixed edge case in ReviewsPerDay SQL query to handle NULL dates.
-- 2026-04-30: All changes committed with passing tests.
-- 2026-04-30: Fresh autonomous baseline started. `go run ./cmd/deutsch-tui --help` succeeds. `./scripts/verify.sh` currently fails 7 E2E assertions because status messages wrap across lines; Browser deck switching also appears to change deck state without reloading browser cards.
-- 2026-04-30: Fixed status rendering to expose a stable single-line status area, shortened missing-file import errors, fixed Browser `[`/`]` deck switching to reload cards, and added unit coverage. Targeted prior failures pass: `tui_tester/venv/bin/python -m pytest ... -q` (7 passed).
-- 2026-04-30: Added 3 new tui-tester E2E regressions for grade status stability, concise import missing-file errors, and Browser deck switching after TSV import. Targeted new suite passes: `tui_tester/venv/bin/python -m pytest e2e_tests/test_status_and_browser_regressions.py -q` (3 passed).
-- 2026-04-30: Full verification passed with `./scripts/verify.sh`: Go tests, smoke launch, and 50 tui-tester E2E tests.
-- 2026-04-30: Updated agent instructions to allow future agents to modify instructions when needed, and added indexed notices for TUI status-line stability and Browser deck reload behavior.
+- 2026-04-30: Started Autonomous Feature Pass 8. Root and TUI agent instructions read; `go run ./cmd/deutsch-tui --help` launches successfully.
+- 2026-04-30: Added visual Streak Indicator (🔥) to the Dashboard view based on the current streak computed from `stats.CurrentStreak`.
+- 2026-04-30: Added 3 new E2E tests for Dashboard features and help overlay in `e2e_tests/test_dashboard_features.py`.
+- 2026-04-30: Expanded `e2e_tests/test_statistics.py` to check for streak indicator in both Dashboard and Statistics.
+- 2026-04-30: Final verification passed with `./scripts/verify.sh`: Go tests, smoke launch, and 53 tui-tester E2E tests.
 
 ## Last Verified
 
-- 2026-04-30: `./scripts/verify.sh` passed: Go tests, smoke launch, and 50 E2E tests.
+- 2026-04-30: `./scripts/verify.sh` passed: Go tests, smoke launch, and 53 E2E tests.
 
 ## Feature Candidates (Future)
 
 - Per-card review history popover: medium impact / medium effort.
 - APKG import/export: high impact / high effort.
 - Deck tags and filtering: medium impact / medium effort.
-- Streak visual indicator: low impact / low effort.

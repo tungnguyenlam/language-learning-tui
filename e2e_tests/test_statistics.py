@@ -74,10 +74,13 @@ def test_statistics_view_navigation():
             agent.close()
 
 def test_streak_indicator_shows_fire_emoji():
-    """Streak > 0 shows fire emoji in Statistics."""
+    """Streak > 0 shows fire emoji in Statistics and Dashboard."""
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
+            # Check initial dashboard streak
+            agent.assert_text("Current Streak: 0 days")
+
             # Go to Review and do enough reviews to build a streak
             agent.act('3')
             agent.wait_for_text("Review 1/")
@@ -99,6 +102,12 @@ def test_streak_indicator_shows_fire_emoji():
             agent.assert_text("Current Streak:")
             # The streak should be > 0, verify days is shown
             agent.assert_text("days")
+            agent.assert_text("🔥")
+            
+            # Go back to Dashboard and check for streak indicator
+            agent.act('1')
+            agent.wait_for_text("Dashboard")
+            agent.assert_text("Current Streak: 1 days 🔥")
             
         finally:
             agent.close()
