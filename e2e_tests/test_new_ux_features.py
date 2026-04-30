@@ -1,0 +1,120 @@
+import os
+import sys
+import tempfile
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../tui_tester")))
+
+from tui_tester import TUIAgent
+
+
+def start_agent(tmpdir, columns=110, lines=30):
+    agent = TUIAgent(f"go run ./cmd/deutsch-tui -data-dir {tmpdir}", columns=columns, lines=30)
+    agent.wait_for_text("Dashboard", timeout=15.0)
+    agent.wait_until_stable()
+    return agent
+
+
+def test_cram_mode_filter_types():
+    """Test Cram Mode with different filter types: suspended, leech, flagged, all."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir)
+        try:
+            # First, create a suspended card
+            agent.act("3")  # Go to Review
+            agent.wait_for_text("Review 1/6")
+            
+            # Suspend a card
+            agent.act("x")
+            agent.wait_for_text("Card suspended")
+            
+            # Go to Cram Mode
+            agent.act("9")
+            agent.wait_for_text("Cram Mode")
+            agent.wait_for_text("Filter: bookmarked")
+            
+            # Test suspended filter (press 2)
+            agent.act("2")
+            agent.wait_for_text("Filter: suspended")
+            # Should show suspended card or "No cards found" message
+            
+            # Test leech filter (press 3)
+            agent.act("3")
+            agent.wait_for_text("Filter: leech")
+            # Should show leech cards or "No cards found" message
+            
+            # Test flagged filter (press 4)
+            agent.act("4")
+            agent.wait_for_text("Filter: flagged")
+            # Should show flagged cards or "No cards found" message
+            
+            # Test all filter (press 5)
+            agent.act("5")
+            agent.wait_for_text("Filter: all")
+            agent.wait_for_text("cards in cram mode")  # Should show card count
+            
+        finally:
+            agent.close()
+
+
+def test_browser_deck_switching():
+    """Test Browser view deck switching functionality using [ and ] keys."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir)
+        try:
+            # Go to Browser view
+            agent.act("8")
+            agent.wait_for_text("Card Browser")
+            agent.wait_for_text("Search: _")
+            
+            # Initially should show cards from current deck
+            agent.wait_for_text("der Apfel")
+            
+            # Try switching to next deck with ]
+            agent.act("]")
+            agent.wait_until_stable()
+            
+            # Try switching to previous deck with [
+            agent.act("[")
+            agent.wait_until_stable()
+            
+            # Should still show the same cards
+            agent.wait_for_text("der Apfel")
+            
+        finally:
+            agent.close()
+
+
+def test_settings_daily_goal_adjustment():
+    """Test Settings view daily goal adjustment with +/- keys."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir)
+        try:
+            # Go to Settings view
+            agent.act("7")
+            agent.wait_for_text("Settings")
+            agent.wait_for_text("Daily Goal:")
+            
+            # Find current daily goal (should be 10 by default)
+            import time
+            time.sleep(0.5)  # Give time for UI to stabilize
+            
+            # Increase daily goal with +
+            agent.act("+")
+            agent.wait_for_text("Daily goal set to 11")
+            
+            # Decrease daily goal with -
+            agent.act("-")
+            agent.wait_for_text("Daily goal set to 10")
+            
+            # Try to decrease below 1 (should stay at 1)
+            for _ in range(15):
+                agent.act("-")
+            agent.wait_for_text("Daily goal set to 1")
+            
+        finally:
+            agent.close()
+
+
+if __name__ == "__main__":
+    import pytest
+    pytest.main(["-v", __file__])

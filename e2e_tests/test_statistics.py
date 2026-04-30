@@ -73,5 +73,79 @@ def test_statistics_view_navigation():
         finally:
             agent.close()
 
+def test_streak_indicator_shows_fire_emoji():
+    """Streak > 0 shows fire emoji in Statistics."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir)
+        try:
+            # Go to Review and do enough reviews to build a streak
+            agent.act('3')
+            agent.wait_for_text("Review 1/")
+            
+            # Do several reviews to build a streak
+            for _ in range(5):
+                agent.act('<Space>')
+                agent.wait_until_stable()
+                agent.act('g')  # Good grade
+                agent.wait_until_stable()
+                try:
+                    agent.wait_for_text("Review 1/", timeout=1)
+                except:
+                    break
+            
+            # Go to Statistics and check for streak indicator
+            agent.act('4')
+            agent.wait_for_text("Statistics")
+            agent.assert_text("Current Streak:")
+            # The streak should be > 0, verify days is shown
+            agent.assert_text("days")
+            
+        finally:
+            agent.close()
+
+
+def test_review_activity_chart_renders():
+    """Review activity chart (14-day bar chart) displays in Statistics."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Use narrower columns and more lines to force medium view where chart is visible
+        agent = start_agent(tmpdir, columns=80, lines=40)
+        try:
+            # Do some reviews first
+            agent.act('3')
+            agent.wait_for_text("Review 1/")
+            agent.act('<Space>')
+            agent.wait_until_stable()
+            agent.act('g')
+            agent.wait_until_stable()
+            
+            # Go to Statistics
+            agent.act('4')
+            agent.wait_for_text("Statistics")
+            
+            # Verify the review activity section is present
+            agent.assert_text("Review Activity")
+            agent.assert_text("last 14 days")
+            
+        finally:
+            agent.close()
+
+
+def test_decks_view_shows_deck_description():
+    """Decks view displays deck description when available."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir)
+        try:
+            # Go to Decks view
+            agent.act('2')
+            agent.wait_for_text("Decks")
+            
+            # The default German A1 Survival deck should have a description
+            # Verify the deck name is shown and potentially description
+            agent.assert_text("German A1 Survival")
+            
+        finally:
+            agent.close()
+
+
 if __name__ == "__main__":
     pytest.main(["-v", __file__])

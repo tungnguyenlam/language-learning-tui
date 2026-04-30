@@ -379,6 +379,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cramCorrect++
 			}
 		}
+		return m, m.loadReviewsPerDay()
 	case bookmarkToggledMsg:
 		m.setCardBookmarkLocal(msg.cardID, msg.bookmarked)
 		if msg.bookmarked {
@@ -1347,7 +1348,38 @@ func (m *Model) render() string {
 		b.WriteString(m.renderCompact())
 	}
 
-	footer := fmt.Sprintf("arrows/tab views | 1-8 views | ? help | q quit | mouse %d,%d | %s", m.mouseX, m.mouseY, m.status)
+	// Add contextual help hints based on active view
+	helpHint := ""
+	switch m.activeView {
+	case ViewReview:
+		if len(m.dueCards) > 0 {
+			if m.revealed {
+				helpHint = "| Grade: a/h/g/e"
+			} else {
+				helpHint = "| Reveal: Space/Enter"
+			}
+		}
+	case ViewCram:
+		if m.cramActive {
+			if m.cramRevealed {
+				helpHint = "| Grade: a/h/g/e"
+			} else {
+				helpHint = "| Reveal: Space/Enter"
+			}
+		} else {
+			helpHint = "| Filter: 1-5"
+		}
+	case ViewBrowser:
+		helpHint = "| Search: type text"
+	case ViewSettings:
+		helpHint = "| Nav: j/k | Edit: Enter"
+	case ViewImport:
+		helpHint = "| Import: Enter | Export: x"
+	case ViewAI:
+		helpHint = "| Generate: Enter | Approve: a"
+	}
+
+	footer := fmt.Sprintf("arrows/tab views | 1-8 views | ? help | q quit | mouse %d,%d%s | %s", m.mouseX, m.mouseY, helpHint, m.status)
 	b.WriteString("\n")
 	b.WriteString(statusStyle.Width(maxInt(20, m.width)).Render(footer))
 

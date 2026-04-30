@@ -742,10 +742,10 @@ func (s *Store) ReviewsPerDay(ctx context.Context, days int) (map[string]int, er
 	start := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, time.UTC)
 
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT DATE(reviewed_at) as review_date, COUNT(*)
+		SELECT COALESCE(DATE(reviewed_at), '') as review_date, COUNT(*)
 		FROM reviews
-		WHERE reviewed_at >= ?
-		GROUP BY DATE(reviewed_at)
+		WHERE reviewed_at IS NOT NULL AND reviewed_at >= ?
+		GROUP BY COALESCE(DATE(reviewed_at), '')
 		ORDER BY review_date
 	`, start)
 	if err != nil {
