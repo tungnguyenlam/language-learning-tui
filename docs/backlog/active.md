@@ -58,7 +58,7 @@ Top blockers for this run:
 
 ## Next Action
 
-Commit verified Feature Pass 7 changes.
+Await next implementation pass; start by reading the indexed notices, especially TUI status-line and Browser reload contracts.
 
 ## Current Session Notes
 
@@ -81,6 +81,7 @@ Commit verified Feature Pass 7 changes.
 - 2026-04-30: Fixed status rendering to expose a stable single-line status area, shortened missing-file import errors, fixed Browser `[`/`]` deck switching to reload cards, and added unit coverage. Targeted prior failures pass: `tui_tester/venv/bin/python -m pytest ... -q` (7 passed).
 - 2026-04-30: Added 3 new tui-tester E2E regressions for grade status stability, concise import missing-file errors, and Browser deck switching after TSV import. Targeted new suite passes: `tui_tester/venv/bin/python -m pytest e2e_tests/test_status_and_browser_regressions.py -q` (3 passed).
 - 2026-04-30: Full verification passed with `./scripts/verify.sh`: Go tests, smoke launch, and 50 tui-tester E2E tests.
+- 2026-04-30: Updated agent instructions to allow future agents to modify instructions when needed, and added indexed notices for TUI status-line stability and Browser deck reload behavior.
 
 ## Last Verified
 

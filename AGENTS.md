@@ -16,6 +16,13 @@ The project is a Go Bubble Tea TUI for German flashcard and MCQ learning. It is 
 6. **Continuous Documentation:** You MUST update `docs/backlog/active.md` and relevant continuity docs *continuously* as you complete tasks, change plans, or discover new context, not just at the end of the session.
 7. Update backlog and notices when leaving unfinished work or changing contracts.
 
+## Instruction Maintenance
+
+- Agents may update these instructions, subtree `AGENTS.md` files, and continuity docs when a change would make future work safer or easier.
+- Keep root `AGENTS.md` concise. Put durable traps, workflow notes, and package-specific contracts in `docs/agent/notices/`, subtree `AGENTS.md`, or ADRs, then index them from `docs/agent/index.md`.
+- When modifying instructions, make the note concrete and searchable: include the affected files, the required behavior, and when the note should be revisited.
+- Do not preserve stale instructions out of inertia. If an instruction becomes wrong, update or remove it in the same change that makes it obsolete.
+
 ## Search Hints
 
 - TUI behavior: `rg "type Model|Hitbox|WindowSizeMsg|Mouse" internal/tui`

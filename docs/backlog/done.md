@@ -1,5 +1,11 @@
 # Completed Work
 
+## 2026-04-30 Agent Instruction Maintenance
+
+- Added explicit root guidance that agents may update root/subtree instructions and continuity docs when needed to make future work safer or easier.
+- Added durable notices for TUI status-line stability and Browser deck reload behavior.
+- Updated `docs/agent/index.md` so future session pickup finds the new notices.
+
 ## 2026-04-30 Autonomous Feature Pass 7 - Status Stability and Browser Reload
 
 - Reproduced fresh baseline failure in `./scripts/verify.sh`: 40 E2E tests passed and 7 failed because status messages wrapped across terminal lines.

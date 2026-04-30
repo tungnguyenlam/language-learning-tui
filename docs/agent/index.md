@@ -1,6 +1,6 @@
 # Agent Context Index
 
-Last updated: 2026-04-29
+Last updated: 2026-04-30
 
 ## Active Backlog
 
@@ -12,6 +12,8 @@ Last updated: 2026-04-29
 
 - `docs/agent/notices/2026-04-29-bubbletea-v2-space-key.md`: Bubble Tea v2 uses "space" string for the space bar.
 - `docs/agent/notices/2026-04-29-wasd-navigation.md`: WASD key navigation support implementation.
+- `docs/agent/notices/2026-04-30-tui-status-line-stability.md`: keep dynamic TUI status text on a stable single-line `status:` surface for tui-tester.
+- `docs/agent/notices/2026-04-30-browser-deck-reload.md`: Browser `[`/`]` deck switching must reload Browser cards for the selected deck.
 
 ## Decisions
 
