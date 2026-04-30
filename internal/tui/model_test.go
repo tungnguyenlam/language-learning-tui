@@ -1037,6 +1037,45 @@ func TestBrowserSearchFilter(t *testing.T) {
 	}
 }
 
+func TestBrowserDeckSwitchReloadsCards(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Prompt: "Apple", Answer: "Apfel"},
+			{ID: "c2", DeckID: "deck-2", Prompt: "Coffee", Answer: "Kaffee"},
+		},
+		decks: []core.Deck{
+			{ID: "deck-1", Name: "Deck One"},
+			{ID: "deck-2", Name: "Deck Two"},
+		},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.Update(dueCardsMsg(repo.dueCards))
+	load := model.updateView(ViewBrowser)
+	model.Update(load())
+
+	if len(model.browserCards) != 1 || model.browserCards[0].ID != "c1" {
+		t.Fatalf("initial browser cards = %#v, want deck-1 card", model.browserCards)
+	}
+
+	updated, cmd := model.Update(tea.KeyPressMsg{Code: ']'})
+	model = updated.(*Model)
+	if cmd == nil {
+		t.Fatal("browser deck switch should reload cards")
+	}
+	model.Update(cmd())
+
+	if model.deck.ID != "deck-2" {
+		t.Fatalf("selected deck = %s, want deck-2", model.deck.ID)
+	}
+	if model.browserDeckID != "deck-2" {
+		t.Fatalf("browserDeckID = %s, want deck-2", model.browserDeckID)
+	}
+	if len(model.browserCards) != 1 || model.browserCards[0].ID != "c2" {
+		t.Fatalf("browser cards after deck switch = %#v, want deck-2 card", model.browserCards)
+	}
+}
+
 func TestCramModeFiltering(t *testing.T) {
 	repo := &mockRepo{
 		dueCards: []core.Card{

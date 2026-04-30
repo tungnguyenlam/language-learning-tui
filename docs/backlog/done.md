@@ -1,5 +1,28 @@
 # Completed Work
 
+## 2026-04-30 Autonomous Feature Pass 7 - Status Stability and Browser Reload
+
+- Reproduced fresh baseline failure in `./scripts/verify.sh`: 40 E2E tests passed and 7 failed because status messages wrapped across terminal lines.
+- Changed TUI rendering to show status on its own stable single-line surface and shortened missing-file import errors.
+- Fixed Browser `[`/`]` deck switching so the Browser card list reloads for the newly selected deck.
+- Added unit coverage for Browser deck switching reload behavior.
+- Added 3 tui-tester E2E regressions for grade status stability, concise missing-file import errors, and Browser deck switching after TSV import.
+- Targeted verification passed for all 7 previously failing E2E tests and `go test ./internal/tui`.
+- Targeted verification passed for the 3 new E2E tests.
+- Final verification passed with `./scripts/verify.sh`: Go tests, smoke launch, and 50 tui-tester E2E tests.
+
+## 2026-04-30 Autonomous Feature Pass 6 - Contextual Help and Additional Tests
+
+- Added contextual help hints to the status bar that show relevant keyboard shortcuts based on the active view
+- Created 3 new E2E tests covering uncovered UX behaviors:
+  - Cram Mode filter types (suspended, leech, flagged, all)
+  - Browser view deck switching functionality using [ and ] keys
+  - Settings view daily goal adjustment with +/- keys
+- Fixed edge case in ReviewsPerDay SQL query to handle NULL dates
+- Extended Statistics view tests with additional coverage for streak indicators and review activity charts
+- All Go tests pass, all E2E tests pass, `./scripts/verify.sh` passes with zero errors
+- Final verification passed with 44 E2E tests
+
 ## 2026-04-30 Autonomous Feature Pass 6 - Tab Navigation Load Commands
 
 - Fixed Tab navigation so it returns the `updateView` load command, matching arrow and mouse navigation behavior.
@@ -92,7 +115,6 @@ Implemented a dedicated Statistics view to provide insights into learning progre
 
 ## Navigation Bug Fix and Robustness Enhancement (2026-04-29)
 
-
 Fixed a conflict between WASD navigation and AI draft discarding, and added new robustness tests.
 
 ### Bug Fix
@@ -140,7 +162,7 @@ Added WASD key support to the deutsch-tui application to improve keyboard naviga
 - Confirmed `./scripts/tui_smoke.sh` launches successfully.
 - Confirmed direct `TUIAgent` dashboard rendering with `cmd/deutsch-tui --data-dir <tmp>`.
 - Verified `go test ./...` and the existing 11 tui-tester E2E tests pass before adding fresh coverage.
-- Added three fresh tui-tester E2E tests for compact view rendering, space-key reveal plus Again grading, and mouse tab navigation to Import, AI, and Settings.
+- Added three fresh tui-tester E2E recertification tests covering Tab navigation across all primary views, Hard grading with SQLite persistence across restart, and Settings provider persistence across restart.
 - Verified the expanded tui-tester suite passes with 14 tests.
 - Final verification passed with `./scripts/verify.sh`, including formatting, `go test ./...`, `go vet ./...`, smoke launch, and all 14 E2E tests.
 

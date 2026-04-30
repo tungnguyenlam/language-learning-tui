@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -311,7 +312,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 		m.breakpoint = breakpointForWidth(msg.Width)
 	case error:
-		m.status = fmt.Sprintf("Error: %v", msg)
+		m.status = friendlyError(msg)
 	case decksMsg:
 		m.decks = []core.Deck(msg)
 		if m.deckIndex >= len(m.decks) {
@@ -514,9 +515,17 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, m.nextViewCmd()
 		}
 	case "[":
+		if m.activeView == ViewBrowser {
+			m.previousDeck()
+			return m, m.reloadBrowserForSelectedDeck()
+		}
 		m.previousDeck()
 		return m, nil
 	case "]":
+		if m.activeView == ViewBrowser {
+			m.nextDeck()
+			return m, m.reloadBrowserForSelectedDeck()
+		}
 		m.nextDeck()
 		return m, nil
 	}
@@ -781,13 +790,6 @@ func (m *Model) updateBrowserKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 			m.browserCursor++
 		}
 		return nil, true
-	case "[":
-		if len(m.browserCards) > 0 {
-			m.browserSearch = ""
-			m.browserCards = nil
-			m.browserCursor = 0
-			return m.loadBrowserCards(), true
-		}
 	case "backspace":
 		if len(m.browserSearch) > 0 {
 			m.browserSearch = m.browserSearch[:len(m.browserSearch)-1]
@@ -1379,9 +1381,12 @@ func (m *Model) render() string {
 		helpHint = "| Generate: Enter | Approve: a"
 	}
 
-	footer := fmt.Sprintf("arrows/tab views | 1-8 views | ? help | q quit | mouse %d,%d%s | %s", m.mouseX, m.mouseY, helpHint, m.status)
+	statusLine := fmt.Sprintf("status: %s", singleLine(m.status))
+	footer := fmt.Sprintf("tab/arrows views | 1-9 views | ? help | q quit | mouse %d,%d %s", m.mouseX, m.mouseY, helpHint)
 	b.WriteString("\n")
-	b.WriteString(statusStyle.Width(maxInt(20, m.width)).Render(footer))
+	b.WriteString(statusStyle.Render(truncateLine(statusLine, maxInt(20, m.width-2))))
+	b.WriteString("\n")
+	b.WriteString(statusStyle.Render(truncateLine(footer, maxInt(20, m.width-2))))
 
 	if m.showHelp {
 		b.WriteString("\n\n")
@@ -1916,6 +1921,15 @@ func (m *Model) updateView(view View) tea.Cmd {
 	return nil
 }
 
+func (m *Model) reloadBrowserForSelectedDeck() tea.Cmd {
+	m.browserDeckID = m.deck.ID
+	m.browserSearch = ""
+	m.browserCards = nil
+	m.browserCursor = 0
+	m.status = fmt.Sprintf("Browsing %s", m.deckLabel())
+	return m.loadBrowserCards()
+}
+
 func (m *Model) previousDeck() {
 	if len(m.decks) == 0 {
 		return
@@ -2017,6 +2031,36 @@ func maxInt(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func friendlyError(err error) string {
+	if errors.Is(err, os.ErrNotExist) {
+		var pathErr *os.PathError
+		if errors.As(err, &pathErr) {
+			return fmt.Sprintf("Error: no such file or directory: %s", filepath.Base(pathErr.Path))
+		}
+		return "Error: no such file or directory"
+	}
+	return fmt.Sprintf("Error: %v", err)
+}
+
+func singleLine(s string) string {
+	s = strings.ReplaceAll(s, "\n", " ")
+	s = strings.ReplaceAll(s, "\r", " ")
+	return strings.Join(strings.Fields(s), " ")
+}
+
+func truncateLine(s string, maxWidth int) string {
+	if maxWidth <= 0 || len(s) <= maxWidth {
+		return s
+	}
+	if maxWidth <= 1 {
+		return s[:maxWidth]
+	}
+	if maxWidth <= 3 {
+		return s[:maxWidth]
+	}
+	return s[:maxWidth-3] + "..."
 }
 
 func decksFromNotes(notes []core.Note) []core.Deck {

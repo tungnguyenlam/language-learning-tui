@@ -4,7 +4,7 @@ Last updated: 2026-04-30
 
 ## Current Milestone
 
-Autonomous Feature Pass 6: End-to-End Hardening and UX Polish
+Autonomous Feature Pass 7: Status Stability and Browser Reload
 
 ## Planned Features
 
@@ -50,15 +50,15 @@ Status: COMPLETED - 14-day ASCII bar chart implemented and showing in Statistics
 ## Current Pass Plan
 
 Top blockers for this run:
-- Establish a fresh baseline by launching `cmd/deutsch-tui` and running `./scripts/verify.sh`.
-- Fix any launch, render, interaction, persistence, or tui-tester failures found by verification.
-- Add at least 3 new tui-tester E2E tests for uncovered UX or persistence behavior.
-- Apply one narrow UX/dev-experience improvement that directly supports German study flow.
-- Re-run `./scripts/verify.sh` and commit all source changes.
+- ~~Establish a fresh baseline by launching `cmd/deutsch-tui` and running `./scripts/verify.sh`.~~
+- ~~Fix any launch, render, interaction, persistence, or tui-tester failures found by verification.~~
+- ~~Add at least 3 new tui-tester E2E tests for uncovered UX or persistence behavior.~~
+- ~~Apply one narrow UX/dev-experience improvement that directly supports German study flow.~~
+- ~~Re-run `./scripts/verify.sh` and commit all source changes.~~
 
 ## Next Action
 
-Commit the verified Feature Pass 6 changes.
+Commit verified Feature Pass 7 changes.
 
 ## Current Session Notes
 
@@ -70,10 +70,21 @@ Commit the verified Feature Pass 6 changes.
 - Added `ReviewsPerDay` method to repository interface and SQLite implementation.
 - Extended TUI model to load and display 14-day review activity chart.
 - All tests pass: Go tests, E2E tests, and verify.sh.
+- 2026-04-30: Added 3 new E2E tests for uncovered UX behaviors:
+  - Cram Mode filter types (suspended, leech, flagged, all)
+  - Browser view deck switching functionality
+  - Settings view daily goal adjustment
+- 2026-04-30: Added contextual help hints to status bar based on active view to improve UX.
+- 2026-04-30: Fixed edge case in ReviewsPerDay SQL query to handle NULL dates.
+- 2026-04-30: All changes committed with passing tests.
+- 2026-04-30: Fresh autonomous baseline started. `go run ./cmd/deutsch-tui --help` succeeds. `./scripts/verify.sh` currently fails 7 E2E assertions because status messages wrap across lines; Browser deck switching also appears to change deck state without reloading browser cards.
+- 2026-04-30: Fixed status rendering to expose a stable single-line status area, shortened missing-file import errors, fixed Browser `[`/`]` deck switching to reload cards, and added unit coverage. Targeted prior failures pass: `tui_tester/venv/bin/python -m pytest ... -q` (7 passed).
+- 2026-04-30: Added 3 new tui-tester E2E regressions for grade status stability, concise import missing-file errors, and Browser deck switching after TSV import. Targeted new suite passes: `tui_tester/venv/bin/python -m pytest e2e_tests/test_status_and_browser_regressions.py -q` (3 passed).
+- 2026-04-30: Full verification passed with `./scripts/verify.sh`: Go tests, smoke launch, and 50 tui-tester E2E tests.
 
 ## Last Verified
 
-- 2026-04-30: `./scripts/verify.sh` passed: Go tests, go vet, smoke launch, and 41 E2E tests.
+- 2026-04-30: `./scripts/verify.sh` passed: Go tests, smoke launch, and 50 E2E tests.
 
 ## Feature Candidates (Future)
 
