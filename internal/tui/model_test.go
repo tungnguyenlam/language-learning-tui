@@ -50,6 +50,29 @@ func TestHitboxActivation(t *testing.T) {
 	}
 }
 
+func TestTabNavigationReturnsViewLoadCommand(t *testing.T) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	model.activeView = ViewAI
+
+	updated, cmd := model.Update(tea.KeyPressMsg{Code: tea.KeyTab})
+	model = updated.(*Model)
+	if model.activeView != ViewSettings {
+		t.Fatalf("active view after first tab = %s, want settings", model.activeView)
+	}
+	if cmd != nil {
+		t.Fatal("settings view should not need a load command")
+	}
+
+	updated, cmd = model.Update(tea.KeyPressMsg{Code: tea.KeyTab})
+	model = updated.(*Model)
+	if model.activeView != ViewBrowser {
+		t.Fatalf("active view after second tab = %s, want browser", model.activeView)
+	}
+	if cmd == nil {
+		t.Fatal("browser view should return its load command when reached by tab")
+	}
+}
+
 func TestReviewFlow(t *testing.T) {
 	repo := &mockRepo{
 		dueCards: []core.Card{

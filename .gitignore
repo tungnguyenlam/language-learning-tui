@@ -1,6 +1,7 @@
 # Go
 /bin/
 /dist/
+/deutsch-tui
 *.test
 *.out
 coverage.txt

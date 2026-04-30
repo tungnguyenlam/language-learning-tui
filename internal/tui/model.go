@@ -491,8 +491,7 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case "tab":
-		m.nextView()
-		return m, nil
+		return m, m.nextViewCmd()
 	case "left", "shift+tab":
 		return m, m.previousViewCmd()
 	case "right":
@@ -1862,14 +1861,6 @@ func (m *Model) previousViewCmd() tea.Cmd {
 		}
 	}
 	return m.updateView(ViewDashboard)
-}
-
-func (m *Model) nextView() {
-	m.nextViewCmd()
-}
-
-func (m *Model) previousView() {
-	m.previousViewCmd()
 }
 
 func (m *Model) updateView(view View) tea.Cmd {

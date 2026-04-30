@@ -1,5 +1,14 @@
 # Completed Work
 
+## 2026-04-30 Autonomous Feature Pass 6 - Tab Navigation Load Commands
+
+- Fixed Tab navigation so it returns the `updateView` load command, matching arrow and mouse navigation behavior.
+- Removed unused no-op view navigation wrappers that discarded command-backed loads.
+- Added unit coverage proving Tab into Browser returns a load command.
+- Added 3 tui-tester E2E tests covering Tab-loaded Browser cards, Tab-loaded Cram bookmarked cards, and Tab-loaded Statistics review progress.
+- Added `/deutsch-tui` to `.gitignore` so local root builds are not surfaced as accidental source changes.
+- Final verification passed with `./scripts/verify.sh`, including Go tests, go vet, smoke launch, and 41 tui-tester E2E tests.
+
 ## 2026-04-30 Autonomous Feature Pass 5 - Review History Visualizations
 
 - Implemented Feature 15: Review History Visualizations (Heatmap/Chart).
