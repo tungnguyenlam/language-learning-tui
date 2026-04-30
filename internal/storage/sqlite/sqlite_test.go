@@ -811,3 +811,66 @@ func TestAudioPersistence(t *testing.T) {
 		t.Fatalf("browser audio = %s, want audio.mp3", browserCards[0].Audio)
 	}
 }
+
+func TestStoreDeckTags(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	deck := core.Deck{
+		ID:          "test-deck-tags",
+		Name:        "Test Deck With Tags",
+		Description: "A test deck with tags",
+		Tags:        []string{"german", "beginner", "vocabulary"},
+	}
+
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck with tags: %v", err)
+	}
+
+	// Retrieve the deck and verify tags are preserved
+	retrieved, err := store.GetDeck(ctx, deck.ID)
+	if err != nil {
+		t.Fatalf("get deck with tags: %v", err)
+	}
+
+	if retrieved.ID != deck.ID {
+		t.Errorf("deck ID mismatch: got %q, want %q", retrieved.ID, deck.ID)
+	}
+	if retrieved.Name != deck.Name {
+		t.Errorf("deck name mismatch: got %q, want %q", retrieved.Name, deck.Name)
+	}
+	if retrieved.Description != deck.Description {
+		t.Errorf("deck description mismatch: got %q, want %q", retrieved.Description, deck.Description)
+	}
+	if len(retrieved.Tags) != len(deck.Tags) {
+		t.Errorf("deck tags length mismatch: got %d, want %d", len(retrieved.Tags), len(deck.Tags))
+	}
+	for i, tag := range deck.Tags {
+		if retrieved.Tags[i] != tag {
+			t.Errorf("deck tag mismatch at index %d: got %q, want %q", i, retrieved.Tags[i], tag)
+		}
+	}
+
+	// Test listing all decks and verify tags are included
+	decks, err := store.Decks(ctx)
+	if err != nil {
+		t.Fatalf("list decks: %v", err)
+	}
+	if len(decks) != 1 {
+		t.Fatalf("expected 1 deck, got %d", len(decks))
+	}
+
+	retrievedDeck := decks[0]
+	if len(retrievedDeck.Tags) != len(deck.Tags) {
+		t.Errorf("listed deck tags length mismatch: got %d, want %d", len(retrievedDeck.Tags), len(deck.Tags))
+	}
+	for i, tag := range deck.Tags {
+		if retrievedDeck.Tags[i] != tag {
+			t.Errorf("listed deck tag mismatch at index %d: got %q, want %q", i, retrievedDeck.Tags[i], tag)
+		}
+	}
+}

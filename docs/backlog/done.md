@@ -1,5 +1,16 @@
 # Completed Work
 
+## 2026-04-30 Autonomous Feature Pass 10 - Deck Tags and Filtering
+
+- Added SQLite migration 16 to add `tags` column to `decks` table for persisting deck tags.
+- Updated SQLite Store to persist and retrieve deck tags in `UpsertDeck`, `GetDeck`, and `Decks` functions.
+- Added `filteredDecks()` helper function in TUI model to filter decks by name, description, or tags.
+- Implemented deck filtering functionality in TUI Decks view with text input and real-time filtering.
+- Added visual display of deck tags in the Decks view.
+- Added unit test coverage for deck tags functionality in SQLite storage.
+- Added 3 E2E tests for deck tags display and filtering functionality.
+- Verification passed with `./scripts/verify.sh`: Go tests, smoke launch, and 59 tui-tester E2E tests.
+
 ## 2026-04-30 Autonomous Feature Pass 9 - Per-card Review History
 
 - Added `core.ReviewLog` and repository-level `ReviewHistory(ctx, cardID, limit)` access for recent card review attempts.

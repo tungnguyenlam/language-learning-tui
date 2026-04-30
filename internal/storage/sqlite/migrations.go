@@ -110,4 +110,8 @@ var migrations = []migration{
 			ALTER TABLE notes ADD COLUMN audio TEXT NOT NULL DEFAULT '';
 		`,
 	},
+	{
+		ID:  16,
+		SQL: `ALTER TABLE decks ADD COLUMN tags TEXT NOT NULL DEFAULT ''`,
+	},
 }

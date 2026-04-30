@@ -109,6 +109,7 @@ type Model struct {
 	reviewHistoryCard  string
 	showReviewHistory  bool
 	spinnerFrame       int
+	deckFilter         string // New field for deck filtering
 }
 
 func NewModel(repo core.Repository, scheduler core.Scheduler) *Model {
@@ -704,15 +705,35 @@ func (m *Model) updateDecksKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "down", "j":
-		if m.deckCursor < len(m.decks)-1 {
+		if m.deckCursor < len(m.filteredDecks())-1 {
 			m.deckCursor++
 		}
 		return nil, true
 	case "enter":
-		m.selectDeck(m.deckCursor)
-		m.activeView = ViewDashboard
+		if len(m.filteredDecks()) > 0 {
+			m.selectDeck(m.deckCursor)
+			m.activeView = ViewDashboard
+		}
+		return nil, true
+	case "backspace":
+		if len(m.deckFilter) > 0 {
+			m.deckFilter = m.deckFilter[:len(m.deckFilter)-1]
+			m.deckCursor = 0 // Reset cursor when filter changes
+		}
+		return nil, true
+	case "esc":
+		m.deckFilter = ""
+		m.deckCursor = 0 // Reset cursor when filter is cleared
 		return nil, true
 	}
+
+	// Handle text input for filtering
+	if len(msg.String()) == 1 {
+		m.deckFilter += msg.String()
+		m.deckCursor = 0 // Reset cursor when filter changes
+		return nil, true
+	}
+
 	return nil, false
 }
 
@@ -964,6 +985,39 @@ func (m *Model) toggleBrowserHistory() tea.Cmd {
 	m.reviewHistory = nil
 	m.showReviewHistory = true
 	return m.loadReviewHistory(cardID)
+}
+
+func (m *Model) filteredDecks() []core.Deck {
+	if m.deckFilter == "" {
+		return m.decks
+	}
+
+	filtered := make([]core.Deck, 0)
+	filterLower := strings.ToLower(m.deckFilter)
+
+	for _, deck := range m.decks {
+		// Check if deck name matches filter
+		if strings.Contains(strings.ToLower(deck.Name), filterLower) {
+			filtered = append(filtered, deck)
+			continue
+		}
+
+		// Check if deck description matches filter
+		if strings.Contains(strings.ToLower(deck.Description), filterLower) {
+			filtered = append(filtered, deck)
+			continue
+		}
+
+		// Check if any deck tags match filter
+		for _, tag := range deck.Tags {
+			if strings.Contains(strings.ToLower(tag), filterLower) {
+				filtered = append(filtered, deck)
+				break
+			}
+		}
+	}
+
+	return filtered
 }
 
 func (m *Model) templateKeyAtCursor() string {
@@ -1681,11 +1735,24 @@ func (m *Model) renderStatistics() string {
 func (m *Model) renderDecks(x, y int) string {
 	var b strings.Builder
 	b.WriteString("Decks\n\n")
-	if len(m.decks) == 0 {
-		b.WriteString("No decks found. Use Import to add notes.")
+
+	// Show filter if active
+	if m.deckFilter != "" {
+		b.WriteString(fmt.Sprintf("Filter: %s_\n\n", m.deckFilter))
+	}
+
+	filteredDecks := m.filteredDecks()
+	if len(filteredDecks) == 0 {
+		if m.deckFilter != "" {
+			b.WriteString("No decks match filter. Press Esc to clear filter.\n")
+		} else {
+			b.WriteString("No decks found. Use Import to add notes.\n")
+		}
+		b.WriteString("\nPress Esc to clear filter.")
 		return b.String()
 	}
-	for i, deck := range m.decks {
+
+	for i, deck := range filteredDecks {
 		prefix := "  "
 		style := lipgloss.NewStyle()
 		if i == m.deckCursor {
@@ -1698,8 +1765,13 @@ func (m *Model) renderDecks(x, y int) string {
 		if deck.Description != "" {
 			b.WriteString(fmt.Sprintf("     %s\n", mutedStyle.Render(deck.Description)))
 		}
+		// Show tags if they exist
+		if len(deck.Tags) > 0 {
+			tags := strings.Join(deck.Tags, ", ")
+			b.WriteString(fmt.Sprintf("     Tags: %s\n", mutedStyle.Render(tags)))
+		}
 	}
-	b.WriteString("\nPress enter to select deck.")
+	b.WriteString("\nPress enter to select deck. Type to filter. Esc to clear filter.")
 	return b.String()
 }
 

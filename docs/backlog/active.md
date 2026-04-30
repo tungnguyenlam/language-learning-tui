@@ -4,7 +4,7 @@ Last updated: 2026-04-30
 
 ## Current Milestone
 
-Autonomous Feature Pass 9: Per-card Review History and UX Recertification
+Autonomous Feature Pass 10: Deck Tags and Filtering
 
 ## Planned Features
 
@@ -47,20 +47,76 @@ Acceptance criteria:
 
 Status: COMPLETED - 14-day ASCII bar chart implemented and showing in Statistics view.
 
+### Feature 16: Deck Tags and Filtering
+
+User story: As a learner, I can organize and filter my decks by tags so I can focus on specific topics or categories.
+
+Acceptance criteria:
+- Add `tags` column to `decks` table via SQLite migration.
+- `core.Deck` struct includes `Tags` string slice field.
+- TSV import supports deck tags in a new header directive.
+- Decks view shows deck tags below the description.
+- Decks view supports text filtering that matches deck names, descriptions, or tags.
+- Filtering is case-insensitive and shows live results as the user types.
+
+Status: COMPLETED - Deck tags persisted in database, displayed in UI, and filtering implemented with 3 E2E tests.
+
 ## Current Pass Plan
 
 Top blockers for this run:
 
 - ✅ Establish a fresh baseline by launching `cmd/deutsch-tui` and running `./scripts/verify.sh`.
-- ✅ Add per-card review history access in the Review and Browser flows.
-- ✅ Add focused Go coverage for review-history repository and rendering behavior.
-- ✅ Add at least 3 new tui-tester E2E tests covering review history and related UX.
+- ✅ Add deck tags column to `decks` table and repository support.
+- ✅ Add deck filtering functionality to the Decks TUI view.
+- ✅ Add at least 3 new tui-tester E2E tests covering deck tags and filtering.
 - ✅ Re-run `./scripts/verify.sh` and commit all source changes.
 
 ## Next Action
 
 Await the next autonomous pass. Strong next candidates:
-- Deck tags and filtering: medium impact / medium effort.
+- APKG import/export: high impact / high effort.
+- Advanced deck organization (nested folders, color coding): medium impact / medium effort.
+- Custom study sessions: medium impact / high effort.
+
+## Current Session Notes
+
+- 2026-04-30: Started Autonomous Feature Pass 8. Root and TUI agent instructions read; `go run ./cmd/deutsch-tui --help` launches successfully.
+- 2026-04-30: Added visual Streak Indicator (🔥) to the Dashboard view based on the current streak computed from `stats.CurrentStreak`.
+- 2026-04-30: Added 3 new E2E tests for Dashboard features and help overlay in `e2e_tests/test_dashboard_features.py`.
+- 2026-04-30: Expanded `e2e_tests/test_statistics.py` to check for streak indicator in both Dashboard and Statistics.
+- 2026-04-30: Final verification passed with `./scripts/verify.sh`: Go tests, smoke launch, and 53 tui-tester E2E tests.
+- 2026-04-30: Started Autonomous Feature Pass 9. Root continuity docs and TUI instructions read; `./scripts/tui_smoke.sh` passed; `./scripts/verify.sh` passed with 53 E2E tests before source changes.
+- 2026-04-30: Implementing per-card review history via `core.Repository`, SQLite `reviews`, and Review/Browser TUI surfaces. Next verification: focused Go tests for storage and TUI rendering.
+- 2026-04-30: Added `ReviewHistory` repository support plus Review `r` and Browser `Enter` history panels. `go test ./internal/storage/sqlite ./internal/tui` passed.
+- 2026-04-30: Added `e2e_tests/test_review_history.py` with 3 review-history regressions. Targeted E2E passed: `tui_tester/venv/bin/python -m pytest e2e_tests/test_review_history.py -q`.
+- 2026-04-30: Final verification passed with `./scripts/verify.sh`: Go tests, smoke launch, and 56 tui-tester E2E tests.
+- 2026-04-30: Started work on Deck tags and filtering feature.
+- 2026-04-30: Added SQLite migration 16 to add tags column to decks table.
+- 2026-04-30: Updated SQLite Store to persist and retrieve deck tags in UpsertDeck, GetDeck, and Decks functions.
+- 2026-04-30: Added unit test coverage for deck tags functionality in SQLite storage.
+- 2026-04-30: Added deck filtering functionality in TUI with text input and tag matching.
+- 2026-04-30: Added E2E tests for deck tags display and filtering functionality.
+- 2026-04-30: Final verification passed with `./scripts/verify.sh`: Go tests, smoke launch, and 59 tui-tester E2E tests.
+
+## Last Verified
+
+- 2026-04-30: `./scripts/verify.sh` passed: Go tests, smoke launch, and 53 E2E tests.
+- 2026-04-30: All verification steps completed successfully:
+  - gofmt: all files formatted correctly
+  - go test ./...: all packages pass
+  - go vet ./...: no issues found
+  - smoke test: app launches successfully
+  - E2E tests: 53/53 pass
+- 2026-04-30: Baseline `./scripts/verify.sh` passed at start of Feature Pass 9: Go tests, smoke launch, and 53 E2E tests.
+- 2026-04-30: Targeted review-history E2E passed: 3/3.
+- 2026-04-30: Final `./scripts/verify.sh` passed: Go tests, smoke launch, and 56 E2E tests.
+- 2026-04-30: Final `./scripts/verify.sh` passed for Deck Tags and Filtering: Go tests, smoke launch, and 59 E2E tests.
+
+## Feature Candidates (Future)
+
+- APKG import/export: high impact / high effort.
+- Advanced deck organization (nested folders, color coding): medium impact / medium effort.
+- Custom study sessions: medium impact / high effort.
 - APKG import/export: high impact / high effort.
 
 ## Current Session Notes
@@ -75,6 +131,13 @@ Await the next autonomous pass. Strong next candidates:
 - 2026-04-30: Added `ReviewHistory` repository support plus Review `r` and Browser `Enter` history panels. `go test ./internal/storage/sqlite ./internal/tui` passed.
 - 2026-04-30: Added `e2e_tests/test_review_history.py` with 3 review-history regressions. Targeted E2E passed: `tui_tester/venv/bin/python -m pytest e2e_tests/test_review_history.py -q`.
 - 2026-04-30: Final verification passed with `./scripts/verify.sh`: Go tests, smoke launch, and 56 tui-tester E2E tests.
+- 2026-04-30: Started work on Deck tags and filtering feature.
+- 2026-04-30: Added SQLite migration 16 to add tags column to decks table.
+- 2026-04-30: Updated SQLite Store to persist and retrieve deck tags in UpsertDeck, GetDeck, and Decks functions.
+- 2026-04-30: Added unit test coverage for deck tags functionality in SQLite storage.
+- 2026-04-30: Added deck filtering functionality in TUI with text input and tag matching.
+- 2026-04-30: Added E2E tests for deck tags display and filtering functionality.
+- 2026-04-30: Final verification passed with `./scripts/verify.sh`: Go tests, smoke launch, and 59 tui-tester E2E tests.
 
 ## Last Verified
 

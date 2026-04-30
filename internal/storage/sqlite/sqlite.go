@@ -114,11 +114,12 @@ func (s *Store) UpsertDeck(ctx context.Context, deck core.Deck) error {
 	if deck.ID == "" {
 		return errors.New("deck id is required")
 	}
+	tags := strings.Join(deck.Tags, " ")
 	_, err := s.db.ExecContext(ctx, `
-		INSERT INTO decks (id, name, description)
-		VALUES (?, ?, ?)
-		ON CONFLICT(id) DO UPDATE SET name = excluded.name, description = excluded.description
-	`, deck.ID, deck.Name, deck.Description)
+		INSERT INTO decks (id, name, description, tags)
+		VALUES (?, ?, ?, ?)
+		ON CONFLICT(id) DO UPDATE SET name = excluded.name, description = excluded.description, tags = excluded.tags
+	`, deck.ID, deck.Name, deck.Description, tags)
 	if err != nil {
 		return err
 	}
@@ -135,12 +136,16 @@ func (s *Store) UpsertDeck(ctx context.Context, deck core.Deck) error {
 
 func (s *Store) GetDeck(ctx context.Context, id string) (core.Deck, error) {
 	var deck core.Deck
-	err := s.db.QueryRowContext(ctx, `SELECT id, name, description FROM decks WHERE id = ?`, id).Scan(&deck.ID, &deck.Name, &deck.Description)
+	var tags string
+	err := s.db.QueryRowContext(ctx, `SELECT id, name, description, tags FROM decks WHERE id = ?`, id).Scan(&deck.ID, &deck.Name, &deck.Description, &tags)
 	if errors.Is(err, sql.ErrNoRows) {
 		return core.Deck{}, fmt.Errorf("deck not found: %s", id)
 	}
 	if err != nil {
 		return core.Deck{}, err
+	}
+	if tags != "" {
+		deck.Tags = strings.Fields(tags)
 	}
 	notes, err := s.notesForDeck(ctx, id)
 	if err != nil {
@@ -155,7 +160,7 @@ func (s *Store) Decks(ctx context.Context) ([]core.Deck, error) {
 	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 	tomorrowStart := todayStart.AddDate(0, 0, 1)
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT d.id, d.name, d.description,
+		SELECT d.id, d.name, d.description, d.tags,
 		       COUNT(c.id) as total_cards,
 		       SUM(CASE WHEN (rs.due_at IS NULL OR rs.due_at <= ?) AND COALESCE(cf.suspended, 0) = 0 THEN 1 ELSE 0 END) as due_cards,
 		       (
@@ -191,9 +196,13 @@ func (s *Store) Decks(ctx context.Context) ([]core.Deck, error) {
 	var decks []core.Deck
 	for rows.Next() {
 		var deck core.Deck
+		var tags string
 		var total, due, reviewsToday, reviewCount, successfulReviews sql.NullInt64
-		if err := rows.Scan(&deck.ID, &deck.Name, &deck.Description, &total, &due, &reviewsToday, &reviewCount, &successfulReviews); err != nil {
+		if err := rows.Scan(&deck.ID, &deck.Name, &deck.Description, &tags, &total, &due, &reviewsToday, &reviewCount, &successfulReviews); err != nil {
 			return nil, err
+		}
+		if tags != "" {
+			deck.Tags = strings.Fields(tags)
 		}
 		deck.TotalCards = int(total.Int64)
 		deck.DueCards = int(due.Int64)
