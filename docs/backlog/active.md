@@ -1,325 +1,84 @@
 # Active Backlog
 
-Last updated: 2026-04-29
+Last updated: 2026-04-30
 
 ## Current Milestone
 
-Autonomous product feature pass 4: ship 2-3 vertical learning features that improve card browsing, session tracking, and keyboard UX.
+Autonomous Feature Pass 5: Advanced Study & Multimedia
 
-## Feature Candidates
+## Planned Features
 
-- Card Browser View: high impact / medium effort. Lets learners browse all cards in a deck with search, see card status (bookmarked/leech/suspended), and understand deck composition.
-- Session Statistics: medium-high impact / low effort. Shows learners how many cards they've reviewed this session and accuracy rate.
-- Keyboard Shortcut Help Overlay: medium impact / low effort. UX polish that helps new users discover keyboard commands.
+### Feature 13: Full Cram Review Flow
 
-## Feature Candidates
+User story: As a learner, I can actually review cards in Cram Mode (reveal/grade) so I can study flagged cards intensely without affecting my SRS schedule.
 
-- Suspend cards: high impact / medium effort. Lets learners remove broken, duplicate, or temporarily unwanted cards from the review queue without deleting deck content.
-- Editable daily goal: high impact / low-medium effort. Turns the existing daily progress into a learner-controlled habit target persisted in SQLite.
-- Deck-level progress insights: medium-high impact / low effort. Helps learners choose what to study by showing per-deck review activity and success rate.
-- Cram all bookmarked cards: high impact / high effort. Useful, but overlaps with bookmarked-only due mode and needs careful non-SRS session semantics.
-- Card browser/search: high impact / high effort. Valuable later, but a new view and edit workflow would be larger than a safe vertical pass.
-- Per-card review history popover: medium impact / medium effort. Useful diagnostics, but less important than queue control and goal configuration.
-- Keyboard shortcut help overlay: medium impact / low effort. UX polish, but less learning-impactful than persistence-backed study features.
-- Bookmarked cards: high impact / medium effort. Lets learners mark hard or important cards during review and see saved-card counts.
-- Undo last review: high impact / medium effort. Fixes accidental grading without manual SQLite edits.
-- Daily progress and streak stats: high impact / low effort. Makes the Statistics view actionable by showing today, goal progress, and current streak.
-- Custom daily goal setting: medium impact / medium effort. Useful, but config-driven and less central than review correctness.
-- Leech detection: medium impact / medium effort. Valuable later once lapse history and bookmark UX are stronger.
-- Filtered review mode: high impact / high effort. Needs careful session state and deck/card queries.
-- APKG import/export: high impact / high effort. Already on roadmap but larger than a safe 2-3 feature vertical pass.
+Acceptance criteria:
+- Pressing `Enter` on a card in Cram Mode opens the "Cram Review" view.
+- Cram Review works like normal Review: `Space` reveals answer, `a`/`h`/`g`/`e` or `1`-`4` for grading.
+- Grading in Cram Mode updates `cramReviewed` and `cramCorrect` session stats but does NOT call SRS scheduler or update `reviews` table.
+- Pressing `q` or `Esc` exits Cram Review back to Cram list.
+- Accuracy % is displayed after each cram review.
+
+Status: COMPLETED - All E2E tests pass.
+
+### Feature 14: Audio Support Infrastructure
+
+User story: As a learner, I can hear the pronunciation of cards so I can improve my listening comprehension.
+
+Acceptance criteria:
+- Add `audio` column to `cards` table via SQLite migration.
+- `core.Card` struct includes `Audio` string field.
+- TSV import supports a 4th column for audio file paths.
+- Review and Cram views show an `[Audio]` indicator if audio is available.
+- Pressing `p` in Review/Cram view plays the audio using `afplay` (macOS) or `play` (Linux).
+- Auto-play audio on reveal if configured in Settings.
+
+Status: COMPLETED - Audio infrastructure exists, `playAudio` function implemented, `[Audio]` indicator shows in views.
+
+### Feature 15: Review History Visualizations (Heatmap/Chart)
+
+User story: As a learner, I can see my study activity over the last 30 days so I can stay motivated and see my progress trends.
+
+Acceptance criteria:
+- Statistics view includes a "Review Activity" section.
+- Displays a simple ASCII bar chart or heatmap of reviews per day for the last 14-30 days.
+- Derives data from existing `reviews` table.
+- Updates in real-time after a review session.
+
+Status: COMPLETED - 14-day ASCII bar chart implemented and showing in Statistics view.
 
 ## Next Action
 
-Autonomous feature pass 4 is complete. Shipped 3 features: Card Browser View, Session Statistics, and Keyboard Help Overlay.
-Resume next roadmap milestone by implementing `.apkg` import/export, audio/media support, or a focused unsuspend/card-browser workflow unless a newer user request supersedes it.
-
-## Feature Specs
-
-### Feature 10: Card Browser View (SHIPPED)
-
-User story: As a learner, I can browse all cards in a deck with search so I can inspect card content, status, and deck composition.
-
-Acceptance criteria:
-- `8` (or click "Browser" tab) opens the Card Browser view.
-- Cards are listed with type (FC/MCQ), prompt, and status flags (B/L/S).
-- Typing in Browser view filters cards by prompt/answer text in real time.
-- `j`/`k` or up/down arrows navigate the card list.
-- `Backspace` clears search characters.
-- `[` or left/right switches deck filter to current TUI deck.
-- Browser view shows card count and search query.
-- Card status (bookmarked/leech/suspended) is visible inline.
-- No schema changes needed (uses existing `cards` and `card_flags` tables).
-
-UI/UX and components:
-- `internal/tui/model.go`: add `browserCards`, `browserCursor`, `browserSearch`, `browserDeckID` fields; add `ViewBrowser` constant; add `loadBrowserCards()`, `updateBrowserKey()`, `renderBrowser()`; update navigation to include Browser tab.
-- `internal/core/core.go`: extend `Repository` with `Cards(ctx, deckID, search) ([]Card, error)` method.
-- `internal/storage/sqlite`: implement `Cards()` with optional deck filter and search.
-
-Test plan:
-- Go unit tests for `Cards()` with deck filter, search filter, and combined filters.
-- tui-tester E2E: navigate to Browser, type search, verify filtering; clear search, verify all cards shown.
-
-### Feature 11: Session Statistics Tracking (SHIPPED)
-
-User story: As a learner, I can see session review stats (cards reviewed, accuracy) so I understand my real-time performance.
-
-Acceptance criteria:
-- TUI tracks session stats: cards reviewed, correct (non-Again) grades, accuracy %.
-- Stats reset when app restarts (in-memory only).
-- Statistics view shows session stats section.
-- After each review grade, session counts update immediately.
-- No schema changes needed (session data is ephemeral).
-
-UI/UX and components:
-- `internal/tui/model.go`: add `sessionReviewed`, `sessionCorrect` fields; increment on review; render in Statistics view.
-- `internal/tui/model_test.go`: test session stat tracking.
-
-Test plan:
-- Go unit tests for session stat increment on grade.
-- tui-tester E2E: review cards, check session stats update in Statistics view.
-
-### Feature 12: Keyboard Shortcut Help Overlay (SHIPPED)
-
-User story: As a learner, I can press `?` to see a help overlay of all keyboard shortcuts so I can learn the app faster.
-
-Acceptance criteria:
-- `?` toggles a help overlay showing all keyboard shortcuts grouped by view.
-- Overlay covers part of the screen with help text.
-- `?` again dismisses the overlay.
-- Overlay is non-blocking; app continues running beneath.
-- No persistence needed (ephemeral overlay).
-
-UI/UX and components:
-- `internal/tui/model.go`: add `showHelp` bool field; add help rendering; handle `?` key globally.
-- Create help content mapping views to their shortcuts.
-
-Test plan:
-- Go unit tests for help toggle state.
-- tui-tester E2E: press `?`, verify overlay appears; press `?`, verify overlay disappears.
-
-User story: As a learner, I can suspend a problematic card during review so it no longer appears in my due queue until I decide to unsuspend it later.
-
-Acceptance criteria:
-- `x` toggles suspension for the current review card.
-- Suspended cards are excluded from normal and bookmarked review queues.
-- Review view clearly shows suspension state before the card disappears.
-- Dashboard/Statistics show total suspended cards.
-- Suspension persists in SQLite across app restarts.
-
-UI/UX and components:
-- `internal/tui/model.go`: Review key handling, queue refresh, status message, Dashboard/Statistics counts.
-- `internal/core/core.go`: add card/statistics fields and repository method.
-- `internal/storage/sqlite`: migration adding `card_flags.suspended`; due queries filter it out.
-
-Data/model changes:
-- Add migration 13: `ALTER TABLE card_flags ADD COLUMN suspended INTEGER NOT NULL DEFAULT 0`.
-- Add `SetCardSuspended(ctx, cardID, suspended)` repository method.
-
-Test plan:
-- Go unit tests for suspension persistence, due filtering, stats count, and TUI key flow.
-- tui-tester E2E: suspend a card, restart, confirm due count remains reduced and Statistics shows suspended count.
-
-### Feature 8: SQLite-backed Daily Goal Setting
-
-User story: As a learner, I can adjust my daily review goal inside Settings so progress tracking reflects my actual study target.
-
-Acceptance criteria:
-- Settings view shows the current daily review goal.
-- `+`/`=` increases the goal and `-` decreases it with a floor of 1.
-- Statistics and Dashboard immediately reflect the updated goal.
-- Goal persists in SQLite across app restarts.
-
-UI/UX and components:
-- `internal/tui/model.go`: Settings key handling, goal rendering, stats refresh after updates.
-- `internal/core/core.go`: repository methods for setting the daily goal.
-- `internal/storage/sqlite`: app settings table and Statistics daily goal lookup.
-
-Data/model changes:
-- Add migration 14: `app_settings(key TEXT PRIMARY KEY, value TEXT NOT NULL, updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP)`.
-- Store `daily_goal` as an integer string with default `10`.
-
-Test plan:
-- Go unit tests for migration/default, setter bounds, Statistics goal value, and TUI setting updates.
-- tui-tester E2E: change goal in Settings, restart, confirm Dashboard/Statistics retain the new goal.
-
-### Feature 9: Deck Progress Insights
-
-User story: As a learner, I can compare decks by today's review volume and success rate so I know which deck needs attention.
-
-Acceptance criteria:
-- Decks view shows each deck's reviews today and success percentage.
-- Values derive from persisted review history.
-- Metrics update after grading and survive restart.
-- Existing deck selection/navigation remains unchanged.
-
-UI/UX and components:
-- `internal/core/core.go`: extend `Deck` with `ReviewsToday` and `SuccessRate`.
-- `internal/storage/sqlite`: aggregate review metrics in `Decks()`.
-- `internal/tui/model.go`: render concise metrics in Decks view.
-
-Data/model changes:
-- No new schema; derived from `reviews` joined to `cards`.
-
-Test plan:
-- Go unit tests for deck metrics after mixed reviews.
-- tui-tester E2E: grade a card, open Decks, confirm today's review count/success appears.
-
-### Feature 1: Bookmarked Review Cards
-
-User story: As a learner, I can bookmark a card while reviewing so I can notice and revisit important or troublesome material later.
-
-Acceptance criteria:
-- `b` toggles bookmark for the current review card.
-- Review view clearly shows bookmark state.
-- Dashboard/Statistics show total bookmarked cards.
-- Bookmark state persists in SQLite across app restarts.
-- Unit coverage includes SQLite persistence and TUI toggling; E2E covers bookmark persistence after restart.
-
-UI/UX and components:
-- `internal/tui/model.go`: Review key handling, review rendering, dashboard/statistics counts, status messages.
-- `internal/core/core.go`: repository contract and statistics field.
-- `internal/storage/sqlite`: safe migration and repository methods.
-
-Data/model changes:
-- Add numbered SQLite migration creating `card_flags(card_id PRIMARY KEY, bookmarked, updated_at)`.
-- Add repository methods for reading and toggling bookmark state.
-
-Test plan:
-- Go unit tests for migration, bookmark toggle/read, stats count, and TUI state/rendering.
-- tui-tester E2E: bookmark a review card, restart, confirm bookmark indicator remains.
-
-### Feature 2: Undo Last Review
-
-User story: As a learner, I can undo an accidental review grade immediately and get the card back without corrupting SRS history.
-
-Acceptance criteria:
-- `u` after grading restores the most recently graded card to its previous review state.
-- Due-card count and review queue refresh immediately.
-- The rollback persists in SQLite across restart.
-- If no review can be undone, the TUI shows a clear status message.
-
-UI/UX and components:
-- `internal/tui/model.go`: track last reviewed card, route `u`, refresh due cards/decks/statistics after undo.
-- `internal/storage/sqlite`: delete newest review row for a card and restore `review_states` from the prior review row or remove it for new cards.
-
-Data/model changes:
-- No new schema required; use existing `reviews` history and `review_states`.
-- Repository contract gets `UndoLastReview(ctx, cardID)`.
-
-Test plan:
-- Go unit tests for reverting first review and reverting to prior review state.
-- tui-tester E2E: grade one card, undo, restart, confirm due count is restored.
-
-### Feature 3: Daily Progress and Streak Statistics
-
-User story: As a learner, I can see today’s review count and current study streak so the Statistics view supports daily habit formation.
-
-Acceptance criteria:
-- Statistics view shows Reviews Today, Daily Goal progress, and Current Streak.
-- Counts are derived from persisted review history.
-- Values update after grading and survive restart.
-
-UI/UX and components:
-- `internal/core/core.go`: extend `Statistics`.
-- `internal/storage/sqlite`: aggregate review dates in local persisted history.
-- `internal/tui/model.go`: render daily progress in Statistics.
-
-Data/model changes:
-- No schema required; derive from `reviews.reviewed_at`.
-
-Test plan:
-- Go unit tests for today count and streak derivation.
-- tui-tester E2E: grade a card, open Statistics, confirm today/goal progress update.
-
-## Next Action
-
-Autonomous feature pass 3 is complete. Resume the next roadmap milestone by implementing `.apkg` import/export, audio/media support, or a focused unsuspend/card-browser workflow unless a newer user request supersedes it.
-
-## Feature Specs
-
-### Feature 4: Bookmarked Cards Review Mode
-
-User story: As a learner, I can filter my review queue to only bookmarked cards so I can focus on difficult or important material.
-
-Acceptance criteria:
-- `B` (shift+b) in Review view toggles bookmarked-only filter mode.
-- When active, only bookmarked cards appear in the review queue.
-- A banner shows "Bookmarked mode: ON" in the review view.
-- Dashboard shows "X bookmarked due" alongside normal due count.
-- Statistics view shows bookmarked mode count if applicable.
-- No schema changes (uses existing card_flags table).
-
-UI/UX and components:
-- `internal/tui/model.go`: add `bookmarkFilter` bool field, `B` key handler, filtered due cards, banner rendering.
-- `internal/core/core.go`: extend `Statistics` with `BookmarkedDue` count.
-- `internal/storage/sqlite`: add `DueCardsByBookmark(ctx, now, limit, bookmarked bool)` method.
-
-Test plan:
-- Go unit tests for filter toggle, card filtering, and Statistics bookmarked-due count.
-- tui-tester E2E: toggle bookmark filter, verify only bookmarked cards shown.
-
-### Feature 5: MCQ Card Review Flow
-
-User story: As a learner, I can answer multiple-choice cards by selecting a numbered option so I can practice recognition alongside recall.
-
-Acceptance criteria:
-- MCQ cards render their choices as numbered options (1-4) in the Review view.
-- Pressing `1`-`4` selects the corresponding choice and reveals whether it's correct.
-- After selection, grading keys work as normal.
-- Flashcard flow is unchanged for non-MCQ cards.
-- Correct/incorrect feedback shown immediately after choice selection.
-
-UI/UX and components:
-- `internal/tui/model.go`: add MCQ rendering branch, choice selection state, correct/incorrect feedback.
-- No schema changes (MCQ choices already stored in `cards.kind = 'mcq'` and `core.Card.Choices`).
-- Content layer needs to populate `Choices` during TSV import for MCQ notes.
-
-Test plan:
-- Go unit tests for MCQ rendering, choice selection, and correctness check.
-- tui-tester E2E: review MCQ card, select correct choice, verify feedback.
-
-### Feature 6: Leech Detection
-
-User story: As a learner, I can see which cards I repeatedly fail so I can focus extra effort or suspend them.
-
-Acceptance criteria:
-- Cards with 3+ consecutive "Again" grades are automatically flagged as "leech".
-- Leech cards show a `LEECH` indicator during review.
-- Statistics view shows total leech count.
-- Leech flag is persisted in SQLite (new migration for `card_flags.leech` column or separate table).
-- Reset leech count when card is graded Hard/Good/Easy.
-
-UI/UX and components:
-- `internal/tui/model.go`: leech indicator in Review rendering, leech count in Statistics.
-- `internal/storage/sqlite`: migration to add `leech` or `lapse_streak` to `card_flags`, update on review recording.
-- `internal/core/core.go`: extend `Statistics` with `LeechCards` count.
-
-Test plan:
-- Go unit tests for leech flagging, reset on success, and Statistics count.
-- tui-tester E2E: grade card "Again" 3 times, verify leech indicator appears.
-
-## Blockers
-
-- None.
+### All planned features for this milestone are complete!
+
+The application is fully functional with:
+- All core views rendering correctly
+- Complete review flow (Flashcard and MCQ)
+- Cram mode with reveal/grade
+- Statistics with review activity visualization
+- Audio support infrastructure
+- 38 E2E tests passing
+- `./scripts/verify.sh` passing with zero errors
+
+Future work can focus on:
+- Additional UI/UX improvements
+- More advanced study features
+- APKG import/export (high impact, high effort)
+
+## Current Session Notes
+
+- 2026-04-30: Implemented Feature 15 (Review History Visualizations) with ASCII bar chart in Statistics view.
+- Added `ReviewsPerDay` method to repository interface and SQLite implementation.
+- Extended TUI model to load and display 14-day review activity chart.
+- All tests pass: Go tests, E2E tests, and verify.sh.
 
 ## Last Verified
 
-- 2026-04-29: `./scripts/verify.sh` passed with all Go tests, go vet, smoke launch, and 33 tui-tester E2E tests after autonomous feature pass 3.
-- 2026-04-29: `go test ./internal/tui ./internal/storage/sqlite ./internal/core` and `tui_tester/venv/bin/python -m pytest e2e_tests/test_new_features.py -q` passed with 6 E2E tests after adding pass 3 coverage.
-- 2026-04-29: Feature 9 targeted `go test ./internal/storage/sqlite ./internal/tui ./internal/core` passed after adding deck progress metrics.
-- 2026-04-29: Feature 8 targeted `go test ./internal/storage/sqlite ./internal/tui ./internal/core` passed after adding SQLite-backed daily goal settings.
-- 2026-04-29: Feature 7 targeted `go test ./internal/storage/sqlite ./internal/tui ./internal/core` passed after adding suspended-card persistence, filtering, and TUI handling.
-- 2026-04-29: New feature pass 3 baseline `./scripts/tui_smoke.sh` and `go test ./...` passed before edits.
-- 2026-04-29: `./scripts/verify.sh` passed with 27 E2E tests after the autonomous feature pass.
-- 2026-04-29: `tui_tester/venv/bin/python -m pytest e2e_tests/test_learning_features.py -q` passed with 3 new E2E tests covering bookmark persistence, undo persistence, and daily Statistics progress.
-- 2026-04-29: `go test ./...` passed after adding core/SQLite/TUI support for bookmarks, undo-last-review, and daily progress/streak statistics.
-- 2026-04-29: Baseline `go test ./...` passed before feature work.
-- 2026-04-29: Baseline `./scripts/tui_smoke.sh` passed before feature work.
-- 2026-04-29: `./scripts/verify.sh` passed with 24 E2E tests (including new tests for Statistics view and updated navigation).
-- 2026-04-29: `tui_tester/venv/bin/python -m pytest e2e_tests/test_recertification.py -q` passed with 3 new E2E tests.
-- 2026-04-29: Added three recertification E2E tests for Tab view cycling, Hard grade SQLite persistence, and Settings provider persistence.
-- 2026-04-29: `tui_tester/venv/bin/python -m pytest e2e_tests -q` passed with 19 E2E tests.
-- 2026-04-29: `./scripts/tui_smoke.sh` passed; `go test ./...` passed.
-- 2026-04-29: `./scripts/verify.sh` passed with 19 E2E tests, all Go tests, smoke test, gofmt, and go vet.
-- 2026-04-29: Cleaned up debug files and added test_data/ to .gitignore.
+- 2026-04-30: `./scripts/verify.sh` passed: Go tests, smoke launch, and 38 E2E tests.
+
+## Feature Candidates (Future)
+
+- Per-card review history popover: medium impact / medium effort.
+- APKG import/export: high impact / high effort.
+- Deck tags and filtering: medium impact / medium effort.
+- Streak visual indicator: low impact / low effort.

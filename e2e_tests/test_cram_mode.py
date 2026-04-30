@@ -1,0 +1,48 @@
+import os
+import sys
+import tempfile
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../tui_tester")))
+
+from tui_tester import TUIAgent
+
+def start_agent(tmpdir):
+    agent = TUIAgent(f"go run ./cmd/deutsch-tui -data-dir {tmpdir}")
+    agent.wait_for_text("Dashboard", timeout=15.0)
+    agent.wait_until_stable()
+    return agent
+
+def test_cram_review_flow():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Create some bookmarked cards
+        agent = start_agent(tmpdir)
+        try:
+            # Go to review and bookmark a card
+            agent.act("3")
+            agent.wait_for_text("Review 1/6")
+            agent.act("b")
+            agent.wait_for_text("Card bookmarked")
+            
+            # Go to Cram mode
+            agent.act("9")
+            agent.wait_for_text("Cram Mode")
+            agent.wait_for_text("Filter: bookmarked")
+            agent.wait_for_text("> [FC]") # Should show the bookmarked card
+            
+            # Start Cram Review
+            agent.act("<Enter>")
+            agent.wait_for_text("Cram Review")
+            agent.wait_for_text("Press space or enter to reveal.")
+            
+            # Reveal
+            agent.act("<Space>")
+            agent.wait_for_text("Answer:")
+            agent.wait_for_text("Grade: a Again | h Hard | g Good | e Easy")
+            
+            # Grade
+            agent.act("g")
+            agent.wait_for_text("Cram Stats: 1 reviewed, 1 correct (100.0%)")
+            agent.wait_for_text("Cram Mode") # Should be back to list
+            
+        finally:
+            agent.close()

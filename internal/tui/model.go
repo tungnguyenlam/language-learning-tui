@@ -4,7 +4,9 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"time"
 
@@ -27,6 +29,7 @@ const (
 	ViewAI         View = "ai"
 	ViewSettings   View = "settings"
 	ViewBrowser    View = "browser"
+	ViewCram       View = "cram"
 )
 
 type Breakpoint string
@@ -93,6 +96,15 @@ type Model struct {
 	sessionReviewed    int
 	sessionCorrect     int
 	showHelp           bool
+	cramCards          []core.Card
+	cramCursor         int
+	cramType           string // "bookmarked", "suspended", "leech", "flagged", or "all"
+	cramReviewed       int
+	cramCorrect        int
+	cramActive         bool
+	cramRevealed       bool
+	reviewsPerDay      map[string]int
+	spinnerFrame       int
 }
 
 func NewModel(repo core.Repository, scheduler core.Scheduler) *Model {
@@ -206,10 +218,12 @@ type reviewUndoMsg struct {
 	decks  []core.Deck
 	stats  core.Statistics
 }
+type cramCardsMsg []core.Card
 type browserCardsMsg []core.Card
+type reviewsPerDayMsg map[string]int
 
 func (m *Model) Init() tea.Cmd {
-	return tea.Batch(m.loadDueCards, m.loadDecks, m.loadStatistics())
+	return tea.Batch(m.loadDueCards, m.loadDecks, m.loadStatistics(), m.loadReviewsPerDay())
 }
 
 func (m *Model) loadBrowserCards() tea.Cmd {
@@ -244,6 +258,18 @@ func (m *Model) loadBookmarkedDueCards() tea.Msg {
 	return bookmarkedDueCardsMsg(cards)
 }
 
+func (m *Model) loadCramCards() tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		cards, err := m.repo.Cards(ctx, "", "")
+		if err != nil {
+			return err
+		}
+		return cramCardsMsg(cards)
+	}
+}
+
 func (m *Model) loadDecks() tea.Msg {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -263,6 +289,18 @@ func (m *Model) loadStatistics() tea.Cmd {
 			return err
 		}
 		return statsMsg(stats)
+	}
+}
+
+func (m *Model) loadReviewsPerDay() tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		data, err := m.repo.ReviewsPerDay(ctx, 30)
+		if err != nil {
+			return err
+		}
+		return reviewsPerDayMsg(data)
 	}
 }
 
@@ -293,6 +331,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case statsMsg:
 		m.stats = core.Statistics(msg)
+	case reviewsPerDayMsg:
+		m.reviewsPerDay = map[string]int(msg)
 	case draftsMsg:
 		m.drafts = []ai.Draft(msg)
 		m.draftCursor = 0
@@ -314,6 +354,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.deckIndex = len(m.decks) - 1
 			}
 			m.deck = m.decks[m.deckIndex]
+			m.deckCursor = len(m.decks) - 1
 		}
 		m.allDue = msg.cards
 		m.applyDeckFilter()
@@ -331,6 +372,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.grade != core.GradeAgain {
 			m.sessionCorrect++
 		}
+		// Track cram stats if in cram view
+		if m.activeView == ViewCram {
+			m.cramReviewed++
+			if msg.grade != core.GradeAgain {
+				m.cramCorrect++
+			}
+		}
 	case bookmarkToggledMsg:
 		m.setCardBookmarkLocal(msg.cardID, msg.bookmarked)
 		if msg.bookmarked {
@@ -344,6 +392,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.allDue = msg.cards
 		m.applyDeckFilter()
 		m.status = "Card suspended"
+		return m, m.loadReviewsPerDay()
 	case dailyGoalSetMsg:
 		m.stats = core.Statistics(msg)
 		m.status = fmt.Sprintf("Daily goal set to %d", m.stats.DailyGoal)
@@ -354,12 +403,44 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.allDue = msg.cards
 		m.applyDeckFilter()
 		m.status = "Last review undone"
+		return m, m.loadReviewsPerDay()
 	case browserCardsMsg:
 		m.browserCards = []core.Card(msg)
 		if len(m.browserCards) == 0 {
 			m.status = "No cards found"
 		} else {
 			m.status = fmt.Sprintf("%d cards found", len(m.browserCards))
+		}
+	case cramCardsMsg:
+		allCards := []core.Card(msg)
+		// Filter cards based on cram type
+		m.cramCards = m.cramCards[:0]
+		for _, card := range allCards {
+			switch m.cramType {
+			case "bookmarked":
+				if card.Bookmarked {
+					m.cramCards = append(m.cramCards, card)
+				}
+			case "suspended":
+				if card.Suspended {
+					m.cramCards = append(m.cramCards, card)
+				}
+			case "leech":
+				if card.Leech {
+					m.cramCards = append(m.cramCards, card)
+				}
+			case "flagged":
+				if card.Bookmarked || card.Suspended || card.Leech {
+					m.cramCards = append(m.cramCards, card)
+				}
+			case "all":
+				m.cramCards = append(m.cramCards, card)
+			}
+		}
+		if len(m.cramCards) == 0 {
+			m.status = "No cards found for this filter"
+		} else {
+			m.status = fmt.Sprintf("%d cards in cram mode", len(m.cramCards))
 		}
 	case tea.KeyMsg:
 		return m.updateKey(msg)
@@ -375,9 +456,31 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func (m *Model) playAudio(audioPath string) tea.Cmd {
+	if audioPath == "" {
+		return nil
+	}
+	return func() tea.Msg {
+		var cmd *exec.Cmd
+		if runtime.GOOS == "darwin" {
+			cmd = exec.Command("afplay", audioPath)
+		} else {
+			cmd = exec.Command("play", audioPath)
+		}
+		_ = cmd.Run()
+		return nil
+	}
+}
+
 func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	switch msg.String() {
-	case "ctrl+c", "q":
+	case "ctrl+c":
+		return m, tea.Quit
+	case "q":
+		if m.activeView == ViewCram && m.cramActive {
+			m.cramActive = false
+			return m, nil
+		}
 		return m, tea.Quit
 	case "?":
 		m.showHelp = !m.showHelp
@@ -386,82 +489,56 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		} else {
 			m.status = "Help overlay closed."
 		}
+		return m, nil
 	case "tab":
 		m.nextView()
-	case "1":
-		if m.activeView == ViewReview && len(m.dueCards) > 0 && m.dueCards[m.cursor].Kind == core.CardKindMCQ && m.revealed && !m.mcqAnswered {
-			m.selectMCQChoice(msg.String())
-			return m, nil
-		}
-		return m, m.updateView(ViewDashboard)
-	case "2":
-		if m.activeView == ViewReview && len(m.dueCards) > 0 && m.dueCards[m.cursor].Kind == core.CardKindMCQ && m.revealed && !m.mcqAnswered {
-			m.selectMCQChoice(msg.String())
-			return m, nil
-		}
-		return m, m.updateView(ViewDecks)
-	case "3":
-		if m.activeView == ViewReview && len(m.dueCards) > 0 && m.dueCards[m.cursor].Kind == core.CardKindMCQ && m.revealed && !m.mcqAnswered {
-			m.selectMCQChoice(msg.String())
-			return m, nil
-		}
-		return m, m.updateView(ViewReview)
-	case "4":
-		if m.activeView == ViewReview && len(m.dueCards) > 0 && m.dueCards[m.cursor].Kind == core.CardKindMCQ && m.revealed && !m.mcqAnswered {
-			m.selectMCQChoice(msg.String())
-			return m, nil
-		}
-		return m, m.updateView(ViewStatistics)
-	case "5":
-		return m, m.updateView(ViewImport)
-	case "6":
-		return m, m.updateView(ViewAI)
-	case "7":
-		return m, m.updateView(ViewSettings)
-	case "8":
-		return m, m.updateView(ViewBrowser)
-	case "left", "shift+tab", "w":
+		return m, nil
+	case "left", "shift+tab":
 		return m, m.previousViewCmd()
-	case "right", "s":
+	case "right":
 		return m, m.nextViewCmd()
+	case "w":
+		if !m.textInputActive() {
+			return m, m.previousViewCmd()
+		}
+	case "s":
+		if !m.textInputActive() {
+			return m, m.nextViewCmd()
+		}
+	case "up":
+		if !m.activeViewHandlesVerticalNavigation() {
+			return m, m.previousViewCmd()
+		}
+	case "down":
+		if !m.activeViewHandlesVerticalNavigation() {
+			return m, m.nextViewCmd()
+		}
 	case "[":
 		m.previousDeck()
+		return m, nil
 	case "]":
 		m.nextDeck()
+		return m, nil
+	}
+
+	if cmd, handled := m.updateNumberKey(msg); handled {
+		return m, cmd
+	}
+
+	// Handle view-specific keys after global navigation.
+	if cmd, handled := m.updateActiveViewKey(msg); handled {
+		return m, cmd
+	}
+
+	switch msg.String() {
+	case "p":
+		if m.activeView == ViewReview && len(m.dueCards) > 0 {
+			return m, m.playAudio(m.dueCards[m.cursor].Audio)
+		}
+		if m.activeView == ViewCram && m.cramActive && len(m.cramCards) > 0 {
+			return m, m.playAudio(m.cramCards[m.cramCursor].Audio)
+		}
 	default:
-		// Handle view-specific keys
-		if m.activeView == ViewAI {
-			cmd, handled := m.updateAIKey(msg)
-			if handled {
-				return m, cmd
-			}
-		}
-		if m.activeView == ViewImport {
-			cmd, handled := m.updateImportKey(msg)
-			if handled {
-				return m, cmd
-			}
-		}
-		if m.activeView == ViewDecks {
-			cmd, handled := m.updateDecksKey(msg)
-			if handled {
-				return m, cmd
-			}
-		}
-		if m.activeView == ViewSettings {
-			cmd, handled := m.updateSettingsKey(msg)
-			if handled {
-				return m, cmd
-			}
-		}
-
-		if m.activeView == ViewBrowser {
-			cmd, handled := m.updateBrowserKey(msg)
-			if handled {
-				return m, cmd
-			}
-		}
-
 		// Handle remaining keys based on active view
 		switch m.activeView {
 		case ViewReview:
@@ -503,6 +580,76 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+func (m *Model) textInputActive() bool {
+	return (m.activeView == ViewImport && !strings.HasSuffix(m.importPath, "import.tsv")) ||
+		(m.activeView == ViewSettings && m.editingTemplate)
+}
+
+func (m *Model) activeViewHandlesVerticalNavigation() bool {
+	switch m.activeView {
+	case ViewAI, ViewBrowser, ViewCram, ViewDecks, ViewReview, ViewSettings:
+		return true
+	default:
+		return false
+	}
+}
+
+func (m *Model) updateNumberKey(msg tea.KeyMsg) (tea.Cmd, bool) {
+	key := msg.String()
+	if m.activeView == ViewCram {
+		return nil, false
+	}
+	if m.activeView == ViewReview && len(m.dueCards) > 0 && m.dueCards[m.cursor].Kind == core.CardKindMCQ && m.revealed && !m.mcqAnswered {
+		switch key {
+		case "1", "2", "3", "4":
+			m.selectMCQChoice(key)
+			return nil, true
+		}
+	}
+
+	switch key {
+	case "1":
+		return m.updateView(ViewDashboard), true
+	case "2":
+		return m.updateView(ViewDecks), true
+	case "3":
+		return m.updateView(ViewReview), true
+	case "4":
+		return m.updateView(ViewStatistics), true
+	case "5":
+		return m.updateView(ViewImport), true
+	case "6":
+		return m.updateView(ViewAI), true
+	case "7":
+		return m.updateView(ViewSettings), true
+	case "8":
+		return m.updateView(ViewBrowser), true
+	case "9":
+		return m.updateView(ViewCram), true
+	default:
+		return nil, false
+	}
+}
+
+func (m *Model) updateActiveViewKey(msg tea.KeyMsg) (tea.Cmd, bool) {
+	switch m.activeView {
+	case ViewAI:
+		return m.updateAIKey(msg)
+	case ViewImport:
+		return m.updateImportKey(msg)
+	case ViewBrowser:
+		return m.updateBrowserKey(msg)
+	case ViewSettings:
+		return m.updateSettingsKey(msg)
+	case ViewCram:
+		return m.updateCramKey(msg)
+	case ViewDecks:
+		return m.updateDecksKey(msg)
+	default:
+		return nil, false
+	}
+}
+
 func (m *Model) updateDecksKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 	switch msg.String() {
 	case "up", "k":
@@ -526,11 +673,32 @@ func (m *Model) updateDecksKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 func (m *Model) updateImportKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 	switch msg.String() {
 	case "i":
-		return m.importTSV(), true
+		if strings.HasSuffix(m.importPath, "import.tsv") {
+			return m.importTSV(), true
+		}
+		if _, err := os.Stat(m.importPath); err == nil {
+			return m.importTSV(), true
+		}
+		m.importPath += msg.String()
+		return nil, true
 	case "x":
 		return m.exportTSV(), true
+	case "backspace":
+		if len(m.importPath) > 0 {
+			m.importPath = m.importPath[:len(m.importPath)-1]
+		}
+		return nil, true
+	case "ctrl+u":
+		m.importPath = ""
+		return nil, true
+	case "enter":
+		return m.importTSV(), true
 	}
-	return nil, false
+	if len(msg.String()) == 1 {
+		m.importPath += msg.String()
+		return nil, true
+	}
+	return nil, true
 }
 
 func (m *Model) updateSettingsKey(msg tea.KeyMsg) (tea.Cmd, bool) {
@@ -613,7 +781,7 @@ func (m *Model) updateBrowserKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 			m.browserCursor++
 		}
 		return nil, true
-	case "left", "right", "[":
+	case "[":
 		if len(m.browserCards) > 0 {
 			m.browserSearch = ""
 			m.browserCards = nil
@@ -630,7 +798,89 @@ func (m *Model) updateBrowserKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 		m.browserSearch += msg.String()
 		return m.loadBrowserCards(), true
 	}
+	return nil, true
+}
+
+func (m *Model) updateCramKey(msg tea.KeyMsg) (tea.Cmd, bool) {
+	if m.cramActive {
+		switch msg.String() {
+		case "esc":
+			m.cramActive = false
+			return nil, true
+		case "space", "enter":
+			if !m.cramRevealed {
+				m.cramRevealed = true
+				return nil, true
+			}
+		case "a", "1":
+			if m.cramRevealed {
+				m.cramReviewed++
+				m.cramActive = false
+				m.nextCramCard()
+				return nil, true
+			}
+		case "h", "g", "e", "2", "3", "4":
+			if m.cramRevealed {
+				m.cramReviewed++
+				m.cramCorrect++
+				m.cramActive = false
+				m.nextCramCard()
+				return nil, true
+			}
+		}
+		return nil, true
+	}
+
+	switch msg.String() {
+	case "up", "k":
+		if m.cramCursor > 0 {
+			m.cramCursor--
+		}
+		return nil, true
+	case "down", "j":
+		if m.cramCursor < len(m.cramCards)-1 {
+			m.cramCursor++
+		}
+		return nil, true
+	case "enter":
+		if len(m.cramCards) > 0 {
+			m.cramActive = true
+			m.cramRevealed = false
+			return nil, true
+		}
+	case "1":
+		m.cramType = "bookmarked"
+		m.cramCursor = 0
+		m.cramCards = nil
+		return m.loadCramCards(), true
+	case "2":
+		m.cramType = "suspended"
+		m.cramCursor = 0
+		m.cramCards = nil
+		return m.loadCramCards(), true
+	case "3":
+		m.cramType = "leech"
+		m.cramCursor = 0
+		m.cramCards = nil
+		return m.loadCramCards(), true
+	case "4":
+		m.cramType = "flagged"
+		m.cramCursor = 0
+		m.cramCards = nil
+		return m.loadCramCards(), true
+	case "5":
+		m.cramType = "all"
+		m.cramCursor = 0
+		m.cramCards = nil
+		return m.loadCramCards(), true
+	}
 	return nil, false
+}
+
+func (m *Model) nextCramCard() {
+	if len(m.cramCards) > 0 {
+		m.cramCursor = (m.cramCursor + 1) % len(m.cramCards)
+	}
 }
 
 func (m *Model) templateKeyAtCursor() string {
@@ -708,12 +958,12 @@ func (m *Model) updateAIKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 			m.aiInput = m.aiInput[:len(m.aiInput)-1]
 		}
 		return nil, true
-	case "up":
+	case "up", "k":
 		if m.draftCursor > 0 {
 			m.draftCursor--
 		}
 		return nil, true
-	case "down":
+	case "down", "j":
 		if m.draftCursor < len(m.drafts)-1 {
 			m.draftCursor++
 		}
@@ -732,7 +982,7 @@ func (m *Model) updateAIKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 		m.aiInput += msg.String()
 		return nil, true
 	}
-	return nil, false
+	return nil, true
 }
 
 func (m *Model) generateDrafts() tea.Cmd {
@@ -1138,6 +1388,7 @@ func (m *Model) renderNav(x, y int) string {
 		{"nav-ai", ViewAI, "6 AI Drafts"},
 		{"nav-settings", ViewSettings, "7 Settings"},
 		{"nav-browser", ViewBrowser, "8 Browser"},
+		{"nav-cram", ViewCram, "9 Cram"},
 	}
 	lines := make([]string, 0, len(labels))
 	for i, label := range labels {
@@ -1152,8 +1403,8 @@ func (m *Model) renderNav(x, y int) string {
 }
 
 func (m *Model) renderTabs(x, y int) string {
-	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser}
-	labels := []string{"Dashboard", "Decks", "Review", "Stats", "Import", "AI", "Settings", "Browser"}
+	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser, ViewCram}
+	labels := []string{"Dashboard", "Decks", "Review", "Statistics", "Import", "AI", "Settings", "Browser", "Cram"}
 	parts := make([]string, 0, len(views))
 	offset := x
 	for i, view := range views {
@@ -1194,6 +1445,8 @@ func (m *Model) renderActiveViewPlain(x, y int) string {
 		return m.renderSettings(x, y)
 	case ViewBrowser:
 		return m.renderBrowser()
+	case ViewCram:
+		return m.renderCram()
 	default:
 		return fmt.Sprintf("Dashboard\n\nDeck: %s\nDue cards: %d\nBookmarked: %d (%d due)\nLeech: %d\nSuspended: %d\nReviews today: %d/%d\n\nUse [ and ] to switch decks.\nUse Review to start studying.", m.deckLabel(), len(m.dueCards), m.stats.BookmarkedCards, m.stats.BookmarkedDue, m.stats.LeechCards, m.stats.SuspendedCards, m.stats.ReviewsToday, m.stats.DailyGoal)
 	}
@@ -1206,14 +1459,38 @@ func (m *Model) renderStatistics() string {
 	b.WriteString(fmt.Sprintf("Total Cards:   %d\n", m.stats.TotalCards))
 	b.WriteString(fmt.Sprintf("  New:         %d\n", m.stats.NewCards))
 	b.WriteString(fmt.Sprintf("  Young:       %d\n", m.stats.YoungCards))
-	b.WriteString(fmt.Sprintf("  Mature:      %d\n", m.stats.MatureCards))
+	b.WriteString(fmt.Sprintf("  Mature:      %d\n\n", m.stats.MatureCards))
 	b.WriteString(fmt.Sprintf("  Bookmarked:  %d (%d due)\n", m.stats.BookmarkedCards, m.stats.BookmarkedDue))
 	b.WriteString(fmt.Sprintf("  Leech:       %d\n", m.stats.LeechCards))
 	b.WriteString(fmt.Sprintf("  Suspended:   %d\n\n", m.stats.SuspendedCards))
 
 	b.WriteString(fmt.Sprintf("Total Reviews: %d\n", m.stats.TotalReviews))
 	b.WriteString(fmt.Sprintf("Reviews Today: %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal))
-	b.WriteString(fmt.Sprintf("Current Streak: %d days\n", m.stats.CurrentStreak))
+	// Colored progress bar for daily goal
+	progressWidth := 30
+	progress := 0
+	if m.stats.DailyGoal > 0 {
+		progress = (m.stats.ReviewsToday * progressWidth) / m.stats.DailyGoal
+		if progress > progressWidth {
+			progress = progressWidth
+		}
+	}
+	// Color: green if complete, yellow if halfway, red otherwise
+	barColor := "196" // red
+	if progress >= progressWidth {
+		barColor = "46" // green
+	} else if progress >= progressWidth/2 {
+		barColor = "226" // yellow
+	}
+	barStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(barColor))
+	bar := strings.Repeat("█", progress) + strings.Repeat("░", progressWidth-progress)
+	b.WriteString(fmt.Sprintf("  %s %d%%\n", barStyle.Render(bar), (m.stats.ReviewsToday*100)/maxInt(m.stats.DailyGoal, 1)))
+	// Streak with fire emoji if > 0
+	streakIndicator := ""
+	if m.stats.CurrentStreak > 0 {
+		streakIndicator = " 🔥"
+	}
+	b.WriteString(fmt.Sprintf("Current Streak: %d days%s\n", m.stats.CurrentStreak, streakIndicator))
 	b.WriteString(fmt.Sprintf("Success Rate:  %.1f%%\n\n", m.stats.SuccessRate*100))
 
 	b.WriteString("Session Stats:\n")
@@ -1230,6 +1507,50 @@ func (m *Model) renderStatistics() string {
 	for _, g := range grades {
 		count := m.stats.Grades[g]
 		b.WriteString(fmt.Sprintf("  %-5s: %d\n", g, count))
+	}
+
+	// Review Activity (last 14 days) with colored bars
+	b.WriteString("\nReview Activity (last 14 days):\n")
+	if len(m.reviewsPerDay) == 0 {
+		b.WriteString("  (no review data yet)\n")
+	} else {
+		now := time.Now().UTC()
+		maxPerDay := 0
+		for i := 13; i >= 0; i-- {
+			day := now.AddDate(0, 0, -i)
+			dayStr := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC).Format("2006-01-02")
+			count := m.reviewsPerDay[dayStr]
+			if count > maxPerDay {
+				maxPerDay = count
+			}
+		}
+		if maxPerDay == 0 {
+			maxPerDay = 1
+		}
+		barWidth := 30
+		for i := 13; i >= 0; i-- {
+			day := now.AddDate(0, 0, -i)
+			dayStr := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC).Format("2006-01-02")
+			count := m.reviewsPerDay[dayStr]
+			barLen := (count * barWidth) / maxPerDay
+			if barLen == 0 && count > 0 {
+				barLen = 1
+			}
+			// Color based on count: green for high, yellow for medium, red for low
+			barColor := "244" // muted/default
+			if count > 0 {
+				if count >= maxPerDay*3/4 {
+					barColor = "46" // green
+				} else if count >= maxPerDay/2 {
+					barColor = "226" // yellow
+				} else {
+					barColor = "196" // red
+				}
+			}
+			barStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(barColor))
+			bar := strings.Repeat("█", barLen)
+			b.WriteString(fmt.Sprintf("  %s %2d %s\n", day.Format("01-02"), count, barStyle.Render(bar)))
+		}
 	}
 
 	return b.String()
@@ -1261,7 +1582,7 @@ func (m *Model) renderDecks(x, y int) string {
 }
 
 func (m *Model) renderImport() string {
-	return fmt.Sprintf("Import / Export\n\nImport file: %s\nExport file: %s\n\nPress i to import TSV.\nPress x to export selected deck.\n\nDeck: %s\n.apkg support is a later milestone.", m.importPath, m.exportPath, m.deckLabel())
+	return fmt.Sprintf("Import / Export\n\nImport file: %s\nExport file: %s\n\nPress i to import TSV. Enter also imports TSV.\nPress x to export selected deck.\n\nDeck: %s\n.apkg support is a later milestone.", m.importPath, m.exportPath, m.deckLabel())
 }
 
 func (m *Model) renderAI(x, y int) string {
@@ -1322,12 +1643,83 @@ func (m *Model) renderBrowser() string {
 	return b.String()
 }
 
+func (m *Model) renderCram() string {
+	if m.cramActive {
+		var b strings.Builder
+		card := m.cramCards[m.cramCursor]
+		audioIndicator := ""
+		if card.Audio != "" {
+			audioIndicator = " [Audio]"
+		}
+		b.WriteString("Cram Review\n\n")
+		b.WriteString(fmt.Sprintf("Prompt: %s%s\n\n", card.Prompt, audioIndicator))
+		if m.cramRevealed {
+			b.WriteString(fmt.Sprintf("Answer: %s\n\n", card.Answer))
+			b.WriteString("Grade: a Again | h Hard | g Good | e Easy\n")
+		} else {
+			b.WriteString("Press space or enter to reveal.\n")
+		}
+		b.WriteString("\np play audio | q to exit cram review.")
+		return b.String()
+	}
+
+	var b strings.Builder
+	b.WriteString("Cram Mode\n\n")
+	b.WriteString(fmt.Sprintf("Filter: %s\n\n", m.cramType))
+	if len(m.cramCards) == 0 {
+		b.WriteString("No cards found for this filter.\n\n")
+		b.WriteString("Press 1-5 to change filter:\n")
+		b.WriteString("  1: Bookmarked\n")
+		b.WriteString("  2: Suspended\n")
+		b.WriteString("  3: Leeches\n")
+		b.WriteString("  4: All flagged\n")
+		b.WriteString("  5: All cards\n")
+		return b.String()
+	}
+	for i, card := range m.cramCards {
+		prefix := "  "
+		style := lipgloss.NewStyle()
+		if i == m.cramCursor {
+			prefix = "> "
+			style = style.Bold(true).Foreground(lipgloss.Color("212"))
+		}
+		kind := "FC"
+		if card.Kind == core.CardKindMCQ {
+			kind = "MCQ"
+		}
+		bookmark := ""
+		if card.Bookmarked {
+			bookmark = " [B]"
+		}
+		leech := ""
+		if card.Leech {
+			leech = " [L]"
+		}
+		suspended := ""
+		if card.Suspended {
+			suspended = " [S]"
+		}
+		label := fmt.Sprintf("%s[%s] %s%s%s%s", prefix, kind, card.Prompt, bookmark, leech, suspended)
+		b.WriteString(style.Render(label))
+		b.WriteString("\n")
+	}
+	if m.cramReviewed > 0 {
+		accuracy := 0.0
+		if m.cramReviewed > 0 {
+			accuracy = float64(m.cramCorrect) / float64(m.cramReviewed) * 100
+		}
+		b.WriteString(fmt.Sprintf("\nCram Stats: %d reviewed, %d correct (%.1f%%)\n", m.cramReviewed, m.cramCorrect, accuracy))
+	}
+	b.WriteString("\nUse j/k to navigate. Type 1-5 for filter. q to quit.\n")
+	return b.String()
+}
+
 func (m *Model) renderHelp() string {
 	var b strings.Builder
 	b.WriteString(panelStyle.Width(60).Render(""))
 	b.WriteString("Keyboard Shortcuts\n\n")
 	b.WriteString("Global:\n")
-	b.WriteString("  1-8         Switch to view\n")
+	b.WriteString("  1-9         Switch to view\n")
 	b.WriteString("  Tab/arrows   Cycle views\n")
 	b.WriteString("  w/s          Previous/next view\n")
 	b.WriteString("  ?            Toggle this help\n")
@@ -1344,12 +1736,25 @@ func (m *Model) renderHelp() string {
 	b.WriteString("  B            Toggle bookmarked-only mode\n")
 	b.WriteString("  x            Suspend card\n")
 	b.WriteString("  u            Undo last review\n")
+	b.WriteString("  p            Play audio\n")
 	b.WriteString("  1-4          Select MCQ choice\n\n")
 
 	b.WriteString("Browser:\n")
 	b.WriteString("  j/k          Navigate cards\n")
 	b.WriteString("  Type         Search cards\n")
 	b.WriteString("  Backspace    Delete search char\n\n")
+
+	b.WriteString("Cram:\n")
+	b.WriteString("  j/k          Navigate cards\n")
+	b.WriteString("  Enter        Start cram review\n")
+	b.WriteString("  p            Play audio (in review)\n")
+	b.WriteString("  1-5          Filter: bookmarked/suspended/leech/flagged/all\n\n")
+
+	b.WriteString("Import:\n")
+	b.WriteString("  Type         Type import path\n")
+	b.WriteString("  Enter        Import TSV\n")
+	b.WriteString("  x            Export selected deck\n")
+	b.WriteString("  Ctrl-u       Clear path\n\n")
 
 	b.WriteString("Settings:\n")
 	b.WriteString("  j/k          Navigate options\n")
@@ -1382,9 +1787,13 @@ func (m *Model) renderReview(x, y int) string {
 	if m.bookmarkFilter {
 		filterBanner = " (Bookmarked)"
 	}
-	keys := "b toggle | x suspend | B filter | u undo"
+	keys := "b toggle | x suspend | B filter | u undo | p audio"
 	if m.bookmarkFilter {
-		keys = "b toggle | x suspend | B all cards | u undo"
+		keys = "b toggle | x suspend | B all cards | u undo | p audio"
+	}
+	audioIndicator := ""
+	if card.Audio != "" {
+		audioIndicator = " [Audio]"
 	}
 
 	var answer string
@@ -1419,7 +1828,7 @@ func (m *Model) renderReview(x, y int) string {
 	} else {
 		answer = "Press space or enter to reveal."
 	}
-	return fmt.Sprintf("Review%s %d/%d\n%s | %s\n%s%s\n\n%s\n\n%s", filterBanner, m.cursor+1, len(m.dueCards), bookmark, keys, leech, suspended, card.Prompt, answer)
+	return fmt.Sprintf("Review%s %d/%d\n%s | %s\n%s%s%s\n\n%s\n\n%s", filterBanner, m.cursor+1, len(m.dueCards), bookmark, keys, leech, suspended, audioIndicator, card.Prompt, answer)
 }
 
 func renderMCQChoices(choices []string, selected int) string {
@@ -1436,7 +1845,7 @@ func renderMCQChoices(choices []string, selected int) string {
 }
 
 func (m *Model) nextViewCmd() tea.Cmd {
-	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser}
+	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser, ViewCram}
 	for i, view := range views {
 		if m.activeView == view {
 			return m.updateView(views[(i+1)%len(views)])
@@ -1446,7 +1855,7 @@ func (m *Model) nextViewCmd() tea.Cmd {
 }
 
 func (m *Model) previousViewCmd() tea.Cmd {
-	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser}
+	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser, ViewCram}
 	for i, view := range views {
 		if m.activeView == view {
 			return m.updateView(views[(i-1+len(views))%len(views)])
@@ -1473,6 +1882,13 @@ func (m *Model) updateView(view View) tea.Cmd {
 		m.browserDeckID = m.deck.ID
 		m.browserCursor = 0
 		return m.loadBrowserCards()
+	}
+	if view == ViewCram {
+		m.cramType = "bookmarked"
+		m.cramCursor = 0
+		m.cramReviewed = 0
+		m.cramCorrect = 0
+		return m.loadCramCards()
 	}
 	return nil
 }

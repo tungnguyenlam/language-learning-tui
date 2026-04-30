@@ -1,5 +1,15 @@
 # Completed Work
 
+## 2026-04-30 Autonomous Feature Pass 5 - Review History Visualizations
+
+- Implemented Feature 15: Review History Visualizations (Heatmap/Chart).
+- Added `ReviewsPerDay(ctx, days)` method to `core.Repository` interface and SQLite store implementation.
+- Added `reviewsPerDay` field to TUI Model and `loadReviewsPerDay()` command.
+- Extended `renderStatistics()` to display a 14-day ASCII bar chart of review activity.
+- Updated `mockRepo` in `mocks_test.go` to implement the new `ReviewsPerDay` method.
+- Statistics view now shows review activity chart with daily counts and visual bars.
+- All Go tests pass, all 38 E2E tests pass, `./scripts/verify.sh` passes with zero errors.
+
 ## 2026-04-30 Autonomous Feature Pass 4 - Card Browser, Session Stats, Help Overlay
 
 - Implemented Card Browser View: `8` opens browser showing all cards in current deck with type (FC/MCQ), prompt, and status flags (B/L/S).

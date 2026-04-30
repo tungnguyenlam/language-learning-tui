@@ -1013,3 +1013,124 @@ func TestBrowserSearchFilter(t *testing.T) {
 		t.Fatalf("expected Apple, got %s", model.browserCards[0].Prompt)
 	}
 }
+
+func TestCramModeFiltering(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", Prompt: "Card 1", Bookmarked: true},
+			{ID: "c2", Prompt: "Card 2", Suspended: true},
+			{ID: "c3", Prompt: "Card 3", Leech: true},
+			{ID: "c4", Prompt: "Card 4"},
+		},
+	}
+	model := NewModel(repo, &mockScheduler{})
+
+	// Mock cram cards loading
+	model.Update(cramCardsMsg(repo.dueCards))
+
+	// Test bookmarked filter
+	model.cramType = "bookmarked"
+	model.cramCards = nil
+	model.Update(cramCardsMsg(repo.dueCards))
+	if len(model.cramCards) != 1 {
+		t.Fatalf("cramCards = %d, want 1 for bookmarked filter", len(model.cramCards))
+	}
+	if model.cramCards[0].ID != "c1" {
+		t.Fatalf("expected c1, got %s", model.cramCards[0].ID)
+	}
+
+	// Test suspended filter
+	model.cramType = "suspended"
+	model.cramCards = nil
+	model.Update(cramCardsMsg(repo.dueCards))
+	if len(model.cramCards) != 1 {
+		t.Fatalf("cramCards = %d, want 1 for suspended filter", len(model.cramCards))
+	}
+	if model.cramCards[0].ID != "c2" {
+		t.Fatalf("expected c2, got %s", model.cramCards[0].ID)
+	}
+
+	// Test leech filter
+	model.cramType = "leech"
+	model.cramCards = nil
+	model.Update(cramCardsMsg(repo.dueCards))
+	if len(model.cramCards) != 1 {
+		t.Fatalf("cramCards = %d, want 1 for leech filter", len(model.cramCards))
+	}
+	if model.cramCards[0].ID != "c3" {
+		t.Fatalf("expected c3, got %s", model.cramCards[0].ID)
+	}
+
+	// Test flagged filter (bookmarked, suspended, or leech)
+	model.cramType = "flagged"
+	model.cramCards = nil
+	model.Update(cramCardsMsg(repo.dueCards))
+	if len(model.cramCards) != 3 {
+		t.Fatalf("cramCards = %d, want 3 for flagged filter", len(model.cramCards))
+	}
+
+	// Test all filter
+	model.cramType = "all"
+	model.cramCards = nil
+	model.Update(cramCardsMsg(repo.dueCards))
+	if len(model.cramCards) != 4 {
+		t.Fatalf("cramCards = %d, want 4 for all filter", len(model.cramCards))
+	}
+}
+
+func TestCramReviewFlow(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", Prompt: "P1", Answer: "A1", Bookmarked: true},
+			{ID: "c2", Prompt: "P2", Answer: "A2", Bookmarked: true},
+		},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewCram
+	model.cramCards = repo.dueCards
+	model.cramType = "bookmarked"
+
+	if model.cramActive {
+		t.Fatal("should not be active initially")
+	}
+
+	// Start review with enter
+	model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+	if !model.cramActive {
+		t.Fatal("should be active after enter")
+	}
+	if model.cramRevealed {
+		t.Fatal("should not be revealed initially")
+	}
+
+	// Reveal with space
+	model.Update(tea.KeyPressMsg{Code: ' '})
+	if !model.cramRevealed {
+		t.Fatal("should be revealed after space")
+	}
+
+	// Grade correct with 'g'
+	model.Update(tea.KeyPressMsg{Code: 'g'})
+	if model.cramActive {
+		t.Fatal("should not be active after grading")
+	}
+	if model.cramReviewed != 1 || model.cramCorrect != 1 {
+		t.Fatalf("expected 1 reviewed/correct, got %d/%d", model.cramReviewed, model.cramCorrect)
+	}
+	if model.cramCursor != 1 {
+		t.Fatalf("expected cursor 1, got %d", model.cramCursor)
+	}
+
+	// Start next card
+	model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+	model.Update(tea.KeyPressMsg{Code: ' '})
+
+	// Grade again with 'a'
+	model.Update(tea.KeyPressMsg{Code: 'a'})
+	if model.cramReviewed != 2 || model.cramCorrect != 1 {
+		t.Fatalf("expected 2 reviewed, 1 correct, got %d/%d", model.cramReviewed, model.cramCorrect)
+	}
+	if model.cramCursor != 0 {
+		t.Fatalf("expected cursor 0 (wrapped), got %d", model.cramCursor)
+	}
+}

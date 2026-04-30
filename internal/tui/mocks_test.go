@@ -145,6 +145,10 @@ func (m *mockRepo) Cards(ctx context.Context, deckID string, search string) ([]c
 	return cards, nil
 }
 
+func (m *mockRepo) ReviewsPerDay(ctx context.Context, days int) (map[string]int, error) {
+	return map[string]int{}, nil
+}
+
 func containsIgnoreCase(s, substr string) bool {
 	s = strings.ToLower(s)
 	substr = strings.ToLower(substr)

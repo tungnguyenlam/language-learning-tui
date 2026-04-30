@@ -103,4 +103,11 @@ var migrations = []migration{
 			updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 		)`,
 	},
+	{
+		ID: 15,
+		SQL: `
+			ALTER TABLE cards ADD COLUMN audio TEXT NOT NULL DEFAULT '';
+			ALTER TABLE notes ADD COLUMN audio TEXT NOT NULL DEFAULT '';
+		`,
+	},
 }

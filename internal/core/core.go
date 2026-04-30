@@ -43,6 +43,7 @@ type Note struct {
 	Front    string
 	Back     string
 	Extra    string
+	Audio    string
 	Tags     []string
 	Examples []string
 	Cards    []Card
@@ -56,6 +57,7 @@ type Card struct {
 	Prompt     string
 	Answer     string
 	Choices    []string
+	Audio      string
 	Tags       []string
 	Bookmarked bool
 	Leech      bool
@@ -112,6 +114,7 @@ type Repository interface {
 	SetDailyGoal(ctx context.Context, goal int) error
 	Statistics(ctx context.Context) (Statistics, error)
 	Cards(ctx context.Context, deckID string, search string) ([]Card, error)
+	ReviewsPerDay(ctx context.Context, days int) (map[string]int, error)
 }
 
 type Scheduler interface {

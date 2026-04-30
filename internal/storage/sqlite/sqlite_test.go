@@ -714,3 +714,51 @@ func TestCards_SearchFilter(t *testing.T) {
 		}
 	}
 }
+
+func TestAudioPersistence(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	note := core.Note{
+		ID:     "n1",
+		DeckID: "d1",
+		Front:  "Front",
+		Back:   "Back",
+		Audio:  "audio.mp3",
+	}
+	note.Cards = []core.Card{
+		{
+			ID:     "c1",
+			NoteID: "n1",
+			DeckID: "d1",
+			Kind:   core.CardKindFlashcard,
+			Prompt: "Front",
+			Answer: "Back",
+			Audio:  "audio.mp3",
+		},
+	}
+
+	if err := store.UpsertDeck(ctx, core.Deck{ID: "d1", Name: "D1", Notes: []core.Note{note}}); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+
+	cards, err := store.DueCards(ctx, time.Now(), 10)
+	if err != nil {
+		t.Fatalf("due cards: %v", err)
+	}
+	if cards[0].Audio != "audio.mp3" {
+		t.Fatalf("audio = %s, want audio.mp3", cards[0].Audio)
+	}
+
+	browserCards, err := store.Cards(ctx, "d1", "")
+	if err != nil {
+		t.Fatalf("cards: %v", err)
+	}
+	if browserCards[0].Audio != "audio.mp3" {
+		t.Fatalf("browser audio = %s, want audio.mp3", browserCards[0].Audio)
+	}
+}

@@ -11,7 +11,7 @@ import (
 	"deutsch-tui/internal/core"
 )
 
-const exportHeader = "#separator:tab\n#html:false\n#columns:id\tfront\tback\textra\ttags\tdeck\tnotetype\n"
+const exportHeader = "#separator:tab\n#html:false\n#columns:id\tfront\tback\textra\ttags\tdeck\tnotetype\taudio\n"
 
 type ImportOptions struct {
 	DefaultDeck string
@@ -76,6 +76,9 @@ func ImportAnkiTSV(r io.Reader, opts ImportOptions) ([]core.Note, error) {
 		if len(record) > 4 {
 			note.Tags = splitTags(record[4])
 		}
+		if len(record) > 7 {
+			note.Audio = strings.TrimSpace(record[7])
+		}
 		note.Cards = CardsForNote(note)
 		notes = append(notes, note)
 	}
@@ -102,6 +105,7 @@ func ExportAnkiTSV(w io.Writer, notes []core.Note) error {
 			strings.Join(note.Tags, " "),
 			note.DeckID,
 			"Basic",
+			note.Audio,
 		}); err != nil {
 			return err
 		}
@@ -126,6 +130,7 @@ func CardsForNote(note core.Note) []core.Card {
 			Kind:   core.CardKindFlashcard,
 			Prompt: note.Front,
 			Answer: note.Back,
+			Audio:  note.Audio,
 			Tags:   baseTags,
 		},
 	}
@@ -138,6 +143,7 @@ func CardsForNote(note core.Note) []core.Card {
 			Prompt:  note.Examples[0],
 			Answer:  note.Back,
 			Choices: []string{note.Back, note.Front},
+			Audio:   note.Audio,
 			Tags:    baseTags,
 		})
 	}
