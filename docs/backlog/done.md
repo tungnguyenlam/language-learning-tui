@@ -1,5 +1,15 @@
 # Completed Work
 
+## 2026-05-01 Autonomous Feature Pass 11 - Audio Auto-play on Reveal
+
+- Implemented Feature 17: Audio Auto-play on Reveal.
+- Added `AutoPlayAudio` field to `Config` struct and enabled persistence in `config.json`.
+- Updated Settings view to include a toggle for "Auto-play audio" with improved help text.
+- Implemented auto-play logic in both Review and Cram views to automatically trigger audio when a card is revealed.
+- Added verifiable status messages for auto-play events (e.g., "Auto-playing audio: beep.mp3") to facilitate E2E testing.
+- Created `e2e_tests/test_audio_autoplay.py` with 2 new E2E tests for toggle persistence and Review auto-play.
+- Final verification passed with `./scripts/verify.sh`: Go tests, smoke launch, and 61 tui-tester E2E tests (including 2 new tests).
+
 ## 2026-04-30 Autonomous Feature Pass 10 - Deck Tags and Filtering
 
 - Added SQLite migration 16 to add `tags` column to `decks` table for persisting deck tags.

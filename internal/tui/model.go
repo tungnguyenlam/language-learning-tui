@@ -608,6 +608,7 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				m.mcqChoice = -1
 				m.mcqAnswered = false
 				if m.revealed && m.autoPlayAudio && card.Audio != "" {
+					m.status = "Auto-playing audio: " + card.Audio
 					return m, m.playAudio(card.Audio)
 				}
 			case "b":
@@ -1093,7 +1094,7 @@ func (m *Model) renderSettings(x, y int) string {
 	if m.editingTemplate {
 		b.WriteString("\nEDITING - Enter to save, Esc to cancel.")
 	} else {
-		b.WriteString("\nUse j/k to move, +/- to adjust daily goal, Enter to toggle provider or edit template.")
+		b.WriteString("\nUse j/k to move, +/- to adjust daily goal, Enter to toggle provider, audio, or edit template.")
 	}
 	return b.String()
 }

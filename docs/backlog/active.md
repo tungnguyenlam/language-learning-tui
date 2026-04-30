@@ -71,7 +71,7 @@ Acceptance criteria:
 - Review view automatically plays audio when card is revealed (if audio exists and auto-play enabled).
 - Cram view also respects auto-play setting.
 
-Status: PENDING - Implementation in progress.
+Status: COMPLETED - Settings toggle, persistence, and auto-play logic implemented.
 
 ## Current Pass Plan
 
@@ -82,11 +82,11 @@ Top blockers for this run:
 - ✅ Add deck filtering functionality to the Decks TUI view.
 - ✅ Add at least 3 new tui-tester E2E tests covering deck tags and filtering.
 - ✅ Re-run `./scripts/verify.sh` and commit all source changes.
-- 🚧 Implement audio auto-play on reveal.
+- ✅ Implement audio auto-play on reveal and verify with E2E tests.
 
 ## Next Action
 
-Implement audio auto-play on reveal. Strong next candidates:
+Verify audio auto-play with new E2E tests. Strong next candidates:
 - APKG import/export: high impact / high effort.
 - Advanced deck organization (nested folders, color coding): medium impact / medium effort.
 - Custom study sessions: medium impact / high effort.
