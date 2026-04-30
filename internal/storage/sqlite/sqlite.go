@@ -783,6 +783,40 @@ func (s *Store) GetReviewState(ctx context.Context, cardID string) (core.ReviewS
 	return state, nil
 }
 
+func (s *Store) ReviewHistory(ctx context.Context, cardID string, limit int) ([]core.ReviewLog, error) {
+	if strings.TrimSpace(cardID) == "" {
+		return nil, errors.New("card id is required")
+	}
+	if limit <= 0 || limit > 50 {
+		limit = 10
+	}
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT card_id, grade, reviewed_at, due_at, interval_seconds, reviews, lapses
+		FROM reviews
+		WHERE card_id = ?
+		ORDER BY reviewed_at DESC, id DESC
+		LIMIT ?
+	`, cardID, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var logs []core.ReviewLog
+	for rows.Next() {
+		var log core.ReviewLog
+		var grade string
+		var intervalSec int64
+		if err := rows.Scan(&log.CardID, &grade, &log.Reviewed, &log.Due, &intervalSec, &log.Reviews, &log.Lapses); err != nil {
+			return nil, err
+		}
+		log.Grade = core.ReviewGrade(grade)
+		log.Interval = time.Duration(intervalSec) * time.Second
+		logs = append(logs, log)
+	}
+	return logs, rows.Err()
+}
+
 func parseChoices(raw string) []string {
 	if strings.TrimSpace(raw) == "" {
 		return nil

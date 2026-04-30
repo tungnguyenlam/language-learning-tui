@@ -4,7 +4,7 @@ Last updated: 2026-04-30
 
 ## Current Milestone
 
-Autonomous Feature Pass 8: Streak Indicator and Dashboard Refinements
+Autonomous Feature Pass 9: Per-card Review History and UX Recertification
 
 ## Planned Features
 
@@ -50,15 +50,18 @@ Status: COMPLETED - 14-day ASCII bar chart implemented and showing in Statistics
 ## Current Pass Plan
 
 Top blockers for this run:
-- ~~Establish a fresh baseline by launching `cmd/deutsch-tui` and running `./scripts/verify.sh`.~~
-- ~~Fix any launch, render, interaction, persistence, or tui-tester failures found by verification.~~
-- ~~Add at least 3 new tui-tester E2E tests for uncovered UX or persistence behavior.~~
-- ~~Apply one narrow UX/dev-experience improvement that directly supports German study flow.~~
-- ~~Re-run `./scripts/verify.sh` and commit all source changes.~~
+
+- ✅ Establish a fresh baseline by launching `cmd/deutsch-tui` and running `./scripts/verify.sh`.
+- ✅ Add per-card review history access in the Review and Browser flows.
+- ✅ Add focused Go coverage for review-history repository and rendering behavior.
+- ✅ Add at least 3 new tui-tester E2E tests covering review history and related UX.
+- ✅ Re-run `./scripts/verify.sh` and commit all source changes.
 
 ## Next Action
 
-Await next implementation pass; consider tackling "Per-card review history popover" or "Deck tags and filtering".
+Await the next autonomous pass. Strong next candidates:
+- Deck tags and filtering: medium impact / medium effort.
+- APKG import/export: high impact / high effort.
 
 ## Current Session Notes
 
@@ -67,13 +70,26 @@ Await next implementation pass; consider tackling "Per-card review history popov
 - 2026-04-30: Added 3 new E2E tests for Dashboard features and help overlay in `e2e_tests/test_dashboard_features.py`.
 - 2026-04-30: Expanded `e2e_tests/test_statistics.py` to check for streak indicator in both Dashboard and Statistics.
 - 2026-04-30: Final verification passed with `./scripts/verify.sh`: Go tests, smoke launch, and 53 tui-tester E2E tests.
+- 2026-04-30: Started Autonomous Feature Pass 9. Root continuity docs and TUI instructions read; `./scripts/tui_smoke.sh` passed; `./scripts/verify.sh` passed with 53 E2E tests before source changes.
+- 2026-04-30: Implementing per-card review history via `core.Repository`, SQLite `reviews`, and Review/Browser TUI surfaces. Next verification: focused Go tests for storage and TUI rendering.
+- 2026-04-30: Added `ReviewHistory` repository support plus Review `r` and Browser `Enter` history panels. `go test ./internal/storage/sqlite ./internal/tui` passed.
+- 2026-04-30: Added `e2e_tests/test_review_history.py` with 3 review-history regressions. Targeted E2E passed: `tui_tester/venv/bin/python -m pytest e2e_tests/test_review_history.py -q`.
+- 2026-04-30: Final verification passed with `./scripts/verify.sh`: Go tests, smoke launch, and 56 tui-tester E2E tests.
 
 ## Last Verified
 
 - 2026-04-30: `./scripts/verify.sh` passed: Go tests, smoke launch, and 53 E2E tests.
+- 2026-04-30: All verification steps completed successfully:
+  - gofmt: all files formatted correctly
+  - go test ./...: all packages pass
+  - go vet ./...: no issues found
+  - smoke test: app launches successfully
+  - E2E tests: 53/53 pass
+- 2026-04-30: Baseline `./scripts/verify.sh` passed at start of Feature Pass 9: Go tests, smoke launch, and 53 E2E tests.
+- 2026-04-30: Targeted review-history E2E passed: 3/3.
+- 2026-04-30: Final `./scripts/verify.sh` passed: Go tests, smoke launch, and 56 E2E tests.
 
 ## Feature Candidates (Future)
 
-- Per-card review history popover: medium impact / medium effort.
 - APKG import/export: high impact / high effort.
 - Deck tags and filtering: medium impact / medium effort.

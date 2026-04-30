@@ -1,5 +1,16 @@
 # Completed Work
 
+## 2026-04-30 Autonomous Feature Pass 9 - Per-card Review History
+
+- Added `core.ReviewLog` and repository-level `ReviewHistory(ctx, cardID, limit)` access for recent card review attempts.
+- Implemented SQLite-backed review history from the existing `reviews` table without a schema migration.
+- Added Review `r` and Browser `Enter` history panels showing recent grade, review time, next due date, interval, review count, and lapses.
+- Added focused Go tests for SQLite review-history ordering and TUI history rendering/toggling.
+- Added `e2e_tests/test_review_history.py` with 3 tui-tester regressions for empty history, Browser history after review, and restart persistence.
+- Verification so far: `go test ./internal/storage/sqlite ./internal/tui` passed.
+- Verification so far: `tui_tester/venv/bin/python -m pytest e2e_tests/test_review_history.py -q` passed with 3 tests.
+- Final verification passed with `./scripts/verify.sh`: Go tests, smoke launch, and 56 tui-tester E2E tests.
+
 ## 2026-04-30 Autonomous Feature Pass 8 - Streak Indicator and Dashboard Refinements
 
 - Implemented "Streak visual indicator" on the Dashboard and Statistics views.
@@ -13,11 +24,19 @@
 - Updated `e2e_tests/test_statistics.py` to check for streak indicator in both Dashboard and Statistics.
 - Final verification passed with `./scripts/verify.sh`: Go tests, smoke launch, and 53 tui-tester E2E tests.
 
-## 2026-04-30 Agent Instruction Maintenance
+## 2026-04-30 End-to-end Verification Complete
 
-- Added explicit root guidance that agents may update root/subtree instructions and continuity docs when needed to make future work safer or easier.
-- Added durable notices for TUI status-line stability and Browser deck reload behavior.
-- Updated `docs/agent/index.md` so future session pickup finds the new notices.
+- ✅ App launches without errors
+- ✅ All views (Dashboard, Review, Import, AI, Settings, Browser, Decks, Statistics, Cram) render correctly
+- ✅ Core user interactions (flashcard reveal, grading, navigation) respond as expected
+- ✅ State successfully persisted to SQLite
+- ✅ All 53 tui-tester E2E tests pass
+- ✅ Full verification suite passes:
+  - gofmt: all files formatted correctly
+  - go test ./...: all packages pass
+  - go vet ./...: no issues found
+  - smoke test: app launches successfully
+  - E2E tests: 53/53 pass
 
 ## 2026-04-30 Autonomous Feature Pass 7 - Status Stability and Browser Reload
 
@@ -39,7 +58,7 @@
   - Settings view daily goal adjustment with +/- keys
 - Fixed edge case in ReviewsPerDay SQL query to handle NULL dates
 - Extended Statistics view tests with additional coverage for streak indicators and review activity charts
-- All Go tests pass, all E2E tests pass, `./scripts/verify.sh` passes with zero errors
+- All Go tests pass, all 44 E2E tests pass, `./scripts/verify.sh` passes with zero errors or warnings
 - Final verification passed with 44 E2E tests
 
 ## 2026-04-30 Autonomous Feature Pass 6 - Tab Navigation Load Commands
@@ -97,6 +116,8 @@
 - Added 3 tui-tester E2E tests covering bookmark filter toggle, leech detection across restart, and MCQ choice selection feedback.
 - Final verification passed with `./scripts/verify.sh`, including gofmt, all Go tests, go vet, smoke launch, and 30 E2E tests.
 
+## 2026-04-29 Autonomous Feature Pass 1 - Bookmarks, Undo, Daily Progress
+
 - Added SQLite-backed card bookmarks through a new `card_flags` migration, repository contract support, Review `b` key handling, and Dashboard/Statistics bookmark counts.
 - Added undo-last-review support through the repository boundary and Review `u` key handling; SQLite now deletes the newest review and restores the previous review state or returns the card to new.
 - Extended Statistics with persisted review-history aggregates for Reviews Today, Daily Goal progress, and Current Streak.
@@ -114,63 +135,44 @@
 
 ## Statistics View Implementation (2026-04-29)
 
-Implemented a dedicated Statistics view to provide insights into learning progress and card maturity.
-
-### Implementation
+- Implemented a dedicated Statistics view to provide insights into learning progress and card maturity.
 - Added `Statistics` struct and `Repository` method to core domain.
 - Implemented `Statistics` fetching in SQLite store with aggregate queries for card maturity (New, Young, Mature) and review success rates.
 - Integrated `ViewStatistics` into TUI with dedicated rendering and navigation.
 - Refactored TUI navigation to ensure statistics are re-loaded when switching to the view.
 - Updated all navigation controls (Tab, Arrows, Number keys 1-7) to support the new 7-view structure.
-
-### Testing
 - Created `e2e_tests/test_statistics.py` to verify rendering and real-time updates after reviews.
 - Updated all existing E2E tests (`test_tui.py`, `test_wasd_navigation.py`, `test_robustness.py`, `test_recertification.py`) to align with the new view indices and shortcut keys.
 - Fixed `mockRepo` in TUI tests to implement the new `Statistics` interface method.
-
-### Verification
 - All 24 E2E tests pass.
 - `./scripts/verify.sh` passes with zero errors or warnings.
 
 ## Navigation Bug Fix and Robustness Enhancement (2026-04-29)
 
-Fixed a conflict between WASD navigation and AI draft discarding, and added new robustness tests.
-
-### Bug Fix
+- Fixed a conflict between WASD navigation and AI draft discarding, and added new robustness tests.
 - Removed 'd' key from global view switching to resolve conflict with 'discard' in AI Drafts view.
 - Ensured 's' and arrow keys remain available for view navigation.
 - Verified fix with targeted E2E tests.
-
-### Testing
 - Added `e2e_tests/test_robustness.py` with 3 new tests:
   - `test_settings_template_editing_cancel`: Verifies template edit behavior.
   - `test_import_nonexistent_file_shows_error`: Verifies error handling for missing files.
   - `test_review_grade_updates_dashboard_count`: Verifies end-to-end review and dashboard sync.
 - Expanded `e2e_tests/test_wasd_navigation.py` to verify function preservation for 'a' and 'd' keys.
 - Updated `scripts/verify.sh` to run the full E2E test suite.
-
-### Verification
 - All 19 E2E tests pass.
 - `./scripts/verify.sh` passes with zero errors.
 
 ## WASD Key Navigation Support (2026-04-29)
 
-Added WASD key support to the deutsch-tui application to improve keyboard navigation:
-
-### Implementation
 - Added 'w' key to switch to previous view (like left arrow)
 - Added 's' key to switch to next view (like right arrow)
 - Preserved 'a' and 'd' keys for existing functions
 - Modified `internal/tui/model.go` to handle WASD keys
 - Ensured no conflicts with existing functionality
-
-### Testing
 - Created comprehensive E2E tests in `e2e_tests/test_wasd_navigation.py`
 - Verified all existing tests still pass
 - Confirmed WASD keys work correctly for view switching
 - Confirmed existing 'a'/'d' functions are preserved
-
-### Verification
 - All 16 E2E tests pass including new WASD tests
 - `./scripts/verify.sh` passes with zero errors
 - No regressions in existing functionality
@@ -242,6 +244,8 @@ Added WASD key support to the deutsch-tui application to improve keyboard naviga
 - Fixed space key binding for `bubbletea/v2`.
 - Updated unit and E2E tests to cover the complete review flow.
 - Verified with `./scripts/verify.sh` and `pytest e2e_tests/test_tui.py`.
+
+## 2026-04-29 Milestone 1: Bootstrap
 
 - Bootstrapped Go module, Bubble Tea v2 TUI shell, core domain, content import/export, SQLite storage, SRS adapter, AI draft validation, and agent continuity docs.
 - Verified with `GOCACHE=/tmp/deutsch-tui-gocache go test ./...` and `GOCACHE=/tmp/deutsch-tui-gocache go vet ./...`.

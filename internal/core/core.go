@@ -83,6 +83,16 @@ type ReviewResult struct {
 	Next     ReviewState
 }
 
+type ReviewLog struct {
+	CardID   string
+	Grade    ReviewGrade
+	Reviewed time.Time
+	Due      time.Time
+	Interval time.Duration
+	Reviews  int
+	Lapses   int
+}
+
 type Statistics struct {
 	TotalCards      int
 	NewCards        int
@@ -115,6 +125,7 @@ type Repository interface {
 	Statistics(ctx context.Context) (Statistics, error)
 	Cards(ctx context.Context, deckID string, search string) ([]Card, error)
 	ReviewsPerDay(ctx context.Context, days int) (map[string]int, error)
+	ReviewHistory(ctx context.Context, cardID string, limit int) ([]ReviewLog, error)
 }
 
 type Scheduler interface {

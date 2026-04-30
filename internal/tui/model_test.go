@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"deutsch-tui/internal/ai"
 	"deutsch-tui/internal/core"
@@ -26,6 +27,67 @@ func TestBreakpointForWidth(t *testing.T) {
 		if got := breakpointForWidth(tt.width); got != tt.want {
 			t.Fatalf("breakpointForWidth(%d) = %s, want %s", tt.width, got, tt.want)
 		}
+	}
+}
+
+func TestReviewHistoryRenderingAndToggle(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{{ID: "c1", Prompt: "der Apfel", Answer: "apple"}},
+		reviews: []core.ReviewResult{{
+			CardID:   "c1",
+			Grade:    core.GradeGood,
+			Reviewed: time.Date(2026, 4, 30, 8, 0, 0, 0, time.UTC),
+			Next:     core.ReviewState{CardID: "c1", Due: time.Date(2026, 5, 1, 8, 0, 0, 0, time.UTC), Interval: 24 * time.Hour, Reviews: 1},
+		}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewReview
+	model.dueCards = repo.dueCards
+
+	cmd := model.toggleReviewHistory()
+	if cmd == nil {
+		t.Fatal("toggleReviewHistory should load review history")
+	}
+	msg := cmd()
+	model.Update(msg)
+
+	view := model.renderReview(0, 0)
+	if !strings.Contains(view, "Review History: der Apfel") {
+		t.Fatalf("review history header missing: %s", view)
+	}
+	if !strings.Contains(view, "good") || !strings.Contains(view, "1 day") {
+		t.Fatalf("review history details missing: %s", view)
+	}
+
+	model.Update(tea.KeyPressMsg{Code: 'r'})
+	if model.showReviewHistory {
+		t.Fatal("second r should hide review history")
+	}
+}
+
+func TestBrowserEnterShowsSelectedCardHistory(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{{ID: "c1", Prompt: "der Apfel", Answer: "apple"}},
+		reviews: []core.ReviewResult{{
+			CardID:   "c1",
+			Grade:    core.GradeHard,
+			Reviewed: time.Date(2026, 4, 30, 8, 0, 0, 0, time.UTC),
+			Next:     core.ReviewState{CardID: "c1", Due: time.Date(2026, 4, 30, 10, 0, 0, 0, time.UTC), Interval: 2 * time.Hour, Reviews: 1},
+		}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewBrowser
+	model.browserCards = repo.dueCards
+
+	cmd, handled := model.updateBrowserKey(tea.KeyPressMsg{Code: tea.KeyEnter})
+	if !handled || cmd == nil {
+		t.Fatal("browser enter should load selected card history")
+	}
+	model.Update(cmd())
+
+	view := model.renderBrowser()
+	if !strings.Contains(view, "Review History: der Apfel") || !strings.Contains(view, "hard") {
+		t.Fatalf("browser history missing: %s", view)
 	}
 }
 

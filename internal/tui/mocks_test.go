@@ -149,6 +149,29 @@ func (m *mockRepo) ReviewsPerDay(ctx context.Context, days int) (map[string]int,
 	return map[string]int{}, nil
 }
 
+func (m *mockRepo) ReviewHistory(ctx context.Context, cardID string, limit int) ([]core.ReviewLog, error) {
+	if limit <= 0 {
+		limit = 10
+	}
+	var logs []core.ReviewLog
+	for i := len(m.reviews) - 1; i >= 0 && len(logs) < limit; i-- {
+		review := m.reviews[i]
+		if review.CardID != cardID {
+			continue
+		}
+		logs = append(logs, core.ReviewLog{
+			CardID:   review.CardID,
+			Grade:    review.Grade,
+			Reviewed: review.Reviewed,
+			Due:      review.Next.Due,
+			Interval: review.Next.Interval,
+			Reviews:  review.Next.Reviews,
+			Lapses:   review.Next.Lapses,
+		})
+	}
+	return logs, nil
+}
+
 func containsIgnoreCase(s, substr string) bool {
 	s = strings.ToLower(s)
 	substr = strings.ToLower(substr)

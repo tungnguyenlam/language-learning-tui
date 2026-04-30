@@ -105,6 +105,9 @@ type Model struct {
 	cramActive         bool
 	cramRevealed       bool
 	reviewsPerDay      map[string]int
+	reviewHistory      []core.ReviewLog
+	reviewHistoryCard  string
+	showReviewHistory  bool
 	spinnerFrame       int
 }
 
@@ -222,6 +225,10 @@ type reviewUndoMsg struct {
 type cramCardsMsg []core.Card
 type browserCardsMsg []core.Card
 type reviewsPerDayMsg map[string]int
+type reviewHistoryMsg struct {
+	cardID string
+	logs   []core.ReviewLog
+}
 
 func (m *Model) Init() tea.Cmd {
 	return tea.Batch(m.loadDueCards, m.loadDecks, m.loadStatistics(), m.loadReviewsPerDay())
@@ -305,6 +312,22 @@ func (m *Model) loadReviewsPerDay() tea.Cmd {
 	}
 }
 
+func (m *Model) loadReviewHistory(cardID string) tea.Cmd {
+	if strings.TrimSpace(cardID) == "" {
+		return nil
+	}
+	m.status = "Loading review history..."
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		logs, err := m.repo.ReviewHistory(ctx, cardID, 5)
+		if err != nil {
+			return err
+		}
+		return reviewHistoryMsg{cardID: cardID, logs: logs}
+	}
+}
+
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
@@ -334,6 +357,16 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.stats = core.Statistics(msg)
 	case reviewsPerDayMsg:
 		m.reviewsPerDay = map[string]int(msg)
+	case reviewHistoryMsg:
+		if msg.cardID == m.reviewHistoryCard {
+			m.reviewHistory = msg.logs
+			m.showReviewHistory = true
+			if len(msg.logs) == 0 {
+				m.status = "No review history for card"
+			} else {
+				m.status = fmt.Sprintf("%d review history entries", len(msg.logs))
+			}
+		}
 	case draftsMsg:
 		m.drafts = []ai.Draft(msg)
 		m.draftCursor = 0
@@ -556,11 +589,13 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				if m.cursor > 0 {
 					m.cursor--
 					m.resetMCQState()
+					m.clearReviewHistory()
 				}
 			case "down", "j":
 				if m.cursor < len(m.dueCards)-1 {
 					m.cursor++
 					m.resetMCQState()
+					m.clearReviewHistory()
 				}
 			case "enter", "space":
 				m.revealed = !m.revealed
@@ -574,6 +609,8 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 				return m, m.suspendCard()
 			case "u":
 				return m, m.undoLastReview()
+			case "r":
+				return m, m.toggleReviewHistory()
 			case "a":
 				return m, m.gradeCard(core.GradeAgain)
 			case "h":
@@ -783,21 +820,27 @@ func (m *Model) updateBrowserKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 	case "up", "k":
 		if m.browserCursor > 0 {
 			m.browserCursor--
+			m.clearReviewHistory()
 		}
 		return nil, true
 	case "down", "j":
 		if m.browserCursor < len(m.browserCards)-1 {
 			m.browserCursor++
+			m.clearReviewHistory()
 		}
 		return nil, true
+	case "enter":
+		return m.toggleBrowserHistory(), true
 	case "backspace":
 		if len(m.browserSearch) > 0 {
 			m.browserSearch = m.browserSearch[:len(m.browserSearch)-1]
+			m.clearReviewHistory()
 			return m.loadBrowserCards(), true
 		}
 	}
 	if len(msg.String()) == 1 && msg.String() >= " " && msg.String() <= "~" {
 		m.browserSearch += msg.String()
+		m.clearReviewHistory()
 		return m.loadBrowserCards(), true
 	}
 	return nil, true
@@ -883,6 +926,44 @@ func (m *Model) nextCramCard() {
 	if len(m.cramCards) > 0 {
 		m.cramCursor = (m.cramCursor + 1) % len(m.cramCards)
 	}
+}
+
+func (m *Model) clearReviewHistory() {
+	m.reviewHistory = nil
+	m.reviewHistoryCard = ""
+	m.showReviewHistory = false
+}
+
+func (m *Model) toggleReviewHistory() tea.Cmd {
+	if m.activeView != ViewReview || len(m.dueCards) == 0 {
+		return nil
+	}
+	cardID := m.dueCards[m.cursor].ID
+	if m.showReviewHistory && m.reviewHistoryCard == cardID {
+		m.clearReviewHistory()
+		m.status = "Review history hidden"
+		return nil
+	}
+	m.reviewHistoryCard = cardID
+	m.reviewHistory = nil
+	m.showReviewHistory = true
+	return m.loadReviewHistory(cardID)
+}
+
+func (m *Model) toggleBrowserHistory() tea.Cmd {
+	if m.activeView != ViewBrowser || len(m.browserCards) == 0 {
+		return nil
+	}
+	cardID := m.browserCards[m.browserCursor].ID
+	if m.showReviewHistory && m.reviewHistoryCard == cardID {
+		m.clearReviewHistory()
+		m.status = "Review history hidden"
+		return nil
+	}
+	m.reviewHistoryCard = cardID
+	m.reviewHistory = nil
+	m.showReviewHistory = true
+	return m.loadReviewHistory(cardID)
 }
 
 func (m *Model) templateKeyAtCursor() string {
@@ -1277,6 +1358,7 @@ func (m *Model) toggleBookmarkFilter() tea.Cmd {
 	m.bookmarkFilter = !m.bookmarkFilter
 	m.revealed = false
 	m.cursor = 0
+	m.clearReviewHistory()
 	if m.bookmarkFilter {
 		m.status = "Loading bookmarked cards..."
 		return m.loadBookmarkedDueCards
@@ -1679,8 +1761,52 @@ func (m *Model) renderBrowser() string {
 		b.WriteString(style.Render(label))
 		b.WriteString("\n")
 	}
-	b.WriteString("\nUse j/k to navigate, type to search, backspace to delete.\n")
+	if m.showReviewHistory && m.browserCursor < len(m.browserCards) && m.reviewHistoryCard == m.browserCards[m.browserCursor].ID {
+		b.WriteString("\n")
+		b.WriteString(m.renderReviewHistory(m.browserCards[m.browserCursor].Prompt))
+		b.WriteString("\n")
+	}
+	b.WriteString("\nUse j/k to navigate, type to search, Enter for history, backspace to delete.\n")
 	return b.String()
+}
+
+func (m *Model) renderReviewHistory(label string) string {
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("Review History: %s\n", label))
+	if len(m.reviewHistory) == 0 {
+		b.WriteString("  No reviews yet.")
+		return b.String()
+	}
+	for i, log := range m.reviewHistory {
+		fmt.Fprintf(&b, "  %d. %s at %s -> next %s (%s, reviews %d, lapses %d)\n",
+			i+1,
+			log.Grade,
+			log.Reviewed.Local().Format("Jan 02 15:04"),
+			log.Due.Local().Format("Jan 02"),
+			formatReviewInterval(log.Interval),
+			log.Reviews,
+			log.Lapses,
+		)
+	}
+	return strings.TrimRight(b.String(), "\n")
+}
+
+func formatReviewInterval(interval time.Duration) string {
+	if interval <= 0 {
+		return "same day"
+	}
+	hours := int(interval.Hours())
+	if hours < 24 {
+		if hours <= 1 {
+			return "1 hour"
+		}
+		return fmt.Sprintf("%d hours", hours)
+	}
+	days := hours / 24
+	if days == 1 {
+		return "1 day"
+	}
+	return fmt.Sprintf("%d days", days)
 }
 
 func (m *Model) renderCram() string {
@@ -1776,11 +1902,13 @@ func (m *Model) renderHelp() string {
 	b.WriteString("  B            Toggle bookmarked-only mode\n")
 	b.WriteString("  x            Suspend card\n")
 	b.WriteString("  u            Undo last review\n")
+	b.WriteString("  r            Toggle card review history\n")
 	b.WriteString("  p            Play audio\n")
 	b.WriteString("  1-4          Select MCQ choice\n\n")
 
 	b.WriteString("Browser:\n")
 	b.WriteString("  j/k          Navigate cards\n")
+	b.WriteString("  Enter        Toggle card review history\n")
 	b.WriteString("  Type         Search cards\n")
 	b.WriteString("  Backspace    Delete search char\n\n")
 
@@ -1827,9 +1955,9 @@ func (m *Model) renderReview(x, y int) string {
 	if m.bookmarkFilter {
 		filterBanner = " (Bookmarked)"
 	}
-	keys := "b toggle | x suspend | B filter | u undo | p audio"
+	keys := "b toggle | x suspend | B filter | u undo | r history | p audio"
 	if m.bookmarkFilter {
-		keys = "b toggle | x suspend | B all cards | u undo | p audio"
+		keys = "b toggle | x suspend | B all cards | u undo | r history | p audio"
 	}
 	audioIndicator := ""
 	if card.Audio != "" {
@@ -1868,7 +1996,11 @@ func (m *Model) renderReview(x, y int) string {
 	} else {
 		answer = "Press space or enter to reveal."
 	}
-	return fmt.Sprintf("Review%s %d/%d\n%s | %s\n%s%s%s\n\n%s\n\n%s", filterBanner, m.cursor+1, len(m.dueCards), bookmark, keys, leech, suspended, audioIndicator, card.Prompt, answer)
+	view := fmt.Sprintf("Review%s %d/%d\n%s | %s\n%s%s%s\n\n%s\n\n%s", filterBanner, m.cursor+1, len(m.dueCards), bookmark, keys, leech, suspended, audioIndicator, card.Prompt, answer)
+	if m.showReviewHistory && m.reviewHistoryCard == card.ID {
+		view += "\n\n" + m.renderReviewHistory(card.Prompt)
+	}
+	return view
 }
 
 func renderMCQChoices(choices []string, selected int) string {
@@ -1906,6 +2038,7 @@ func (m *Model) previousViewCmd() tea.Cmd {
 
 func (m *Model) updateView(view View) tea.Cmd {
 	m.activeView = view
+	m.clearReviewHistory()
 	if view == ViewStatistics {
 		return m.loadStatistics()
 	}
@@ -1930,6 +2063,7 @@ func (m *Model) reloadBrowserForSelectedDeck() tea.Cmd {
 	m.browserSearch = ""
 	m.browserCards = nil
 	m.browserCursor = 0
+	m.clearReviewHistory()
 	m.status = fmt.Sprintf("Browsing %s", m.deckLabel())
 	return m.loadBrowserCards()
 }

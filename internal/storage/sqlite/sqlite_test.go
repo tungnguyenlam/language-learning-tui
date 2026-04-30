@@ -715,6 +715,55 @@ func TestCards_SearchFilter(t *testing.T) {
 	}
 }
 
+func TestReviewHistoryReturnsRecentReviewsForCard(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	deck := content.StarterDeck()
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+	card := deck.Notes[0].Cards[0]
+	now := time.Date(2026, 4, 30, 8, 0, 0, 0, time.UTC)
+	reviews := []core.ReviewResult{
+		{
+			CardID:   card.ID,
+			Grade:    core.GradeAgain,
+			Reviewed: now,
+			Next:     core.ReviewState{CardID: card.ID, Due: now.Add(time.Hour), Interval: time.Hour, Reviews: 1, Lapses: 1},
+		},
+		{
+			CardID:   card.ID,
+			Grade:    core.GradeGood,
+			Reviewed: now.Add(time.Minute),
+			Next:     core.ReviewState{CardID: card.ID, Due: now.Add(24 * time.Hour), Interval: 24 * time.Hour, Reviews: 2, Lapses: 1},
+		},
+	}
+	for _, review := range reviews {
+		if err := store.RecordReview(ctx, review); err != nil {
+			t.Fatalf("record review: %v", err)
+		}
+	}
+
+	history, err := store.ReviewHistory(ctx, card.ID, 5)
+	if err != nil {
+		t.Fatalf("review history: %v", err)
+	}
+	if len(history) != 2 {
+		t.Fatalf("history len = %d, want 2", len(history))
+	}
+	if history[0].Grade != core.GradeGood || history[0].Reviews != 2 {
+		t.Fatalf("newest history = %#v, want good review count 2", history[0])
+	}
+	if history[1].Grade != core.GradeAgain || history[1].Interval != time.Hour {
+		t.Fatalf("oldest history = %#v, want again with 1h interval", history[1])
+	}
+}
+
 func TestAudioPersistence(t *testing.T) {
 	ctx := context.Background()
 	store, err := OpenMemory()
