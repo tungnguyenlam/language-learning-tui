@@ -77,11 +77,13 @@ func main() {
 		AIProvider:     provider,
 		AIProviderName: cfg.AIProvider,
 		AITemplates:    cfg.AITemplates,
+		AutoPlayAudio:  cfg.AutoPlayAudio,
 		ImportPath:     filepath.Join(dir, "import.tsv"),
 		ExportPath:     filepath.Join(dir, "export.tsv"),
-		OnConfigChange: func(name string, tmpls map[string]string) {
+		OnConfigChange: func(name string, tmpls map[string]string, autoPlayAudio bool) {
 			cfg.AIProvider = name
 			cfg.AITemplates = tmpls
+			cfg.AutoPlayAudio = autoPlayAudio
 			if err := app.SaveConfig(dir, cfg); err != nil {
 				logger.Printf("save config: %v", err)
 			}

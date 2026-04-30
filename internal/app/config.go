@@ -13,22 +13,24 @@ const (
 )
 
 type Config struct {
-	Theme       string            `json:"theme"`
-	Keymap      string            `json:"keymap"`
-	AIProvider  string            `json:"ai_provider"`
-	LogLevel    string            `json:"log_level"`
-	AITemplates map[string]string `json:"ai_templates,omitempty"`
+	Theme         string            `json:"theme"`
+	Keymap        string            `json:"keymap"`
+	AIProvider    string            `json:"ai_provider"`
+	LogLevel      string            `json:"log_level"`
+	AutoPlayAudio bool              `json:"autoplay_audio"`
+	AITemplates   map[string]string `json:"ai_templates,omitempty"`
 }
 
 func DefaultConfig() Config {
 	return Config{
-		Theme:      "system",
-		Keymap:     "default",
-		AIProvider: "disabled",
-		LogLevel:   "info",
+		Theme:         "system",
+		Keymap:        "default",
+		AIProvider:    "disabled",
+		LogLevel:      "info",
+		AutoPlayAudio: false,
 		AITemplates: map[string]string{
 			"front":   "{{.Topic}}",
-			"back":    "German prompt for {{.Topic}}",
+			"back":    "German prompt for {{.Topic}}.",
 			"example": "Practice sentence using {{.Topic}}.",
 		},
 	}

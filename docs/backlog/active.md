@@ -61,6 +61,18 @@ Acceptance criteria:
 
 Status: COMPLETED - Deck tags persisted in database, displayed in UI, and filtering implemented with 3 E2E tests.
 
+### Feature 17: Audio Auto-play on Reveal
+
+User story: As a learner, I can have audio played automatically when I reveal a card, so I can focus on pronunciation without extra steps.
+
+Acceptance criteria:
+- Add `autoplay_audio` boolean field to config (default false).
+- Settings view includes toggle for "Auto-play audio on reveal".
+- Review view automatically plays audio when card is revealed (if audio exists and auto-play enabled).
+- Cram view also respects auto-play setting.
+
+Status: PENDING - Implementation in progress.
+
 ## Current Pass Plan
 
 Top blockers for this run:
@@ -70,10 +82,11 @@ Top blockers for this run:
 - ✅ Add deck filtering functionality to the Decks TUI view.
 - ✅ Add at least 3 new tui-tester E2E tests covering deck tags and filtering.
 - ✅ Re-run `./scripts/verify.sh` and commit all source changes.
+- 🚧 Implement audio auto-play on reveal.
 
 ## Next Action
 
-Await the next autonomous pass. Strong next candidates:
+Implement audio auto-play on reveal. Strong next candidates:
 - APKG import/export: high impact / high effort.
 - Advanced deck organization (nested folders, color coding): medium impact / medium effort.
 - Custom study sessions: medium impact / high effort.

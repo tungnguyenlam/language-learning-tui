@@ -77,6 +77,7 @@ type Model struct {
 	aiProvider         ai.Provider
 	aiProviderName     string
 	aiTemplates        map[string]string
+	autoPlayAudio      bool
 	stats              core.Statistics
 	settingsCursor     int
 	editingTemplate    bool
@@ -85,7 +86,7 @@ type Model struct {
 	draftCursor        int
 	importPath         string
 	exportPath         string
-	onConfigChange     func(string, map[string]string)
+	onConfigChange     func(string, map[string]string, bool)
 	bookmarkFilter     bool
 	mcqChoice          int
 	mcqAnswered        bool
@@ -127,9 +128,10 @@ type ModelOptions struct {
 	AIProvider     ai.Provider
 	AIProviderName string
 	AITemplates    map[string]string
+	AutoPlayAudio  bool
 	ImportPath     string
 	ExportPath     string
-	OnConfigChange func(string, map[string]string)
+	OnConfigChange func(string, map[string]string, bool)
 }
 
 func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts ModelOptions) *Model {
@@ -145,6 +147,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 			"example": "Practice sentence using {{.Topic}}.",
 		}
 	}
+	autoPlayAudio := opts.AutoPlayAudio
 	provider := opts.AIProvider
 	if provider == nil {
 		switch providerName {
@@ -168,6 +171,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		aiProvider:     provider,
 		aiProviderName: providerName,
 		aiTemplates:    templates,
+		autoPlayAudio:  autoPlayAudio,
 		width:          80,
 		height:         24,
 		activeView:     ViewDashboard,
@@ -599,9 +603,13 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 					m.clearReviewHistory()
 				}
 			case "enter", "space":
+				card := m.dueCards[m.cursor]
 				m.revealed = !m.revealed
 				m.mcqChoice = -1
 				m.mcqAnswered = false
+				if m.revealed && m.autoPlayAudio && card.Audio != "" {
+					return m, m.playAudio(card.Audio)
+				}
 			case "b":
 				return m, m.toggleBookmark()
 			case "B":
@@ -777,7 +785,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 				m.aiProvider = ai.TemplateProvider{Templates: m.aiTemplates}
 			}
 			if m.onConfigChange != nil {
-				m.onConfigChange(m.aiProviderName, m.aiTemplates)
+				m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio)
 			}
 			return nil, true
 		case "backspace":
@@ -802,7 +810,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "down", "j":
-		if m.settingsCursor < 4 {
+		if m.settingsCursor < 5 {
 			m.settingsCursor++
 		}
 		return nil, true
@@ -825,7 +833,19 @@ func (m *Model) updateSettingsKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 			}
 			m.status = fmt.Sprintf("Switched to %s AI provider", m.aiProviderName)
 			if m.onConfigChange != nil {
-				m.onConfigChange(m.aiProviderName, m.aiTemplates)
+				m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio)
+			}
+			return nil, true
+		}
+		if m.settingsCursor == 5 {
+			m.autoPlayAudio = !m.autoPlayAudio
+			status := "disabled"
+			if m.autoPlayAudio {
+				status = "enabled"
+			}
+			m.status = fmt.Sprintf("Auto-play audio %s", status)
+			if m.onConfigChange != nil {
+				m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio)
 			}
 			return nil, true
 		} else if m.settingsCursor > 0 && m.settingsCursor < 4 {
@@ -876,6 +896,12 @@ func (m *Model) updateCramKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 		case "space", "enter":
 			if !m.cramRevealed {
 				m.cramRevealed = true
+				if m.autoPlayAudio {
+					card := m.cramCards[m.cramCursor]
+					if card.Audio != "" {
+						return m.playAudio(card.Audio), true
+					}
+				}
 				return nil, true
 			}
 		case "a", "1":
@@ -1037,12 +1063,17 @@ func (m *Model) renderSettings(x, y int) string {
 	var b strings.Builder
 	b.WriteString("Settings\n\n")
 
+	autoPlayStatus := "off"
+	if m.autoPlayAudio {
+		autoPlayStatus = "on"
+	}
 	options := []string{
 		fmt.Sprintf("AI Provider: %s", m.aiProviderName),
 		fmt.Sprintf("Front Template: %s", m.aiTemplates["front"]),
 		fmt.Sprintf("Back Template: %s", m.aiTemplates["back"]),
 		fmt.Sprintf("Example Template: %s", m.aiTemplates["example"]),
 		fmt.Sprintf("Daily Goal: %d", m.stats.DailyGoal),
+		fmt.Sprintf("Auto-play audio: %s", autoPlayStatus),
 	}
 
 	for i, opt := range options {
