@@ -9,7 +9,7 @@ from tui_tester import TUIAgent
 
 def start_agent(tmpdir, columns=110, lines=30):
     agent = TUIAgent(f"go run ./cmd/deutsch-tui -data-dir {tmpdir}", columns=columns, lines=lines)
-    agent.wait_for_text("Dashboard", timeout=15.0)
+    agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()
     return agent
 
@@ -61,7 +61,7 @@ def test_undo_last_review_restores_due_card_after_restart():
 
         restarted = start_agent(tmpdir)
         try:
-            restarted.assert_text("Due cards: 6")
+            restarted.assert_text("Due cards:   6")
             restarted.act("3")
             restarted.wait_for_text("Review 1/6")
         finally:

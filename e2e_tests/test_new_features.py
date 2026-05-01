@@ -7,9 +7,9 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../t
 from tui_tester import TUIAgent
 
 
-def start_agent(tmpdir, columns=110, lines=30):
-    agent = TUIAgent(f"go run ./cmd/deutsch-tui -data-dir {tmpdir}", columns=columns, lines=30)
-    agent.wait_for_text("Dashboard", timeout=15.0)
+def start_agent(tmpdir, columns=110, lines=40):
+    agent = TUIAgent(f"go run ./cmd/deutsch-tui -data-dir {tmpdir}", columns=columns, lines=lines)
+    agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()
     return agent
 
@@ -88,7 +88,7 @@ def test_suspend_card_persists_and_updates_statistics():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
-            agent.assert_text("Due cards: 6")
+            agent.assert_text("Due cards:   6")
             agent.act("3")
             agent.wait_for_text("Review 1/6")
             agent.act("x")
@@ -99,7 +99,7 @@ def test_suspend_card_persists_and_updates_statistics():
 
         agent = start_agent(tmpdir)
         try:
-            agent.assert_text("Due cards: 5")
+            agent.assert_text("Due cards:   5")
             agent.act("4")
             agent.wait_for_text("Statistics")
             agent.assert_text("Suspended:")
@@ -124,7 +124,7 @@ def test_daily_goal_setting_persists_after_restart():
 
         agent = start_agent(tmpdir)
         try:
-            agent.assert_text("Reviews today: 0/11")
+            agent.assert_text("Reviews:     0/11")
             agent.act("7")
             agent.wait_for_text("Settings")
             agent.assert_text("Daily Goal: 11")
@@ -197,7 +197,7 @@ def test_help_overlay_shows_and_dismisses():
         agent = start_agent(tmpdir)
         try:
             agent.act("?")
-            agent.wait_for_text("Keyboard Shortcuts")
+            agent.wait_for_text("Help overlay shown. Press ? to close.")
             agent.assert_text("Global:")
 
             agent.act("?")
@@ -205,6 +205,6 @@ def test_help_overlay_shows_and_dismisses():
             import time
             time.sleep(1)
             agent.wait_until_stable()
-            agent.assert_not_text("Keyboard Shortcuts")
+            agent.assert_not_text("Help overlay shown. Press ? to close.")
         finally:
             agent.close()

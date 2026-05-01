@@ -11,7 +11,7 @@ from tui_tester import TUIAgent
 
 def start_agent(tmpdir, columns=110, lines=30):
     agent = TUIAgent(f'go run ./cmd/deutsch-tui -data-dir {tmpdir}', columns=columns, lines=lines)
-    agent.wait_for_text("Dashboard", timeout=15.0)
+    agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()
     return agent
 
@@ -79,7 +79,7 @@ def test_streak_indicator_shows_fire_emoji():
         agent = start_agent(tmpdir)
         try:
             # Check initial dashboard streak
-            agent.assert_text("Current Streak: 0 days")
+            agent.assert_text("Streak:      0 days")
 
             # Go to Review and do enough reviews to build a streak
             agent.act('3')
@@ -99,15 +99,15 @@ def test_streak_indicator_shows_fire_emoji():
             # Go to Statistics and check for streak indicator
             agent.act('4')
             agent.wait_for_text("Statistics")
-            agent.assert_text("Current Streak:")
+            agent.assert_text("Streak:")
             # The streak should be > 0, verify days is shown
             agent.assert_text("days")
             agent.assert_text("🔥")
             
             # Go back to Dashboard and check for streak indicator
             agent.act('1')
-            agent.wait_for_text("Dashboard")
-            agent.assert_text("Current Streak: 1 days 🔥")
+            agent.wait_for_text("DASHBOARD")
+            agent.assert_text("Streak:      1 days 🔥")
             
         finally:
             agent.close()

@@ -9,7 +9,7 @@ from tui_tester import TUIAgent
 
 def start_agent(tmpdir, columns=90, lines=28):
     agent = TUIAgent(f"go run ./cmd/deutsch-tui -data-dir {tmpdir}", columns=columns, lines=lines)
-    agent.wait_for_text("Dashboard", timeout=15.0)
+    agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()
     return agent
 
@@ -27,7 +27,7 @@ def test_tab_cycles_through_all_primary_views_and_wraps():
                 "Settings",
                 "Card Browser",
                 "Cram Mode",
-                "Use Review to start studying.",
+                "Use Review (3) to start studying.",
             ]:
                 agent.act("<Tab>")
                 agent.wait_for_text(text)
@@ -47,13 +47,13 @@ def test_hard_grade_persists_review_progress_to_sqlite_after_restart():
             agent.act("h")
             agent.wait_for_text("5 cards due")
             agent.act("1")
-            agent.wait_for_text("Due cards: 5")
+            agent.wait_for_text("Due cards:   5")
         finally:
             agent.close()
 
         restarted = start_agent(tmpdir)
         try:
-            restarted.assert_text("Due cards: 5")
+            restarted.assert_text("Due cards:   5")
             restarted.act("3")
             restarted.wait_for_text("Review 1/5")
         finally:

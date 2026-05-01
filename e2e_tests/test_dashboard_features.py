@@ -11,7 +11,7 @@ from tui_tester import TUIAgent
 
 def start_agent(tmpdir, columns=110, lines=30):
     agent = TUIAgent(f'go run ./cmd/deutsch-tui -data-dir {tmpdir}', columns=columns, lines=lines)
-    agent.wait_for_text("Dashboard", timeout=15.0)
+    agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()
     return agent
 
@@ -54,7 +54,7 @@ def test_streak_persists_across_sessions():
         # First session
         agent1 = start_agent(tmpdir)
         try:
-            agent1.assert_text("Current Streak: 0 days")
+            agent1.assert_text("Streak:      0 days")
 
             # Do reviews to build streak
             agent1.act('3')
@@ -71,8 +71,8 @@ def test_streak_persists_across_sessions():
             
             # Verify streak updated in session 1
             agent1.act('1')
-            agent1.wait_for_text("Dashboard")
-            agent1.assert_text("Current Streak: 1 days 🔥")
+            agent1.wait_for_text("DASHBOARD")
+            agent1.assert_text("Streak:      1 days 🔥")
         finally:
             agent1.close()
 
@@ -80,7 +80,7 @@ def test_streak_persists_across_sessions():
         agent2 = start_agent(tmpdir)
         try:
             # Streak should still be 1 day
-            agent2.assert_text("Current Streak: 1 days 🔥")
+            agent2.assert_text("Streak:      1 days 🔥")
         finally:
             agent2.close()
 

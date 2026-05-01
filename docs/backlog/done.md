@@ -14,3 +14,12 @@
 - Added unit tests in internal/content/apkg_test.go
 - Updated architecture boundary test to allow database/sql in content package
 - All Go tests pass, E2E tests pass
+
+## Autonomous Feature Pass 12: UI Refinement and Robust Import/Export ✅
+- Fixed import path suffix bug allowing any .tsv/.apkg file to be imported.
+- Refined Dashboard and Import/Export views with better styling and structured layouts.
+- Implemented 'editing mode' for text fields to resolve key conflicts.
+- Protected global navigation keys during text input.
+- Added a robust APKG export-import cycle E2E test.
+- Updated all existing E2E tests to match the new UI and workflow.
+- All 62 E2E tests passing.

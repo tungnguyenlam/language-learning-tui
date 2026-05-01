@@ -11,7 +11,7 @@ from tui_tester import TUIAgent
 
 def start_agent(tmpdir, columns=100, lines=30):
     agent = TUIAgent(f'go run ./cmd/deutsch-tui -data-dir {tmpdir}', columns=columns, lines=lines)
-    agent.wait_for_text("Dashboard", timeout=15.0)
+    agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()
     return agent
 
@@ -68,8 +68,16 @@ def test_import_nonexistent_file_shows_error():
             agent.act('5')
             agent.wait_for_text("Import / Export")
             
-            # 'i' triggers import of 'import.tsv' (default)
-            # which shouldn't exist in the temp dir.
+            # workflow: Enter, Ctrl-u, type nonexistent path, Enter, i
+            agent.act('<Enter>')
+            agent.wait_until_stable()
+            agent.act('<Ctrl-u>')
+            for char in "nonexistent.tsv":
+                agent.act(char)
+            agent.act('<Enter>')
+            agent.wait_until_stable()
+
+            # 'i' triggers import
             agent.act('i')
             agent.wait_for_text("Error:")
             agent.assert_text("no such file or directory")
@@ -81,7 +89,7 @@ def test_review_grade_updates_dashboard_count():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
-            agent.assert_text("Due cards: 6")
+            agent.assert_text("Due cards:   6")
             
             agent.act('3')
             agent.wait_for_text("Review 1/6")
@@ -94,8 +102,8 @@ def test_review_grade_updates_dashboard_count():
             
             # Go back to Dashboard
             agent.act('1')
-            agent.wait_for_text("Dashboard")
-            agent.assert_text("Due cards: 5")
+            agent.wait_for_text("DASHBOARD")
+            agent.assert_text("Due cards:   5")
             
         finally:
             agent.close()

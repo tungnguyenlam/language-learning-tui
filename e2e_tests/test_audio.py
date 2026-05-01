@@ -8,7 +8,7 @@ from tui_tester import TUIAgent
 
 def start_agent(tmpdir):
     agent = TUIAgent(f"go run ./cmd/deutsch-tui -data-dir {tmpdir}")
-    agent.wait_for_text("Dashboard", timeout=15.0)
+    agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()
     return agent
 
@@ -26,12 +26,14 @@ def test_audio_indicator_in_review():
             agent.wait_for_text("Import / Export")
             
             # Clear path and type new one
+            agent.act("<Enter>") # START EDITING
             agent.act("<Ctrl-u>")
             import time
             for char in tsv_path:
                 agent.act(char)
                 time.sleep(0.05)
-            agent.act("<Enter>") # Press Enter to import
+            agent.act("<Enter>") # FINISH EDITING
+            agent.act("i") # EXECUTE IMPORT TSV
             agent.wait_for_text("Imported 1 notes", timeout=10.0)
             
             # Select the new deck (use left arrows to avoid capturing '2')

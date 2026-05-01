@@ -10,7 +10,7 @@ from tui_tester import TUIAgent
 
 def start_agent(tmpdir, columns=100, lines=30):
     agent = TUIAgent(f'go run ./cmd/deutsch-tui -data-dir {tmpdir}', columns=columns, lines=lines)
-    agent.wait_for_text("Dashboard", timeout=15.0)
+    agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()
     return agent
 
@@ -22,9 +22,9 @@ def test_dashboard_and_review_flow():
 
         try:
             # Verify dashboard content
-            agent.assert_text("Dashboard")
+            agent.assert_text("DASHBOARD")
             agent.assert_text("Deck: German A1 Survival")
-            agent.assert_text("Due cards: 6")
+            agent.assert_text("Due cards:   6")
 
             # Switch to Review view
             agent.act('3')
@@ -56,7 +56,7 @@ def test_dashboard_and_review_flow():
             # Try returning to Dashboard
             agent.act('1')
             agent.wait_until_stable()
-            agent.assert_text("Use Review to start studying.")
+            agent.assert_text("Use Review (3) to start studying.")
 
         finally:
             # Close the agent
@@ -69,7 +69,7 @@ def test_ai_draft_approval_persists_across_restart():
         try:
             agent.act('6')
             agent.wait_until_stable()
-            agent.assert_text("AI Drafts")
+            agent.assert_text("AI")
             agent.assert_text("Topic: der Kaffee")
 
             agent.act('<Enter>')
@@ -83,14 +83,14 @@ def test_ai_draft_approval_persists_across_restart():
 
             agent.act('1')
             agent.wait_until_stable()
-            agent.assert_text("Due cards: 8")
+            agent.assert_text("Due cards:   8")
         finally:
             agent.close()
 
         restarted = start_agent(tmpdir)
         try:
-            restarted.assert_text("Dashboard")
-            restarted.assert_text("Due cards: 8")
+            restarted.assert_text("DASHBOARD")
+            restarted.assert_text("Due cards:   8")
         finally:
             restarted.close()
 
@@ -108,7 +108,16 @@ def test_import_tsv_adds_reviewable_deck_and_export_writes_file():
             agent.act('5')
             agent.wait_until_stable()
             agent.assert_text("Import / Export")
-            agent.assert_text("Press i to import TSV.")
+            agent.assert_text("i         : Import TSV")
+
+            # Workflow: act("<Enter>"), act("<Ctrl-u>"), type path, act("<Enter>"), act("i")
+            agent.act('<Enter>')
+            agent.wait_until_stable()
+            agent.act('<Ctrl-u>')
+            for char in import_path:
+                agent.act(char)
+            agent.act('<Enter>')
+            agent.wait_until_stable()
 
             agent.act('i')
             agent.wait_until_stable()
@@ -124,6 +133,18 @@ def test_import_tsv_adds_reviewable_deck_and_export_writes_file():
 
             agent.act('5')
             agent.wait_until_stable()
+
+            # Set export path
+            agent.act('<Down>') # Move to Export Path
+            agent.wait_until_stable()
+            agent.act('<Enter>')
+            agent.wait_until_stable()
+            agent.act('<Ctrl-u>')
+            for char in export_path:
+                agent.act(char)
+            agent.act('<Enter>')
+            agent.wait_until_stable()
+
             agent.act('x')
             agent.wait_until_stable()
             agent.assert_text("Exported 1 notes")
@@ -210,12 +231,12 @@ def test_all_core_views_render_with_keyboard_navigation():
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
             expected_views = [
-                ('1', "Dashboard"),
+                ('1', "DASHBOARD"),
                 ('2', "Decks"),
                 ('3', "Review 1/6"),
                 ('4', "Statistics"),
                 ('5', "Import / Export"),
-                ('6', "AI Drafts"),
+                ('6', "AI"),
                 ('7', "Settings"),
             ]
             for key, text in expected_views:
@@ -233,12 +254,12 @@ def test_compact_layout_renders_all_core_views():
             agent.assert_text("deutsch-tui compact")
 
             for key, text in [
-                ('1', "Dashboard"),
+                ('1', "DASHBOARD"),
                 ('2', "Decks"),
                 ('3', "Review 1/6"),
                 ('4', "Statistics"),
                 ('5', "Import / Export"),
-                ('6', "AI Drafts"),
+                ('6', "AI"),
                 ('7', "Settings"),
             ]:
                 agent.act(key)
@@ -277,11 +298,11 @@ def test_mouse_tabs_open_import_ai_and_settings_views():
             # Import tab
             agent.click(45, 3)
             agent.wait_for_text("Import / Export")
-            agent.assert_text("Press i to import TSV.")
+            agent.assert_text("i         : Import TSV")
             
             # AI tab
             agent.click(54, 3)
-            agent.wait_for_text("AI Drafts")
+            agent.wait_for_text("AI")
             agent.assert_text("Topic: der Kaffee")
             
             # Settings tab
@@ -302,13 +323,13 @@ def test_review_grade_persists_to_sqlite_across_restart():
             agent.act('e')
             agent.wait_for_text("5 cards due")
             agent.act('1')
-            agent.wait_for_text("Due cards: 5")
+            agent.wait_for_text("Due cards:   5")
         finally:
             agent.close()
 
         restarted = start_agent(tmpdir)
         try:
-            restarted.assert_text("Due cards: 5")
+            restarted.assert_text("Due cards:   5")
             restarted.act('3')
             restarted.wait_for_text("Review 1/5")
         finally:
@@ -335,7 +356,7 @@ def test_view_navigation_with_arrow_keys():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
-            agent.assert_text("Dashboard")
+            agent.assert_text("DASHBOARD")
             
             agent.act('<Right>')
             agent.wait_for_text("Press enter to select deck.")
@@ -350,9 +371,9 @@ def test_view_navigation_with_arrow_keys():
             agent.wait_until_stable()
             
             agent.act('<Left>')
-            agent.wait_for_text("Use Review to start studying.")
+            agent.wait_for_text("Use Review (3) to start studying.")
             agent.wait_until_stable()
-            agent.assert_text("Dashboard")
+            agent.assert_text("DASHBOARD")
         finally:
             agent.close()
 
@@ -366,7 +387,17 @@ def test_deck_navigation_with_up_down_arrows():
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
             agent.act('5')
-            agent.wait_for_text("Press i to import TSV.")
+            agent.wait_for_text("Import / Export")
+            agent.assert_text("i         : Import TSV")
+
+            agent.act('<Enter>')
+            agent.wait_until_stable()
+            agent.act('<Ctrl-u>')
+            for char in import_path:
+                agent.act(char)
+            agent.act('<Enter>')
+            agent.wait_until_stable()
+
             agent.act('i')
             agent.wait_for_text("Imported 1 notes")
             
@@ -377,7 +408,7 @@ def test_deck_navigation_with_up_down_arrows():
             agent.wait_for_text("> Z-Imported")
             
             agent.act('<Enter>')
-            agent.wait_for_text("Use Review to start studying.")
+            agent.wait_for_text("Use Review (3) to start studying.")
             agent.wait_until_stable()
             agent.assert_text("Deck: Z-Imported")
         finally:

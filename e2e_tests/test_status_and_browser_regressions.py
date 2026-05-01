@@ -9,7 +9,7 @@ from tui_tester import TUIAgent
 
 def start_agent(tmpdir, columns=90, lines=28):
     agent = TUIAgent(f"go run ./cmd/deutsch-tui -data-dir {tmpdir}", columns=columns, lines=lines)
-    agent.wait_for_text("Dashboard", timeout=15.0)
+    agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()
     return agent
 

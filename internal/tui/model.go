@@ -86,6 +86,8 @@ type Model struct {
 	draftCursor        int
 	importPath         string
 	exportPath         string
+	importCursor       int // 0 for importPath, 1 for exportPath
+	editingImportPath  bool
 	onConfigChange     func(string, map[string]string, bool)
 	bookmarkFilter     bool
 	mcqChoice          int
@@ -517,12 +519,18 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "ctrl+c":
 		return m, tea.Quit
 	case "q":
+		if m.textInputActive() {
+			break
+		}
 		if m.activeView == ViewCram && m.cramActive {
 			m.cramActive = false
 			return m, nil
 		}
 		return m, tea.Quit
 	case "?":
+		if m.textInputActive() {
+			break
+		}
 		m.showHelp = !m.showHelp
 		if m.showHelp {
 			m.status = "Help overlay shown. Press ? to close."
@@ -531,10 +539,19 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case "tab":
+		if m.textInputActive() {
+			break
+		}
 		return m, m.nextViewCmd()
 	case "left", "shift+tab":
+		if m.textInputActive() {
+			break
+		}
 		return m, m.previousViewCmd()
 	case "right":
+		if m.textInputActive() {
+			break
+		}
 		return m, m.nextViewCmd()
 	case "w":
 		if !m.textInputActive() {
@@ -553,6 +570,9 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, m.nextViewCmd()
 		}
 	case "[":
+		if m.textInputActive() && m.activeView != ViewBrowser {
+			break
+		}
 		if m.activeView == ViewBrowser {
 			m.previousDeck()
 			return m, m.reloadBrowserForSelectedDeck()
@@ -560,6 +580,9 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		m.previousDeck()
 		return m, nil
 	case "]":
+		if m.textInputActive() && m.activeView != ViewBrowser {
+			break
+		}
 		if m.activeView == ViewBrowser {
 			m.nextDeck()
 			return m, m.reloadBrowserForSelectedDeck()
@@ -637,13 +660,13 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) textInputActive() bool {
-	return (m.activeView == ViewImport && !strings.HasSuffix(m.importPath, "import.tsv")) ||
+	return (m.activeView == ViewImport && m.editingImportPath) ||
 		(m.activeView == ViewSettings && m.editingTemplate)
 }
 
 func (m *Model) activeViewHandlesVerticalNavigation() bool {
 	switch m.activeView {
-	case ViewAI, ViewBrowser, ViewCram, ViewDecks, ViewReview, ViewSettings:
+	case ViewAI, ViewBrowser, ViewCram, ViewDecks, ViewReview, ViewSettings, ViewImport:
 		return true
 	default:
 		return false
@@ -653,6 +676,9 @@ func (m *Model) activeViewHandlesVerticalNavigation() bool {
 func (m *Model) updateNumberKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 	key := msg.String()
 	if m.activeView == ViewCram {
+		return nil, false
+	}
+	if m.textInputActive() {
 		return nil, false
 	}
 	if m.activeView == ViewReview && len(m.dueCards) > 0 && m.dueCards[m.cursor].Kind == core.CardKindMCQ && m.revealed && !m.mcqAnswered {
@@ -747,52 +773,65 @@ func (m *Model) updateDecksKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 }
 
 func (m *Model) updateImportKey(msg tea.KeyMsg) (tea.Cmd, bool) {
+	if m.editingImportPath {
+		switch msg.String() {
+		case "enter", "esc":
+			m.editingImportPath = false
+			return nil, true
+		case "backspace":
+			if m.importCursor == 0 {
+				if len(m.importPath) > 0 {
+					m.importPath = m.importPath[:len(m.importPath)-1]
+				}
+			} else {
+				if len(m.exportPath) > 0 {
+					m.exportPath = m.exportPath[:len(m.exportPath)-1]
+				}
+			}
+			return nil, true
+		case "ctrl+u":
+			if m.importCursor == 0 {
+				m.importPath = ""
+			} else {
+				m.exportPath = ""
+			}
+			return nil, true
+		}
+		if len(msg.String()) == 1 {
+			if m.importCursor == 0 {
+				m.importPath += msg.String()
+			} else {
+				m.exportPath += msg.String()
+			}
+			return nil, true
+		}
+		return nil, true
+	}
+
 	switch msg.String() {
+	case "up", "k":
+		if m.importCursor > 0 {
+			m.importCursor--
+		}
+		return nil, true
+	case "down", "j":
+		if m.importCursor < 1 {
+			m.importCursor++
+		}
+		return nil, true
+	case "enter":
+		m.editingImportPath = true
+		return nil, true
 	case "i":
-		if strings.HasSuffix(m.importPath, "import.tsv") {
-			return m.importTSV(), true
-		}
-		if _, err := os.Stat(m.importPath); err == nil {
-			return m.importTSV(), true
-		}
-		m.importPath += msg.String()
-		return nil, true
+		return m.importTSV(), true
 	case "I": // Shift+i for APKG import
-		if strings.HasSuffix(m.importPath, "import.apkg") {
-			return m.importAPKG(), true
-		}
-		if _, err := os.Stat(m.importPath); err == nil {
-			return m.importAPKG(), true
-		}
-		m.importPath += msg.String()
-		return nil, true
+		return m.importAPKG(), true
 	case "x":
 		return m.exportTSV(), true
 	case "X": // Shift+x for APKG export
 		return m.exportAPKG(), true
-	case "backspace":
-		if len(m.importPath) > 0 {
-			m.importPath = m.importPath[:len(m.importPath)-1]
-		}
-		return nil, true
-	case "ctrl+u":
-		m.importPath = ""
-		return nil, true
-	case "enter":
-		if strings.HasSuffix(m.importPath, "import.tsv") || strings.HasSuffix(m.importPath, "import.apkg") {
-			if strings.HasSuffix(m.importPath, "import.tsv") {
-				return m.importTSV(), true
-			} else {
-				return m.importAPKG(), true
-			}
-		}
-		return nil, true
 	}
-	if len(msg.String()) == 1 {
-		m.importPath += msg.String()
-		return nil, true
-	}
-	return nil, true
+	return nil, false
 }
 
 func (m *Model) updateSettingsKey(msg tea.KeyMsg) (tea.Cmd, bool) {
@@ -1740,7 +1779,30 @@ func (m *Model) renderActiveViewPlain(x, y int) string {
 		if m.stats.CurrentStreak > 0 {
 			streakIndicator = " 🔥"
 		}
-		return fmt.Sprintf("Dashboard\n\nDeck: %s\nDue cards: %d\nBookmarked: %d (%d due)\nLeech: %d\nSuspended: %d\nReviews today: %d/%d\nCurrent Streak: %d days%s\n\nUse [ and ] to switch decks.\nUse Review to start studying.", m.deckLabel(), len(m.dueCards), m.stats.BookmarkedCards, m.stats.BookmarkedDue, m.stats.LeechCards, m.stats.SuspendedCards, m.stats.ReviewsToday, m.stats.DailyGoal, m.stats.CurrentStreak, streakIndicator)
+
+		var db strings.Builder
+		db.WriteString(lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).Render("DASHBOARD") + "\n\n")
+
+		deckStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81"))
+		db.WriteString(fmt.Sprintf("Active Deck: %s\n\n", deckStyle.Render(m.deckLabel())))
+
+		statsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("226"))
+		db.WriteString(statsStyle.Render("Review Queue") + "\n")
+		db.WriteString(fmt.Sprintf("  Due cards:   %d\n", len(m.dueCards)))
+		db.WriteString(fmt.Sprintf("  Bookmarked:  %d (%d due)\n\n", m.stats.BookmarkedCards, m.stats.BookmarkedDue))
+
+		db.WriteString(statsStyle.Render("Collection Stats") + "\n")
+		db.WriteString(fmt.Sprintf("  Leech:       %d\n", m.stats.LeechCards))
+		db.WriteString(fmt.Sprintf("  Suspended:   %d\n\n", m.stats.SuspendedCards))
+
+		goalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("46"))
+		db.WriteString(goalStyle.Render("Today's Progress") + "\n")
+		db.WriteString(fmt.Sprintf("  Reviews:     %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal))
+		db.WriteString(fmt.Sprintf("  Streak:      %d days%s\n\n", m.stats.CurrentStreak, streakIndicator))
+
+		db.WriteString(mutedStyle.Render("Use [ and ] to switch decks.\nUse Review (3) to start studying."))
+
+		return db.String()
 	}
 }
 
@@ -1892,7 +1954,51 @@ func (m *Model) renderDecks(x, y int) string {
 }
 
 func (m *Model) renderImport() string {
-	return fmt.Sprintf("Import / Export\n\nImport file: %s\nExport file: %s\n\nPress i to import TSV. Enter also imports TSV.\nPress I to import APKG. Shift+Enter also imports APKG.\nPress x to export TSV. Press X to export APKG.\n\nDeck: %s", m.importPath, m.exportPath, m.deckLabel())
+	var b strings.Builder
+	b.WriteString("Import / Export\n\n")
+
+	importLabel := "Import file: " + m.importPath
+	exportLabel := "Export file: " + m.exportPath
+
+	style := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212"))
+	editStyle := lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("62"))
+
+	if m.importCursor == 0 {
+		importLabel = "> " + importLabel
+		exportLabel = "  " + exportLabel
+		if m.editingImportPath {
+			importLabel = editStyle.Render(importLabel)
+		} else {
+			importLabel = style.Render(importLabel)
+		}
+	} else {
+		importLabel = "  " + importLabel
+		exportLabel = "> " + exportLabel
+		if m.editingImportPath {
+			exportLabel = editStyle.Render(exportLabel)
+		} else {
+			exportLabel = style.Render(exportLabel)
+		}
+	}
+
+	b.WriteString(importLabel + "\n")
+	b.WriteString(exportLabel + "\n\n")
+
+	b.WriteString("Actions:\n")
+	b.WriteString("  i         : Import TSV\n")
+	b.WriteString("  I         : Import APKG\n")
+	b.WriteString("  x         : Export TSV\n")
+	b.WriteString("  X         : Export APKG\n\n")
+
+	b.WriteString(fmt.Sprintf("Current Deck: %s\n\n", m.deckLabel()))
+
+	if m.editingImportPath {
+		b.WriteString("EDITING - Enter to save, Esc to cancel.")
+	} else {
+		b.WriteString("Use j/k to select path, Enter to edit, i/I/x/X to execute.")
+	}
+
+	return b.String()
 }
 
 func (m *Model) renderAI(x, y int) string {
@@ -2070,10 +2176,9 @@ func (m *Model) renderCram() string {
 
 func (m *Model) renderHelp() string {
 	var b strings.Builder
-	b.WriteString(panelStyle.Width(60).Render(""))
 	b.WriteString("Keyboard Shortcuts\n\n")
 	b.WriteString("Global:\n")
-	b.WriteString("  1-9         Switch to view\n")
+	b.WriteString("  1-9          Switch to view\n")
 	b.WriteString("  Tab/arrows   Cycle views\n")
 	b.WriteString("  w/s          Previous/next view\n")
 	b.WriteString("  ?            Toggle this help\n")
@@ -2107,16 +2212,17 @@ func (m *Model) renderHelp() string {
 	b.WriteString("  1-5          Filter: bookmarked/suspended/leech/flagged/all\n\n")
 
 	b.WriteString("Import:\n")
-	b.WriteString("  Type         Type import path\n")
-	b.WriteString("  Enter        Import TSV\n")
-	b.WriteString("  x            Export selected deck\n")
-	b.WriteString("  Ctrl-u       Clear path\n\n")
+	b.WriteString("  j/k          Select field\n")
+	b.WriteString("  Enter        Start/stop editing path\n")
+	b.WriteString("  i/I          Import TSV/APKG\n")
+	b.WriteString("  x/X          Export TSV/APKG\n\n")
 
 	b.WriteString("Settings:\n")
 	b.WriteString("  j/k          Navigate options\n")
 	b.WriteString("  +/-          Adjust daily goal\n")
-	b.WriteString("  Enter        Toggle AI provider / edit template\n")
-	return b.String()
+	b.WriteString("  Enter        Toggle AI provider / edit template")
+
+	return panelStyle.Width(60).Render(b.String())
 }
 
 func (m *Model) renderReview(x, y int) string {
