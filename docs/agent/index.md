@@ -1,6 +1,6 @@
 # Agent Context Index
 
-Last updated: 2026-04-30
+Last updated: 2026-05-01
 
 ## Active Backlog
 
@@ -15,6 +15,17 @@ Last updated: 2026-04-30
 - `docs/agent/notices/2026-04-30-tui-status-line-stability.md`: keep dynamic TUI status text on a stable single-line `status:` surface for tui-tester.
 - `docs/agent/notices/2026-04-30-browser-deck-reload.md`: Browser `[`/`]` deck switching must reload Browser cards for the selected deck.
 
+## Verification Status
+
+- ✅ All 62 E2E tests passing (as of 2026-05-01)
+- ✅ All 8 Go test suites passing (as of 2026-05-01)
+- ✅ App launches without errors (smoke test passing)
+- ✅ All views render correctly (Dashboard, Review, Import, AI, Settings, Browser, Cram)
+- ✅ Core user interactions respond as expected (flashcard reveal, grading, navigation)
+- ✅ State successfully persisted to SQLite
+- ✅ Code formatting verified (gofmt)
+- ✅ Code quality verified (go vet)
+
 ## Decisions
 
 - `docs/decisions/ADR-0001-local-first-modular-monolith.md`: local-first modular monolith with indexed continuity docs.
@@ -28,3 +39,4 @@ Last updated: 2026-04-30
 - `internal/storage/README.md`: SQLite migrations and repository rules.
 - `internal/content/README.md`: deck files and Anki text interop.
 - `internal/ai/README.md`: AI provider adapter and draft validation.
+
