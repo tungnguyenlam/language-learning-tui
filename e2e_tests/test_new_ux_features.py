@@ -21,7 +21,7 @@ def test_cram_mode_filter_types():
         try:
             # First, create a suspended card
             agent.act("3")  # Go to Review
-            agent.wait_for_text("Review 1/6")
+            agent.wait_for_text("Review 1/21")
             
             # Suspend a card
             agent.act("x")

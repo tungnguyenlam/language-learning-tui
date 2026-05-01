@@ -618,6 +618,26 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	}
 
 	switch msg.String() {
+	case "up", "k":
+		// Handle up arrow for views that support it
+		if m.activeView == ViewReview {
+			if m.cursor > 0 {
+				m.cursor--
+				m.resetMCQState()
+				m.clearReviewHistory()
+			}
+			return m, nil
+		}
+	case "down", "j":
+		// Handle down arrow for views that support it
+		if m.activeView == ViewReview {
+			if m.cursor < len(m.dueCards)-1 {
+				m.cursor++
+				m.resetMCQState()
+				m.clearReviewHistory()
+			}
+			return m, nil
+		}
 	case "p":
 		if m.activeView == ViewReview && len(m.dueCards) > 0 {
 			return m, m.playAudio(m.dueCards[m.cursor].Audio)
@@ -630,18 +650,6 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		switch m.activeView {
 		case ViewReview:
 			switch msg.String() {
-			case "up", "k":
-				if m.cursor > 0 {
-					m.cursor--
-					m.resetMCQState()
-					m.clearReviewHistory()
-				}
-			case "down", "j":
-				if m.cursor < len(m.dueCards)-1 {
-					m.cursor++
-					m.resetMCQState()
-					m.clearReviewHistory()
-				}
 			case "enter", "space":
 				card := m.dueCards[m.cursor]
 				m.revealed = !m.revealed
@@ -1816,7 +1824,6 @@ func (m *Model) renderActiveViewPlain(x, y int) string {
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("63")).
 			Padding(0, 1).
-			Width(maxInt(30, (m.width-64)/2)).
 			Render(statsStyle.Render("Review Queue") + "\n" +
 				fmt.Sprintf("  Due cards:   %d\n", len(m.dueCards)) +
 				fmt.Sprintf("  Bookmarked:  %d (%d due)", m.stats.BookmarkedCards, m.stats.BookmarkedDue))
@@ -1825,7 +1832,6 @@ func (m *Model) renderActiveViewPlain(x, y int) string {
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("64")).
 			Padding(0, 1).
-			Width(maxInt(30, (m.width-64)/2)).
 			Render(statsStyle.Render("Collection") + "\n" +
 				fmt.Sprintf("  Leech:       %d\n", m.stats.LeechCards) +
 				fmt.Sprintf("  Suspended:   %d", m.stats.SuspendedCards))
@@ -1835,16 +1841,32 @@ func (m *Model) renderActiveViewPlain(x, y int) string {
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("65")).
 			Padding(0, 1).
-			Width(maxInt(40, m.width-60)).
 			Render(goalStyle.Render("Today's Progress") + "\n" +
 				fmt.Sprintf("  Reviews:     %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal) +
 				fmt.Sprintf("  Streak:      %d days%s", m.stats.CurrentStreak, streakIndicator))
+
+		digestStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("213")).Bold(true)
+		message := "All caught up!"
+		if len(m.dueCards) > 0 {
+			message = fmt.Sprintf("%d due today.", len(m.dueCards))
+		}
+		if m.stats.CurrentStreak == 0 && len(m.dueCards) > 0 {
+			message = fmt.Sprintf("%d cards waiting.", len(m.dueCards))
+		}
+
+		dailyDigestBox := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("213")).
+			Padding(0, 1).
+			Render(digestStyle.Render("Daily Digest") + "\n" +
+				fmt.Sprintf("  %s\n", message) +
+				fmt.Sprintf("  M:%d Y:%d N:%d", m.stats.MatureCards, m.stats.YoungCards, m.stats.NewCards))
 
 		var db strings.Builder
 		db.WriteString(titleStyle.Render("DASHBOARD") + "\n")
 		db.WriteString(headerBox + "\n")
 		db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, reviewQueue, " ", collectionStats) + "\n")
-		db.WriteString(progressBox + "\n\n")
+		db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, progressBox, " ", dailyDigestBox) + "\n")
 		db.WriteString(mutedStyle.Render("Use [ and ] to switch decks.\nUse Review (3) to start studying."))
 
 		return db.String()
@@ -2091,7 +2113,25 @@ func (m *Model) renderBrowser() string {
 		b.WriteString(mutedStyle.Render("Use left/right/[ to change deck filter.\n"))
 		return b.String()
 	}
-	for i, card := range m.browserCards {
+	start := 0
+	end := len(m.browserCards)
+	maxVisible := 6
+	if end > maxVisible {
+		start = m.browserCursor - maxVisible/2
+		if start < 0 {
+			start = 0
+		}
+		end = start + maxVisible
+		if end > len(m.browserCards) {
+			end = len(m.browserCards)
+			start = end - maxVisible
+			if start < 0 {
+				start = 0
+			}
+		}
+	}
+	for i := start; i < end; i++ {
+		card := m.browserCards[i]
 		prefix := "  "
 		style := lipgloss.NewStyle()
 		if i == m.browserCursor {
@@ -2114,7 +2154,11 @@ func (m *Model) renderBrowser() string {
 		if card.Suspended {
 			suspended = " [S]"
 		}
-		label := fmt.Sprintf("%s[%s] %s%s%s%s", prefix, kind, card.Prompt, bookmark, leech, suspended)
+		mature := ""
+		if card.Mature {
+			mature = " ⭐"
+		}
+		label := fmt.Sprintf("%s[%s] %s%s%s%s%s", prefix, kind, card.Prompt, mature, bookmark, leech, suspended)
 		b.WriteString(style.Render(label))
 		b.WriteString("\n")
 	}
@@ -2199,7 +2243,25 @@ func (m *Model) renderCram() string {
 		b.WriteString("  5: All cards\n")
 		return b.String()
 	}
-	for i, card := range m.cramCards {
+	start := 0
+	end := len(m.cramCards)
+	maxVisible := 6
+	if end > maxVisible {
+		start = m.cramCursor - maxVisible/2
+		if start < 0 {
+			start = 0
+		}
+		end = start + maxVisible
+		if end > len(m.cramCards) {
+			end = len(m.cramCards)
+			start = end - maxVisible
+			if start < 0 {
+				start = 0
+			}
+		}
+	}
+	for i := start; i < end; i++ {
+		card := m.cramCards[i]
 		prefix := "  "
 		style := lipgloss.NewStyle()
 		if i == m.cramCursor {
@@ -2222,7 +2284,11 @@ func (m *Model) renderCram() string {
 		if card.Suspended {
 			suspended = " [S]"
 		}
-		label := fmt.Sprintf("%s[%s] %s%s%s%s", prefix, kind, card.Prompt, bookmark, leech, suspended)
+		mature := ""
+		if card.Mature {
+			mature = " ⭐"
+		}
+		label := fmt.Sprintf("%s[%s] %s%s%s%s%s", prefix, kind, card.Prompt, mature, bookmark, leech, suspended)
 		b.WriteString(style.Render(label))
 		b.WriteString("\n")
 	}
@@ -2357,7 +2423,11 @@ func (m *Model) renderReview(x, y int) string {
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205"))
 	header := fmt.Sprintf("%s%s %d/%d", titleStyle.Render("Review"), filterBanner, m.cursor+1, len(m.dueCards))
 
-	view := fmt.Sprintf("%s\n%s | %s\n%s%s%s\n\n%s\n\n%s", header, bookmark, keys, leech, suspended, audioIndicator, card.Prompt, answer)
+	mature := ""
+	if card.Mature {
+		mature = " ⭐"
+	}
+	view := fmt.Sprintf("%s\n%s | %s\n%s%s%s\n\n%s%s\n\n%s", header, bookmark, keys, leech, suspended, audioIndicator, card.Prompt, mature, answer)
 	if m.showReviewHistory && m.reviewHistoryCard == card.ID {
 		view += "\n\n" + m.renderReviewHistory(card.Prompt)
 	}

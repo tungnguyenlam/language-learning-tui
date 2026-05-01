@@ -1,6 +1,6 @@
 # Agent Context Index
 
-Last updated: 2026-05-01
+Last updated: 2026-05-02
 
 ## Active Backlog
 
@@ -14,6 +14,7 @@ Last updated: 2026-05-01
 - `docs/agent/notices/2026-04-29-wasd-navigation.md`: WASD key navigation support implementation.
 - `docs/agent/notices/2026-04-30-tui-status-line-stability.md`: keep dynamic TUI status text on a stable single-line `status:` surface for tui-tester.
 - `docs/agent/notices/2026-04-30-browser-deck-reload.md`: Browser `[`/`]` deck switching must reload Browser cards for the selected deck.
+- `docs/agent/notices/2026-05-02-arrow-key-navigation-fix.md`: Arrow key navigation fix for Review view.
 
 ## Verification Status
 

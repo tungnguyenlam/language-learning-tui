@@ -28,7 +28,7 @@ def test_tab_to_browser_loads_cards():
             tab_to(agent, "Card Browser", 7)
             agent.wait_for_text("der Apfel")
             agent.assert_text("[FC] der Apfel")
-            agent.assert_text("6 cards found")
+            agent.assert_text("21 cards found")
         finally:
             agent.close()
 
@@ -38,7 +38,7 @@ def test_tab_to_cram_loads_bookmarked_cards():
         agent = start_agent(tmpdir)
         try:
             agent.act("3")
-            agent.wait_for_text("Review 1/6")
+            agent.wait_for_text("Review 1/21")
             agent.act("b")
             agent.wait_for_text("Card bookmarked")
 
@@ -55,11 +55,11 @@ def test_tab_to_statistics_renders_persisted_progress():
         agent = start_agent(tmpdir)
         try:
             agent.act("3")
-            agent.wait_for_text("Review 1/6")
+            agent.wait_for_text("Review 1/21")
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.act("g")
-            agent.wait_for_text("5 cards due")
+            agent.wait_for_text("20 cards due")
 
             tab_to(agent, "Statistics", 1)
             agent.assert_text("Total Reviews: 1")

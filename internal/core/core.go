@@ -62,6 +62,7 @@ type Card struct {
 	Bookmarked bool
 	Leech      bool
 	Suspended  bool
+	Mature     bool
 }
 
 type ReviewState struct {

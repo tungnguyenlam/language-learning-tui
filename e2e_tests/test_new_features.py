@@ -20,7 +20,7 @@ def test_bookmark_filter_toggle():
         agent = start_agent(tmpdir)
         try:
             agent.act("3")
-            agent.wait_for_text("Review 1/6")
+            agent.wait_for_text("Review 1/21")
             agent.assert_text("Bookmark: off")
 
             agent.act("b")
@@ -40,7 +40,7 @@ def test_leech_detection_in_statistics():
         agent = start_agent(tmpdir)
         try:
             agent.act("3")
-            agent.wait_for_text("Review 1/6")
+            agent.wait_for_text("Review 1/21")
 
             for _ in range(3):
                 agent.act("<Space>")
@@ -67,7 +67,7 @@ def test_mcq_review_shows_choices():
         agent = start_agent(tmpdir)
         try:
             agent.act("3")
-            agent.wait_for_text("Review 1/6")
+            agent.wait_for_text("Review 1/21")
 
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
@@ -88,9 +88,9 @@ def test_suspend_card_persists_and_updates_statistics():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
-            agent.assert_text("Due cards:   6")
+            agent.assert_text("Due cards:   21")
             agent.act("3")
-            agent.wait_for_text("Review 1/6")
+            agent.wait_for_text("Review 1/21")
             agent.act("x")
             agent.wait_for_text("Card suspended")
             agent.act("q")
@@ -99,7 +99,7 @@ def test_suspend_card_persists_and_updates_statistics():
 
         agent = start_agent(tmpdir)
         try:
-            agent.assert_text("Due cards:   5")
+            agent.assert_text("Due cards:   20")
             agent.act("4")
             agent.wait_for_text("Statistics")
             agent.assert_text("Suspended:")
@@ -138,7 +138,7 @@ def test_decks_view_shows_progress_metrics_after_review():
         agent = start_agent(tmpdir)
         try:
             agent.act("3")
-            agent.wait_for_text("Review 1/6")
+            agent.wait_for_text("Review 1/21")
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.act("g")
@@ -159,7 +159,7 @@ def test_card_browser_search_filter():
         try:
             agent.act("8")
             agent.wait_for_text("Card Browser")
-            agent.wait_for_text("6 cards found")
+            agent.wait_for_text("21 cards found")
 
             agent.act("Ap")
             agent.wait_for_text("der Apfel")
@@ -175,7 +175,7 @@ def test_session_stats_show_in_statistics():
         agent = start_agent(tmpdir)
         try:
             agent.act("3")
-            agent.wait_for_text("Review 1/6")
+            agent.wait_for_text("Review 1/21")
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.act("a")

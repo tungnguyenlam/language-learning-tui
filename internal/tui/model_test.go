@@ -1262,3 +1262,65 @@ func TestCramReviewFlow(t *testing.T) {
 		t.Fatalf("expected cursor 0 (wrapped), got %d", model.cramCursor)
 	}
 }
+
+func TestReviewArrowNavigation(t *testing.T) {
+	repo := &mockRepo{
+		decks: []core.Deck{{ID: "deck-1", Name: "Test Deck"}},
+		dueCards: []core.Card{
+			{ID: "c1", Prompt: "Card 1", DeckID: "deck-1"},
+			{ID: "c2", Prompt: "Card 2", DeckID: "deck-1"},
+			{ID: "c3", Prompt: "Card 3", DeckID: "deck-1"},
+		},
+	}
+	model := NewModel(repo, &mockScheduler{})
+
+	// Load cards
+	model.Update(dueCardsMsg(repo.dueCards))
+
+	// Switch to Review view
+	model.Update(tea.KeyPressMsg{Code: '3'})
+	if model.activeView != ViewReview {
+		t.Fatalf("active view = %s, want review", model.activeView)
+	}
+
+	// Initial cursor should be at index 0
+	if model.cursor != 0 {
+		t.Fatalf("cursor = %d, want 0", model.cursor)
+	}
+
+	// Move cursor down with arrow key
+	model.Update(tea.KeyPressMsg{Code: tea.KeyDown})
+	if model.cursor != 1 {
+		t.Fatalf("cursor after down arrow = %d, want 1", model.cursor)
+	}
+
+	// Move cursor down again
+	model.Update(tea.KeyPressMsg{Code: tea.KeyDown})
+	if model.cursor != 2 {
+		t.Fatalf("cursor after second down arrow = %d, want 2", model.cursor)
+	}
+
+	// Try to move down when at end (should stay at 2)
+	model.Update(tea.KeyPressMsg{Code: tea.KeyDown})
+	if model.cursor != 2 {
+		t.Fatalf("cursor after down at end = %d, want 2", model.cursor)
+	}
+
+	// Move cursor up
+	model.Update(tea.KeyPressMsg{Code: tea.KeyUp})
+	if model.cursor != 1 {
+		t.Fatalf("cursor after up arrow = %d, want 1", model.cursor)
+	}
+
+	// Move cursor up again
+	model.Update(tea.KeyPressMsg{Code: tea.KeyUp})
+	if model.cursor != 0 {
+		t.Fatalf("cursor after second up arrow = %d, want 0", model.cursor)
+	}
+
+	// Try to move up when at start (should stay at 0)
+	model.Update(tea.KeyPressMsg{Code: tea.KeyUp})
+	if model.cursor != 0 {
+		t.Fatalf("cursor after up at start = %d, want 0", model.cursor)
+	}
+}

@@ -19,7 +19,7 @@ def test_cram_review_flow():
         try:
             # Go to review and bookmark a card
             agent.act("3")
-            agent.wait_for_text("Review 1/6")
+            agent.wait_for_text("Review 1/21")
             agent.act("b")
             agent.wait_for_text("Card bookmarked")
             

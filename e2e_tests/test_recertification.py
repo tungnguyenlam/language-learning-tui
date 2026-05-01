@@ -20,7 +20,7 @@ def test_tab_cycles_through_all_primary_views_and_wraps():
         try:
             for text in [
                 "Press enter to select deck.",
-                "Review 1/6",
+                "Review 1/21",
                 "Statistics",
                 "Import / Export",
                 "AI Drafts",
@@ -41,21 +41,21 @@ def test_hard_grade_persists_review_progress_to_sqlite_after_restart():
         agent = start_agent(tmpdir)
         try:
             agent.act("3")
-            agent.wait_for_text("Review 1/6")
+            agent.wait_for_text("Review 1/21")
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.act("h")
-            agent.wait_for_text("5 cards due")
+            agent.wait_for_text("20 cards due")
             agent.act("1")
-            agent.wait_for_text("Due cards:   5")
+            agent.wait_for_text("Due cards:   20")
         finally:
             agent.close()
 
         restarted = start_agent(tmpdir)
         try:
-            restarted.assert_text("Due cards:   5")
+            restarted.assert_text("Due cards:   20")
             restarted.act("3")
-            restarted.wait_for_text("Review 1/5")
+            restarted.wait_for_text("Review 1/20")
         finally:
             restarted.close()
 

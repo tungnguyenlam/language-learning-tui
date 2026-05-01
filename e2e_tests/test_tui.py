@@ -24,14 +24,14 @@ def test_dashboard_and_review_flow():
             # Verify dashboard content
             agent.assert_text("DASHBOARD")
             agent.assert_text("Deck: German A1 Survival")
-            agent.assert_text("Due cards:   6")
+            agent.assert_text("Due cards:   21")
 
             # Switch to Review view
             agent.act('3')
             agent.wait_until_stable()
 
             # Verify review screen for the first card
-            agent.assert_text("Review 1/6")
+            agent.assert_text("Review 1/21")
             agent.assert_text("der Apfel")
             agent.assert_text("Press space or enter to reveal.")
 
@@ -48,9 +48,9 @@ def test_dashboard_and_review_flow():
 
             # Verify it advanced to the next card (the MCQ for the same note)
             # Note: 1/5 because one card is now scheduled in the future
-            agent.assert_text("Review 1/5")
+            agent.assert_text("Review 1/20")
             agent.assert_text("Ich esse einen Apfel.")
-            agent.assert_text("5 cards due")
+            agent.assert_text("20 cards due")
 
             # Try returning to Dashboard
             agent.act('1')
@@ -82,14 +82,14 @@ def test_ai_draft_approval_persists_across_restart():
 
             agent.act('1')
             agent.wait_until_stable()
-            agent.assert_text("Due cards:   8")
+            agent.assert_text("Due cards:   23")
         finally:
             agent.close()
 
         restarted = start_agent(tmpdir)
         try:
             restarted.assert_text("DASHBOARD")
-            restarted.assert_text("Due cards:   8")
+            restarted.assert_text("Due cards:   23")
         finally:
             restarted.close()
 
@@ -232,7 +232,7 @@ def test_all_core_views_render_with_keyboard_navigation():
             expected_views = [
                 ('1', "DASHBOARD"),
                 ('2', "Decks"),
-                ('3', "Review 1/6"),
+                ('3', "Review 1/21"),
                 ('4', "Statistics"),
                 ('5', "Import / Export"),
                 ('6', "AI"),
@@ -255,7 +255,7 @@ def test_compact_layout_renders_all_core_views():
             for key, text in [
                 ('1', "DASHBOARD"),
                 ('2', "Decks"),
-                ('3', "Review 1/6"),
+                ('3', "Review 1/21"),
                 ('4', "Statistics"),
                 ('5', "Import / Export"),
                 ('6', "AI"),
@@ -273,15 +273,15 @@ def test_space_reveal_and_again_grade_keyboard_flow():
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
             agent.act('3')
-            agent.wait_for_text("Review 1/6")
+            agent.wait_for_text("Review 1/21")
 
             agent.act('<Space>')
             agent.wait_for_text("Grade: a Again")
             agent.assert_text("apple")
 
             agent.act('a')
-            agent.wait_for_text("Review 1/5")
-            agent.assert_text("5 cards due")
+            agent.wait_for_text("Review 1/20")
+            agent.assert_text("20 cards due")
             agent.assert_text("reveal")
         finally:
             agent.close()
@@ -316,21 +316,21 @@ def test_review_grade_persists_to_sqlite_across_restart():
         agent = start_agent(tmpdir)
         try:
             agent.act('3')
-            agent.wait_for_text("Review 1/6")
+            agent.wait_for_text("Review 1/21")
             agent.act('<Enter>')
             agent.wait_for_text("Grade: a Again")
             agent.act('e')
-            agent.wait_for_text("5 cards due")
+            agent.wait_for_text("20 cards due")
             agent.act('1')
-            agent.wait_for_text("Due cards:   5")
+            agent.wait_for_text("Due cards:   20")
         finally:
             agent.close()
 
         restarted = start_agent(tmpdir)
         try:
-            restarted.assert_text("Due cards:   5")
+            restarted.assert_text("Due cards:   20")
             restarted.act('3')
-            restarted.wait_for_text("Review 1/5")
+            restarted.wait_for_text("Review 1/20")
         finally:
             restarted.close()
 
@@ -340,14 +340,14 @@ def test_mouse_tab_navigation_and_grade_button():
         try:
             # Medium layout tab row starts on terminal row 3; Review(6) tab spans columns 20-30.
             agent.click(22, 3)
-            agent.wait_for_text("Review 1/6")
+            agent.wait_for_text("Review 1/21")
             agent.act('<Enter>')
             agent.wait_for_text("Grade: a Again")
 
             # In the medium review panel, the Good grade hitbox is on terminal row 11.
             agent.click(30, 11)
-            agent.wait_for_text("5 cards due")
-            agent.assert_text("Review 1/5")
+            agent.wait_for_text("20 cards due")
+            agent.assert_text("Review 1/20")
         finally:
             agent.close()
 

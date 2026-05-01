@@ -19,12 +19,12 @@ def test_review_grade_status_is_single_line():
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
             agent.act("3")
-            agent.wait_for_text("Review 1/6")
+            agent.wait_for_text("Review 1/21")
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.act("g")
-            agent.wait_for_text("status: 5 cards due")
-            agent.assert_text("Review 1/5")
+            agent.wait_for_text("status: 20 cards due")
+            agent.assert_text("Review 1/20")
         finally:
             agent.close()
 

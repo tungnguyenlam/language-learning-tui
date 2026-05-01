@@ -20,7 +20,7 @@ def test_review_history_empty_state_toggles_in_review():
         agent = start_agent(tmpdir)
         try:
             agent.act("3")
-            agent.wait_for_text("Review 1/6")
+            agent.wait_for_text("Review 1/21")
 
             agent.act("r")
             agent.wait_for_text("Review History: der Apfel")
@@ -39,11 +39,11 @@ def test_browser_history_shows_reviewed_card_attempt():
         agent = start_agent(tmpdir)
         try:
             agent.act("3")
-            agent.wait_for_text("Review 1/6")
+            agent.wait_for_text("Review 1/21")
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.act("g")
-            agent.wait_for_text("status: 5 cards due")
+            agent.wait_for_text("status: 20 cards due")
 
             agent.act("8")
             agent.wait_for_text("Card Browser")
@@ -62,11 +62,11 @@ def test_review_history_persists_after_restart():
         agent = start_agent(tmpdir)
         try:
             agent.act("3")
-            agent.wait_for_text("Review 1/6")
+            agent.wait_for_text("Review 1/21")
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.act("h")
-            agent.wait_for_text("status: 5 cards due")
+            agent.wait_for_text("status: 20 cards due")
             agent.act("q")
         finally:
             agent.close()

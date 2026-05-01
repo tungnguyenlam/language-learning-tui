@@ -42,3 +42,25 @@
 - All 62 E2E tests passing
 - ./scripts/verify.sh executes successfully
 
+## Autonomous Feature Pass 15: E2E Test Expansion ✅
+- Created 9 new E2E tests covering core app functionality
+- Verified app startup and basic navigation
+- Tested review flow and bookmark functionality
+- Tested AI, Import, and Settings views
+- All 71 E2E tests passing (62 existing + 9 new)
+- ./scripts/verify.sh executes successfully
+
+## Autonomous Feature Pass 15: Content and MCQ Expansion ✅
+- Added 5 new MCQ-specific starter cards for German articles
+- Added 2 new MCQ-specific starter cards for German verb conjugations
+- Enhanced CardsForNote function to properly handle custom MCQ cards
+- Fixed card ID conflicts in database storage
+- Expanded starter content from 3 to 8 notes with 21 total cards
+- Fixed TUI E2E tests assertions that were hardcoding previous card counts
+- Fixed vertical truncation in Browser and Cram views by paginating cards
+- Implemented "Daily Digest" view on the Dashboard with dynamic review messaging
+- Implemented "Mastery" indicator (⭐) for mature cards (interval >= 21 days)
+- Added 3 new E2E tests to verify Daily Digest
+- All Go tests and E2E tests passing
+
+
