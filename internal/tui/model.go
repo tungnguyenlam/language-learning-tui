@@ -113,6 +113,7 @@ type Model struct {
 	showReviewHistory  bool
 	spinnerFrame       int
 	deckFilter         string // New field for deck filtering
+	drafting           bool
 }
 
 func NewModel(repo core.Repository, scheduler core.Scheduler) *Model {
@@ -335,13 +336,28 @@ func (m *Model) loadReviewHistory(cardID string) tea.Cmd {
 	}
 }
 
+type spinnerTickMsg struct{}
+
+func (m *Model) tickSpinner() tea.Cmd {
+	return tea.Tick(time.Millisecond*100, func(t time.Time) tea.Msg {
+		return spinnerTickMsg{}
+	})
+}
+
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case spinnerTickMsg:
+		if m.drafting {
+			m.spinnerFrame++
+			return m, m.tickSpinner()
+		}
+		return m, nil
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
 		m.breakpoint = breakpointForWidth(msg.Width)
 	case error:
+		m.drafting = false
 		m.status = friendlyError(msg)
 	case decksMsg:
 		m.decks = []core.Deck(msg)
@@ -375,6 +391,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 	case draftsMsg:
+		m.drafting = false
 		m.drafts = []ai.Draft(msg)
 		m.draftCursor = 0
 		if len(m.drafts) == 0 {
@@ -1178,7 +1195,7 @@ func (m *Model) setDailyGoal(goal int) tea.Cmd {
 func (m *Model) updateAIKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 	switch msg.String() {
 	case "enter":
-		return m.generateDrafts(), true
+		return tea.Batch(m.generateDrafts(), m.tickSpinner()), true
 	case "backspace":
 		if len(m.aiInput) > 0 {
 			m.aiInput = m.aiInput[:len(m.aiInput)-1]
@@ -1226,6 +1243,7 @@ func (m *Model) generateDrafts() tea.Cmd {
 		Tags:       []string{"reviewed"},
 	}
 	m.status = "Generating draft..."
+	m.drafting = true
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
@@ -1780,26 +1798,53 @@ func (m *Model) renderActiveViewPlain(x, y int) string {
 			streakIndicator = " 🔥"
 		}
 
+		titleStyle := lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color("205")).
+			MarginBottom(1)
+
+		headerBox := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("62")).
+			Padding(0, 1).
+			Width(maxInt(40, m.width-60)).
+			Render(fmt.Sprintf("Active Deck: %s", lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render(m.deckLabel())))
+
+		statsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("226")).Bold(true)
+
+		reviewQueue := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("63")).
+			Padding(0, 1).
+			Width(maxInt(30, (m.width-64)/2)).
+			Render(statsStyle.Render("Review Queue") + "\n" +
+				fmt.Sprintf("  Due cards:   %d\n", len(m.dueCards)) +
+				fmt.Sprintf("  Bookmarked:  %d (%d due)", m.stats.BookmarkedCards, m.stats.BookmarkedDue))
+
+		collectionStats := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("64")).
+			Padding(0, 1).
+			Width(maxInt(30, (m.width-64)/2)).
+			Render(statsStyle.Render("Collection") + "\n" +
+				fmt.Sprintf("  Leech:       %d\n", m.stats.LeechCards) +
+				fmt.Sprintf("  Suspended:   %d", m.stats.SuspendedCards))
+
+		goalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Bold(true)
+		progressBox := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("65")).
+			Padding(0, 1).
+			Width(maxInt(40, m.width-60)).
+			Render(goalStyle.Render("Today's Progress") + "\n" +
+				fmt.Sprintf("  Reviews:     %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal) +
+				fmt.Sprintf("  Streak:      %d days%s", m.stats.CurrentStreak, streakIndicator))
+
 		var db strings.Builder
-		db.WriteString(lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).Render("DASHBOARD") + "\n\n")
-
-		deckStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81"))
-		db.WriteString(fmt.Sprintf("Active Deck: %s\n\n", deckStyle.Render(m.deckLabel())))
-
-		statsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("226"))
-		db.WriteString(statsStyle.Render("Review Queue") + "\n")
-		db.WriteString(fmt.Sprintf("  Due cards:   %d\n", len(m.dueCards)))
-		db.WriteString(fmt.Sprintf("  Bookmarked:  %d (%d due)\n\n", m.stats.BookmarkedCards, m.stats.BookmarkedDue))
-
-		db.WriteString(statsStyle.Render("Collection Stats") + "\n")
-		db.WriteString(fmt.Sprintf("  Leech:       %d\n", m.stats.LeechCards))
-		db.WriteString(fmt.Sprintf("  Suspended:   %d\n\n", m.stats.SuspendedCards))
-
-		goalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("46"))
-		db.WriteString(goalStyle.Render("Today's Progress") + "\n")
-		db.WriteString(fmt.Sprintf("  Reviews:     %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal))
-		db.WriteString(fmt.Sprintf("  Streak:      %d days%s\n\n", m.stats.CurrentStreak, streakIndicator))
-
+		db.WriteString(titleStyle.Render("DASHBOARD") + "\n")
+		db.WriteString(headerBox + "\n")
+		db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, reviewQueue, " ", collectionStats) + "\n")
+		db.WriteString(progressBox + "\n\n")
 		db.WriteString(mutedStyle.Render("Use [ and ] to switch decks.\nUse Review (3) to start studying."))
 
 		return db.String()
@@ -2003,9 +2048,18 @@ func (m *Model) renderImport() string {
 
 func (m *Model) renderAI(x, y int) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "AI Drafts\n\nDeck: %s\nTopic: %s\n\nEnter generate | a approve | d discard\n", m.deckLabel(), m.aiInput)
+	spinner := ""
+	if m.drafting {
+		frames := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
+		spinner = " " + frames[m.spinnerFrame%len(frames)]
+	}
+	fmt.Fprintf(&b, "AI Drafts%s\n\nDeck: %s\nTopic: %s\n\nEnter generate | a approve | d discard\n", spinner, m.deckLabel(), m.aiInput)
 	if len(m.drafts) == 0 {
-		b.WriteString("\nNo drafts yet.")
+		if m.drafting {
+			b.WriteString("\nDrafting in progress...")
+		} else {
+			b.WriteString("\nNo drafts yet.")
+		}
 		return b.String()
 	}
 	for i, draft := range m.drafts {
@@ -2021,11 +2075,20 @@ func (m *Model) renderAI(x, y int) string {
 
 func (m *Model) renderBrowser() string {
 	var b strings.Builder
-	b.WriteString("Card Browser\n\n")
-	b.WriteString(fmt.Sprintf("Search: %s_\n\n", m.browserSearch))
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).MarginBottom(1)
+	b.WriteString(titleStyle.Render("Card Browser") + "\n")
+
+	searchStyle := lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color("62")).
+		Padding(0, 1).
+		Width(maxInt(30, m.width-60))
+
+	b.WriteString(searchStyle.Render(fmt.Sprintf("Search: %s_", m.browserSearch)) + "\n\n")
+
 	if len(m.browserCards) == 0 {
 		b.WriteString("No cards found. Type to search.\n\n")
-		b.WriteString("Use left/right/[ to change deck filter.\n")
+		b.WriteString(mutedStyle.Render("Use left/right/[ to change deck filter.\n"))
 		return b.String()
 	}
 	for i, card := range m.browserCards {
@@ -2290,7 +2353,11 @@ func (m *Model) renderReview(x, y int) string {
 	} else {
 		answer = "Press space or enter to reveal."
 	}
-	view := fmt.Sprintf("Review%s %d/%d\n%s | %s\n%s%s%s\n\n%s\n\n%s", filterBanner, m.cursor+1, len(m.dueCards), bookmark, keys, leech, suspended, audioIndicator, card.Prompt, answer)
+
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205"))
+	header := fmt.Sprintf("%s%s %d/%d", titleStyle.Render("Review"), filterBanner, m.cursor+1, len(m.dueCards))
+
+	view := fmt.Sprintf("%s\n%s | %s\n%s%s%s\n\n%s\n\n%s", header, bookmark, keys, leech, suspended, audioIndicator, card.Prompt, answer)
 	if m.showReviewHistory && m.reviewHistoryCard == card.ID {
 		view += "\n\n" + m.renderReviewHistory(card.Prompt)
 	}

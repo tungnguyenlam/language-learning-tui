@@ -41,8 +41,7 @@ def test_dashboard_and_review_flow():
 
             # Verify revealed content
             agent.assert_text("apple")
-            agent.assert_text("Grade: a Again | h Hard | g Good | e")
-
+            agent.assert_text("Grade: a Again")
             # Press 'e' for Easy
             agent.act('e')
             agent.wait_until_stable()

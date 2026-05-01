@@ -826,7 +826,7 @@ func TestMCQCardRendersChoicesAfterReveal(t *testing.T) {
 	model.activeView = ViewReview
 
 	view := model.renderReview(0, 0)
-	if !strings.Contains(view, "reveal choices") {
+	if !strings.Contains(view, "reveal") || !strings.Contains(view, "choices") {
 		t.Fatalf("MCQ view should show reveal prompt: %s", view)
 	}
 

@@ -4,18 +4,15 @@ Last updated: 2026-05-01
 
 ## Current Milestone
 
-Autonomous Feature Pass 13: Verification and Stabilization
+Autonomous Feature Pass 15: Content and MCQ Expansion
 
 ## Planned Features
 
-### Feature 20: Verification and Testing
-- [x] App launches without errors
-- [x] All views render correctly
-- [x] Core user interactions respond as expected
-- [x] State successfully persisted to SQLite
-- [x] All 62 E2E tests passing
-- [x] ./scripts/verify.sh executes successfully
+### Feature 21: Content Expansion
+- [ ] Add more MCQ-specific starter cards
+- [ ] Implement a "Daily Digest" view on the Dashboard
+- [ ] Add a "Mastery" indicator for well-learned cards
 
 ## Next Action
 
-Monitor user feedback on the current release and prepare for next feature iteration.
+Research MCQ starter card templates and identify suitable German vocabulary for new content.
