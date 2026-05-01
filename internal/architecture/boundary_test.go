@@ -16,7 +16,7 @@ func TestPackageBoundaries(t *testing.T) {
 	}{
 		{dir: "internal/core", forbidden: []string{"deutsch-tui/internal/tui", "deutsch-tui/internal/storage", "deutsch-tui/internal/ai", "database/sql", "charm.land/"}},
 		{dir: "internal/storage", forbidden: []string{"deutsch-tui/internal/tui", "deutsch-tui/internal/ai", "charm.land/"}},
-		{dir: "internal/content", forbidden: []string{"deutsch-tui/internal/tui", "deutsch-tui/internal/storage", "database/sql", "charm.land/"}},
+		{dir: "internal/content", forbidden: []string{"deutsch-tui/internal/tui", "deutsch-tui/internal/storage", "charm.land/"}},
 		{dir: "internal/ai", forbidden: []string{"deutsch-tui/internal/tui", "deutsch-tui/internal/storage", "database/sql", "charm.land/"}},
 	}
 

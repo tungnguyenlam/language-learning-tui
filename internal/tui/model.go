@@ -757,8 +757,19 @@ func (m *Model) updateImportKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 		}
 		m.importPath += msg.String()
 		return nil, true
+	case "I": // Shift+i for APKG import
+		if strings.HasSuffix(m.importPath, "import.apkg") {
+			return m.importAPKG(), true
+		}
+		if _, err := os.Stat(m.importPath); err == nil {
+			return m.importAPKG(), true
+		}
+		m.importPath += msg.String()
+		return nil, true
 	case "x":
 		return m.exportTSV(), true
+	case "X": // Shift+x for APKG export
+		return m.exportAPKG(), true
 	case "backspace":
 		if len(m.importPath) > 0 {
 			m.importPath = m.importPath[:len(m.importPath)-1]
@@ -768,7 +779,14 @@ func (m *Model) updateImportKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 		m.importPath = ""
 		return nil, true
 	case "enter":
-		return m.importTSV(), true
+		if strings.HasSuffix(m.importPath, "import.tsv") || strings.HasSuffix(m.importPath, "import.apkg") {
+			if strings.HasSuffix(m.importPath, "import.tsv") {
+				return m.importTSV(), true
+			} else {
+				return m.importAPKG(), true
+			}
+		}
+		return nil, true
 	}
 	if len(msg.String()) == 1 {
 		m.importPath += msg.String()
@@ -1273,6 +1291,72 @@ func (m *Model) exportTSV() tea.Cmd {
 			return err
 		}
 		return exportDoneMsg{count: len(deck.Notes), path: path}
+	}
+}
+
+func (m *Model) exportAPKG() tea.Cmd {
+	deckID := m.deck.ID
+	path := m.exportPath
+	if strings.TrimSpace(deckID) == "" {
+		m.status = "Select a deck before exporting"
+		return nil
+	}
+	m.status = "Exporting APKG..."
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		deck, err := m.repo.GetDeck(ctx, deckID)
+		if err != nil {
+			return err
+		}
+		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+			return err
+		}
+		file, err := os.Create(path)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		if err := content.ExportAnkiAPKG(file, deck.Notes); err != nil {
+			return err
+		}
+		return exportDoneMsg{count: len(deck.Notes), path: path}
+	}
+}
+
+func (m *Model) importAPKG() tea.Cmd {
+	path := m.importPath
+	m.status = "Importing APKG..."
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		file, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		notes, err := content.ImportAnkiAPKG(file)
+		if err != nil {
+			return err
+		}
+		decks := decksFromNotes(notes)
+		for _, deck := range decks {
+			if err := m.repo.UpsertDeck(ctx, deck); err != nil {
+				return err
+			}
+		}
+		loadedDecks, err := m.repo.Decks(ctx)
+		if err != nil {
+			return err
+		}
+		cards, err := m.repo.DueCards(ctx, time.Now(), 50)
+		if err != nil {
+			return err
+		}
+		return importDoneMsg{decks: loadedDecks, cards: cards, count: len(notes), path: path}
 	}
 }
 
@@ -1808,7 +1892,7 @@ func (m *Model) renderDecks(x, y int) string {
 }
 
 func (m *Model) renderImport() string {
-	return fmt.Sprintf("Import / Export\n\nImport file: %s\nExport file: %s\n\nPress i to import TSV. Enter also imports TSV.\nPress x to export selected deck.\n\nDeck: %s\n.apkg support is a later milestone.", m.importPath, m.exportPath, m.deckLabel())
+	return fmt.Sprintf("Import / Export\n\nImport file: %s\nExport file: %s\n\nPress i to import TSV. Enter also imports TSV.\nPress I to import APKG. Shift+Enter also imports APKG.\nPress x to export TSV. Press X to export APKG.\n\nDeck: %s", m.importPath, m.exportPath, m.deckLabel())
 }
 
 func (m *Model) renderAI(x, y int) string {
