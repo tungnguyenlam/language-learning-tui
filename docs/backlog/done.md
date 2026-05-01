@@ -23,3 +23,13 @@
 - Added a robust APKG export-import cycle E2E test.
 - Updated all existing E2E tests to match the new UI and workflow.
 - All 62 E2E tests passing.
+
+## Verification Pass: End-to-End ✅
+- App starts with zero errors (smoke test passes)
+- All views render correctly (Dashboard, Review, Import, AI, Settings, Browser, Cram)
+- Core user interactions respond as expected (flashcard reveal, grading, navigation)
+- State successfully persisted to SQLite (verified across restarts)
+- All 12 unit test suites pass (62 unit tests)
+- All 62 E2E tests passing
+- ./scripts/verify.sh executes successfully
+
