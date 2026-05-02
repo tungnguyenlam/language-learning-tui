@@ -2345,7 +2345,18 @@ func (m *Model) renderDecks(x, y int) string {
 			prefix = "> "
 			style = style.Bold(true).Foreground(lipgloss.Color("212"))
 		}
-		label := fmt.Sprintf("%s%s (%d total, %d due, today %d, %.0f%% success)", prefix, deck.Name, deck.TotalCards, deck.DueCards, deck.ReviewsToday, deck.SuccessRate*100)
+
+		newStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81"))
+		dueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("208"))
+		totalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
+
+		counts := fmt.Sprintf("%s new, %s due, %s total",
+			newStyle.Render(strconv.Itoa(deck.NewCards)),
+			dueStyle.Render(strconv.Itoa(deck.DueCards)),
+			totalStyle.Render(strconv.Itoa(deck.TotalCards)))
+
+		label := fmt.Sprintf("%s%s (%s, today %d, %.0f%% success)",
+			prefix, deck.Name, counts, deck.ReviewsToday, deck.SuccessRate*100)
 		b.WriteString(style.Render(label))
 		b.WriteString("\n")
 		if deck.Description != "" {

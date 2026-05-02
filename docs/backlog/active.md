@@ -12,6 +12,7 @@ Autonomous Feature Pass 18: Final Polish and UI Interactive Elements
 - [x] Fixed Statistics scrollbar logic to be more precise and visually representative
 - [x] Implemented **interactive scrollbar clicking** for the Statistics view
 - [x] Implemented **drag-to-scroll support** for scrollbars in Statistics, Browser, and Cram views
+- [x] **Enhanced Decks view** with separate counts for New, Due, and Total cards, featuring color-coded statistics
 - [x] Reworked active panel hitbox coordinates to derive content origin from Lip Gloss frame metrics
 - [x] Added interactive scrollbar tracks for Browser and Cram views
 - [x] Unified all breakpoints (Compact, Medium, Wide) to use a consistent bordered panel for active views

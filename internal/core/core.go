@@ -32,6 +32,7 @@ type Deck struct {
 	Tags         []string
 	Notes        []Note
 	TotalCards   int
+	NewCards     int
 	DueCards     int
 	ReviewsToday int
 	SuccessRate  float64

@@ -162,6 +162,7 @@ func (s *Store) Decks(ctx context.Context) ([]core.Deck, error) {
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT d.id, d.name, d.description, d.tags,
 		       COUNT(c.id) as total_cards,
+		       SUM(CASE WHEN rs.due_at IS NULL AND COALESCE(cf.suspended, 0) = 0 THEN 1 ELSE 0 END) as new_cards,
 		       SUM(CASE WHEN (rs.due_at IS NULL OR rs.due_at <= ?) AND COALESCE(cf.suspended, 0) = 0 THEN 1 ELSE 0 END) as due_cards,
 		       (
 		           SELECT COUNT(*)
@@ -197,14 +198,15 @@ func (s *Store) Decks(ctx context.Context) ([]core.Deck, error) {
 	for rows.Next() {
 		var deck core.Deck
 		var tags string
-		var total, due, reviewsToday, reviewCount, successfulReviews sql.NullInt64
-		if err := rows.Scan(&deck.ID, &deck.Name, &deck.Description, &tags, &total, &due, &reviewsToday, &reviewCount, &successfulReviews); err != nil {
+		var total, newCards, due, reviewsToday, reviewCount, successfulReviews sql.NullInt64
+		if err := rows.Scan(&deck.ID, &deck.Name, &deck.Description, &tags, &total, &newCards, &due, &reviewsToday, &reviewCount, &successfulReviews); err != nil {
 			return nil, err
 		}
 		if tags != "" {
 			deck.Tags = strings.Fields(tags)
 		}
 		deck.TotalCards = int(total.Int64)
+		deck.NewCards = int(newCards.Int64)
 		deck.DueCards = int(due.Int64)
 		deck.ReviewsToday = int(reviewsToday.Int64)
 		if reviewCount.Int64 > 0 {
