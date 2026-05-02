@@ -7,6 +7,14 @@
 - Fixed unit and E2E tests after signature changes in rendering logic.
 - All 68 E2E tests passing.
 
+## Autonomous Feature Pass 18: Scrollbar Hitbox Robustness ✅
+- Reworked active panel mouse hitbox registration to derive content origin from Lip Gloss border/padding frame metrics.
+- Fixed Statistics scrollbar thumb sizing, track-click jump logic, and scroll clamping.
+- Added matching interactive scrollbar tracks for Browser and Cram list views.
+- Added unit coverage that checks scrollbar hitbox coordinates against the rendered terminal characters.
+- Verified with tui-tester equivalent output: stats track at terminal column 83 and bottom click updated the footer to `Lines 21-30 of 30`.
+- `./scripts/verify.sh` passed with all 68 E2E tests.
+
 ## Autonomous Feature Pass 17: Content Richness and Scalability ✅
 - Significantly expanded German A1 starter deck (from 8 to 45 notes, 52 total cards).
 - Added thematic content: Greetings, Numbers, Colors, Family, Places, Time.
@@ -86,4 +94,12 @@
 - Added 3 new E2E tests to verify Daily Digest
 - All Go tests and E2E tests passing
 
+## Verification Pass: TUI Application End-to-End ✅
+- Verified app starts with zero errors (smoke test passes)
+- Confirmed all views render correctly (Dashboard, Review, Import, AI, Settings, Browser, Cram)
+- Validated core user interactions (flashcard reveal, grading, navigation)
+- Confirmed state successfully persisted to SQLite
+- All 9 Go unit test suites pass
+- All 68 E2E tests pass
+- ./scripts/verify.sh executes successfully
 

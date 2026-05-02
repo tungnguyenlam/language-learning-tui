@@ -15,11 +15,12 @@ Last updated: 2026-05-02
 - `docs/agent/notices/2026-04-30-tui-status-line-stability.md`: keep dynamic TUI status text on a stable single-line `status:` surface for tui-tester.
 - `docs/agent/notices/2026-04-30-browser-deck-reload.md`: Browser `[`/`]` deck switching must reload Browser cards for the selected deck.
 - `docs/agent/notices/2026-05-02-arrow-key-navigation-fix.md`: Arrow key navigation fix for Review view.
+- `docs/agent/notices/2026-05-02-scrollbar-hitbox-layout.md`: derive active-panel hitboxes from Lip Gloss frame metrics instead of per-view offsets.
 
 ## Verification Status
 
-- ✅ All 62 E2E tests passing (as of 2026-05-01)
-- ✅ All 8 Go test suites passing (as of 2026-05-01)
+- ✅ All 68 E2E tests passing (as of 2026-05-02)
+- ✅ All Go test suites passing (as of 2026-05-02)
 - ✅ App launches without errors (smoke test passing)
 - ✅ All views render correctly (Dashboard, Review, Import, AI, Settings, Browser, Cram)
 - ✅ Core user interactions respond as expected (flashcard reveal, grading, navigation)
@@ -40,4 +41,3 @@ Last updated: 2026-05-02
 - `internal/storage/README.md`: SQLite migrations and repository rules.
 - `internal/content/README.md`: deck files and Anki text interop.
 - `internal/ai/README.md`: AI provider adapter and draft validation.
-

@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,6 +13,7 @@ import (
 	"deutsch-tui/internal/core"
 
 	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/ansi"
 )
 
 func TestBreakpointForWidth(t *testing.T) {
@@ -813,6 +815,126 @@ func TestStatisticsShowsLeechAndBookmarkedDue(t *testing.T) {
 	}
 }
 
+func TestScrollbarThumbScalesAndReachesTrackEnd(t *testing.T) {
+	start, height := scrollbarThumb(40, 10, 0)
+	if start != 0 || height != 2 {
+		t.Fatalf("top thumb = %d/%d, want 0/2", start, height)
+	}
+
+	start, height = scrollbarThumb(40, 10, 30)
+	if start != 8 || height != 2 {
+		t.Fatalf("bottom thumb = %d/%d, want 8/2", start, height)
+	}
+}
+
+func TestStatisticsScrollbarHitboxesAlignWithRenderedTrack(t *testing.T) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	model.activeView = ViewStatistics
+	model.width = 90
+	model.height = 30
+	model.breakpoint = BreakpointMedium
+	model.stats = core.Statistics{
+		TotalCards:   20,
+		DailyGoal:    10,
+		Grades:       map[core.ReviewGrade]int{core.GradeAgain: 3, core.GradeHard: 2, core.GradeGood: 7, core.GradeEasy: 1},
+		ReviewsToday: 4,
+	}
+	model.reviewsPerDay = map[string]int{}
+	for i := 0; i < 14; i++ {
+		day := time.Now().UTC().AddDate(0, 0, -i)
+		dayStr := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC).Format("2006-01-02")
+		model.reviewsPerDay[dayStr] = i + 1
+	}
+
+	view := model.View().Content
+	statsHitboxes := hitboxesWithPrefix(model.hitboxes, "stats-scroll-")
+	if len(statsHitboxes) == 0 {
+		t.Fatal("statistics scrollbar hitboxes were not registered")
+	}
+	for _, hitbox := range statsHitboxes {
+		got := renderedRuneAt(view, hitbox.X, hitbox.Y)
+		if got != '│' && got != '█' {
+			t.Fatalf("hitbox %s at %d,%d maps to %q, want scrollbar track in:\n%s", hitbox.ID, hitbox.X, hitbox.Y, got, ansi.Strip(view))
+		}
+	}
+}
+
+func TestStatisticsScrollClickAndWheelClampToViewport(t *testing.T) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	model.activeView = ViewStatistics
+	model.width = 90
+	model.height = 30
+	model.breakpoint = BreakpointMedium
+	model.stats = core.Statistics{DailyGoal: 1, Grades: map[core.ReviewGrade]int{}}
+	model.reviewsPerDay = map[string]int{}
+	for i := 0; i < 14; i++ {
+		day := time.Now().UTC().AddDate(0, 0, -i)
+		dayStr := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC).Format("2006-01-02")
+		model.reviewsPerDay[dayStr] = i + 1
+	}
+
+	model.View()
+	maxScroll := model.statsMaxScroll()
+	if maxScroll <= 0 {
+		t.Fatalf("statsMaxScroll = %d, want scrollable content", maxScroll)
+	}
+	model.activateHitbox(fmt.Sprintf("stats-scroll-%d", model.statisticsVisibleLines(model.activeViewContentLayout().Height)-1))
+	if model.statsScroll != maxScroll {
+		t.Fatalf("statsScroll after bottom click = %d, want %d", model.statsScroll, maxScroll)
+	}
+
+	model.Update(tea.MouseClickMsg(tea.Mouse{Button: tea.MouseWheelDown}))
+	if model.statsScroll != maxScroll {
+		t.Fatalf("statsScroll after wheel past bottom = %d, want %d", model.statsScroll, maxScroll)
+	}
+	model.activateHitbox("stats-scroll-0")
+	if model.statsScroll != 0 {
+		t.Fatalf("statsScroll after top click = %d, want 0", model.statsScroll)
+	}
+	model.Update(tea.MouseClickMsg(tea.Mouse{Button: tea.MouseWheelUp}))
+	if model.statsScroll != 0 {
+		t.Fatalf("statsScroll after wheel past top = %d, want 0", model.statsScroll)
+	}
+}
+
+func TestBrowserAndCramScrollbarHitboxesAlignAndClick(t *testing.T) {
+	cards := makeCards(16)
+
+	browser := NewModel(&mockRepo{}, &mockScheduler{})
+	browser.activeView = ViewBrowser
+	browser.width = 90
+	browser.height = 30
+	browser.breakpoint = BreakpointMedium
+	browser.browserCards = cards
+	browser.View()
+	assertScrollbarHitboxesAlign(t, browser.View().Content, browser.hitboxes, "browser-scroll-")
+	browser.activateHitbox("browser-scroll-0")
+	if browser.browserCursor != 0 {
+		t.Fatalf("browser top click cursor = %d, want 0", browser.browserCursor)
+	}
+	browser.activateHitbox(fmt.Sprintf("browser-scroll-%d", browser.listVisibleLines(browser.activeViewContentLayout().Height)-1))
+	if browser.browserCursor != len(cards)-1 {
+		t.Fatalf("browser bottom click cursor = %d, want last card", browser.browserCursor)
+	}
+
+	cram := NewModel(&mockRepo{}, &mockScheduler{})
+	cram.activeView = ViewCram
+	cram.width = 90
+	cram.height = 30
+	cram.breakpoint = BreakpointMedium
+	cram.cramCards = cards
+	cram.View()
+	assertScrollbarHitboxesAlign(t, cram.View().Content, cram.hitboxes, "cram-scroll-")
+	cram.activateHitbox("cram-scroll-0")
+	if cram.cramCursor != 0 {
+		t.Fatalf("cram top click cursor = %d, want 0", cram.cramCursor)
+	}
+	cram.activateHitbox(fmt.Sprintf("cram-scroll-%d", cram.listVisibleLines(cram.activeViewContentLayout().Height)-1))
+	if cram.cramCursor != len(cards)-1 {
+		t.Fatalf("cram bottom click cursor = %d, want last card", cram.cramCursor)
+	}
+}
+
 func TestMCQCardRendersChoicesAfterReveal(t *testing.T) {
 	repo := &mockRepo{
 		dueCards: []core.Card{
@@ -1323,4 +1445,53 @@ func TestReviewArrowNavigation(t *testing.T) {
 	if model.cursor != 0 {
 		t.Fatalf("cursor after up at start = %d, want 0", model.cursor)
 	}
+}
+
+func makeCards(count int) []core.Card {
+	cards := make([]core.Card, count)
+	for i := range cards {
+		cards[i] = core.Card{
+			ID:     fmt.Sprintf("c-%02d", i+1),
+			Prompt: fmt.Sprintf("Card %02d", i+1),
+			Answer: fmt.Sprintf("Answer %02d", i+1),
+			Kind:   core.CardKindFlashcard,
+		}
+	}
+	return cards
+}
+
+func hitboxesWithPrefix(hitboxes []Hitbox, prefix string) []Hitbox {
+	matches := make([]Hitbox, 0)
+	for _, hitbox := range hitboxes {
+		if strings.HasPrefix(hitbox.ID, prefix) {
+			matches = append(matches, hitbox)
+		}
+	}
+	return matches
+}
+
+func assertScrollbarHitboxesAlign(t *testing.T, view string, hitboxes []Hitbox, prefix string) {
+	t.Helper()
+	matches := hitboxesWithPrefix(hitboxes, prefix)
+	if len(matches) == 0 {
+		t.Fatalf("%s hitboxes were not registered", prefix)
+	}
+	for _, hitbox := range matches {
+		got := renderedRuneAt(view, hitbox.X, hitbox.Y)
+		if got != '│' && got != '█' {
+			t.Fatalf("hitbox %s at %d,%d maps to %q, want scrollbar track in:\n%s", hitbox.ID, hitbox.X, hitbox.Y, got, ansi.Strip(view))
+		}
+	}
+}
+
+func renderedRuneAt(view string, x, y int) rune {
+	lines := strings.Split(ansi.Strip(view), "\n")
+	if y < 0 || y >= len(lines) {
+		return 0
+	}
+	runes := []rune(lines[y])
+	if x < 0 || x >= len(runes) {
+		return 0
+	}
+	return runes[x]
 }

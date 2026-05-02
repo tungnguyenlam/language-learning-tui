@@ -55,6 +55,13 @@ func (h Hitbox) Contains(x, y int) bool {
 	return x >= h.X && x < h.X+h.Width && y >= h.Y && y < h.Y+h.Height
 }
 
+type viewportLayout struct {
+	X      int
+	Y      int
+	Width  int
+	Height int
+}
+
 type Model struct {
 	repo               core.Repository
 	scheduler          core.Scheduler
@@ -518,30 +525,20 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else if mouse.Button == tea.MouseWheelUp {
 			switch m.activeView {
 			case ViewStatistics:
-				if m.statsScroll > 0 {
-					m.statsScroll--
-				}
+				m.scrollStats(-1)
 			case ViewBrowser:
-				if m.browserCursor > 0 {
-					m.browserCursor--
-				}
+				m.moveBrowserCursor(-1)
 			case ViewCram:
-				if m.cramCursor > 0 {
-					m.cramCursor--
-				}
+				m.moveCramCursor(-1)
 			}
 		} else if mouse.Button == tea.MouseWheelDown {
 			switch m.activeView {
 			case ViewStatistics:
-				m.statsScroll++
+				m.scrollStats(1)
 			case ViewBrowser:
-				if m.browserCursor < len(m.browserCards)-1 {
-					m.browserCursor++
-				}
+				m.moveBrowserCursor(1)
 			case ViewCram:
-				if m.cramCursor < len(m.cramCards)-1 {
-					m.cramCursor++
-				}
+				m.moveCramCursor(1)
 			}
 		}
 	}
@@ -795,12 +792,10 @@ func (m *Model) updateActiveViewKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 func (m *Model) updateStatisticsKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 	switch msg.String() {
 	case "up", "k":
-		if m.statsScroll > 0 {
-			m.statsScroll--
-		}
+		m.scrollStats(-1)
 		return nil, true
 	case "down", "j":
-		m.statsScroll++
+		m.scrollStats(1)
 		return nil, true
 	}
 	return nil, false
@@ -991,16 +986,10 @@ func (m *Model) updateSettingsKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 func (m *Model) updateBrowserKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 	switch msg.String() {
 	case "up", "k":
-		if m.browserCursor > 0 {
-			m.browserCursor--
-			m.clearReviewHistory()
-		}
+		m.moveBrowserCursor(-1)
 		return nil, true
 	case "down", "j":
-		if m.browserCursor < len(m.browserCards)-1 {
-			m.browserCursor++
-			m.clearReviewHistory()
-		}
+		m.moveBrowserCursor(1)
 		return nil, true
 	case "enter":
 		return m.toggleBrowserHistory(), true
@@ -1057,14 +1046,10 @@ func (m *Model) updateCramKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 
 	switch msg.String() {
 	case "up", "k":
-		if m.cramCursor > 0 {
-			m.cramCursor--
-		}
+		m.moveCramCursor(-1)
 		return nil, true
 	case "down", "j":
-		if m.cramCursor < len(m.cramCards)-1 {
-			m.cramCursor++
-		}
+		m.moveCramCursor(1)
 		return nil, true
 	case "enter":
 		if len(m.cramCards) > 0 {
@@ -1099,6 +1084,41 @@ func (m *Model) updateCramKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 		return m.loadCramCards(), true
 	}
 	return nil, false
+}
+
+func (m *Model) scrollStats(delta int) {
+	m.setStatsScroll(m.statsScroll + delta)
+}
+
+func (m *Model) setStatsScroll(next int) {
+	m.statsScroll = clampInt(next, 0, m.statsMaxScroll())
+}
+
+func (m *Model) statsMaxScroll() int {
+	if m.statsTotalLines <= 0 {
+		return 0
+	}
+	return maxInt(0, m.statsTotalLines-m.statisticsVisibleLines(m.activeViewContentLayout().Height))
+}
+
+func (m *Model) moveBrowserCursor(delta int) {
+	if len(m.browserCards) == 0 {
+		m.browserCursor = 0
+		return
+	}
+	next := clampInt(m.browserCursor+delta, 0, len(m.browserCards)-1)
+	if next != m.browserCursor {
+		m.browserCursor = next
+		m.clearReviewHistory()
+	}
+}
+
+func (m *Model) moveCramCursor(delta int) {
+	if len(m.cramCards) == 0 {
+		m.cramCursor = 0
+		return
+	}
+	m.cramCursor = clampInt(m.cramCursor+delta, 0, len(m.cramCards)-1)
 }
 
 func (m *Model) nextCramCard() {
@@ -1763,17 +1783,17 @@ func (m *Model) render() string {
 
 func (m *Model) renderWide() string {
 	sidebar := m.renderNav(0, 2)
-	main := m.renderActiveView(20, 2)
+	main := m.renderActiveView(20, 1)
 	detail := panelStyle.Width(28).Render("Deck\n" + m.deckLabel() + "\n\nCards due\n" + fmt.Sprint(len(m.dueCards)) + "\n\n[ ] switch deck")
 	return lipgloss.JoinHorizontal(lipgloss.Top, sidebar, main, detail)
 }
 
 func (m *Model) renderMedium() string {
-	return m.renderTabs(0, 2) + "\n" + m.renderActiveView(0, 3)
+	return m.renderTabs(0, 2) + "\n" + m.renderActiveView(0, 2)
 }
 
 func (m *Model) renderCompact() string {
-	return m.renderTabs(0, 2) + "\n" + m.renderActiveView(0, 3)
+	return m.renderTabs(0, 2) + "\n" + m.renderActiveView(0, 2)
 }
 
 func (m *Model) renderNav(x, y int) string {
@@ -1823,7 +1843,7 @@ func (m *Model) renderTabs(x, y int) string {
 	return strings.Join(parts, " ")
 }
 
-func (m *Model) renderActiveView(x, y int) string {
+func (m *Model) activePanelSize() (int, int) {
 	width := maxInt(30, m.width-54)
 	height := maxInt(15, m.height-10)
 	if m.breakpoint == BreakpointMedium {
@@ -1833,27 +1853,55 @@ func (m *Model) renderActiveView(x, y int) string {
 		width = maxInt(20, m.width-2)
 		height = maxInt(10, m.height-12)
 	}
-	return panelStyle.Width(width).Height(height).Render(m.renderActiveViewPlain(x+2, y+1))
+	return width, height
+}
+
+func (m *Model) activeViewContentLayout() viewportLayout {
+	width, height := m.activePanelSize()
+	return contentLayoutForStyle(panelStyle.Width(width).Height(height), 0, 0)
+}
+
+func contentLayoutForStyle(style lipgloss.Style, x, y int) viewportLayout {
+	return viewportLayout{
+		X:      x + style.GetMarginLeft() + style.GetBorderLeftSize() + style.GetPaddingLeft(),
+		Y:      y + style.GetMarginTop() + style.GetBorderTopSize() + style.GetPaddingTop(),
+		Width:  maxInt(1, style.GetWidth()-style.GetHorizontalFrameSize()),
+		Height: maxInt(1, style.GetHeight()-style.GetVerticalFrameSize()),
+	}
+}
+
+func (m *Model) renderActiveView(x, y int) string {
+	width, height := m.activePanelSize()
+	style := panelStyle.Width(width).Height(height)
+	layout := contentLayoutForStyle(style, x, y)
+	return style.Render(m.renderActiveViewPlainAt(layout))
 }
 
 func (m *Model) renderActiveViewPlain(x, y int) string {
+	layout := m.activeViewContentLayout()
+	layout.X = x
+	layout.Y = y
+	return m.renderActiveViewPlainAt(layout)
+}
+
+func (m *Model) renderActiveViewPlainAt(layout viewportLayout) string {
 	switch m.activeView {
 	case ViewDecks:
-		return m.renderDecks(x, y)
+		return m.renderDecks(layout.X, layout.Y)
 	case ViewReview:
-		return m.renderReview(x, y)
+		return m.renderReview(layout.X, layout.Y)
 	case ViewStatistics:
-		return m.renderStatistics(x, y)
+		return m.renderStatisticsAt(layout)
 	case ViewImport:
 		return m.renderImport()
 	case ViewAI:
-		return m.renderAI(x, y)
+		return m.renderAI(layout.X, layout.Y)
 	case ViewSettings:
-		return m.renderSettings(x, y)
+		return m.renderSettings(layout.X, layout.Y)
 	case ViewBrowser:
-		return m.renderBrowser()
+		return m.renderBrowserAt(layout)
 	case ViewCram:
-		return m.renderCram()
+		return m.renderCramAt(layout)
 	default:
 		streakIndicator := ""
 		if m.stats.CurrentStreak > 0 {
@@ -1927,7 +1975,61 @@ func (m *Model) renderActiveViewPlain(x, y int) string {
 	}
 }
 
+func (m *Model) statisticsVisibleLines(viewportHeight int) int {
+	return maxInt(1, viewportHeight-2)
+}
+
+func (m *Model) listVisibleLines(viewportHeight int) int {
+	return clampInt(viewportHeight-8, 3, 10)
+}
+
+func scrollbarLineWidth(viewportWidth int) int {
+	return maxInt(1, viewportWidth-2)
+}
+
+func padLine(line string, width int) string {
+	padding := width - lipgloss.Width(line)
+	if padding <= 0 {
+		return line
+	}
+	return line + strings.Repeat(" ", padding)
+}
+
+func scrollbarThumb(totalLines, visibleLines, offset int) (int, int) {
+	if totalLines <= 0 || visibleLines <= 0 || totalLines <= visibleLines {
+		return 0, 0
+	}
+	thumbHeight := maxInt(1, (visibleLines*visibleLines)/totalLines)
+	thumbHeight = minInt(visibleLines, thumbHeight)
+	maxScroll := maxInt(1, totalLines-visibleLines)
+	maxThumbStart := maxInt(0, visibleLines-thumbHeight)
+	thumbStart := (clampInt(offset, 0, maxScroll) * maxThumbStart) / maxScroll
+	return thumbStart, thumbHeight
+}
+
+func scrollOffsetForTrackRow(totalLines, visibleLines, row int) int {
+	maxScroll := maxInt(0, totalLines-visibleLines)
+	if maxScroll == 0 || visibleLines <= 1 {
+		return 0
+	}
+	return clampInt((clampInt(row, 0, visibleLines-1)*maxScroll)/(visibleLines-1), 0, maxScroll)
+}
+
+func selectedIndexForTrackRow(totalItems, visibleLines, row int) int {
+	if totalItems <= 0 || visibleLines <= 1 {
+		return 0
+	}
+	return clampInt((clampInt(row, 0, visibleLines-1)*(totalItems-1))/(visibleLines-1), 0, totalItems-1)
+}
+
 func (m *Model) renderStatistics(x, y int) string {
+	layout := m.activeViewContentLayout()
+	layout.X = x
+	layout.Y = y
+	return m.renderStatisticsAt(layout)
+}
+
+func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 	var content strings.Builder
 	content.WriteString("Statistics\n\n")
 
@@ -2031,33 +2133,17 @@ func (m *Model) renderStatistics(x, y int) string {
 	lines := strings.Split(content.String(), "\n")
 	totalLines := len(lines)
 	m.statsTotalLines = totalLines
-	maxVisible := 30
-	if m.height > 15 {
-		maxVisible = m.height - 15
-	}
-	if maxVisible < 15 {
-		maxVisible = 15
-	}
+	maxVisible := m.statisticsVisibleLines(layout.Height)
 
-	if m.statsScroll > totalLines-maxVisible && totalLines > maxVisible {
-		m.statsScroll = totalLines - maxVisible
-	}
+	m.statsScroll = clampInt(m.statsScroll, 0, maxInt(0, totalLines-maxVisible))
+	lineWidth := scrollbarLineWidth(layout.Width)
+	thumbStart, thumbHeight := scrollbarThumb(totalLines, maxVisible, m.statsScroll)
 
 	var visibleContent strings.Builder
 	for i := m.statsScroll; i < m.statsScroll+maxVisible && i < totalLines; i++ {
-		line := lines[i]
-		// Pad the line to a consistent width for the scrollbar
-		width := maxInt(35, m.width-60)
-		if len(line) < width {
-			line = line + strings.Repeat(" ", width-len(line))
-		}
-		// Append scrollbar character if content is scrollable
+		line := padLine(lines[i], lineWidth)
 		if totalLines > maxVisible {
 			scrollbarChar := "│"
-			// Precise scrollbar indicator
-			thumbHeight := maxInt(1, (maxVisible*maxVisible)/totalLines)
-			thumbStart := (m.statsScroll * maxVisible) / totalLines
-
 			currentPos := i - m.statsScroll
 			if currentPos >= thumbStart && currentPos < thumbStart+thumbHeight {
 				scrollbarChar = "█"
@@ -2068,8 +2154,8 @@ func (m *Model) renderStatistics(x, y int) string {
 			m.hitboxes = append(m.hitboxes, Hitbox{
 				ID:     fmt.Sprintf("stats-scroll-%d", currentPos),
 				View:   ViewStatistics,
-				X:      x + width + 1,
-				Y:      y + currentPos,
+				X:      layout.X + lineWidth + 1,
+				Y:      layout.Y + currentPos,
 				Width:  1,
 				Height: 1,
 			})
@@ -2263,6 +2349,10 @@ func (m *Model) renderAI(x, y int) string {
 }
 
 func (m *Model) renderBrowser() string {
+	return m.renderBrowserAt(m.activeViewContentLayout())
+}
+
+func (m *Model) renderBrowserAt(layout viewportLayout) string {
 	var b strings.Builder
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).MarginBottom(1)
 	b.WriteString(titleStyle.Render("Card Browser") + "\n")
@@ -2282,7 +2372,7 @@ func (m *Model) renderBrowser() string {
 	}
 	start := 0
 	end := len(m.browserCards)
-	maxVisible := 6
+	maxVisible := m.listVisibleLines(layout.Height)
 	if end > maxVisible {
 		start = m.browserCursor - maxVisible/2
 		if start < 0 {
@@ -2297,6 +2387,9 @@ func (m *Model) renderBrowser() string {
 			}
 		}
 	}
+	listStartY := strings.Count(b.String(), "\n")
+	lineWidth := scrollbarLineWidth(layout.Width)
+	thumbStart, thumbHeight := scrollbarThumb(len(m.browserCards), maxVisible, start)
 	for i := start; i < end; i++ {
 		card := m.browserCards[i]
 		prefix := "  "
@@ -2326,7 +2419,24 @@ func (m *Model) renderBrowser() string {
 			mature = " ⭐"
 		}
 		label := fmt.Sprintf("%s[%s] %s%s%s%s%s", prefix, kind, card.Prompt, mature, bookmark, leech, suspended)
-		b.WriteString(style.Render(label))
+		line := padLine(style.Render(label), lineWidth)
+		if len(m.browserCards) > maxVisible {
+			currentPos := i - start
+			scrollbarChar := "│"
+			if currentPos >= thumbStart && currentPos < thumbStart+thumbHeight {
+				scrollbarChar = "█"
+			}
+			line += " " + scrollbarChar
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID:     fmt.Sprintf("browser-scroll-%d", currentPos),
+				View:   ViewBrowser,
+				X:      layout.X + lineWidth + 1,
+				Y:      layout.Y + listStartY + currentPos,
+				Width:  1,
+				Height: 1,
+			})
+		}
+		b.WriteString(line)
 		b.WriteString("\n")
 	}
 	if m.showReviewHistory && m.browserCursor < len(m.browserCards) && m.reviewHistoryCard == m.browserCards[m.browserCursor].ID {
@@ -2378,6 +2488,10 @@ func formatReviewInterval(interval time.Duration) string {
 }
 
 func (m *Model) renderCram() string {
+	return m.renderCramAt(m.activeViewContentLayout())
+}
+
+func (m *Model) renderCramAt(layout viewportLayout) string {
 	if m.cramActive {
 		var b strings.Builder
 		card := m.cramCards[m.cramCursor]
@@ -2412,7 +2526,7 @@ func (m *Model) renderCram() string {
 	}
 	start := 0
 	end := len(m.cramCards)
-	maxVisible := 6
+	maxVisible := m.listVisibleLines(layout.Height)
 	if end > maxVisible {
 		start = m.cramCursor - maxVisible/2
 		if start < 0 {
@@ -2427,6 +2541,9 @@ func (m *Model) renderCram() string {
 			}
 		}
 	}
+	listStartY := strings.Count(b.String(), "\n")
+	lineWidth := scrollbarLineWidth(layout.Width)
+	thumbStart, thumbHeight := scrollbarThumb(len(m.cramCards), maxVisible, start)
 	for i := start; i < end; i++ {
 		card := m.cramCards[i]
 		prefix := "  "
@@ -2456,7 +2573,24 @@ func (m *Model) renderCram() string {
 			mature = " ⭐"
 		}
 		label := fmt.Sprintf("%s[%s] %s%s%s%s%s", prefix, kind, card.Prompt, mature, bookmark, leech, suspended)
-		b.WriteString(style.Render(label))
+		line := padLine(style.Render(label), lineWidth)
+		if len(m.cramCards) > maxVisible {
+			currentPos := i - start
+			scrollbarChar := "│"
+			if currentPos >= thumbStart && currentPos < thumbStart+thumbHeight {
+				scrollbarChar = "█"
+			}
+			line += " " + scrollbarChar
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID:     fmt.Sprintf("cram-scroll-%d", currentPos),
+				View:   ViewCram,
+				X:      layout.X + lineWidth + 1,
+				Y:      layout.Y + listStartY + currentPos,
+				Width:  1,
+				Height: 1,
+			})
+		}
+		b.WriteString(line)
 		b.WriteString("\n")
 	}
 	if m.cramReviewed > 0 {
@@ -2749,19 +2883,28 @@ func (m *Model) activateHitbox(id string) tea.Cmd {
 	case id == "draft-approve":
 		return m.approveDraft()
 	case strings.HasPrefix(id, "stats-scroll-"):
-		line, _ := strconv.Atoi(strings.TrimPrefix(id, "stats-scroll-"))
-		maxVisible := 30
-		if m.height > 15 {
-			maxVisible = m.height - 15
+		line, err := strconv.Atoi(strings.TrimPrefix(id, "stats-scroll-"))
+		if err == nil {
+			visible := m.statisticsVisibleLines(m.activeViewContentLayout().Height)
+			m.setStatsScroll(scrollOffsetForTrackRow(m.statsTotalLines, visible, line))
 		}
-		if maxVisible < 15 {
-			maxVisible = 15
-		}
-		if m.statsTotalLines > maxVisible {
-			m.statsScroll = (line * m.statsTotalLines) / maxVisible
-			if m.statsScroll > m.statsTotalLines-maxVisible {
-				m.statsScroll = m.statsTotalLines - maxVisible
+		return nil
+	case strings.HasPrefix(id, "browser-scroll-"):
+		line, err := strconv.Atoi(strings.TrimPrefix(id, "browser-scroll-"))
+		if err == nil && len(m.browserCards) > 0 {
+			visible := m.listVisibleLines(m.activeViewContentLayout().Height)
+			next := selectedIndexForTrackRow(len(m.browserCards), visible, line)
+			if next != m.browserCursor {
+				m.browserCursor = next
+				m.clearReviewHistory()
 			}
+		}
+		return nil
+	case strings.HasPrefix(id, "cram-scroll-"):
+		line, err := strconv.Atoi(strings.TrimPrefix(id, "cram-scroll-"))
+		if err == nil && len(m.cramCards) > 0 {
+			visible := m.listVisibleLines(m.activeViewContentLayout().Height)
+			m.cramCursor = selectedIndexForTrackRow(len(m.cramCards), visible, line)
 		}
 		return nil
 	}
@@ -2790,6 +2933,19 @@ func minInt(a, b int) int {
 		return a
 	}
 	return b
+}
+
+func clampInt(v, low, high int) int {
+	if high < low {
+		return low
+	}
+	if v < low {
+		return low
+	}
+	if v > high {
+		return high
+	}
+	return v
 }
 
 func friendlyError(err error) string {
