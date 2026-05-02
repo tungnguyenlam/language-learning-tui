@@ -536,6 +536,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.status = fmt.Sprintf("%d cards in cram mode", len(m.cramCards))
 		}
+		if m.cramCursor >= len(m.cramCards) {
+			m.cramCursor = maxInt(0, len(m.cramCards)-1)
+		}
 	case tea.KeyMsg:
 		return m.updateKey(msg)
 	case tea.MouseMsg:
@@ -884,6 +887,7 @@ func (m *Model) updateStatisticsKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 }
 
 func (m *Model) updateDecksKey(msg tea.KeyMsg) (tea.Cmd, bool) {
+	filtered := m.filteredDecks()
 	switch msg.String() {
 	case "up", "k":
 		if m.deckCursor > 0 {
@@ -891,13 +895,13 @@ func (m *Model) updateDecksKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "down", "j":
-		if m.deckCursor < len(m.filteredDecks())-1 {
+		if m.deckCursor < len(filtered)-1 {
 			m.deckCursor++
 		}
 		return nil, true
 	case "enter":
-		if len(m.filteredDecks()) > 0 {
-			m.selectDeck(m.deckCursor)
+		if len(filtered) > 0 {
+			m.selectDeckByID(filtered[m.deckCursor].ID)
 			m.activeView = ViewDashboard
 		}
 		return nil, true
@@ -3371,6 +3375,18 @@ func (m *Model) syncDecks(newDecks []core.Deck) {
 		m.deck = core.Deck{}
 		m.deckIndex = 0
 		m.deckCursor = 0
+	}
+}
+
+func (m *Model) selectDeckByID(id string) {
+	for i, d := range m.decks {
+		if d.ID == id {
+			m.deckIndex = i
+			m.deck = d
+			m.deckCursor = i
+			m.applyDeckFilter()
+			return
+		}
 	}
 }
 

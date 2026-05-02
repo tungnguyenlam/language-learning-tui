@@ -39,6 +39,8 @@ Autonomous Feature Pass 18: Final Polish and UI Interactive Elements
 - [x] **Eliminated keyboard input traps** in AI, Browser, Import, and Settings views, restoring global navigation (1-9) reliability
 - [x] **Fixed audio auto-play trigger** and added detailed error reporting for failed playback
 - [x] **Hardened hierarchical input architecture** in `updateKey` to ensure consistent global vs. local key prioritization
+- [x] **Fixed deck selection bug** where selecting from a filtered list resulted in the wrong deck being active (now uses ID-based selection)
+- [x] **Secured Cram mode cursor** by ensuring `cramCursor` is safely clamped whenever the card list is refreshed or reduced
 
 ### Testing
 - [x] Added 3 new interactive E2E tests in `e2e_tests/test_interactive_features.py` (mouse navigation, browser movement, scrollbar interaction)
