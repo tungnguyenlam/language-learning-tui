@@ -20,6 +20,7 @@
 - **Fixed audio auto-play and error reporting**, ensuring reliable playback feedback for learners.
 - **Documented TUI Tester** as a standalone utility with detailed `README.md` and `AGENTS.md` guides, including instructions for publishing as a Gemini Skill or MCP server.
 - **Cleaned up TUI Tester directory** by removing redundant internal `e2e_tests` to ensure a clean standalone repository.
+- **Added MIT License** to both the main project and the standalone `tui_tester` library.
 - Enhanced `tui-tester` with `move_mouse` and `drag_mouse` simulation capabilities.
 - Verified all 76 E2E tests passing.
 - **Parallelized E2E tests** with `pytest-xdist`, reducing full verification time from ~5.5 minutes to ~45 seconds.
