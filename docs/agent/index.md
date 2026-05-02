@@ -16,10 +16,11 @@ Last updated: 2026-05-02
 - `docs/agent/notices/2026-04-30-browser-deck-reload.md`: Browser `[`/`]` deck switching must reload Browser cards for the selected deck.
 - `docs/agent/notices/2026-05-02-arrow-key-navigation-fix.md`: Arrow key navigation fix for Review view.
 - `docs/agent/notices/2026-05-02-scrollbar-hitbox-layout.md`: derive active-panel hitboxes from Lip Gloss frame metrics instead of per-view offsets.
+- `docs/agent/notices/2026-05-02-review-reveal-sync.md`: only show grading options when card is fully revealed to prevent race conditions.
 
 ## Verification Status
 
-- ✅ All 68 E2E tests passing (as of 2026-05-02)
+- ✅ All 71 E2E tests passing (as of 2026-05-02)
 - ✅ All Go test suites passing (as of 2026-05-02)
 - ✅ App launches without errors (smoke test passing)
 - ✅ All views render correctly (Dashboard, Review, Import, AI, Settings, Browser, Cram)

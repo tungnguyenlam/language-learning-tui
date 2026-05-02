@@ -2798,7 +2798,7 @@ func (m *Model) renderReview(x, y int) string {
 			revealedRunes := []rune(fullText)[:revealedChars]
 			remainingBlocks := numChars - revealedChars
 			animationText := string(revealedRunes) + strings.Repeat("█", remainingBlocks)
-			answer = fmt.Sprintf("1-4 select answer\n\n%s\n\nGrade: a Again | h Hard | g Good | e Easy", renderMCQChoices(card.Choices, m.mcqChoice))
+			answer = fmt.Sprintf("1-4 select answer\n\n%s", renderMCQChoices(card.Choices, m.mcqChoice))
 			// Replace the answer in choices display
 			answer = strings.Replace(answer, fullText, animationText, 1)
 		} else {
@@ -2828,7 +2828,7 @@ func (m *Model) renderReview(x, y int) string {
 		}
 		revealedRunes := []rune(fullText)[:revealedChars]
 		remainingBlocks := numChars - revealedChars
-		answer = string(revealedRunes) + strings.Repeat("█", remainingBlocks) + "\n\nGrade: a Again | h Hard | g Good | e Easy"
+		answer = string(revealedRunes) + strings.Repeat("█", remainingBlocks)
 	} else {
 		answer = "Press space or enter to reveal."
 	}

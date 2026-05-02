@@ -1,0 +1,13 @@
+# Done Backlog
+
+## 2026-05-02 - Review Reveal Sync and Interactive Testing
+
+- Fixed race condition in Review view where grading hints were displayed before hitboxes and answers were ready.
+- Refactored `renderReview` to strictly synchronize visual state with interaction state.
+- Added 3 new E2E tests in `e2e_tests/test_interactive_features.py` covering:
+    - Mouse navigation between all views using tabs/sidebar.
+    - Browser cursor movement and history toggle.
+    - Statistics scrollbar track interaction.
+- Verified all 71 E2E tests passing.
+- Verified all Go unit tests passing.
+- Updated project notices and index to reflect architectural requirements for reveal synchronization.

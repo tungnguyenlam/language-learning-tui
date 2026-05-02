@@ -21,6 +21,10 @@ Autonomous Feature Pass 18: Final Polish and UI Interactive Elements
 - [x] Added missing `strconv` import in TUI layer
 - [x] Resolved regression in `renderCompact` where panels were missing
 - [x] Fixed TUI unit tests failing due to signature changes
+- [x] **Fixed race condition in Review reveal** by only showing grading hints and hitboxes when fully revealed (synchronizing visual state with interaction)
+
+### Testing
+- [x] Added 3 new interactive E2E tests in `e2e_tests/test_interactive_features.py` (mouse navigation, browser movement, scrollbar interaction)
 
 ### Current Status (Verification)
 - [x] App starts with zero errors
@@ -28,7 +32,7 @@ Autonomous Feature Pass 18: Final Polish and UI Interactive Elements
 - [x] Core user interactions respond as expected (flashcard reveal, grading, navigation)
 - [x] State successfully persisted to SQLite
 - [x] All Go unit tests pass (9 test suites)
-- [x] All 68 E2E tests pass
+- [x] All 71 E2E tests pass
 - [x] ./scripts/verify.sh executes successfully
 
 ## Planned Features
@@ -37,11 +41,11 @@ Autonomous Feature Pass 18: Final Polish and UI Interactive Elements
 
 ## Last Verification
 
-- 2026-05-02: `./scripts/verify.sh` passed, including all 68 E2E tests.
+- 2026-05-02: `./scripts/verify.sh` passed, including all 71 E2E tests.
 
 ## Next Action
 
-All verification complete. Application fully functional with expanded content.
+Final commit and handoff.
 
 ## Summary
 
