@@ -1,5 +1,12 @@
 # Done
 
+## Autonomous Feature Pass 18: Final Polish and UI Interactive Elements ✅
+- Fixed Statistics scrollbar logic for better precision and visual accuracy.
+- Implemented interactive scrollbar clicking (jump-to-position) for Statistics.
+- Standardized all TUI breakpoints (Compact, Medium, Wide) to use consistent bordered panels.
+- Fixed unit and E2E tests after signature changes in rendering logic.
+- All 68 E2E tests passing.
+
 ## Autonomous Feature Pass 17: Content Richness and Scalability ✅
 - Significantly expanded German A1 starter deck (from 8 to 45 notes, 52 total cards).
 - Added thematic content: Greetings, Numbers, Colors, Family, Places, Time.

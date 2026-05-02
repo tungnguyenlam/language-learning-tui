@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -115,6 +116,7 @@ type Model struct {
 	deckFilter         string // New field for deck filtering
 	drafting           bool
 	statsScroll        int
+	statsTotalLines    int
 }
 
 func NewModel(repo core.Repository, scheduler core.Scheduler) *Model {
@@ -1771,7 +1773,7 @@ func (m *Model) renderMedium() string {
 }
 
 func (m *Model) renderCompact() string {
-	return m.renderTabs(0, 2) + "\n" + compactStyle.Render(m.renderActiveViewPlain(0, 3))
+	return m.renderTabs(0, 2) + "\n" + m.renderActiveView(0, 3)
 }
 
 func (m *Model) renderNav(x, y int) string {
@@ -1827,6 +1829,9 @@ func (m *Model) renderActiveView(x, y int) string {
 	if m.breakpoint == BreakpointMedium {
 		width = maxInt(30, m.width-4)
 		height = maxInt(15, m.height-12)
+	} else if m.breakpoint == BreakpointCompact {
+		width = maxInt(20, m.width-2)
+		height = maxInt(10, m.height-12)
 	}
 	return panelStyle.Width(width).Height(height).Render(m.renderActiveViewPlain(x+2, y+1))
 }
@@ -1838,7 +1843,7 @@ func (m *Model) renderActiveViewPlain(x, y int) string {
 	case ViewReview:
 		return m.renderReview(x, y)
 	case ViewStatistics:
-		return m.renderStatistics()
+		return m.renderStatistics(x, y)
 	case ViewImport:
 		return m.renderImport()
 	case ViewAI:
@@ -1922,7 +1927,7 @@ func (m *Model) renderActiveViewPlain(x, y int) string {
 	}
 }
 
-func (m *Model) renderStatistics() string {
+func (m *Model) renderStatistics(x, y int) string {
 	var content strings.Builder
 	content.WriteString("Statistics\n\n")
 
@@ -2025,6 +2030,7 @@ func (m *Model) renderStatistics() string {
 
 	lines := strings.Split(content.String(), "\n")
 	totalLines := len(lines)
+	m.statsTotalLines = totalLines
 	maxVisible := 30
 	if m.height > 15 {
 		maxVisible = m.height - 15
@@ -2048,16 +2054,25 @@ func (m *Model) renderStatistics() string {
 		// Append scrollbar character if content is scrollable
 		if totalLines > maxVisible {
 			scrollbarChar := "│"
-			// Simple scrollbar indicator
-			startRatio := float64(m.statsScroll) / float64(totalLines)
-			endRatio := float64(m.statsScroll+maxVisible) / float64(totalLines)
+			// Precise scrollbar indicator
+			thumbHeight := maxInt(1, (maxVisible*maxVisible)/totalLines)
+			thumbStart := (m.statsScroll * maxVisible) / totalLines
 
-			currentLineRatio := float64(i-m.statsScroll) / float64(maxVisible)
-
-			if currentLineRatio >= startRatio && currentLineRatio <= endRatio {
+			currentPos := i - m.statsScroll
+			if currentPos >= thumbStart && currentPos < thumbStart+thumbHeight {
 				scrollbarChar = "█"
 			}
 			line = line + " " + scrollbarChar
+
+			// Register hitbox for this line of the scrollbar
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID:     fmt.Sprintf("stats-scroll-%d", currentPos),
+				View:   ViewStatistics,
+				X:      x + width + 1,
+				Y:      y + currentPos,
+				Width:  1,
+				Height: 1,
+			})
 		}
 		visibleContent.WriteString(line + "\n")
 	}
@@ -2733,6 +2748,22 @@ func (m *Model) activateHitbox(id string) tea.Cmd {
 		return m.gradeCard(core.GradeEasy)
 	case id == "draft-approve":
 		return m.approveDraft()
+	case strings.HasPrefix(id, "stats-scroll-"):
+		line, _ := strconv.Atoi(strings.TrimPrefix(id, "stats-scroll-"))
+		maxVisible := 30
+		if m.height > 15 {
+			maxVisible = m.height - 15
+		}
+		if maxVisible < 15 {
+			maxVisible = 15
+		}
+		if m.statsTotalLines > maxVisible {
+			m.statsScroll = (line * m.statsTotalLines) / maxVisible
+			if m.statsScroll > m.statsTotalLines-maxVisible {
+				m.statsScroll = m.statsTotalLines - maxVisible
+			}
+		}
+		return nil
 	}
 	return nil
 }
