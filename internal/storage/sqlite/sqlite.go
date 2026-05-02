@@ -461,7 +461,7 @@ func (s *Store) UndoLastReview(ctx context.Context, cardID string) error {
 
 func (s *Store) DueCards(ctx context.Context, now time.Time, limit int) ([]core.Card, error) {
 	if limit <= 0 {
-		limit = 20
+		limit = 500
 	}
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, c.audio, COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0), COALESCE(rs.interval_seconds, 0)
@@ -500,7 +500,7 @@ func (s *Store) DueCards(ctx context.Context, now time.Time, limit int) ([]core.
 
 func (s *Store) DueCardsBookmarked(ctx context.Context, now time.Time, limit int) ([]core.Card, error) {
 	if limit <= 0 {
-		limit = 20
+		limit = 500
 	}
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, c.audio, COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0), COALESCE(rs.interval_seconds, 0)
@@ -710,10 +710,14 @@ func (s *Store) Statistics(ctx context.Context) (core.Statistics, error) {
 }
 
 func (s *Store) currentStreak(ctx context.Context, now time.Time) (int, error) {
+	// Query for unique dates where reviews happened, up to 1 year back
+	// We select the raw TIMESTAMP and convert to date in Go to avoid SQLite DATE() inconsistencies
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT reviewed_at
 		FROM reviews
+		WHERE reviewed_at IS NOT NULL
 		ORDER BY reviewed_at DESC
+		LIMIT 1000
 	`)
 	if err != nil {
 		return 0, err
@@ -727,24 +731,36 @@ func (s *Store) currentStreak(ctx context.Context, now time.Time) (int, error) {
 			return 0, err
 		}
 		day := reviewed.UTC()
-		dates[time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC).Format("2006-01-02")] = true
+		dates[day.Format("2006-01-02")] = true
 	}
 	if err := rows.Err(); err != nil {
 		return 0, err
 	}
 
-	day := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-	if !dates[day.Format("2006-01-02")] {
+	if len(dates) == 0 {
+		return 0, nil
+	}
+
+	// We count streak backwards from 'now' (today) or 'yesterday'
+	day := now.UTC()
+	dayStr := day.Format("2006-01-02")
+
+	// If no review today, check if there was one yesterday to continue a streak
+	if !dates[dayStr] {
 		yesterday := day.AddDate(0, 0, -1)
-		if !dates[yesterday.Format("2006-01-02")] {
+		yesterdayStr := yesterday.Format("2006-01-02")
+		if !dates[yesterdayStr] {
 			return 0, nil
 		}
+		dayStr = yesterdayStr
 		day = yesterday
 	}
+
 	streak := 0
-	for dates[day.Format("2006-01-02")] {
+	for dates[dayStr] {
 		streak++
 		day = day.AddDate(0, 0, -1)
+		dayStr = day.Format("2006-01-02")
 	}
 	return streak, nil
 }
@@ -855,7 +871,7 @@ func (s *Store) Cards(ctx context.Context, deckID string, search string) ([]core
 		searchPattern := "%" + search + "%"
 		args = append(args, searchPattern, searchPattern)
 	}
-	query += ` ORDER BY c.id LIMIT 100`
+	query += ` ORDER BY c.id LIMIT 1000`
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {

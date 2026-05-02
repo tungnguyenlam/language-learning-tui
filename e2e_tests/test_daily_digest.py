@@ -16,7 +16,7 @@ def test_daily_digest_renders_on_dashboard():
         agent = start_agent(tmpdir)
         try:
             agent.wait_for_text("Daily Digest")
-            agent.assert_text("M:0 Y:0 N:21")
+            agent.assert_text("M:0 Y:0 N:52")
         finally:
             agent.close()
 
@@ -24,7 +24,7 @@ def test_daily_digest_shows_due_cards_message():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
-            agent.wait_for_text("21 cards waiting.")
+            agent.wait_for_text("52 cards waiting.")
         finally:
             agent.close()
 

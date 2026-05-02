@@ -350,8 +350,27 @@ func TestStatisticsDailyProgressAndStreak(t *testing.T) {
 		t.Fatalf("upsert deck: %v", err)
 	}
 	now := time.Now().UTC()
-	cardA := deck.Notes[0].Cards[0]
-	cardB := deck.Notes[0].Cards[1]
+	var cardA, cardB core.Card
+	found := 0
+	for _, n := range deck.Notes {
+		for _, c := range n.Cards {
+			if found == 0 {
+				cardA = c
+				found++
+			} else if found == 1 {
+				cardB = c
+				found++
+				break
+			}
+		}
+		if found == 2 {
+			break
+		}
+	}
+	if found < 2 {
+		t.Fatalf("need at least 2 cards for streak test")
+	}
+
 	for _, item := range []struct {
 		cardID string
 		when   time.Time

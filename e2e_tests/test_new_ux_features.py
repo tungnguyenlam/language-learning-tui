@@ -21,7 +21,7 @@ def test_cram_mode_filter_types():
         try:
             # First, create a suspended card
             agent.act("3")  # Go to Review
-            agent.wait_for_text("Review 1/21")
+            agent.wait_for_text("Review 1/52")
             
             # Suspend a card
             agent.act("x")
@@ -67,7 +67,7 @@ def test_browser_deck_switching():
             agent.wait_for_text("Search: _")
             
             # Initially should show cards from current deck
-            agent.wait_for_text("der Apfel")
+            agent.wait_for_text("blau")
             
             # Try switching to next deck with ]
             agent.act("]")
@@ -78,7 +78,7 @@ def test_browser_deck_switching():
             agent.wait_until_stable()
             
             # Should still show the same cards
-            agent.wait_for_text("der Apfel")
+            agent.wait_for_text("blau")
             
         finally:
             agent.close()

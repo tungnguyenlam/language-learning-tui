@@ -19,7 +19,7 @@ def test_review_bookmark_persists_after_restart():
         agent = start_agent(tmpdir)
         try:
             agent.act("3")
-            agent.wait_for_text("Review 1/21")
+            agent.wait_for_text("Review 1/52")
             agent.assert_text("Bookmark: off")
 
             agent.act("b")
@@ -31,7 +31,7 @@ def test_review_bookmark_persists_after_restart():
         restarted = start_agent(tmpdir)
         try:
             restarted.act("3")
-            restarted.wait_for_text("Review 1/21")
+            restarted.wait_for_text("Review 1/52")
             restarted.assert_text("Bookmark: on")
 
             restarted.act("4")
@@ -46,24 +46,24 @@ def test_undo_last_review_restores_due_card_after_restart():
         agent = start_agent(tmpdir)
         try:
             agent.act("3")
-            agent.wait_for_text("Review 1/21")
+            agent.wait_for_text("Review 1/52")
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.act("g")
-            agent.wait_for_text("20 cards due")
+            agent.wait_for_text("51 cards due")
 
             agent.act("u")
             agent.wait_for_text("Last review undone")
-            agent.assert_text("Review 1/21")
-            agent.assert_text("der Apfel")
+            agent.assert_text("Review 1/52")
+            agent.assert_text("blau")
         finally:
             agent.close()
 
         restarted = start_agent(tmpdir)
         try:
-            restarted.assert_text("Due cards:   21")
+            restarted.assert_text("Due cards:   52")
             restarted.act("3")
-            restarted.wait_for_text("Review 1/21")
+            restarted.wait_for_text("Review 1/52")
         finally:
             restarted.close()
 
@@ -78,11 +78,11 @@ def test_statistics_daily_progress_updates_after_review():
             agent.wait_for_text("Statistics")
 
             agent.act("3")
-            agent.wait_for_text("Review 1/21")
+            agent.wait_for_text("Review 1/52")
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.act("g")
-            agent.wait_for_text("20 cards due")
+            agent.wait_for_text("51 cards due")
 
             agent.act("4")
             agent.wait_for_text("Statistics")

@@ -89,21 +89,21 @@ def test_review_grade_updates_dashboard_count():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
-            agent.assert_text("Due cards:   21")
+            agent.assert_text("Due cards:   52")
             
             agent.act('3')
-            agent.wait_for_text("Review 1/21")
+            agent.wait_for_text("Review 1/52")
             
             # Reveal and grade Good
             agent.act('<Space>')
             agent.wait_for_text("Grade: a Again")
             agent.act('g')
-            agent.wait_for_text("20 cards due")
+            agent.wait_for_text("51 cards due")
             
             # Go back to Dashboard
             agent.act('1')
             agent.wait_for_text("DASHBOARD")
-            agent.assert_text("Due cards:   20")
+            agent.assert_text("Due cards:   51")
             
         finally:
             agent.close()

@@ -82,7 +82,7 @@ def test_wasd_navigation_preserves_existing_functions():
             # Go to Review view
             agent.act('3')
             agent.wait_until_stable()
-            agent.assert_text("Review 1/21")
+            agent.assert_text("Review 1/52")
             
             # Reveal card
             agent.act('<Space>')
@@ -92,7 +92,7 @@ def test_wasd_navigation_preserves_existing_functions():
             # 'a' should grade as "Again", not switch views
             agent.act('a')
             agent.wait_until_stable()
-            agent.assert_text("20 cards due")
+            agent.assert_text("51 cards due")
             
             # Go to AI view (shortcut 6)
             agent.act('6')

@@ -258,7 +258,7 @@ func (m *Model) loadBrowserCards() tea.Cmd {
 func (m *Model) loadDueCards() tea.Msg {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	cards, err := m.repo.DueCards(ctx, time.Now(), 50)
+	cards, err := m.repo.DueCards(ctx, time.Now(), 500)
 	if err != nil {
 		return err
 	}
@@ -1332,7 +1332,7 @@ func (m *Model) approveDraft() tea.Cmd {
 		if err := m.repo.UpsertDeck(ctx, deck); err != nil {
 			return err
 		}
-		cards, err := m.repo.DueCards(ctx, time.Now(), 50)
+		cards, err := m.repo.DueCards(ctx, time.Now(), 500)
 		if err != nil {
 			return err
 		}
@@ -1367,7 +1367,7 @@ func (m *Model) importTSV() tea.Cmd {
 		if err != nil {
 			return err
 		}
-		cards, err := m.repo.DueCards(ctx, time.Now(), 50)
+		cards, err := m.repo.DueCards(ctx, time.Now(), 500)
 		if err != nil {
 			return err
 		}
@@ -1464,7 +1464,7 @@ func (m *Model) importAPKG() tea.Cmd {
 		if err != nil {
 			return err
 		}
-		cards, err := m.repo.DueCards(ctx, time.Now(), 50)
+		cards, err := m.repo.DueCards(ctx, time.Now(), 500)
 		if err != nil {
 			return err
 		}
@@ -1533,7 +1533,7 @@ func (m *Model) gradeCard(grade core.ReviewGrade) tea.Cmd {
 		if m.bookmarkFilter {
 			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
 		} else {
-			cards, err = m.repo.DueCards(ctx, time.Now(), 50)
+			cards, err = m.repo.DueCards(ctx, time.Now(), 500)
 		}
 		if err != nil {
 			return err
@@ -1584,7 +1584,7 @@ func (m *Model) suspendCard() tea.Cmd {
 		if m.bookmarkFilter {
 			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
 		} else {
-			cards, err = m.repo.DueCards(ctx, time.Now(), 50)
+			cards, err = m.repo.DueCards(ctx, time.Now(), 500)
 		}
 		if err != nil {
 			return err
@@ -1619,7 +1619,7 @@ func (m *Model) undoLastReview() tea.Cmd {
 		if m.bookmarkFilter {
 			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
 		} else {
-			cards, err = m.repo.DueCards(ctx, time.Now(), 50)
+			cards, err = m.repo.DueCards(ctx, time.Now(), 500)
 		}
 		if err != nil {
 			return err
@@ -1823,10 +1823,12 @@ func (m *Model) renderTabs(x, y int) string {
 
 func (m *Model) renderActiveView(x, y int) string {
 	width := maxInt(30, m.width-54)
+	height := maxInt(15, m.height-10)
 	if m.breakpoint == BreakpointMedium {
 		width = maxInt(30, m.width-4)
+		height = maxInt(15, m.height-12)
 	}
-	return panelStyle.Width(width).Render(m.renderActiveViewPlain(x+2, y+1))
+	return panelStyle.Width(width).Height(height).Render(m.renderActiveViewPlain(x+2, y+1))
 }
 
 func (m *Model) renderActiveViewPlain(x, y int) string {
@@ -2038,8 +2040,8 @@ func (m *Model) renderStatistics() string {
 	var visibleContent strings.Builder
 	for i := m.statsScroll; i < m.statsScroll+maxVisible && i < totalLines; i++ {
 		line := lines[i]
-		// Pad the line to a consistent width
-		width := maxInt(50, m.width-60)
+		// Pad the line to a consistent width for the scrollbar
+		width := maxInt(35, m.width-60)
 		if len(line) < width {
 			line = line + strings.Repeat(" ", width-len(line))
 		}
@@ -2047,30 +2049,25 @@ func (m *Model) renderStatistics() string {
 		if totalLines > maxVisible {
 			scrollbarChar := "│"
 			// Simple scrollbar indicator
-			startLine := (m.statsScroll * maxVisible) / totalLines
-			endLine := ((m.statsScroll + maxVisible) * maxVisible) / totalLines
-			currentLine := i - m.statsScroll
-			if currentLine >= startLine && currentLine <= endLine {
+			startRatio := float64(m.statsScroll) / float64(totalLines)
+			endRatio := float64(m.statsScroll+maxVisible) / float64(totalLines)
+
+			currentLineRatio := float64(i-m.statsScroll) / float64(maxVisible)
+
+			if currentLineRatio >= startRatio && currentLineRatio <= endRatio {
 				scrollbarChar = "█"
 			}
-			line = line + scrollbarChar
+			line = line + " " + scrollbarChar
 		}
 		visibleContent.WriteString(line + "\n")
 	}
 
-	statsPanel := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("62")).
-		Padding(0, 1).
-		Render(visibleContent.String())
-
-	var b strings.Builder
-	b.WriteString(statsPanel)
+	footer := ""
 	if totalLines > maxVisible {
-		b.WriteString(fmt.Sprintf("\n%s\n", mutedStyle.Render(fmt.Sprintf("Use j/k or Mouse Wheel to scroll. Lines %d-%d of %d.", m.statsScroll+1, minInt(m.statsScroll+maxVisible, totalLines), totalLines))))
+		footer = fmt.Sprintf("\n%s", mutedStyle.Render(fmt.Sprintf("Use j/k or Mouse Wheel to scroll. Lines %d-%d of %d.", m.statsScroll+1, minInt(m.statsScroll+maxVisible, totalLines), totalLines)))
 	}
 
-	return b.String()
+	return visibleContent.String() + footer
 }
 
 func (m *Model) renderDecks(x, y int) string {
@@ -2093,7 +2090,33 @@ func (m *Model) renderDecks(x, y int) string {
 		return b.String()
 	}
 
-	for i, deck := range filteredDecks {
+	start := 0
+	end := len(filteredDecks)
+	maxVisible := 5
+	if m.height > 20 {
+		maxVisible = (m.height - 15) / 3 // Each deck takes about 3 lines
+	}
+	if maxVisible < 3 {
+		maxVisible = 3
+	}
+
+	if end > maxVisible {
+		start = m.deckCursor - maxVisible/2
+		if start < 0 {
+			start = 0
+		}
+		end = start + maxVisible
+		if end > len(filteredDecks) {
+			end = len(filteredDecks)
+			start = end - maxVisible
+			if start < 0 {
+				start = 0
+			}
+		}
+	}
+
+	for i := start; i < end; i++ {
+		deck := filteredDecks[i]
 		prefix := "  "
 		style := lipgloss.NewStyle()
 		if i == m.deckCursor {
@@ -2113,6 +2136,9 @@ func (m *Model) renderDecks(x, y int) string {
 		}
 	}
 	b.WriteString("\nPress enter to select deck. Type to filter. Esc to clear filter.")
+	if len(filteredDecks) > maxVisible {
+		b.WriteString(fmt.Sprintf(" (Showing %d-%d of %d)", start+1, end, len(filteredDecks)))
+	}
 	return b.String()
 }
 
@@ -2180,13 +2206,43 @@ func (m *Model) renderAI(x, y int) string {
 		}
 		return b.String()
 	}
-	for i, draft := range m.drafts {
+
+	start := 0
+	end := len(m.drafts)
+	maxVisible := 10
+	if m.height > 20 {
+		maxVisible = m.height - 15
+	}
+	if maxVisible < 5 {
+		maxVisible = 5
+	}
+
+	if end > maxVisible {
+		start = m.draftCursor - maxVisible/2
+		if start < 0 {
+			start = 0
+		}
+		end = start + maxVisible
+		if end > len(m.drafts) {
+			end = len(m.drafts)
+			start = end - maxVisible
+			if start < 0 {
+				start = 0
+			}
+		}
+	}
+
+	for i := start; i < end; i++ {
+		draft := m.drafts[i]
 		prefix := "  "
 		if i == m.draftCursor {
 			prefix = "> "
-			m.hitboxes = append(m.hitboxes, Hitbox{ID: "draft-approve", View: ViewAI, X: x, Y: y + 7 + i, Width: 32, Height: 1})
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "draft-approve", View: ViewAI, X: x, Y: y + 7 + (i - start), Width: 32, Height: 1})
 		}
 		fmt.Fprintf(&b, "\n%s%s -> %s", prefix, draft.Note.Front, draft.Note.Back)
+	}
+	if len(m.drafts) > maxVisible {
+		b.WriteString(fmt.Sprintf("\n\n(Showing %d-%d of %d)", start+1, end, len(m.drafts)))
 	}
 	return b.String()
 }
