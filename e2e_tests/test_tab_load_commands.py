@@ -64,6 +64,6 @@ def test_tab_to_statistics_renders_persisted_progress():
             tab_to(agent, "Statistics", 1)
             agent.assert_text("Total Reviews: 1")
             agent.assert_text("Reviews Today: 1/10")
-            agent.assert_text("good : 1")
+            agent.assert_text("good: 1")
         finally:
             agent.close()

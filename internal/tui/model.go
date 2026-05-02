@@ -114,6 +114,7 @@ type Model struct {
 	spinnerFrame       int
 	deckFilter         string // New field for deck filtering
 	drafting           bool
+	statsScroll        int
 }
 
 func NewModel(repo core.Repository, scheduler core.Scheduler) *Model {
@@ -691,7 +692,7 @@ func (m *Model) textInputActive() bool {
 
 func (m *Model) activeViewHandlesVerticalNavigation() bool {
 	switch m.activeView {
-	case ViewAI, ViewBrowser, ViewCram, ViewDecks, ViewReview, ViewSettings, ViewImport:
+	case ViewAI, ViewBrowser, ViewCram, ViewDecks, ViewReview, ViewSettings, ViewImport, ViewStatistics:
 		return true
 	default:
 		return false
@@ -752,9 +753,25 @@ func (m *Model) updateActiveViewKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 		return m.updateCramKey(msg)
 	case ViewDecks:
 		return m.updateDecksKey(msg)
+	case ViewStatistics:
+		return m.updateStatisticsKey(msg)
 	default:
 		return nil, false
 	}
+}
+
+func (m *Model) updateStatisticsKey(msg tea.KeyMsg) (tea.Cmd, bool) {
+	switch msg.String() {
+	case "up", "k":
+		if m.statsScroll > 0 {
+			m.statsScroll--
+		}
+		return nil, true
+	case "down", "j":
+		m.statsScroll++
+		return nil, true
+	}
+	return nil, false
 }
 
 func (m *Model) updateDecksKey(msg tea.KeyMsg) (tea.Cmd, bool) {
@@ -1875,18 +1892,19 @@ func (m *Model) renderActiveViewPlain(x, y int) string {
 
 func (m *Model) renderStatistics() string {
 	var b strings.Builder
-	b.WriteString("Statistics\n\n")
+	var content strings.Builder
+	content.WriteString("Statistics\n\n")
 
-	b.WriteString(fmt.Sprintf("Total Cards:   %d\n", m.stats.TotalCards))
-	b.WriteString(fmt.Sprintf("  New:         %d\n", m.stats.NewCards))
-	b.WriteString(fmt.Sprintf("  Young:       %d\n", m.stats.YoungCards))
-	b.WriteString(fmt.Sprintf("  Mature:      %d\n\n", m.stats.MatureCards))
-	b.WriteString(fmt.Sprintf("  Bookmarked:  %d (%d due)\n", m.stats.BookmarkedCards, m.stats.BookmarkedDue))
-	b.WriteString(fmt.Sprintf("  Leech:       %d\n", m.stats.LeechCards))
-	b.WriteString(fmt.Sprintf("  Suspended:   %d\n\n", m.stats.SuspendedCards))
+	content.WriteString(fmt.Sprintf("Total Cards:   %d\n", m.stats.TotalCards))
+	content.WriteString(fmt.Sprintf("  New:         %d\n", m.stats.NewCards))
+	content.WriteString(fmt.Sprintf("  Young:       %d\n", m.stats.YoungCards))
+	content.WriteString(fmt.Sprintf("  Mature:      %d\n\n", m.stats.MatureCards))
+	content.WriteString(fmt.Sprintf("  Bookmarked:  %d (%d due)\n", m.stats.BookmarkedCards, m.stats.BookmarkedDue))
+	content.WriteString(fmt.Sprintf("  Leech:       %d\n", m.stats.LeechCards))
+	content.WriteString(fmt.Sprintf("  Suspended:   %d\n\n", m.stats.SuspendedCards))
 
-	b.WriteString(fmt.Sprintf("Total Reviews: %d\n", m.stats.TotalReviews))
-	b.WriteString(fmt.Sprintf("Reviews Today: %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal))
+	content.WriteString(fmt.Sprintf("Total Reviews: %d\n", m.stats.TotalReviews))
+	content.WriteString(fmt.Sprintf("Reviews Today: %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal))
 	// Colored progress bar for daily goal
 	progressWidth := 30
 	progress := 0
@@ -1905,35 +1923,35 @@ func (m *Model) renderStatistics() string {
 	}
 	barStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(barColor))
 	bar := strings.Repeat("█", progress) + strings.Repeat("░", progressWidth-progress)
-	b.WriteString(fmt.Sprintf("  %s %d%%\n", barStyle.Render(bar), (m.stats.ReviewsToday*100)/maxInt(m.stats.DailyGoal, 1)))
+	content.WriteString(fmt.Sprintf("  %s %d%%\n", barStyle.Render(bar), (m.stats.ReviewsToday*100)/maxInt(m.stats.DailyGoal, 1)))
 	// Streak with fire emoji if > 0
 	streakIndicator := ""
 	if m.stats.CurrentStreak > 0 {
 		streakIndicator = " 🔥"
 	}
-	b.WriteString(fmt.Sprintf("Current Streak: %d days%s\n", m.stats.CurrentStreak, streakIndicator))
-	b.WriteString(fmt.Sprintf("Success Rate:  %.1f%%\n\n", m.stats.SuccessRate*100))
+	content.WriteString(fmt.Sprintf("Current Streak: %d days%s\n", m.stats.CurrentStreak, streakIndicator))
+	content.WriteString(fmt.Sprintf("Success Rate:  %.1f%%\n\n", m.stats.SuccessRate*100))
 
-	b.WriteString("Session Stats:\n")
-	b.WriteString(fmt.Sprintf("  Reviewed:    %d\n", m.sessionReviewed))
+	content.WriteString("Session Stats:\n")
+	content.WriteString(fmt.Sprintf("  Reviewed:    %d\n", m.sessionReviewed))
 	if m.sessionReviewed > 0 {
-		b.WriteString(fmt.Sprintf("  Correct:     %d\n", m.sessionCorrect))
-		b.WriteString(fmt.Sprintf("  Accuracy:     %.1f%%\n\n", float64(m.sessionCorrect)/float64(m.sessionReviewed)*100))
+		content.WriteString(fmt.Sprintf("  Correct:     %d\n", m.sessionCorrect))
+		content.WriteString(fmt.Sprintf("  Accuracy:     %.1f%%\n\n", float64(m.sessionCorrect)/float64(m.sessionReviewed)*100))
 	} else {
-		b.WriteString("  (no reviews yet)\n\n")
+		content.WriteString("  (no reviews yet)\n\n")
 	}
 
-	b.WriteString("Reviews by Grade:\n")
+	content.WriteString("Reviews by Grade:\n")
 	grades := []core.ReviewGrade{core.GradeAgain, core.GradeHard, core.GradeGood, core.GradeEasy}
 	for _, g := range grades {
 		count := m.stats.Grades[g]
-		b.WriteString(fmt.Sprintf("  %-5s: %d\n", g, count))
+		content.WriteString(fmt.Sprintf("  %s: %d\n", g, count))
 	}
 
 	// Review Activity (last 14 days) with colored bars
-	b.WriteString("\nReview Activity (last 14 days):\n")
+	content.WriteString("\nReview Activity (last 14 days):\n")
 	if len(m.reviewsPerDay) == 0 {
-		b.WriteString("  (no review data yet)\n")
+		content.WriteString("  (no review data yet)\n")
 	} else {
 		now := time.Now().UTC()
 		maxPerDay := 0
@@ -1970,8 +1988,29 @@ func (m *Model) renderStatistics() string {
 			}
 			barStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(barColor))
 			bar := strings.Repeat("█", barLen)
-			b.WriteString(fmt.Sprintf("  %s %2d %s\n", day.Format("01-02"), count, barStyle.Render(bar)))
+			content.WriteString(fmt.Sprintf("  %s %2d %s\n", day.Format("01-02"), count, barStyle.Render(bar)))
 		}
+	}
+
+	lines := strings.Split(content.String(), "\n")
+	maxVisible := 30
+	if m.height > 40 {
+		maxVisible = m.height - 10
+	}
+	if maxVisible < 30 {
+		maxVisible = 30
+	}
+
+	if m.statsScroll > len(lines)-maxVisible && len(lines) > maxVisible {
+		m.statsScroll = len(lines) - maxVisible
+	}
+
+	for i := m.statsScroll; i < m.statsScroll+maxVisible && i < len(lines); i++ {
+		b.WriteString(lines[i] + "\n")
+	}
+
+	if len(lines) > maxVisible {
+		b.WriteString(fmt.Sprintf("\n%s\n", mutedStyle.Render(fmt.Sprintf("Use j/k to scroll. Lines %d-%d of %d.", m.statsScroll+1, minInt(m.statsScroll+maxVisible, len(lines)), len(lines)))))
 	}
 
 	return b.String()
@@ -2597,6 +2636,13 @@ func breakpointForWidth(width int) Breakpoint {
 
 func maxInt(a, b int) int {
 	if a > b {
+		return a
+	}
+	return b
+}
+
+func minInt(a, b int) int {
+	if a < b {
 		return a
 	}
 	return b

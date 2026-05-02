@@ -44,7 +44,7 @@ def test_statistics_view_rendering_and_update():
             # Verify update
             agent.assert_text("Total Reviews: 1")
             agent.assert_text("Success Rate:  100.0%")
-            agent.assert_text("good : 1")
+            agent.assert_text("good: 1")
             
         finally:
             agent.close()
