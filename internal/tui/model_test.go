@@ -143,6 +143,7 @@ func TestReviewFlow(t *testing.T) {
 			{ID: "c1", Prompt: "P1", Answer: "A1"},
 			{ID: "c2", Prompt: "P2", Answer: "A2"},
 		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
 	}
 	model := NewModel(repo, &mockScheduler{})
 
@@ -154,14 +155,14 @@ func TestReviewFlow(t *testing.T) {
 	}
 
 	model.activeView = ViewReview
-	if model.revealed {
+	if model.revealState != RevealIdle {
 		t.Fatal("should not be revealed initially")
 	}
 
 	// Reveal using space
 	model.Update(tea.KeyPressMsg{Code: ' '})
-	if !model.revealed {
-		t.Fatal("should be revealed after space")
+	if model.revealState != RevealRevealing {
+		t.Fatal("should be revealing after space")
 	}
 
 	// Grade (in test we don't run the async command, we just check it exists)
@@ -184,7 +185,7 @@ func TestReviewFlow(t *testing.T) {
 	if model.cursor != 0 {
 		t.Fatalf("cursor should be 0, got %d", model.cursor)
 	}
-	if model.revealed {
+	if model.revealState != RevealIdle {
 		t.Fatal("should be reset to unrevealed")
 	}
 }
@@ -952,7 +953,10 @@ func TestMCQCardRendersChoicesAfterReveal(t *testing.T) {
 		t.Fatalf("MCQ view should show reveal prompt: %s", view)
 	}
 
-	model.revealed = true
+	model.revealState = RevealRevealed
+	model.revealProgress = 100
+	model.revealState = RevealRevealed
+	model.revealProgress = 100
 	view = model.renderReview(0, 0)
 	if !strings.Contains(view, "1:") {
 		t.Fatalf("MCQ view should show choice 1 after reveal: %s", view)
@@ -979,7 +983,8 @@ func TestMCQChoiceSelectionCorrect(t *testing.T) {
 	model.Update(decksMsg(repo.decks))
 	model.Update(dueCardsMsg(repo.dueCards))
 	model.activeView = ViewReview
-	model.revealed = true
+	model.revealState = RevealRevealed
+	model.revealProgress = 100
 
 	model.selectMCQChoice("1")
 	if !model.mcqAnswered {
@@ -1004,7 +1009,8 @@ func TestMCQChoiceSelectionIncorrect(t *testing.T) {
 	model.Update(decksMsg(repo.decks))
 	model.Update(dueCardsMsg(repo.dueCards))
 	model.activeView = ViewReview
-	model.revealed = true
+	model.revealState = RevealRevealed
+	model.revealProgress = 100
 
 	model.selectMCQChoice("2")
 	if !model.mcqAnswered {
@@ -1031,7 +1037,8 @@ func TestMCQChoiceSelectionShowsCorrectAnswer(t *testing.T) {
 	model.Update(decksMsg(repo.decks))
 	model.Update(dueCardsMsg(repo.dueCards))
 	model.activeView = ViewReview
-	model.revealed = true
+	model.revealState = RevealRevealed
+	model.revealProgress = 100
 
 	model.selectMCQChoice("3")
 
@@ -1056,7 +1063,8 @@ func TestMCQStateResetsOnCardNavigation(t *testing.T) {
 	model.Update(decksMsg(repo.decks))
 	model.Update(dueCardsMsg(repo.dueCards))
 	model.activeView = ViewReview
-	model.revealed = true
+	model.revealState = RevealRevealed
+	model.revealProgress = 100
 
 	model.selectMCQChoice("1")
 	if !model.mcqAnswered {
@@ -1086,7 +1094,7 @@ func TestMCQFlashcardFlowUnchanged(t *testing.T) {
 	model.Update(dueCardsMsg(repo.dueCards))
 	model.activeView = ViewReview
 
-	if model.revealed {
+	if model.revealState == RevealRevealed {
 		t.Fatal("flashcard should not be revealed initially")
 	}
 
@@ -1096,8 +1104,8 @@ func TestMCQFlashcardFlowUnchanged(t *testing.T) {
 	}
 
 	model.Update(tea.KeyPressMsg{Code: ' '})
-	if !model.revealed {
-		t.Fatalf("flashcard should be revealed after space, revealed=%v", model.revealed)
+	if model.revealState != RevealRevealing {
+		t.Fatalf("flashcard should be revealing after space, revealState=%v", model.revealState)
 	}
 }
 
@@ -1113,7 +1121,8 @@ func TestSessionStatsTracking(t *testing.T) {
 	model.Update(decksMsg(repo.decks))
 	model.Update(dueCardsMsg(repo.dueCards))
 	model.activeView = ViewReview
-	model.revealed = true
+	model.revealState = RevealRevealed
+	model.revealProgress = 100
 
 	if model.sessionReviewed != 0 {
 		t.Fatalf("sessionReviewed = %d, want 0", model.sessionReviewed)

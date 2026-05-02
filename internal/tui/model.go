@@ -34,6 +34,14 @@ const (
 	ViewCram       View = "cram"
 )
 
+type RevealState int
+
+const (
+	RevealIdle RevealState = iota
+	RevealRevealing
+	RevealRevealed
+)
+
 type Breakpoint string
 
 const (
@@ -76,7 +84,8 @@ type Model struct {
 	allDue             []core.Card
 	dueCards           []core.Card
 	cursor             int
-	revealed           bool
+	revealState        RevealState
+	revealProgress     float64
 	lastReviewedCardID string
 	status             string
 	mouseX             int
@@ -362,6 +371,16 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, m.tickSpinner()
 		}
 		return m, nil
+	case revealTickMsg:
+		if m.revealState == RevealRevealing {
+			m.revealProgress += 20 // 5 steps from 0 to 100
+			if m.revealProgress >= 100 {
+				m.revealProgress = 100
+				m.revealState = RevealRevealed
+			} else {
+				return m, m.tickReveal()
+			}
+		}
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
@@ -545,6 +564,27 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+type revealTickMsg struct{}
+
+func (m *Model) startRevealAnimation(audioPath string) tea.Cmd {
+	return tea.Batch(
+		m.tickReveal(),
+		func() tea.Msg {
+			if audioPath != "" && m.autoPlayAudio {
+				m.status = "Auto-playing audio: " + audioPath
+				return m.playAudio(audioPath)
+			}
+			return nil
+		},
+	)
+}
+
+func (m *Model) tickReveal() tea.Cmd {
+	return tea.Tick(time.Millisecond*50, func(t time.Time) tea.Msg {
+		return revealTickMsg{}
+	})
+}
+
 func (m *Model) playAudio(audioPath string) tea.Cmd {
 	if audioPath == "" {
 		return nil
@@ -682,13 +722,18 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			switch msg.String() {
 			case "enter", "space":
 				card := m.dueCards[m.cursor]
-				m.revealed = !m.revealed
+				if m.revealState == RevealRevealed {
+					m.revealState = RevealIdle
+					m.revealProgress = 0
+				} else {
+					m.revealState = RevealRevealing
+					m.revealProgress = 0
+				}
 				m.mcqChoice = -1
 				m.mcqAnswered = false
-				if m.revealed && m.autoPlayAudio && card.Audio != "" {
-					m.status = "Auto-playing audio: " + card.Audio
-					return m, m.playAudio(card.Audio)
-				}
+				// Start animation ticker
+				return m, m.startRevealAnimation(card.Audio)
+
 			case "b":
 				return m, m.toggleBookmark()
 			case "B":
@@ -736,7 +781,7 @@ func (m *Model) updateNumberKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 	if m.textInputActive() {
 		return nil, false
 	}
-	if m.activeView == ViewReview && len(m.dueCards) > 0 && m.dueCards[m.cursor].Kind == core.CardKindMCQ && m.revealed && !m.mcqAnswered {
+	if m.activeView == ViewReview && len(m.dueCards) > 0 && m.dueCards[m.cursor].Kind == core.CardKindMCQ && m.revealState == RevealRevealed && !m.mcqAnswered {
 		switch key {
 		case "1", "2", "3", "4":
 			m.selectMCQChoice(key)
@@ -1017,13 +1062,16 @@ func (m *Model) updateCramKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 		case "space", "enter":
 			if !m.cramRevealed {
 				m.cramRevealed = true
+				var audioPath string
 				if m.autoPlayAudio {
 					card := m.cramCards[m.cramCursor]
-					if card.Audio != "" {
-						return m.playAudio(card.Audio), true
+					audioPath = card.Audio
+					if audioPath != "" {
+						return tea.Batch(m.startRevealAnimation(audioPath), m.playAudio(audioPath)), true
 					}
 				}
-				return nil, true
+				// Start cram reveal animation
+				return m.startRevealAnimation(audioPath), true
 			}
 		case "a", "1":
 			if m.cramRevealed {
@@ -1519,7 +1567,7 @@ func (m *Model) removeDraft(noteID string) {
 }
 
 func (m *Model) gradeCard(grade core.ReviewGrade) tea.Cmd {
-	if m.activeView != ViewReview || len(m.dueCards) == 0 || !m.revealed {
+	if m.activeView != ViewReview || len(m.dueCards) == 0 || m.revealState == RevealIdle {
 		return nil
 	}
 
@@ -1660,7 +1708,8 @@ func (m *Model) undoLastReview() tea.Cmd {
 
 func (m *Model) toggleBookmarkFilter() tea.Cmd {
 	m.bookmarkFilter = !m.bookmarkFilter
-	m.revealed = false
+	m.revealState = RevealIdle
+	m.revealProgress = 0
 	m.cursor = 0
 	m.clearReviewHistory()
 	if m.bookmarkFilter {
@@ -1688,7 +1737,8 @@ func (m *Model) selectMCQChoice(key string) {
 	}
 	m.mcqChoice = choiceIdx
 	m.mcqAnswered = true
-	m.revealed = true
+	m.revealState = RevealRevealed
+	m.revealProgress = 100
 	chosen := m.dueCards[m.cursor].Choices[choiceIdx]
 	m.mcqCorrect = chosen == m.dueCards[m.cursor].Answer
 }
@@ -1741,7 +1791,7 @@ func (m *Model) render() string {
 	switch m.activeView {
 	case ViewReview:
 		if len(m.dueCards) > 0 {
-			if m.revealed {
+			if m.revealState == RevealRevealed {
 				helpHint = "| Grade: a/h/g/e"
 			} else {
 				helpHint = "| Reveal: Space/Enter"
@@ -2504,6 +2554,27 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		if m.cramRevealed {
 			b.WriteString(fmt.Sprintf("Answer: %s\n\n", card.Answer))
 			b.WriteString("Grade: a Again | h Hard | g Good | e Easy\n")
+		} else if m.revealState == RevealRevealing {
+			// Show gradual reveal animation with blocks
+			progress := int(m.revealProgress)
+			if progress > 100 {
+				progress = 100
+			}
+			// Calculate how many characters to reveal
+			fullText := card.Answer
+			numChars := len([]rune(fullText))
+			revealedChars := (numChars * progress) / 100
+			if revealedChars < 0 {
+				revealedChars = 0
+			}
+			if revealedChars > numChars {
+				revealedChars = numChars
+			}
+			revealedRunes := []rune(fullText)[:revealedChars]
+			remainingBlocks := numChars - revealedChars
+			animationText := string(revealedRunes) + strings.Repeat("█", remainingBlocks)
+			b.WriteString(fmt.Sprintf("Answer: %s\n\n", animationText))
+			b.WriteString("Press space or enter to finish reveal.\n")
 		} else {
 			b.WriteString("Press space or enter to reveal.\n")
 		}
@@ -2690,7 +2761,7 @@ func (m *Model) renderReview(x, y int) string {
 
 	var answer string
 	if card.Kind == core.CardKindMCQ && len(card.Choices) > 0 {
-		if m.revealed {
+		if m.revealState == RevealRevealed {
 			if m.mcqAnswered {
 				feedback := "Incorrect"
 				if m.mcqCorrect {
@@ -2708,15 +2779,56 @@ func (m *Model) renderReview(x, y int) string {
 				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: x + 26, Y: y + 8, Width: 4, Height: 1})
 				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + 35, Y: y + 8, Width: 4, Height: 1})
 			}
+		} else if m.revealState == RevealRevealing {
+			// Show gradual reveal animation with blocks
+			progress := int(m.revealProgress)
+			if progress > 100 {
+				progress = 100
+			}
+			// Calculate how many characters to reveal
+			fullText := card.Answer
+			numChars := len([]rune(fullText))
+			revealedChars := (numChars * progress) / 100
+			if revealedChars < 0 {
+				revealedChars = 0
+			}
+			if revealedChars > numChars {
+				revealedChars = numChars
+			}
+			revealedRunes := []rune(fullText)[:revealedChars]
+			remainingBlocks := numChars - revealedChars
+			animationText := string(revealedRunes) + strings.Repeat("█", remainingBlocks)
+			answer = fmt.Sprintf("1-4 select answer\n\n%s\n\nGrade: a Again | h Hard | g Good | e Easy", renderMCQChoices(card.Choices, m.mcqChoice))
+			// Replace the answer in choices display
+			answer = strings.Replace(answer, fullText, animationText, 1)
 		} else {
 			answer = "Press space or enter to reveal choices."
 		}
-	} else if m.revealed {
+	} else if m.revealState == RevealRevealed {
 		answer = card.Answer + "\n\nGrade: a Again | h Hard | g Good | e Easy"
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: x + 7, Y: y + 6, Width: 5, Height: 1})
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: x + 17, Y: y + 6, Width: 4, Height: 1})
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: x + 26, Y: y + 6, Width: 4, Height: 1})
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + 35, Y: y + 6, Width: 4, Height: 1})
+	} else if m.revealState == RevealRevealing {
+		// Show gradual reveal animation with blocks
+		progress := int(m.revealProgress)
+		if progress > 100 {
+			progress = 100
+		}
+		// Calculate how many characters to reveal
+		fullText := card.Answer
+		numChars := len([]rune(fullText))
+		revealedChars := (numChars * progress) / 100
+		if revealedChars < 0 {
+			revealedChars = 0
+		}
+		if revealedChars > numChars {
+			revealedChars = numChars
+		}
+		revealedRunes := []rune(fullText)[:revealedChars]
+		remainingBlocks := numChars - revealedChars
+		answer = string(revealedRunes) + strings.Repeat("█", remainingBlocks) + "\n\nGrade: a Again | h Hard | g Good | e Easy"
 	} else {
 		answer = "Press space or enter to reveal."
 	}
@@ -2842,7 +2954,8 @@ func (m *Model) applyDeckFilter() {
 	if m.cursor >= len(m.dueCards) {
 		m.cursor = maxInt(0, len(m.dueCards)-1)
 	}
-	m.revealed = false
+	m.revealState = RevealIdle
+	m.revealProgress = 0
 	if len(m.dueCards) == 0 {
 		m.status = "All caught up!"
 	} else {
