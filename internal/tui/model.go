@@ -1390,6 +1390,9 @@ func (m *Model) setDailyGoal(goal int) tea.Cmd {
 
 func (m *Model) updateAIKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 	switch msg.String() {
+	case "esc":
+		m.aiInput = ""
+		return nil, true
 	case "enter":
 		return tea.Batch(m.generateDrafts(), m.tickSpinner()), true
 	case "backspace":
@@ -1417,7 +1420,7 @@ func (m *Model) updateAIKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 			return nil, true
 		}
 	}
-	if len(msg.String()) == 1 {
+	if len(msg.String()) == 1 && msg.String() >= " " && msg.String() <= "~" {
 		m.aiInput += msg.String()
 		return nil, true
 	}
@@ -1889,6 +1892,13 @@ func (m *Model) render() string {
 	}
 
 	statusLine := fmt.Sprintf("status: %s", singleLine(m.status))
+	if m.sessionReviewed > 0 {
+		accuracy := 0.0
+		if m.sessionReviewed > 0 {
+			accuracy = float64(m.sessionCorrect) / float64(m.sessionReviewed) * 100
+		}
+		statusLine += fmt.Sprintf(" | session: %d/%d (%.0f%%)", m.sessionCorrect, m.sessionReviewed, accuracy)
+	}
 	footer := fmt.Sprintf("tab/arrows views | 1-9 views | ? help | q quit | mouse %d,%d %s", m.mouseX, m.mouseY, helpHint)
 	b.WriteString("\n")
 	b.WriteString(statusStyle.Render(truncateLine(statusLine, maxInt(20, m.width-2))))
@@ -2430,7 +2440,7 @@ func (m *Model) renderAI(x, y int) string {
 		frames := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
 		spinner = " " + frames[m.spinnerFrame%len(frames)]
 	}
-	fmt.Fprintf(&b, "AI Drafts%s\n\nDeck: %s\nTopic: %s\n\nEnter generate | a approve | d discard\n", spinner, m.deckLabel(), m.aiInput)
+	fmt.Fprintf(&b, "AI Drafts%s\n\nDeck: %s\nTopic: %s\n\nEnter generate | a approve | d discard | esc clear\n", spinner, m.deckLabel(), m.aiInput)
 	if len(m.drafts) == 0 {
 		if m.drafting {
 			b.WriteString("\nDrafting in progress...")
@@ -2468,14 +2478,70 @@ func (m *Model) renderAI(x, y int) string {
 	for i := start; i < end; i++ {
 		draft := m.drafts[i]
 		prefix := "  "
+		style := lipgloss.NewStyle()
 		if i == m.draftCursor {
 			prefix = "> "
-			m.hitboxes = append(m.hitboxes, Hitbox{ID: "draft-approve", View: ViewAI, X: x, Y: y + 7 + (i - start), Width: 32, Height: 1})
+			style = style.Bold(true).Foreground(lipgloss.Color("212"))
 		}
-		fmt.Fprintf(&b, "\n%s%s -> %s", prefix, draft.Note.Front, draft.Note.Back)
+
+		item := fmt.Sprintf("%s%s -> %s", prefix, draft.Note.Front, draft.Note.Back)
+		b.WriteString(style.Render(item))
+
+		// Add interactive buttons
+		btnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+		approveBtn := " [Approve]"
+		discardBtn := " [Discard]"
+
+		if i == m.draftCursor {
+			btnStyle = btnStyle.Foreground(lipgloss.Color("81"))
+		}
+
+		b.WriteString(btnStyle.Render(approveBtn))
+		b.WriteString(btnStyle.Render(discardBtn))
+		b.WriteString("\n")
+
+		// Register hitboxes
+		rowY := y + 6 + (i - start)
+		approveX := x + lipgloss.Width(item)
+		discardX := approveX + lipgloss.Width(approveBtn)
+
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     fmt.Sprintf("draft-approve-%d", i),
+			View:   ViewAI,
+			X:      approveX,
+			Y:      rowY,
+			Width:  lipgloss.Width(approveBtn),
+			Height: 1,
+		})
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     fmt.Sprintf("draft-discard-%d", i),
+			View:   ViewAI,
+			X:      discardX,
+			Y:      rowY,
+			Width:  lipgloss.Width(discardBtn),
+			Height: 1,
+		})
 	}
+
+	// Show detailed preview for selected draft
+	if len(m.drafts) > 0 && m.draftCursor < len(m.drafts) {
+		selected := m.drafts[m.draftCursor]
+		previewTitleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205"))
+		b.WriteString("\n" + previewTitleStyle.Render("Preview:") + "\n")
+		b.WriteString(fmt.Sprintf("  Extra:    %s\n", selected.Note.Extra))
+		if len(selected.Note.Tags) > 0 {
+			b.WriteString(fmt.Sprintf("  Tags:     %s\n", strings.Join(selected.Note.Tags, ", ")))
+		}
+		if len(selected.Note.Examples) > 0 {
+			b.WriteString("  Examples:\n")
+			for _, ex := range selected.Note.Examples {
+				b.WriteString(fmt.Sprintf("    - %s\n", ex))
+			}
+		}
+	}
+
 	if len(m.drafts) > maxVisible {
-		b.WriteString(fmt.Sprintf("\n\n(Showing %d-%d of %d)", start+1, end, len(m.drafts)))
+		b.WriteString(fmt.Sprintf("\n(Showing %d-%d of %d)", start+1, end, len(m.drafts)))
 	}
 	return b.String()
 }
@@ -3077,6 +3143,20 @@ func (m *Model) activateHitbox(id string) tea.Cmd {
 		return m.gradeCard(core.GradeEasy)
 	case id == "draft-approve":
 		return m.approveDraft()
+	case strings.HasPrefix(id, "draft-approve-"):
+		idx, err := strconv.Atoi(strings.TrimPrefix(id, "draft-approve-"))
+		if err == nil && idx >= 0 && idx < len(m.drafts) {
+			m.draftCursor = idx
+			return m.approveDraft()
+		}
+		return nil
+	case strings.HasPrefix(id, "draft-discard-"):
+		idx, err := strconv.Atoi(strings.TrimPrefix(id, "draft-discard-"))
+		if err == nil && idx >= 0 && idx < len(m.drafts) {
+			m.draftCursor = idx
+			m.discardDraft()
+		}
+		return nil
 	case strings.HasPrefix(id, "stats-scroll-"):
 		line, err := strconv.Atoi(strings.TrimPrefix(id, "stats-scroll-"))
 		if err == nil {

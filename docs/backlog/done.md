@@ -6,6 +6,8 @@
 - Refactored `renderReview` to strictly synchronize visual state with interaction state.
 - Implemented **drag-to-scroll support** for scrollbars in Statistics, Browser, and Cram views.
 - **Enhanced Decks view** with separate counts for New, Due, and Total cards, providing better progress visibility.
+- **Added Session Statistics** to the status line, showing accuracy and cards reviewed in the current session.
+- **Improved AI view UX** with interactive [Approve] and [Discard] buttons and a detailed draft preview section.
 - Enhanced `tui-tester` with `move_mouse` and `drag_mouse` simulation capabilities.
 - Added 4 new E2E tests in `e2e_tests/test_interactive_features.py` covering:
     - Mouse navigation between all views using tabs/sidebar.

@@ -13,6 +13,9 @@ Autonomous Feature Pass 18: Final Polish and UI Interactive Elements
 - [x] Implemented **interactive scrollbar clicking** for the Statistics view
 - [x] Implemented **drag-to-scroll support** for scrollbars in Statistics, Browser, and Cram views
 - [x] **Enhanced Decks view** with separate counts for New, Due, and Total cards, featuring color-coded statistics
+- [x] **Added Session Statistics** to the status line (Accuracy and Reviewed count)
+- [x] **Improved AI view** with interactive [Approve] and [Discard] buttons for each draft
+- [x] **Added detailed Preview** to the AI view for the selected draft (showing Extra info, Tags, and Examples)
 - [x] Reworked active panel hitbox coordinates to derive content origin from Lip Gloss frame metrics
 - [x] Added interactive scrollbar tracks for Browser and Cram views
 - [x] Unified all breakpoints (Compact, Medium, Wide) to use a consistent bordered panel for active views
@@ -40,7 +43,7 @@ Autonomous Feature Pass 18: Final Polish and UI Interactive Elements
 
 ## Planned Features
 
-- [ ] Drag-to-scroll support for scrollbars
+(None at this time)
 
 ## Last Verification
 

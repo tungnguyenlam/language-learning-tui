@@ -111,3 +111,39 @@ def test_statistics_drag_to_scroll():
             agent.wait_for_text("Lines 19-30 of 30")
         finally:
             agent.close()
+
+def test_ai_draft_interaction():
+    """Verify that AI drafts can be approved/discarded via interactive buttons."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir)
+        try:
+            # Go to AI View
+            agent.act("6")
+            agent.wait_for_text("AI Drafts")
+            
+            # Clear existing topic
+            agent.act("<Esc>")
+            agent.wait_until_stable()
+
+            # Type a topic
+            agent.act("Hallo")
+            agent.wait_for_text("Topic: Hallo")
+            
+            # Generate
+            agent.act("<Enter>")
+            agent.wait_for_text("Hallo ->", timeout=10.0) # Wait for generation
+            
+            # Should have at least one draft. 
+            # Preview should be visible for the first one
+            agent.wait_for_text("Preview:")
+            
+            # Click Discard on the first draft
+            # In 90 col medium layout, AI view starts at Y=4. 
+            # From debug logs, draft-discard-0 is at X:47 Y:10 (0-based)
+            # So we click (48, 11) (1-based)
+            agent.click(48, 11)
+            
+            # First draft should be gone
+            agent.wait_for_text("No drafts yet.")
+        finally:
+            agent.close()
