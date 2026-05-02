@@ -508,9 +508,39 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		mouse := msg.Mouse()
 		m.mouseX = mouse.X
 		m.mouseY = mouse.Y
-		if hit, ok := m.hitboxAt(mouse.X, mouse.Y); ok {
-			cmd := m.activateHitbox(hit.ID)
-			return m, cmd
+		if mouse.Button == tea.MouseLeft {
+			if hit, ok := m.hitboxAt(mouse.X, mouse.Y); ok {
+				cmd := m.activateHitbox(hit.ID)
+				return m, cmd
+			}
+		} else if mouse.Button == tea.MouseWheelUp {
+			switch m.activeView {
+			case ViewStatistics:
+				if m.statsScroll > 0 {
+					m.statsScroll--
+				}
+			case ViewBrowser:
+				if m.browserCursor > 0 {
+					m.browserCursor--
+				}
+			case ViewCram:
+				if m.cramCursor > 0 {
+					m.cramCursor--
+				}
+			}
+		} else if mouse.Button == tea.MouseWheelDown {
+			switch m.activeView {
+			case ViewStatistics:
+				m.statsScroll++
+			case ViewBrowser:
+				if m.browserCursor < len(m.browserCards)-1 {
+					m.browserCursor++
+				}
+			case ViewCram:
+				if m.cramCursor < len(m.cramCards)-1 {
+					m.cramCursor++
+				}
+			}
 		}
 	}
 	return m, nil
@@ -1891,7 +1921,6 @@ func (m *Model) renderActiveViewPlain(x, y int) string {
 }
 
 func (m *Model) renderStatistics() string {
-	var b strings.Builder
 	var content strings.Builder
 	content.WriteString("Statistics\n\n")
 
@@ -1993,24 +2022,52 @@ func (m *Model) renderStatistics() string {
 	}
 
 	lines := strings.Split(content.String(), "\n")
+	totalLines := len(lines)
 	maxVisible := 30
-	if m.height > 40 {
-		maxVisible = m.height - 10
+	if m.height > 15 {
+		maxVisible = m.height - 15
 	}
-	if maxVisible < 30 {
-		maxVisible = 30
-	}
-
-	if m.statsScroll > len(lines)-maxVisible && len(lines) > maxVisible {
-		m.statsScroll = len(lines) - maxVisible
+	if maxVisible < 15 {
+		maxVisible = 15
 	}
 
-	for i := m.statsScroll; i < m.statsScroll+maxVisible && i < len(lines); i++ {
-		b.WriteString(lines[i] + "\n")
+	if m.statsScroll > totalLines-maxVisible && totalLines > maxVisible {
+		m.statsScroll = totalLines - maxVisible
 	}
 
-	if len(lines) > maxVisible {
-		b.WriteString(fmt.Sprintf("\n%s\n", mutedStyle.Render(fmt.Sprintf("Use j/k to scroll. Lines %d-%d of %d.", m.statsScroll+1, minInt(m.statsScroll+maxVisible, len(lines)), len(lines)))))
+	var visibleContent strings.Builder
+	for i := m.statsScroll; i < m.statsScroll+maxVisible && i < totalLines; i++ {
+		line := lines[i]
+		// Pad the line to a consistent width
+		width := maxInt(50, m.width-60)
+		if len(line) < width {
+			line = line + strings.Repeat(" ", width-len(line))
+		}
+		// Append scrollbar character if content is scrollable
+		if totalLines > maxVisible {
+			scrollbarChar := "│"
+			// Simple scrollbar indicator
+			startLine := (m.statsScroll * maxVisible) / totalLines
+			endLine := ((m.statsScroll + maxVisible) * maxVisible) / totalLines
+			currentLine := i - m.statsScroll
+			if currentLine >= startLine && currentLine <= endLine {
+				scrollbarChar = "█"
+			}
+			line = line + scrollbarChar
+		}
+		visibleContent.WriteString(line + "\n")
+	}
+
+	statsPanel := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("62")).
+		Padding(0, 1).
+		Render(visibleContent.String())
+
+	var b strings.Builder
+	b.WriteString(statsPanel)
+	if totalLines > maxVisible {
+		b.WriteString(fmt.Sprintf("\n%s\n", mutedStyle.Render(fmt.Sprintf("Use j/k or Mouse Wheel to scroll. Lines %d-%d of %d.", m.statsScroll+1, minInt(m.statsScroll+maxVisible, totalLines), totalLines))))
 	}
 
 	return b.String()
