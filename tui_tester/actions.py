@@ -75,3 +75,28 @@ class Actions:
             raise ValueError("mouse coordinates are 1-based and must be positive")
         self.driver.write(f"\x1b[<{button};{x};{y}M")
         self.driver.write(f"\x1b[<{button};{x};{y}m")
+
+    def move_mouse(self, x: int, y: int, button: int = 0) -> None:
+        """
+        Send an xterm SGR mouse motion at 1-based terminal coordinates.
+        Button 0 is the primary mouse button.
+        """
+        if x < 1 or y < 1:
+            raise ValueError("mouse coordinates are 1-based and must be positive")
+        # Motion bit is 32
+        self.driver.write(f"\x1b[<{button + 32};{x};{y}M")
+
+    def drag_mouse(self, start_x: int, start_y: int, end_x: int, end_y: int, button: int = 0, steps: int = 5) -> None:
+        """
+        Simulate a mouse drag from start to end coordinates.
+        """
+        import time
+        self.driver.write(f"\x1b[<{button};{start_x};{start_y}M")
+        time.sleep(0.05)
+        for i in range(1, steps + 1):
+            x = start_x + (end_x - start_x) * i // steps
+            y = start_y + (end_y - start_y) * i // steps
+            self.move_mouse(x, y, button)
+            time.sleep(0.05)
+        self.driver.write(f"\x1b[<{button};{end_x};{end_y}m")
+        time.sleep(0.05)

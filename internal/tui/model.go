@@ -133,6 +133,11 @@ type Model struct {
 	drafting           bool
 	statsScroll        int
 	statsTotalLines    int
+	isDragging         bool
+	dragView           View
+	dragTrackStartY    int
+	dragVisible        int
+	dragTotal          int
 }
 
 func NewModel(repo core.Repository, scheduler core.Scheduler) *Model {
@@ -536,29 +541,68 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		mouse := msg.Mouse()
 		m.mouseX = mouse.X
 		m.mouseY = mouse.Y
-		if mouse.Button == tea.MouseLeft {
-			if hit, ok := m.hitboxAt(mouse.X, mouse.Y); ok {
-				cmd := m.activateHitbox(hit.ID)
-				return m, cmd
+
+		switch msg.(type) {
+		case tea.MouseClickMsg, *tea.MouseClickMsg:
+			if mouse.Button == tea.MouseLeft {
+				if hit, ok := m.hitboxAt(mouse.X, mouse.Y); ok {
+					// Check if this is a scrollbar hitbox to initiate dragging
+					if strings.Contains(hit.ID, "-scroll-") {
+						m.isDragging = true
+						m.dragView = hit.View
+						// Deduce track start Y from the row index in hit.ID
+						parts := strings.Split(hit.ID, "-")
+						if len(parts) > 0 {
+							if row, err := strconv.Atoi(parts[len(parts)-1]); err == nil {
+								m.dragTrackStartY = mouse.Y - row
+							}
+						}
+						// Capture current visibility metrics
+						layout := m.activeViewContentLayout()
+						switch hit.View {
+						case ViewStatistics:
+							m.dragVisible = m.statisticsVisibleLines(layout.Height)
+							m.dragTotal = m.statsTotalLines
+						case ViewBrowser:
+							m.dragVisible = m.listVisibleLines(layout.Height)
+							m.dragTotal = len(m.browserCards)
+						case ViewCram:
+							m.dragVisible = m.listVisibleLines(layout.Height)
+							m.dragTotal = len(m.cramCards)
+						}
+					}
+					cmd := m.activateHitbox(hit.ID)
+					return m, cmd
+				}
 			}
-		} else if mouse.Button == tea.MouseWheelUp {
-			switch m.activeView {
-			case ViewStatistics:
-				m.scrollStats(-1)
-			case ViewBrowser:
-				m.moveBrowserCursor(-1)
-			case ViewCram:
-				m.moveCramCursor(-1)
+		case tea.MouseMotionMsg, *tea.MouseMotionMsg:
+			if m.isDragging {
+				m.handleMouseDrag(mouse.Y)
 			}
-		} else if mouse.Button == tea.MouseWheelDown {
-			switch m.activeView {
-			case ViewStatistics:
-				m.scrollStats(1)
-			case ViewBrowser:
-				m.moveBrowserCursor(1)
-			case ViewCram:
-				m.moveCramCursor(1)
+		case tea.MouseReleaseMsg, *tea.MouseReleaseMsg:
+			m.isDragging = false
+		case tea.MouseWheelMsg, *tea.MouseWheelMsg:
+			if mouse.Button == tea.MouseWheelUp {
+				switch m.activeView {
+				case ViewStatistics:
+					m.scrollStats(-1)
+				case ViewBrowser:
+					m.moveBrowserCursor(-1)
+				case ViewCram:
+					m.moveCramCursor(-1)
+				}
+			} else if mouse.Button == tea.MouseWheelDown {
+				switch m.activeView {
+				case ViewStatistics:
+					m.scrollStats(1)
+				case ViewBrowser:
+					m.moveBrowserCursor(1)
+				case ViewCram:
+					m.moveCramCursor(1)
+				}
 			}
+		default:
+			m.status += fmt.Sprintf(" Unknown:%T", msg)
 		}
 	}
 	return m, nil
@@ -1140,6 +1184,33 @@ func (m *Model) scrollStats(delta int) {
 
 func (m *Model) setStatsScroll(next int) {
 	m.statsScroll = clampInt(next, 0, m.statsMaxScroll())
+}
+
+func (m *Model) handleMouseDrag(y int) {
+	if !m.isDragging {
+		return
+	}
+	trackRow := y - m.dragTrackStartY
+	if m.dragVisible <= 1 {
+		return
+	}
+
+	switch m.dragView {
+	case ViewStatistics:
+		m.setStatsScroll(scrollOffsetForTrackRow(m.dragTotal, m.dragVisible, trackRow))
+	case ViewBrowser:
+		if m.dragTotal > 0 {
+			next := selectedIndexForTrackRow(m.dragTotal, m.dragVisible, trackRow)
+			if next != m.browserCursor {
+				m.browserCursor = next
+				m.clearReviewHistory()
+			}
+		}
+	case ViewCram:
+		if m.dragTotal > 0 {
+			m.cramCursor = selectedIndexForTrackRow(m.dragTotal, m.dragVisible, trackRow)
+		}
+	}
 }
 
 func (m *Model) statsMaxScroll() int {

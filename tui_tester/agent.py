@@ -50,6 +50,14 @@ class TUIAgent:
         """Send a mouse click at 1-based terminal coordinates."""
         self.actions.click(x, y, button)
 
+    def move_mouse(self, x: int, y: int, button: int = 0) -> None:
+        """Send a mouse motion at 1-based terminal coordinates."""
+        self.actions.move_mouse(x, y, button)
+
+    def drag_mouse(self, start_x: int, start_y: int, end_x: int, end_y: int, button: int = 0, steps: int = 5) -> None:
+        """Simulate a mouse drag from start to end coordinates."""
+        self.actions.drag_mouse(start_x, start_y, end_x, end_y, button, steps)
+
     def wait_until_stable(self, timeout: float = 5.0, min_stable_duration: float = 0.5) -> None:
         """Wait for the screen to stabilize after an action."""
         self.waiter.wait_for_stable(timeout, min_stable_duration)

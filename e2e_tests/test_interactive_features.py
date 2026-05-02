@@ -80,12 +80,34 @@ def test_statistics_scrollbar_click():
             agent.wait_for_text("Statistics")
             
             # In medium layout (90 wide), panel is 86 wide.
-            # Content layout X=3, Y=4. lineWidth = 84.
-            # Scrollbar X = 3 + 84 + 1 = 88 (0-based) = 89 (1-based)
-            agent.click(89, 10)
+            # Content layout X=3, Y=4. lineWidth = 78.
+            # Scrollbar X = 3 + 78 + 1 = 82 (0-based) = 83 (1-based)
+            agent.click(83, 10)
             
             # Verify the mouse click is registered in the status line
-            # 1-based (89, 10) is 0-based (88, 9)
-            agent.wait_for_text("mouse 88,9")
+            # 1-based (83, 10) is 0-based (82, 9)
+            agent.wait_for_text("mouse 82,9")
+        finally:
+            agent.close()
+
+def test_statistics_drag_to_scroll():
+    """Verify that dragging the scrollbar in Statistics scrolls the view."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir)
+        try:
+            # Go to Statistics
+            agent.act("4")
+            agent.wait_for_text("Statistics")
+            agent.assert_text("Lines 1-12 of 30")
+            time.sleep(0.2) # Ensure hitboxes are stable
+            
+            # Drag scrollbar from top (approx row 6) to bottom (row 16)
+            # In medium layout (90 wide), scrollbar is at X=83.
+            # Row 0 is at Y=5, so Row 11 (last) is at Y=16.
+            agent.drag_mouse(83, 6, 83, 16, steps=10)
+            agent.wait_until_stable()
+            
+            # The view should have scrolled. We check for the last lines.
+            agent.wait_for_text("Lines 19-30 of 30")
         finally:
             agent.close()
