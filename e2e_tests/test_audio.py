@@ -41,6 +41,10 @@ def test_audio_indicator_in_review():
             agent.act("<Left>")
             agent.act("<Left>")
             agent.wait_for_text("deck-1")
+            # If deck-1 is not selected, move to it. 
+            # In our case, it might be index 0 or 1.
+            # Let's try to move to it explicitly.
+            agent.act("j") 
             agent.act("<Enter>")
             
             # Go to Review

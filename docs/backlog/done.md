@@ -14,11 +14,10 @@
 - **Added interactive Dashboard hitboxes** linking to Review, Browser, and Statistics views.
 - **Added interactive Cram filters** allowing mouse-based switching of card sets.
 - **Fixed multiple edge-case bugs** in session statistics (undo support), state management (resetting dragging on view/size change), and MCQ interaction state leakage.
+- **Implemented robust ID-based deck synchronization** preventing visual and functional desyncs across all collection-refresh actions.
+- **Resolved navigation "traps"** by ensuring global keyboard shortcuts (1-9, ?) take precedence over unhandled local view keys.
+- **Fixed audio auto-play and error reporting**, ensuring reliable playback feedback for learners.
 - Enhanced `tui-tester` with `move_mouse` and `drag_mouse` simulation capabilities.
-- Added 4 new E2E tests in `e2e_tests/test_interactive_features.py` covering:
-    - Mouse navigation between all views using tabs/sidebar.
-    - Browser cursor movement and history toggle.
-    - Statistics scrollbar track interaction (clicking and dragging).
 - Verified all 76 E2E tests passing.
 - **Parallelized E2E tests** with `pytest-xdist`, reducing full verification time from ~5.5 minutes to ~45 seconds.
 - Verified all Go unit tests passing.

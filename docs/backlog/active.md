@@ -35,6 +35,10 @@ Autonomous Feature Pass 18: Final Polish and UI Interactive Elements
 - [x] **Fixed session statistics undo bug** by correctly decrementing reviewed and correct counts when a review is undone
 - [x] **Fixed persistent dragging state** by clearing `isDragging` on view changes and window resizes
 - [x] **Fixed MCQ state leakage** by resetting `mcqChoice` and `mcqAnswered` in `applyDeckFilter`
+- [x] **Implemented robust ID-based deck synchronization** to prevent visual desyncs when decks are reordered (e.g. after import)
+- [x] **Eliminated keyboard input traps** in AI, Browser, Import, and Settings views, restoring global navigation (1-9) reliability
+- [x] **Fixed audio auto-play trigger** and added detailed error reporting for failed playback
+- [x] **Hardened hierarchical input architecture** in `updateKey` to ensure consistent global vs. local key prioritization
 
 ### Testing
 - [x] Added 3 new interactive E2E tests in `e2e_tests/test_interactive_features.py` (mouse navigation, browser movement, scrollbar interaction)

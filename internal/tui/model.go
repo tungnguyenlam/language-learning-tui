@@ -398,11 +398,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.drafting = false
 		m.status = friendlyError(msg)
 	case decksMsg:
-		m.decks = []core.Deck(msg)
-		if m.deckIndex >= len(m.decks) {
-			m.deckIndex = maxInt(0, len(m.decks)-1)
-		}
-		m.selectDeck(m.deckIndex)
+		m.syncDecks([]core.Deck(msg))
+		m.applyDeckFilter()
 	case dueCardsMsg:
 		m.allDue = []core.Card(msg)
 		m.applyDeckFilter()
@@ -443,15 +440,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.applyDeckFilter()
 		m.status = "Draft approved"
 	case importDoneMsg:
-		m.decks = msg.decks
-		if len(m.decks) > 0 {
-			m.deckIndex = maxInt(0, m.deckIndex)
-			if m.deckIndex >= len(m.decks) {
-				m.deckIndex = len(m.decks) - 1
-			}
-			m.deck = m.decks[m.deckIndex]
-			m.deckCursor = len(m.decks) - 1
-		}
+		m.syncDecks(msg.decks)
 		m.allDue = msg.cards
 		m.applyDeckFilter()
 		m.status = fmt.Sprintf("Imported %d notes from %s", msg.count, filepath.Base(msg.path))
@@ -460,7 +449,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case reviewRecordedMsg:
 		m.lastReviewedCardID = msg.cardID
 		m.lastReviewedGrade = msg.grade
-		m.decks = msg.decks
+		m.syncDecks(msg.decks)
 		m.stats = msg.stats
 		m.allDue = msg.cards
 		m.applyDeckFilter()
@@ -485,7 +474,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.status = "Card bookmark removed"
 		}
 	case cardSuspendedMsg:
-		m.decks = msg.decks
+		m.syncDecks(msg.decks)
 		m.stats = msg.stats
 		m.allDue = msg.cards
 		m.applyDeckFilter()
@@ -503,7 +492,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.sessionCorrect--
 			}
 		}
-		m.decks = msg.decks
+		m.syncDecks(msg.decks)
 		m.stats = msg.stats
 		m.allDue = msg.cards
 		m.applyDeckFilter()
@@ -623,16 +612,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 type revealTickMsg struct{}
 
 func (m *Model) startRevealAnimation(audioPath string) tea.Cmd {
-	return tea.Batch(
-		m.tickReveal(),
-		func() tea.Msg {
-			if audioPath != "" && m.autoPlayAudio {
-				m.status = "Auto-playing audio: " + audioPath
-				return m.playAudio(audioPath)
-			}
-			return nil
-		},
-	)
+	cmds := []tea.Cmd{m.tickReveal()}
+	if audioPath != "" && m.autoPlayAudio {
+		cmds = append(cmds, m.playAudio(audioPath))
+	}
+	return tea.Batch(cmds...)
 }
 
 func (m *Model) tickReveal() tea.Cmd {
@@ -652,100 +636,94 @@ func (m *Model) playAudio(audioPath string) tea.Cmd {
 		} else {
 			cmd = exec.Command("play", audioPath)
 		}
-		_ = cmd.Run()
+		if err := cmd.Run(); err != nil {
+			return err
+		}
 		return nil
 	}
 }
 
 func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	switch msg.String() {
+	key := msg.String()
+
+	// 1. Global critical keys
+	switch key {
 	case "ctrl+c":
 		return m, tea.Quit
 	case "q":
-		if m.textInputActive() {
-			break
+		if !m.textInputActive() {
+			if m.activeView == ViewCram && m.cramActive {
+				m.cramActive = false
+				return m, nil
+			}
+			return m, tea.Quit
 		}
-		if m.activeView == ViewCram && m.cramActive {
-			m.cramActive = false
+	case "?":
+		if !m.textInputActive() {
+			m.showHelp = !m.showHelp
+			if m.showHelp {
+				m.status = "Help overlay shown. Press ? to close."
+			} else {
+				m.status = "Help overlay closed."
+			}
 			return m, nil
 		}
-		return m, tea.Quit
-	case "?":
-		if m.textInputActive() {
-			break
+	}
+
+	// 2. Text input trapping
+	if m.textInputActive() {
+		// Only allow certain keys to escape trapping
+		if key != "enter" && key != "esc" && key != "tab" && key != "shift+tab" {
+			// If it's a view-specific key for the active editing view, handle it
+			if cmd, handled := m.updateActiveViewKey(msg); handled {
+				return m, cmd
+			}
+			return m, nil // Trap everything else
 		}
-		m.showHelp = !m.showHelp
-		if m.showHelp {
-			m.status = "Help overlay shown. Press ? to close."
-		} else {
-			m.status = "Help overlay closed."
-		}
-		return m, nil
-	case "tab":
-		if m.textInputActive() {
-			break
-		}
-		return m, m.nextViewCmd()
-	case "left", "shift+tab":
-		if m.textInputActive() {
-			break
-		}
-		return m, m.previousViewCmd()
-	case "right":
-		if m.textInputActive() {
-			break
-		}
-		return m, m.nextViewCmd()
-	case "w":
-		if !m.textInputActive() {
-			return m, m.previousViewCmd()
-		}
-	case "s":
+	}
+
+	// 3. Global navigation
+	switch key {
+	case "tab", "right", "s":
 		if !m.textInputActive() {
 			return m, m.nextViewCmd()
 		}
-	case "up":
-		if !m.activeViewHandlesVerticalNavigation() {
+	case "shift+tab", "left", "w":
+		if !m.textInputActive() {
 			return m, m.previousViewCmd()
-		}
-	case "down":
-		if !m.activeViewHandlesVerticalNavigation() {
-			return m, m.nextViewCmd()
 		}
 	case "[":
-		if m.textInputActive() && m.activeView != ViewBrowser {
-			break
-		}
-		if m.activeView == ViewBrowser {
+		if !m.textInputActive() || m.activeView == ViewBrowser {
+			if m.activeView == ViewBrowser {
+				m.previousDeck()
+				return m, m.reloadBrowserForSelectedDeck()
+			}
 			m.previousDeck()
-			return m, m.reloadBrowserForSelectedDeck()
+			return m, nil
 		}
-		m.previousDeck()
-		return m, nil
 	case "]":
-		if m.textInputActive() && m.activeView != ViewBrowser {
-			break
-		}
-		if m.activeView == ViewBrowser {
+		if !m.textInputActive() || m.activeView == ViewBrowser {
+			if m.activeView == ViewBrowser {
+				m.nextDeck()
+				return m, m.reloadBrowserForSelectedDeck()
+			}
 			m.nextDeck()
-			return m, m.reloadBrowserForSelectedDeck()
+			return m, nil
 		}
-		m.nextDeck()
-		return m, nil
 	}
 
 	if cmd, handled := m.updateNumberKey(msg); handled {
 		return m, cmd
 	}
 
-	// Handle view-specific keys after global navigation.
+	// 4. View-specific keys
 	if cmd, handled := m.updateActiveViewKey(msg); handled {
 		return m, cmd
 	}
 
-	switch msg.String() {
+	// 5. Shared navigation keys (if not handled by view)
+	switch key {
 	case "up", "k":
-		// Handle up arrow for views that support it
 		if m.activeView == ViewReview {
 			if m.cursor > 0 {
 				m.cursor--
@@ -755,7 +733,6 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 	case "down", "j":
-		// Handle down arrow for views that support it
 		if m.activeView == ViewReview {
 			if m.cursor < len(m.dueCards)-1 {
 				m.cursor++
@@ -770,45 +747,6 @@ func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 		}
 		if m.activeView == ViewCram && m.cramActive && len(m.cramCards) > 0 {
 			return m, m.playAudio(m.cramCards[m.cramCursor].Audio)
-		}
-	default:
-		// Handle remaining keys based on active view
-		switch m.activeView {
-		case ViewReview:
-			switch msg.String() {
-			case "enter", "space":
-				card := m.dueCards[m.cursor]
-				if m.revealState == RevealRevealed {
-					m.revealState = RevealIdle
-					m.revealProgress = 0
-				} else {
-					m.revealState = RevealRevealing
-					m.revealProgress = 0
-				}
-				m.mcqChoice = -1
-				m.mcqAnswered = false
-				// Start animation ticker
-				return m, m.startRevealAnimation(card.Audio)
-
-			case "b":
-				return m, m.toggleBookmark()
-			case "B":
-				return m, m.toggleBookmarkFilter()
-			case "x":
-				return m, m.suspendCard()
-			case "u":
-				return m, m.undoLastReview()
-			case "r":
-				return m, m.toggleReviewHistory()
-			case "a":
-				return m, m.gradeCard(core.GradeAgain)
-			case "h":
-				return m, m.gradeCard(core.GradeHard)
-			case "g":
-				return m, m.gradeCard(core.GradeGood)
-			case "e":
-				return m, m.gradeCard(core.GradeEasy)
-			}
 		}
 	}
 
@@ -831,7 +769,10 @@ func (m *Model) activeViewHandlesVerticalNavigation() bool {
 
 func (m *Model) updateNumberKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 	key := msg.String()
-	if m.activeView == ViewCram {
+	if m.activeView == ViewCram && (key == "1" || key == "2" || key == "3" || key == "4" || key == "5") {
+		return nil, false
+	}
+	if m.activeView == ViewCram && m.cramActive {
 		return nil, false
 	}
 	if m.textInputActive() {
@@ -871,6 +812,8 @@ func (m *Model) updateNumberKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 
 func (m *Model) updateActiveViewKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 	switch m.activeView {
+	case ViewReview:
+		return m.updateReviewKey(msg)
 	case ViewAI:
 		return m.updateAIKey(msg)
 	case ViewImport:
@@ -888,6 +831,44 @@ func (m *Model) updateActiveViewKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 	default:
 		return nil, false
 	}
+}
+
+func (m *Model) updateReviewKey(msg tea.KeyMsg) (tea.Cmd, bool) {
+	switch msg.String() {
+	case "enter", "space", " ":
+		card := m.dueCards[m.cursor]
+		if m.revealState == RevealRevealed {
+			m.revealState = RevealIdle
+			m.revealProgress = 0
+		} else {
+			m.revealState = RevealRevealing
+			m.revealProgress = 0
+		}
+		m.mcqChoice = -1
+		m.mcqAnswered = false
+		// Start animation ticker
+		return m.startRevealAnimation(card.Audio), true
+
+	case "b":
+		return m.toggleBookmark(), true
+	case "B":
+		return m.toggleBookmarkFilter(), true
+	case "x":
+		return m.suspendCard(), true
+	case "u":
+		return m.undoLastReview(), true
+	case "r":
+		return m.toggleReviewHistory(), true
+	case "a":
+		return m.gradeCard(core.GradeAgain), true
+	case "h":
+		return m.gradeCard(core.GradeHard), true
+	case "g":
+		return m.gradeCard(core.GradeGood), true
+	case "e":
+		return m.gradeCard(core.GradeEasy), true
+	}
+	return nil, false
 }
 
 func (m *Model) updateStatisticsKey(msg tea.KeyMsg) (tea.Cmd, bool) {
@@ -1134,7 +1115,7 @@ func (m *Model) updateBrowserKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 			return m.loadBrowserCards(), true
 		}
 	}
-	return nil, true
+	return nil, false
 }
 
 func (m *Model) updateCramKey(msg tea.KeyMsg) (tea.Cmd, bool) {
@@ -1143,7 +1124,7 @@ func (m *Model) updateCramKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 		case "esc":
 			m.cramActive = false
 			return nil, true
-		case "space", "enter":
+		case "space", " ", "enter":
 			if !m.cramRevealed {
 				m.cramRevealed = true
 				var audioPath string
@@ -1541,7 +1522,7 @@ func (m *Model) updateAIKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 		m.aiInput += msg.String()
 		return nil, true
 	}
-	return nil, true
+	return nil, false
 }
 
 func (m *Model) generateDrafts() tea.Cmd {
@@ -2586,17 +2567,22 @@ func (m *Model) renderImport(x, y int) string {
 		MarginRight(1)
 
 	rowY = y + strings.Count(b.String(), "\n")
-	for i, action := range actions {
+	currentX := x
+	for _, action := range actions {
 		btn := fmt.Sprintf("[%s] %s", action.key, action.label)
-		b.WriteString(btnStyle.Render(btn))
+		renderedBtn := btnStyle.Render(btn)
+		btnWidth := lipgloss.Width(renderedBtn)
+
 		m.hitboxes = append(m.hitboxes, Hitbox{
 			ID:     action.id,
 			View:   ViewImport,
-			X:      x + (i * 20), // Rough spacing
+			X:      currentX,
 			Y:      rowY,
-			Width:  lipgloss.Width(btn) + 2,
+			Width:  btnWidth,
 			Height: 1,
 		})
+		b.WriteString(renderedBtn)
+		currentX += btnWidth + 1 // Add 1 for margin
 	}
 	b.WriteString("\n\n")
 
@@ -3357,6 +3343,35 @@ func (m *Model) nextDeck() {
 	}
 	m.deckIndex = (m.deckIndex + 1) % len(m.decks)
 	m.selectDeck(m.deckIndex)
+}
+
+func (m *Model) syncDecks(newDecks []core.Deck) {
+	m.decks = newDecks
+	if len(m.decks) > 0 {
+		// Try to find current deck in new list by ID
+		found := false
+		for i, d := range m.decks {
+			if d.ID == m.deck.ID {
+				m.deckIndex = i
+				m.deckCursor = i
+				m.deck = d
+				found = true
+				break
+			}
+		}
+		if !found {
+			// Fall back to current index if valid
+			if m.deckIndex >= len(m.decks) {
+				m.deckIndex = maxInt(0, len(m.decks)-1)
+			}
+			m.deck = m.decks[m.deckIndex]
+			m.deckCursor = m.deckIndex
+		}
+	} else {
+		m.deck = core.Deck{}
+		m.deckIndex = 0
+		m.deckCursor = 0
+	}
 }
 
 func (m *Model) selectDeck(index int) {
