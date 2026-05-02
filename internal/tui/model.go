@@ -1178,33 +1178,31 @@ func (m *Model) updateCramKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 			m.cramRevealed = false
 			return nil, true
 		}
-	case "1":
-		m.cramType = "bookmarked"
-		m.cramCursor = 0
-		m.cramCards = nil
-		return m.loadCramCards(), true
-	case "2":
-		m.cramType = "suspended"
-		m.cramCursor = 0
-		m.cramCards = nil
-		return m.loadCramCards(), true
-	case "3":
-		m.cramType = "leech"
-		m.cramCursor = 0
-		m.cramCards = nil
-		return m.loadCramCards(), true
-	case "4":
-		m.cramType = "flagged"
-		m.cramCursor = 0
-		m.cramCards = nil
-		return m.loadCramCards(), true
-	case "5":
-		m.cramType = "all"
-		m.cramCursor = 0
-		m.cramCards = nil
-		return m.loadCramCards(), true
+	case "1", "2", "3", "4", "5":
+		idx, _ := strconv.Atoi(msg.String())
+		return m.setCramFilter(idx), true
 	}
 	return nil, false
+}
+
+func (m *Model) setCramFilter(idx int) tea.Cmd {
+	switch idx {
+	case 1:
+		m.cramType = "bookmarked"
+	case 2:
+		m.cramType = "suspended"
+	case 3:
+		m.cramType = "leech"
+	case 4:
+		m.cramType = "flagged"
+	case 5:
+		m.cramType = "all"
+	default:
+		return nil
+	}
+	m.cramCursor = 0
+	m.cramCards = nil
+	return m.loadCramCards()
 }
 
 func (m *Model) scrollStats(delta int) {
@@ -2975,14 +2973,47 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 	b.WriteString(fmt.Sprintf("Filter: %s\n\n", m.cramType))
 	if len(m.cramCards) == 0 {
 		b.WriteString("No cards found for this filter.\n\n")
-		b.WriteString("Press 1-5 to change filter:\n")
-		b.WriteString("  1: Bookmarked\n")
-		b.WriteString("  2: Suspended\n")
-		b.WriteString("  3: Leeches\n")
-		b.WriteString("  4: All flagged\n")
-		b.WriteString("  5: All cards\n")
-		return b.String()
 	}
+
+	b.WriteString("Click a filter to load cards:\n")
+	filters := []struct {
+		id    string
+		label string
+	}{
+		{"cram-filter-1", "Bookmarked"},
+		{"cram-filter-2", "Suspended"},
+		{"cram-filter-3", "Leeches"},
+		{"cram-filter-4", "All flagged"},
+		{"cram-filter-5", "All cards"},
+	}
+
+	filterStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("255")).
+		Background(lipgloss.Color("62")).
+		Padding(0, 1).
+		MarginBottom(1)
+
+	for i, f := range filters {
+		idx := i + 1
+		item := fmt.Sprintf("  %d: %s", idx, f.label)
+		rowY := layout.Y + strings.Count(b.String(), "\n")
+		b.WriteString(filterStyle.Render(item) + "\n")
+
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     f.id,
+			View:   ViewCram,
+			X:      layout.X,
+			Y:      rowY,
+			Width:  lipgloss.Width(item) + 2,
+			Height: 1,
+		})
+	}
+
+	if len(m.cramCards) > 0 {
+		b.WriteString(fmt.Sprintf("\n%d cards loaded.\n", len(m.cramCards)))
+		b.WriteString("Press enter to start cramming.\n")
+	}
+
 	start := 0
 	end := len(m.cramCards)
 	maxVisible := m.listVisibleLines(layout.Height)
@@ -3383,6 +3414,24 @@ func (m *Model) activateHitbox(id string) tea.Cmd {
 		return m.gradeCard(core.GradeEasy)
 	case id == "draft-approve":
 		return m.approveDraft()
+	case strings.HasPrefix(id, "dash-"):
+		switch id {
+		case "dash-review":
+			return m.updateView(ViewReview)
+		case "dash-collection":
+			return m.updateView(ViewBrowser)
+		case "dash-progress":
+			return m.updateView(ViewStatistics)
+		case "dash-digest":
+			return m.updateView(ViewDecks)
+		}
+		return nil
+	case strings.HasPrefix(id, "cram-filter-"):
+		idx, err := strconv.Atoi(strings.TrimPrefix(id, "cram-filter-"))
+		if err == nil {
+			return m.setCramFilter(idx)
+		}
+		return nil
 	case strings.HasPrefix(id, "settings-"):
 		if id == "settings-goal-minus" {
 			return m.setDailyGoal(m.stats.DailyGoal - 1)

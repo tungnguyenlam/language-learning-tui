@@ -50,8 +50,7 @@ def test_cram_mode_filter_types():
             # Test all filter (press 5)
             agent.act("5")
             agent.wait_for_text("Filter: all")
-            agent.wait_for_text("cards in cram mode")  # Should show card count
-            
+            agent.wait_for_text("cards loaded")  # Should show card count
         finally:
             agent.close()
 

@@ -19,6 +19,8 @@ Autonomous Feature Pass 18: Final Polish and UI Interactive Elements
 - [x] **Refactored Browser view** with an explicit **Search Mode** (via `/`) and quick card actions (**b** to bookmark, **x** to suspend)
 - [x] **Enhanced Settings view** with interactive hitboxes, section headers, and clickable [+] [-] goal adjustment buttons
 - [x] **Enhanced Import view** with interactive buttons and clickable path fields for easier collection management
+- [x] **Added interactive Dashboard hitboxes** allowing users to click sections to navigate to Review, Browser, Statistics, etc.
+- [x] **Added interactive Cram filters** allowing mouse-based switching between bookmarked, suspended, and other card sets
 - [x] Reworked active panel hitbox coordinates to derive content origin from Lip Gloss frame metrics
 - [x] Added interactive scrollbar tracks for Browser and Cram views
 - [x] Unified all breakpoints (Compact, Medium, Wide) to use a consistent bordered panel for active views

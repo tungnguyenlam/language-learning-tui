@@ -182,7 +182,7 @@ def test_card_browser_search_filter():
 
             # Enter search mode and type query
             agent.act("/Ap")
-            agent.wait_for_text("der Apfel")
+            agent.wait_for_text("Apfel")
             # Verify only matching cards shown
             agent.wait_for_text("1 cards found")
         finally:

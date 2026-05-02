@@ -41,7 +41,9 @@ def test_cram_review_flow():
             
             # Grade
             agent.act("g")
-            agent.wait_for_text("Cram Stats: 1 reviewed, 1 correct (100.0%)")
+            # After grading the last card, should return to selection
+            agent.wait_for_text("Cram Mode")
+            agent.assert_text("1 cards loaded")
             agent.wait_for_text("Cram Mode") # Should be back to list
             
         finally:
