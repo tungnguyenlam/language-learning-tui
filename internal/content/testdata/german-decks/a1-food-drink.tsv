@@ -1,0 +1,80 @@
+
+#separator:tab
+#html:false
+#deck:A1 Food & Drink
+a1-food-apfel	der Apfel	apple	Plural: die Äpfel	a1 noun food
+a1-food-brot	Das Brot	bread	Plural: die Brote	a1 noun food
+a1-food-wasser	Das Wasser	water		a1 noun drink
+a1-food-kaffee	Der Kaffee	coffee		a1 noun drink
+a1-food-milch	Die Milch	milk		a1 noun drink
+a1-food-kase	Der Käse	cheese	Plural: die Käse	a1 noun food
+a1-food-fleisch	Das Fleisch	meat		a1 noun food
+a1-food-apfelsaft	Der Apfelsaft	apple juice		a1 noun drink
+a1-food-bier	Das Bier	beer		a1 noun drink
+a1-food-wein	Der Wein	wine		a1 noun drink
+a1-food-butter	Die Butter	butter		a1 noun food
+a1-food-joghurt	Der Joghurt	yogurt	Plural: die Joghurts	a1 noun food
+a1-food-kaese	Der Käse	cheese	Plural: die Käse	a1 noun food
+a1-food-salz	Das Salz	salt		a1 noun food
+a1-food-zucker	Der Zucker	sugar		a1 noun food
+a1-food-pfeffer	Der Pfeffer	pepper		a1 noun food
+a1-food-oeil	Das Öl	oil		a1 noun food
+a1-food-essig	Der Essig	vinegar		a1 noun food
+a1-food-senf	Der Senf	mustard		a1 noun food
+a1-food-sosse	Die Soße	sauce	Plural: die Soßen	a1 noun food
+a1-food-gewuerz	Das Gewürz	spice	Plural: die Gewürze	a1 noun food
+a1-food-banane	Die Banane	banana	Plural: die Bananen	a1 noun food
+a1-food-orange	Die Orange	orange	Plural: die Orangen	a1 noun food
+a1-food-traube	Die Traube	grape	Plural: die Trauben	a1 noun food
+a1-food-kirsche	Die Kirsche	cherry	Plural: die Kirschen	a1 noun food
+a1-food-erdbeere	Die Erdbeere	strawberry	Plural: die Erdbeeren	a1 noun food
+a1-food-citrone	Die Zitrone	lemon	Plural: die Zitronen	a1 noun food
+a1-food-birne	Die Birne	pear	Plural: die Birnen	a1 noun food
+a1-food-moehre	Die Möhre	carrot	Plural: die Möhren	a1 noun food
+a1-food-kartoffel	Die Kartoffel	potato	Plural: die Kartoffeln	a1 noun food
+a1-food-reis	Der Reis	rice		a1 noun food
+a1-food-nudel	Die Nudel	pasta	Plural: die Nudeln	a1 noun food
+a1-food-spaetzle	Die Spätzle	Swabian noodles		a1 noun food
+a1-food-salat	Der Salat	salad	Plural: die Salate	a1 noun food
+a1-food-suppe	Die Suppe	soup	Plural: die Suppen	a1 noun food
+a1-food-pizza	Die Pizza	pizza	Plural: die Pizzen	a1 noun food
+a1-food-kuchen	Der Kuchen	cake/tart	Plural: die Kuchen	a1 noun food
+a1-food-torte	Die Torte	cake (layered)	Plural: die Torten	a1 noun food
+a1-food-teigwaren	Die Teigwaren	pasta		a1 noun food
+a1-food-kaesekuchen	Der Käsekuchen	cheesecake		a1 noun food
+a1-food-schokolade	Die Schokolade	chocolate		a1 noun food
+a1-food-eis	Das Eis	ice cream		a1 noun food
+a1-food-brotzeit	Die Brotzeit	snack/lunch		a1 noun food
+a1-food-fruehstueck	Das Frühstück	breakfast		a1 noun food
+a1-food-mittagessen	Das Mittagessen	lunch		a1 noun food
+a1-food-abendessen	Das Abendessen	dinner		a1 noun food
+a1-food-kuchen-backen	Kuchen backen	to bake cake		a1 activity
+a1-food-kochen	Kochen	to cook		a1 activity
+a1-food-essen	Essen	to eat		a1 activity
+a1-food-trinken	Trinken	to drink		a1 activity
+a1-food-schmeckt-mir	Schmeckt mir	I like it (tastes good to me)	a1 phrase
+a1-food-ich-moechte	Ich möchte	I would like		a1 phrase
+a1-food-bitte-schoen	Bitte schön	you're welcome		a1 phrase
+a1-food-guten-appetit	Guten Appetit	enjoy your meal		a1 phrase
+a1-food-zum-essen	Zum Essen	for eating		a1 phrase
+a1-food-viel-gewicht	viel Gewicht	very heavy		a1 adjective
+a1-food-leicht	leicht	light		a1 adjective
+a1-food-sauer	Sauer	sour		a1 adjective
+a1-food-süß	Süß	sweet		a1 adjective
+a1-food-salzig	Salzig	salty		a1 adjective
+a1-food-bitter	Bitter	bitter		a1 adjective
+a1-food-scharf	Scharf	spicy/hot		a1 adjective
+a1-food-lebensmittel	Lebensmittel	food items		a1 noun food
+a1-food-getraenk	Getränk	beverage/drink		a1 noun drink
+a1-food-frisch	Frisch	fresh		a1 adjective
+a1-food-kalt	Kalt	cold		a1 adjective
+a1-food-warm	Warm	warm		a1 adjective
+a1-food-heiss	Heiß	hot		a1 adjective
+a1-food-alle	Alles	all/everything		a1 pronoun
+a1-food-etwas	Etwas	something/a little		a1 pronoun
+a1-food-nichts	Nichts	nothing		a1 pronoun
+a1-food-mehr	Mehr	more		a1 adjective
+a1-food-wenig	Wenig	little/few		a1 adjective
+a1-food-viel	Viel	much/many		a1 adjective
+a1-food-gut	Gut	good		a1 adjective
+a1-food-schlecht	Schlecht	bad		a1 adjective

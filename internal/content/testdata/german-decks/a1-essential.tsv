@@ -1,0 +1,31 @@
+
+#separator:tab
+#html:false
+#deck:A1 Essential German
+a1-ess-hallo	Hallo	hello	Basic greeting	a1 greeting
+a1-ess-tschuss	Tschüss	bye	Farewell	a1 greeting
+a1-ess-bitte	Bitte	please / you're welcome	Polite word	a1 essential
+a1-ess-danke	Danke	thank you	Expression of gratitude	a1 essential
+a1-ess-ja	Ja	yes	Affirmation	a1 essential
+a1-ess-nein	Nein	no	Negation	a1 essential
+a1-ess-entschuldigung	Entschuldigung	excuse me / sorry	Apology	a1 essential
+a1-ess-guten-tag	Guten Tag	good day	Formal greeting	a1 greeting
+a1-ess-guten-morgen	Guten Morgen	good morning	Morning greeting	a1 greeting
+a1-ess-guten-abend	Guten Abend	good evening	Evening greeting	a1 greeting
+a1-ess-wie-gehts	Wie geht es dir?	how are you?	Casual inquiry	a1 question
+a1-ess-wie-gehts-formal	Wie geht es Ihnen?	how are you?	Formal inquiry	a1 question
+a1-ess-freut-mich	Freut mich	nice to meet you	Introduction	a1 greeting
+a1-ess-tschuesse	Tschüß	bye (informal)	Farewell	a1 greeting
+a1-ess-bis-spater	Bis später	see you later	Casual goodbye	a1 greeting
+a1-ess-bis-bald	Bis bald	see you soon	Near future goodbye	a1 greeting
+a1-ess-bis-morgen	Bis morgen	see you tomorrow	Tomorrow goodbye	a1 greeting
+a1-ess-auf-wiedersehen	Auf Wiedersehen	goodbye	Formal goodbye	a1 greeting
+a1-ess-alles-gute	Alles Gute	all the best	Well wishes	a1 greeting
+a1-ess-glueckwunsch	Glückwunsch	congratulations	Celebration	a1 greeting
+a1-ess-prost	Prost	cheers (toast)	Drinking	a1 greeting
+a1-ess-ganz-gut	Ganz gut	quite good	Response to "how are you"	a1 essential
+a1-ess-nicht-schlecht	Nicht schlecht	not bad	Response to "how are you"	a1 essential
+a1-ess-soso	So-so	so-so	Response to "how are you"	a1 essential
+a1-ess-schlecht	Schlecht	bad	Response to "how are you"	a1 essential
+a1-ess-verstehe-nicht	Verstehe nicht	I don't understand	Communication	a1 essential
+a1-ess-sprechen-englisch	Sprechen Sie Englisch?	do you speak English?	Language inquiry	a1 essential

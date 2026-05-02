@@ -1,0 +1,97 @@
+
+#separator:tab
+#html:false
+#deck:B1 Business Professional
+business-arbeit	Die Arbeit	work/job		a2 business
+business-beruf	Der Beruf	profession		a2 business
+business-chef	Der Chef	boss		a2 business
+business-kollege	Der Kollege	colleague		a2 business
+business-mitarbeiter	Der Mitarbeiter	employee		a2 business
+business-angestellte	Die Angestellte	employee (female)	a2 business
+business-chefetage	Die Chefetage	executive floor	a2 business
+business-buero	Das Büro	office		a2 business
+business-schreibtisch	Der Schreibtisch	desk		a2 business
+business-computer	Der Computer	computer		a2 business
+business-laptop	Der Laptop	laptop		a2 business
+business-drucker	Der Drucker	printer		a2 business
+business-telefon	Das Telefon	phone		a2 business
+business-handy	Das Handy	mobile phone	a2 business
+business-email	Die E-Mail	email		a2 business
+business-brief	Der Brief	letter		a2 business
+business-dokument	Das Dokument	document		a2 business
+business-bericht	Der Bericht	report		a2 business
+business-praesentation	Die Präsentation	presentation	a2 business
+business-meeting	Das Meeting	meeting		a2 business
+business-besprechung	Die Besprechung	conference		a2 business
+business-termin	Der Termin	appointment		a2 business
+business-zeitplan	Der Zeitplan	schedule		a2 business
+business-vertrag	Der Vertrag	contract		a2 business
+business-angebot	Das Angebot	offer		a2 business
+business-rechnung	Die Rechnung	bill/invoice	a2 business
+business-quittung	Die Quittung	receipt		a2 business
+business-gehalt	Das Gehalt	salary		a2 business
+business-lohn	Der Lohn	wage		a2 business
+business-bonus	Der Bonus	bonus		a2 business
+business-urlaubstage	Die Urlaubstage	vacation days	a2 business
+business-kuendigung	Die Kündigung	resignation	a2 business
+business-bewerbung	Die Bewerbung	job application	a2 business
+business-lebenslauf	Der Lebenslauf	CV/resume	a2 business
+business-vorstellungsgespraech	Das Vorstellungsgespräch	job interview	a2 business
+business-referenz	Die Referenz	reference		a2 business
+business-probezeit	Die Probezeit	probation period	a2 business
+business-kunde	Der Kunde	customer		a2 business
+business-kaeufer	Der Käufer	buyer		a2 business
+business-verkaeufer	Der Verkäufer	seller		a2 business
+business-lieferant	Der Lieferant	supplier		a2 business
+business-produkt	Das Produkt	product		a2 business
+business-dienstleistung	Die Dienstleistung	service	a2 business
+business-qualitaet	Die Qualität	quality		a2 business
+business-preis	Der Preis	price		a2 business
+business-markt	Der Markt	market		a2 business
+business-wettbewerb	Der Wettbewerb	competition	a2 business
+business-strategie	Die Strategie	strategy	a2 business
+business-ziel	Das Ziel	goal		a2 business
+business-umsatz	Der Umsatz	turnover/revenue	a2 business
+business-gewinn	Der Gewinn	profit		a2 business
+business-verlust	Der Verlust	loss		a2 business
+business-kosten	Die Kosten	costs		a2 business
+business-budget	Das Budget	budget		a2 business
+business-investition	Die Investition	investment	a2 business
+business-risiko	Das Risiko	risk		a2 business
+business-chance	Die Chance	opportunity	a2 business
+business-bewerbung-schreiben	Eine Bewerbung schreiben	to write a job application	a2 business
+business-im-vorstellungsgespraech	Im Vorstellungsgespräch	In the job interview	a2 business
+business-zur-arbeit-gehen	Zur Arbeit gehen	to go to work	a2 business
+business-stress	Der Stress	stress		a2 business
+business-karriere	Die Karriere	career		a2 business
+business-erfolg	Der Erfolg	success		a2 business
+business-meilenstein	Der Meilenstein	milestone	a2 business
+business-teamwork	Das Teamwork	teamwork		a2 business
+business-kommunikation	Die Kommunikation	communication	a2 business
+business-e-mail-schreiben	E-Mails schreiben	to write emails	a2 business
+business-bericht-erstellen	Einen Bericht erstellen	to create a report	a2 business
+business-protokoll-fuehren	Ein Protokoll führen	to take minutes	a2 business
+business-entscheidung-treffen	Eine Entscheidung treffen	to make a decision	a2 business
+business-ziel-erreichen	Ein Ziel erreichen	to achieve a goal	a2 business
+business-projekt	Das Projekt	project		a2 business
+business-idee	Die Idee	idea		a2 business
+business-konzept	Das Konzept	concept		a2 business
+business-plan	Der Plan	plan		a2 business
+business-organisation	Die Organisation	organization	a2 business
+business-ablauf	Der Ablauf	process		a2 business
+business-terminplanung	Die Terminplanung	scheduling	a2 business
+business-prioritaet	Die Priorität	priority	a2 business
+business-frist	Die Frist	deadline		a2 business
+business-verzoegerung	Die Verzögerung	delay		a2 business
+business-interview-fuehren	Ein Interview führen	to conduct an interview	a2 business
+business-praesentieren	Präsentieren	to present	a2 business
+business-fragen-stellen	Fragen stellen	to ask questions	a2 business
+business-antwort-geben	Antwort geben	to give an answer	a2 business
+business-einigung-erreichen	Eine Einigung erreichen	to reach an agreement	a2 business
+business-verhandlung	Die Verhandlung	negotiation	a2 business
+business-konditionen	Die Konditionen	terms/conditions	a2 business
+business-lieferung	Die Lieferung	delivery		a2 business
+business-rechnung-schreiben	Eine Rechnung schreiben	to write an invoice	a2 business
+business-bezahlen	Bezahlen	to pay	a2 business
+business-barzahlen	Barzahlen	to pay cash	a2 business
+business-ueberweisen	Überweisen	to transfer	a2 business

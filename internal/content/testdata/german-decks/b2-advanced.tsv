@@ -1,0 +1,225 @@
+
+#separator:tab
+#html:false
+#deck:B2 Advanced German
+b2-kultur	Kultur	culture		a2 noun
+b2-tradition	Tradition	tradition	a2 noun
+b2-feiertag	Feiertag	holiday		a2 noun
+b2-geschichte	Geschichte	history		a2 noun
+b2-kunst	Kunst	art		a2 noun
+b2-literatur	Literatur	literature	a2 noun
+b2-musik	Musik	music		a2 noun
+b2-film	Film	film		a2 noun
+b2-theater	Theater	theater	a2 noun
+b2-medien	Medien	media		a2 noun
+b2-nachrichten	Nachrichten	news		a2 noun
+b2-zeitung	Zeitung	newspaper	a2 noun
+b2-zeitschrift	Zeitschrift	magazine	a2 noun
+b2-buch	Buch	book		a2 noun
+b2-autor	Autor	author		a2 noun
+b2-leser	Leser	reader		a2 noun
+b2-sprache	Sprache	language	a2 noun
+b2-uebersetzung	Übersetzung	translation	a2 noun
+b2-wortschatz	Wortschatz	vocabulary	a2 noun
+b2-grammatik	Grammatik	grammar		a2 noun
+b2-regel	Regel	rule		a2 noun
+b2-ausnahme	Ausnahme	exception	a2 noun
+b2-bildung	Bildung	education	a2 noun
+b2-schule	Schule	school		a2 noun
+b2-lehrer	Lehrer	teacher (m)	a2 noun
+b2-lehrerin	Lehrerin	teacher (f)	a2 noun
+b2-student	Student	university student (m)	a2 noun
+b2-studentin	Studentin	university student (f)	a2 noun
+b2-pruefung	Prüfung	exam/test	a2 noun
+b2-abschluss	Abschluss	degree/certification	a2 noun
+b2-universitaet	Universität	university	a2 noun
+b2-forschung	Forschung	research		a2 noun
+b2-wissenschaft	Wissenschaft	science		a2 noun
+b2-technologie	Technologie	technology	a2 noun
+b2-internet	Internet	internet		a2 noun
+b2-sozial	soziale Medien	social media	a2 noun
+b2-digital	Digital	digital		a2 adjective
+b2-elektronisch	Elektronisch	electronic	a2 adjective
+b2-modern	Modern	modern		a2 adjective
+b2-traditionell	Traditionell	traditional	a2 adjective
+b2-wissenschaftlich	Wissenschaftlich	scientific	a2 adjective
+b2-kulturell	Kulturell	cultural	a2 adjective
+b2-geschichtlich	Geschichtlich	historical	a2 adjective
+b2-kuenstlerisch	Künstlerisch	artistic	a2 adjective
+b2-literarisch	Literarisch	literary	a2 adjective
+b2-musikalisch	Musikalisch	musical	a2 adjective
+b2-international	International	international	a2 adjective
+b2-lokal	Lokal	local		a2 adjective
+b2-regional	Regional	regional	a2 adjective
+b2-national	National	national		a2 adjective
+b2-global	Global	global		a2 adjective
+b2-europa	Europa	Europe		a2 noun
+b2-deutschland	Deutschland	Germany	a2 noun
+b2-oesterreich	Österreich	Austria	a2 noun
+b2-schweiz	Schweiz	Switzerland	a2 noun
+b2-stadt	Stadt	city		a2 noun
+b2-dorf	Dorf	village		a2 noun
+b2-land	Land	country		a2 noun
+b2-region	Region	region		a2 noun
+b2-umwelt	Umwelt	environment	a2 noun
+b2-natur	Natur	nature		a2 noun
+b2-wald	Wald	forest		a2 noun
+b2-fluss	Fluss	river		a2 noun
+b2-see	See	lake		a2 noun
+b2-berg	Berg	mountain	a2 noun
+b2-meer	Meer	sea		a2 noun
+b2-ozean	Ozean	ocean		a2 noun
+b2-insel	Insel	island		a2 noun
+b2-klima	Klima	climate		a2 noun
+b2-wetter	Wetter	weather		a2 noun
+b2-jahreszeit	Jahreszeit	season		a2 noun
+b2-sommer	Sommer	summer		a2 noun
+b2-winter	Winter	winter		a2 noun
+b2-herbst	Herbst	autumn		a2 noun
+b2-fruehling	Frühling	spring		a2 noun
+b2-temperatur	Temperatur	temperature	a2 noun
+b2-grad	Grad	degrees		a2 noun
+b2-wind	Wind	wind		a2 noun
+b2-regen	Regen	rain		a2 noun
+b2-schnee	Schnee	snow		a2 noun
+b2-sturm	Sturm	storm		a2 noun
+b2-sonne	Sonne	sun		a2 noun
+b2-mond	Mond	moon		a2 noun
+b2-stern	Stern	star		a2 noun
+b2-tag	Tag	day		a2 noun
+b2-nacht	Nacht	night		a2 noun
+b2-uhrzeit	Uhrzeit	time		a2 noun
+b2-stunde	Stunde	hour		a2 noun
+b2-minute	Minute	minute		a2 noun
+b2-sekunde	Sekunde	second		a2 noun
+b2-woche	Woche	week		a2 noun
+b2-monat	Monat	month		a2 noun
+b2-jahr	Jahr	year		a2 noun
+b2-jahrhundert	Jahrhundert	century	a2 noun
+b2-tanz	Tanzen	to dance		a2 verb
+b2-malen	Malen	to paint		a2 verb
+b2-zeichnen	Zeichnen	to draw		a2 verb
+b2-singen	Singen	to sing		a2 verb
+b2-musizieren	Musizieren	to play music	a2 verb
+b2-fotografieren	Fotografieren	to photograph	a2 verb
+b2-filmen	Filmen	to film		a2 verb
+b2-basteln	Basteln	to do crafts	a2 verb
+b2-kochen	Kochen	to cook		a2 verb
+b2-backen	Backen	to bake		a2 verb
+b2-gaertnern	Gärtnern	to garden		a2 verb
+b2-reiten	Reiten	to ride (horse)	a2 verb
+b2-schwimmen	Schwimmen	to swim		a2 verb
+b2-tauchen	Tauchen	to dive		a2 verb
+b2-ski-fahren	Skifahren	to ski		a2 verb
+b2-rodeln	Rodeln	to sled		a2 verb
+b2-wandern	Wandern	to hike		a2 verb
+b2-reisen	Reisen	to travel		a2 verb
+b2-entdecken	Entdecken	to discover	a2 verb
+b2-erforschen	Erforschen	to explore	a2 verb
+b2-studieren	Studieren	to study		a2 verb
+b2-lernen	Lernen	to learn		a2 verb
+b2-lehren	Lehren	to teach		a2 verb
+b2-uebersetzen	Übersetzen	to translate	a2 verb
+b2-erklaeren	Erklären	to explain	a2 verb
+b2-beschreiben	Beschreiben	to describe	a2 verb
+b2-vergleichen	Vergleichen	to compare	a2 verb
+b2-analysieren	Analysieren	to analyze	a2 verb
+b2-bewerten	Bewerten	to evaluate	a2 verb
+b2-entscheiden	Entscheiden	to decide		a2 verb
+b2-waehlen	Wählen	to choose/elect	a2 verb
+b2-stimmen	Stimmen	to vote		a2 verb
+b2-diskutieren	Diskutieren	to discuss	a2 verb
+b2-debattieren	Debattieren	to debate	a2 verb
+b2-nachdenken	Nachdenken	to think/reflect	a2 verb
+b2-ueberlegen	Überlegen	to consider	a2 verb
+b2-planen	Planen	to plan		a2 verb
+b2-organisieren	Organisieren	to organize	a2 verb
+b2-verwalten	Verwalten	to manage/administer	a2 verb
+b2-entwickeln	Entwickeln	to develop	a2 verb
+b2-verbessern	Verbessern	to improve	a2 verb
+b2-veraendern	Verändern	to change	a2 verb
+b2-bewahren	Bewahren	to preserve/keep	a2 verb
+b2-schuetzen	Schützen	to protect	a2 verb
+b2-retten	Retten	to rescue/save	a2 verb
+b2-helfen	Helfen	to help		a2 verb
+b2-unterstuetzen	Unterstützen	to support	a2 verb
+b2-teilen	Teilen	to share		a2 verb
+b2-trennen	Trennen	to separate	a2 verb
+b2-verbinden	Verbinden	to connect	a2 verb
+b2-beenden	Beenden	to end/finish	a2 verb
+b2-anfangen	Anfangen	to begin/start	a2 verb
+b2-fortsetzen	Fortsetzen	to continue	a2 verb
+b2-wiederholen	Wiederholen	to repeat	a2 verb
+b2-praktizieren	Praktizieren	to practice	a2 verb
+b2-anwenden	Anwenden	to apply/train	a2 verb
+b2-benutzen	Benutzen	to use	a2 verb
+b2-nutzen	Nutzen	to make use of	a2 verb
+b2-verstehen	Verstehen	to understand	a2 verb
+b2-begreifen	Begreifen	to comprehend	a2 verb
+b2-erkennen	Erkennen	to recognize	a2 verb
+b2-wissen	Wissen	to know (fact)	a2 verb
+b2-kennen	Kennen	to know (person/place)	a2 verb
+b2-glauben	Glauben	to believe	a2 verb
+b2-hoffen	Hoffen	to hope	a2 verb
+b2-wuenschen	Wünschen	to wish	a2 verb
+b2-moegen	Mögen	to like	a2 verb
+b2-lieben	Lieben	to love	a2 verb
+b2-hassen	Hassen	to hate	a2 verb
+b2-veraergern	Verärgern	to annoy	a2 verb
+b2-enttaeuschen	Enttäuschen	to disappoint	a2 verb
+b2-ueberraschen	Überraschen	to surprise	a2 verb
+b2-beeindrucken	Beeindrucken	to impress	a2 verb
+b2-motivieren	Motivieren	to motivate	a2 verb
+b2-inspirieren	Inspirieren	to inspire	a2 verb
+b2-zwingen	Zwingen	to force	a2 verb
+b2-erlauben	Erlauben	to allow	a2 verb
+b2-verbieten	Verbieten	to forbid	a2 verb
+b2-duerfen	Dürfen	may/to be allowed	a2 verb
+b2-koennen	Können	can/to be able	a2 verb
+b2-muessen	Müssen	must/to have to	a2 verb
+b2-sollen	Sollen	should/to ought	a2 verb
+b2-wollen	Wollen	to want	a2 verb
+b2-brauchen	Brauchen	to need	a2 verb
+b2-gefaellen	Gefallen	to like/to please	a2 verb
+b2-passen	Passen	to fit/to suit	a2 verb
+b2-fehlen	Fehlen	to lack/to miss	a2 verb
+b2-reichen	Reichen	to be enough	a2 verb
+b2-kosten	Kosten	to cost	a2 verb
+b2-bringen	Bringen	to bring	a2 verb
+b2-nehmen	Nehmen	to take	a2 verb
+b2-geben	Geben	to give	a2 verb
+b2-kriegen	Kriegen	to get/receive	a2 verb
+b2-finden	Finden	to find	a2 verb
+b2-lassen	Lassen	to let/allow	a2 verb
+b2-machen	Machen	to do/make	a2 verb
+b2-sagen	Sagen	to say	a2 verb
+b2-sprechen	Sprechen	to speak	a2 verb
+b2-reden	Reden	to talk	a2 verb
+b2-antworten	Antworten	to answer	a2 verb
+b2-fragen	Fragen	to ask	a2 verb
+b2-bitten	Bitten	to ask (polite)/to request	a2 verb
+b2-einladen	Einladen	to invite	a2 verb
+b2-besuchen	Besuchen	to visit	a2 noun/verb
+b2-treffen	Treffen	to meet	a2 verb
+b2-kennenlernen	Kennenlernen	to meet/get to know	a2 verb
+b2-verabreden	Verabreden	to arrange	a2 verb
+b2-vereinbaren	Vereinbaren	to agree/arrange	a2 verb
+b2-versprechen	Versprechen	to promise	a2 verb
+b2-glauben	Glauben	to believe	a2 verb
+b2-hoffen	Hoffen	to hope	a2 verb
+b2-wuenschen	Wünschen	to wish	a2 verb
+b2-zustimmen	Zustimmen	to agree	a2 verb
+b2-widersprechen	Widersprechen	to disagree/contradict	a2 verb
+b2-zweifeln	Zweifeln	to doubt	a2 verb
+b2-sich-erinnern	Sich erinnern	to remember	a2 verb
+b2-vergessen	Vergessen	to forget	a2 verb
+b2-sich-aufregen	Sich aufregen	to get upset	a2 verb
+b2-sich-freuen	Sich freuen	to be happy	a2 verb
+b2-sich-aergern	Sich ärgern	to get annoyed	a2 verb
+b2-sich-entschuldigen	Sich entschuldigen	to apologize	a2 verb
+b2-sich-beschweren	Sich beschweren	to complain	a2 verb
+b2-sich-vorstellen	Sich vorstellen	to introduce oneself	a2 verb
+b2-sich-bedanken	Sich bedanken	to thank	a2 verb
+b2-sich-ausruhen	Sich ausruhen	to rest	a2 verb
+b2-sich-entspannen	Sich entspannen	to relax	a2 verb
+b2-sich-konzentrieren	Sich konzentrieren	to concentrate	a2 verb

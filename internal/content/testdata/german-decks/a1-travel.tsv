@@ -1,0 +1,54 @@
+
+#separator:tab
+#html:false
+#deck:A1 Travel & Places
+travel-bahnhof	Der Bahnhof	train station		a2 travel
+travel-flughafen	Der Flughafen	airport		a2 travel
+travel-bus	Der Bus	bus		a2 travel
+travel-zug	Der Zug	train		a2 travel
+travel-u-bahn	Die U-Bahn	subway		a2 travel
+travel-s-bahn	Die S-Bahn	suburban train		a2 travel
+travel-auto	Das Auto	car		a2 travel
+travel-taxi	Das Taxi	taxi		a2 travel
+travel-fahrkarte	Die Fahrkarte	ticket		a2 travel
+travel-bahnsteig	Der Bahnsteig	platform		a2 travel
+travel-abfahrt	Die Abfahrt	departure		a2 travel
+travel-ankunft	Die Ankunft	arrival		a2 travel
+travel-gleis	Das Gleis	track/platform		a2 travel
+travel-verspaetung	Die Verspätung	delay		a2 travel
+travel-pass	Der Reisepass	passport		a2 travel
+travel-ausweis	Der Ausweis	ID card		a2 travel
+travel-visum	Das Visum	visa		a2 travel
+travel-gepaeck	Das Gepäck	luggage		a2 travel
+travel-koffer	Der Koffer	suitcase		a2 travel
+travel-rucksack	Der Rucksack	backpack		a2 travel
+travel-reisefuehrer	Der Reiseführer	guidebook		a2 travel
+travel-karte	Die Karte	map		a2 travel
+travel-navi	Das Navi	GPS navigation		a2 travel
+travel-grenze	Die Grenze	border		a2 travel
+travel-fahrrad	Das Fahrrad	bicycle		a2 travel
+travel-helm	Der Helm	helmet		a2 travel
+travel-mietwagen	Der Mietwagen	rental car		a2 travel
+travel-strasse	Die Straße	street		a2 travel
+travel-ampel	Die Ampel	traffic light		a2 travel
+travel-parken	Parken	to park		a2 travel
+travel-fahren	Fahren	to drive		a2 travel
+travel-fahrradfahren	Fahrrad fahren	to ride a bicycle	a2 travel
+travel-zugfahren	Zug fahren	to take the train	a2 travel
+travel-fliegen	Fliegen	to fly		a2 travel
+travel-reisen	Reisen	to travel		a2 travel
+travel-entdecken	Entdecken	to discover		a2 travel
+travel-urlaub	Der Urlaub	vacation/holiday	a2 travel
+travel-reise	Die Reise	trip/journey	a2 travel
+hotel-zimmer	Das Zimmer	room		a2 travel
+hotel-bett	Das Bett	bed		a2 travel
+hotel-fruehstueck	Das Frühstück	breakfast		a2 travel
+hotel-rezeption	Die Rezeption	reception		a2 travel
+hotel-kofferraum	Der Kofferraum	trunk		a2 travel
+hotel-balkon	Der Balkon	balcony		a2 travel
+hotel-schlafzimmer	Das Schlafzimmer	bedroom	a2 travel
+hotel-badezimmer	Das Badezimmer	bathroom	a2 travel
+travel-wc	Das WC	toilet		a2 travel
+travel-toilette	Die Toilette	toilet		a2 travel
+travel-dusche	Die Dusche	shower		a2 travel
+hotel-bad	Das Bad	bathroom		a2 travel
