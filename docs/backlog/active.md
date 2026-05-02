@@ -8,59 +8,39 @@ Autonomous Feature Pass 18: Final Polish and Handoff
 
 ## Completed Work
 
-### UI/UX Refinements
-- [x] Fixed Statistics scrollbar logic to be more precise and visually representative
-- [x] Implemented **interactive scrollbar clicking** for the Statistics view
-- [x] Implemented **drag-to-scroll support** for scrollbars in Statistics, Browser, and Cram views
-- [x] **Enhanced Decks view** with separate counts for New, Due, and Total cards, featuring color-coded statistics
-- [x] **Added Session Statistics** to the status line (Accuracy and Reviewed count)
-- [x] **Improved AI view** with interactive [Approve] and [Discard] buttons for each draft
-- [x] **Added detailed Preview** to the AI view for the selected draft (showing Extra info, Tags, and Examples)
-- [x] **Refactored Browser view** with an explicit **Search Mode** (via `/`) and quick card actions (**b** to bookmark, **x** to suspend)
-- [x] **Enhanced Settings view** with interactive hitboxes, section headers, and clickable [+] [-] goal adjustment buttons
-- [x] **Enhanced Import view** with interactive buttons and clickable path fields for easier collection management
-- [x] **Added interactive Dashboard hitboxes** allowing users to click sections to navigate to Review, Browser, Statistics, etc.
-- [x] **Added interactive Cram filters** allowing mouse-based switching between bookmarked, suspended, and other card sets
-- [x] Reworked active panel hitbox coordinates to derive content origin from Lip Gloss frame metrics
-- [x] Added interactive scrollbar tracks for Browser and Cram views
-- [x] Unified all breakpoints (Compact, Medium, Wide) to use a consistent bordered panel for active views
-- [x] Added `statsTotalLines` tracking to accurately calculate scroll ratios
-- [x] Fixed all Go unit tests for `renderStatistics`
+### Cloze Deletion Support
+- [x] **Implemented Cloze Deletion card kind** in core models
+- [x] **Added robust Cloze parser** supporting Anki-style `{{c1::text::hint}}` syntax
+- [x] **Enhanced TUI rendering for Cloze cards** with highlighted placeholders
+- [x] **Fixed card generation logic** to prevent duplicate/ugly flashcards for Cloze notes
+- [x] **Added comprehensive E2E test** for Cloze deletion flow (`e2e_tests/test_cloze_deletion.py`)
 
-### Bug Fixes
-- [x] Added missing `strconv` import in TUI layer
-- [x] Resolved regression in `renderCompact` where panels were missing
-- [x] Fixed TUI unit tests failing due to signature changes
-- [x] **Fixed race condition in Review reveal** by only showing grading hints and hitboxes when fully revealed (synchronizing visual state with interaction)
-- [x] **Fixed session statistics undo bug** by correctly decrementing reviewed and correct counts when a review is undone
-- [x] **Fixed persistent dragging state** by clearing `isDragging` on view changes and window resizes
-- [x] **Fixed MCQ state leakage** by resetting `mcqChoice` and `mcqAnswered` in `applyDeckFilter`
-- [x] **Implemented robust ID-based deck synchronization** to prevent visual desyncs when decks are reordered (e.g. after import)
-- [x] **Eliminated keyboard input traps** in AI, Browser, Import, and Settings views, restoring global navigation (1-9) reliability
-- [x] **Fixed audio auto-play trigger** and added detailed error reporting for failed playback
-- [x] **Hardened hierarchical input architecture** in `updateKey` to ensure consistent global vs. local key prioritization
-- [x] **Fixed deck selection bug** where selecting from a filtered list resulted in the wrong deck being active (now uses ID-based selection)
-- [x] **Secured Cram mode cursor** by ensuring `cramCursor` is safely clamped whenever the card list is refreshed or reduced
+### MCQ Enhancements
+- [x] **Expanded MCQ support in TSV imports** using the `notetype` column
+- [x] **Updated parser to handle arbitrary choices** (e.g., `MCQ:choice1,choice2,choice3`)
+- [x] **Added unit tests for MCQ choices** in `internal/content/anki_test.go`
 
-### Testing
-- [x] Added 3 new interactive E2E tests in `e2e_tests/test_interactive_features.py` (mouse navigation, browser movement, scrollbar interaction)
-- [x] **Parallelized E2E tests** using `pytest-xdist`, achieving ~8x speedup (from 323s to <45s)
+### Dashboard & Content
+- [x] **Implemented "Grammar Tip of the Day" system** with rotating daily tips
+- [x] **Added responsive Grammar Tip box** to the Dashboard (with height-based visibility check)
+- [x] **Created "German Grammar Essentials" deck** featuring both MCQ and Cloze exercises
+- [x] **Updated README.md and documentation** to reflect new learning capabilities
 
-### Documentation
-- [x] **Updated README.md** to reflect the current production-ready state, including advanced views, interactive mouse support, and robust test metrics.
-- [x] **Documented TUI Tester** as a standalone utility with updated `tui_tester/README.md` and a new `tui_tester/AGENTS.md` guide.
-- [x] **Cleaned up TUI Tester directory** by removing redundant internal `e2e_tests` to ensure a clean standalone repository.
-- [x] **Added MIT License** to both the main project and the `tui_tester` library.
-- [x] Updated project notices and index to maintain agent continuity.
+### Bug Fixes & Refinement
+- [x] **Fixed Dashboard layout overflows** caused by large boxes on small terminals
+- [x] **Synchronized Cloze note card generation** to only produce intended study cards
+- [x] **Fixed gofmt violations** across content and test files
+- [x] **Hardened E2E test suite** with better environment handling and stabilization
 
 ### Current Status (Verification)
 - [x] App starts with zero errors
-- [x] All views render correctly (Dashboard, Review, Import, AI, Settings, Browser, Cram)
-- [x] Core user interactions respond as expected (flashcard reveal, grading, navigation)
+- [x] All views render correctly (including new responsive Dashboard elements)
+- [x] Core user interactions respond as expected
 - [x] State successfully persisted to SQLite
-- [x] All Go unit tests pass (9 test suites)
-- [x] All 76 E2E tests pass
+- [x] All Go unit tests pass (10 test suites)
+- [x] All 77 E2E tests pass (including new Cloze test)
 - [x] ./scripts/verify.sh executes successfully
+
 
 ## Planned Features
 

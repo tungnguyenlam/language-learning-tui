@@ -2206,6 +2206,21 @@ func (m *Model) renderActiveViewPlainAt(layout viewportLayout) string {
 		db.WriteString(headerBox + "\n")
 		db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, reviewQueue, " ", collectionStats) + "\n")
 		db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, progressBox, " ", dailyDigestBox) + "\n")
+
+		// Only show grammar tip if there is enough vertical space
+		if layout.Height > 20 {
+			tip := content.GetDailyGrammarTip()
+			tipStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Bold(true)
+			tipBox := lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(lipgloss.Color("39")).
+				Padding(0, 1).
+				Width(layout.Width - 4). // Use layout width
+				Render(tipStyle.Render("Grammar Tip: "+tip.Title) + "\n" +
+					fmt.Sprintf("  %s", tip.Tip))
+			db.WriteString(tipBox + "\n")
+		}
+
 		db.WriteString(mutedStyle.Render("Use [ and ] to switch decks.\nUse Review (3) to start studying."))
 
 		return db.String()
@@ -3269,7 +3284,15 @@ func (m *Model) renderReview(x, y int) string {
 	if card.Mature {
 		mature = " ✨"
 	}
-	view := fmt.Sprintf("%s\n%s | %s\n%s%s%s\n\n%s%s\n\n%s", header, bookmark, keys, leech, suspended, audioIndicator, card.Prompt, mature, answer)
+
+	promptDisplay := card.Prompt
+	if card.Kind == core.CardKindCloze {
+		// Highlight the [...] or [hint] in cloze prompt
+		promptDisplay = strings.Replace(promptDisplay, "[", lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("["), 1)
+		promptDisplay = strings.Replace(promptDisplay, "]", lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("]"), 1)
+	}
+
+	view := fmt.Sprintf("%s\n%s | %s\n%s%s%s\n\n%s%s\n\n%s", header, bookmark, keys, leech, suspended, audioIndicator, promptDisplay, mature, answer)
 	if m.showReviewHistory && m.reviewHistoryCard == card.ID {
 		view += "\n\n" + m.renderReviewHistory(card.Prompt)
 	}

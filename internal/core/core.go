@@ -14,6 +14,7 @@ type CardKind string
 const (
 	CardKindFlashcard CardKind = "flashcard"
 	CardKindMCQ       CardKind = "mcq"
+	CardKindCloze     CardKind = "cloze"
 )
 
 type ReviewGrade string
@@ -47,6 +48,7 @@ type Note struct {
 	Audio    string
 	Tags     []string
 	Examples []string
+	Choices  []string
 	Cards    []Card
 }
 
@@ -150,7 +152,7 @@ func ValidateCard(card Card) error {
 	if card.Kind == CardKindMCQ && len(card.Choices) < 2 {
 		return errors.New("mcq cards require at least two choices")
 	}
-	if card.Kind != CardKindFlashcard && card.Kind != CardKindMCQ {
+	if card.Kind != CardKindFlashcard && card.Kind != CardKindMCQ && card.Kind != CardKindCloze {
 		return errors.New("unsupported card kind")
 	}
 	return nil

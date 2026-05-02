@@ -76,6 +76,16 @@ func ImportAnkiTSV(r io.Reader, opts ImportOptions) ([]core.Note, error) {
 		if len(record) > 4 {
 			note.Tags = splitTags(record[4])
 		}
+		if len(record) > 6 {
+			noteType := strings.TrimSpace(record[6])
+			if strings.HasPrefix(noteType, "MCQ:") {
+				choicesStr := strings.TrimPrefix(noteType, "MCQ:")
+				note.Choices = strings.Split(choicesStr, ",")
+				for i := range note.Choices {
+					note.Choices[i] = strings.TrimSpace(note.Choices[i])
+				}
+			}
+		}
 		if len(record) > 7 {
 			note.Audio = strings.TrimSpace(record[7])
 		}
@@ -97,6 +107,10 @@ func ExportAnkiTSV(w io.Writer, notes []core.Note) error {
 		if strings.TrimSpace(note.ID) == "" {
 			return errors.New("cannot export note with empty id")
 		}
+		noteType := "Basic"
+		if len(note.Choices) > 0 {
+			noteType = "MCQ:" + strings.Join(note.Choices, ",")
+		}
 		if err := writer.Write([]string{
 			note.ID,
 			note.Front,
@@ -104,7 +118,7 @@ func ExportAnkiTSV(w io.Writer, notes []core.Note) error {
 			note.Extra,
 			strings.Join(note.Tags, " "),
 			note.DeckID,
-			"Basic",
+			noteType,
 			note.Audio,
 		}); err != nil {
 			return err
@@ -122,6 +136,27 @@ func ExportAnkiTSVString(notes []core.Note) (string, error) {
 
 func CardsForNote(note core.Note) []core.Card {
 	baseTags := append([]string(nil), note.Tags...)
+
+	// Cloze Deletion
+	clozes := parseClozes(note.Front)
+	if len(clozes) > 0 {
+		cards := make([]core.Card, 0, len(clozes))
+		for i, cloze := range clozes {
+			cards = append(cards, core.Card{
+				ID:      fmt.Sprintf("%s:cloze-%d", note.ID, i+1),
+				NoteID:  note.ID,
+				DeckID:  note.DeckID,
+				Kind:    core.CardKindCloze,
+				Prompt:  cloze.Prompt,
+				Answer:  cloze.Full,             // Full sentence for Cloze
+				Choices: []string{cloze.Answer}, // The actual missing part
+				Audio:   note.Audio,
+				Tags:    baseTags,
+			})
+		}
+		return cards
+	}
+
 	cards := []core.Card{
 		{
 			ID:     note.ID + ":front",
@@ -134,7 +169,20 @@ func CardsForNote(note core.Note) []core.Card {
 			Tags:   baseTags,
 		},
 	}
-	if len(note.Examples) > 0 {
+
+	if len(note.Choices) > 0 {
+		cards = append(cards, core.Card{
+			ID:      note.ID + ":mcq",
+			NoteID:  note.ID,
+			DeckID:  note.DeckID,
+			Kind:    core.CardKindMCQ,
+			Prompt:  note.Front,
+			Answer:  note.Back,
+			Choices: note.Choices,
+			Audio:   note.Audio,
+			Tags:    baseTags,
+		})
+	} else if len(note.Examples) > 0 {
 		cards = append(cards, core.Card{
 			ID:      note.ID + ":mcq",
 			NoteID:  note.ID,
@@ -148,6 +196,95 @@ func CardsForNote(note core.Note) []core.Card {
 		})
 	}
 	return cards
+}
+
+type clozeInfo struct {
+	Prompt string
+	Answer string
+	Full   string
+}
+
+func parseClozes(text string) []clozeInfo {
+	var result []clozeInfo
+	// Simple regex-like parsing for {{c1::text::hint}}
+	// We'll support multiple clozes
+	originalText := text
+	offset := 0
+	for {
+		start := strings.Index(text, "{{c")
+		if start == -1 {
+			break
+		}
+		end := strings.Index(text[start:], "}}")
+		if end == -1 {
+			break
+		}
+		end += start
+		content := text[start+2 : end]
+		parts := strings.Split(content, "::")
+		if len(parts) < 2 {
+			// Not a valid cloze, skip
+			text = text[end+2:]
+			offset += end + 2
+			continue
+		}
+		// parts[0] is c1, c2, etc.
+		answer := parts[1]
+		hint := ""
+		if len(parts) > 2 {
+			hint = parts[2]
+		}
+
+		// Replace the cloze with [...] or [hint] for the prompt
+		placeholder := "[...]"
+		if hint != "" {
+			placeholder = "[" + hint + "]"
+		}
+
+		// Create the prompt by replacing ONLY this cloze with placeholder
+		// and ALL other clozes with their text
+		prompt := stripClozeMarkers(originalText, offset+start, offset+end, placeholder)
+		full := stripClozeMarkers(originalText, -1, -1, "")
+
+		result = append(result, clozeInfo{
+			Prompt: prompt,
+			Answer: answer,
+			Full:   full,
+		})
+
+		// Continue searching in the rest of the text
+		text = text[end+2:]
+		offset += end + 2
+	}
+	return result
+}
+
+func stripClozeMarkers(text string, activeStart, activeEnd int, placeholder string) string {
+	var b strings.Builder
+	i := 0
+	for i < len(text) {
+		if i == activeStart {
+			b.WriteString(placeholder)
+			i = activeEnd + 2
+			continue
+		}
+		if strings.HasPrefix(text[i:], "{{c") {
+			end := strings.Index(text[i:], "}}")
+			if end != -1 {
+				end += i
+				content := text[i+2 : end]
+				parts := strings.Split(content, "::")
+				if len(parts) >= 2 {
+					b.WriteString(parts[1]) // Keep the answer text
+					i = end + 2
+					continue
+				}
+			}
+		}
+		b.WriteByte(text[i])
+		i++
+	}
+	return b.String()
 }
 
 func splitTags(raw string) []string {

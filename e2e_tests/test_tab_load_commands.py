@@ -2,13 +2,17 @@ import os
 import sys
 import tempfile
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../tui_tester")))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../tui_tester"))
+)
 
 from tui_tester import TUIAgent
 
 
 def start_agent(tmpdir, columns=100, lines=30):
-    agent = TUIAgent(f"go run ./cmd/deutsch-tui -data-dir {tmpdir}", columns=columns, lines=lines)
+    agent = TUIAgent(
+        f"go run ./cmd/deutsch-tui -data-dir {tmpdir}", columns=columns, lines=lines
+    )
     agent.wait_for_text("Dashboard", timeout=15.0)
     agent.wait_until_stable()
     return agent
@@ -43,6 +47,7 @@ def test_tab_to_cram_loads_bookmarked_cards():
             agent.wait_for_text("Card bookmarked")
 
             tab_to(agent, "Cram Mode", 6)
+            agent.wait_until_stable()
             agent.wait_for_text("Filter: bookmarked")
             agent.assert_text("> [FC] blau")
             agent.assert_text("1 cards in cram mode")

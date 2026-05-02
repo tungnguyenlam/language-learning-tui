@@ -1,0 +1,19 @@
+#separator:tab
+#html:false
+#deck:German Grammar Essentials
+front	back	extra	tags	notetype
+Ich gebe ___ (the man) das Buch.	dem Mann	Dativ: geben takes indirect object in Dativ.	grammar,cases,dativ	MCQ:den Mann,der Mann,dem Mann,des Mannes
+Wir sehen ___ (the dog).	den Hund	Akkusativ: sehen takes direct object in Akkusativ.	grammar,cases,akkusativ	MCQ:der Hund,den Hund,dem Hund,des Hundes
+Das ist das Auto ___ (the father).	des Vaters	Genitiv: shows possession.	grammar,cases,genitiv	MCQ:der Vater,den Vater,dem Vater,des Vaters
+___ (The child) spielt im Garten.	Das Kind	Nominativ: subject of the sentence.	grammar,cases,nominativ	MCQ:Der Kind,Die Kind,Das Kind,Den Kind
+Ich helfe ___ (the woman).	der Frau	Dativ: helfen is a Dativ verb.	grammar,cases,dativ	MCQ:die Frau,der Frau,den Frau,des Frau
+Wir gehen ___ (without) meinen Bruder.	ohne	ohne always takes Akkusativ.	grammar,prepositions,akkusativ	MCQ:mit,ohne,von,zu
+Ich komme ___ (with) dem Auto.	mit	mit always takes Dativ.	grammar,prepositions,dativ	MCQ:für,durch,mit,gegen
+Das Buch liegt ___ (on) dem Tisch.	auf	auf + Dativ (position).	grammar,prepositions,dativ	MCQ:in,auf,unter,hinter
+Ich lege das Buch ___ (on) den Tisch.	auf	auf + Akkusativ (direction/movement).	grammar,prepositions,akkusativ	MCQ:in,auf,unter,hinter
+Er arbeitet ___ (at/for) Siemens.	bei	bei + Dativ (company/place).	grammar,prepositions,dativ	MCQ:zu,nach,bei,von
+Ich {{c1::gebe}} dem Mann das Buch.	give	gebe (to give) - Dativ verb.	grammar,verbs,dativ	Basic
+Wir {{c1::sehen}} den Hund.	see	sehen (to see) - Akkusativ verb.	grammar,verbs,akkusativ	Basic
+Das ist das Haus {{c1::meines Vaters::my father's}}.	my father's	Genitiv case.	grammar,cases,genitiv	Basic
+Ich helfe {{c1::der Frau::the woman}}.	the woman	helfen + Dativ.	grammar,verbs,dativ	Basic
+Wir gehen {{c1::ohne}} meinen Bruder.	without	ohne + Akkusativ.	grammar,prepositions,akkusativ	Basic
