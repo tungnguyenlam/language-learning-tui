@@ -14,6 +14,10 @@ At the start of a new session:
 
 If the user switches chats mid-task, treat `docs/backlog/active.md` as the handoff source of truth.
 
+## Status Note
+
+As of 2026-05-03: Project is production-ready. All 76 E2E tests pass, all 9 Go unit test suites pass, verification passes end-to-end. No outstanding issues.
+
 ## Continuous Documentation
 
 Agents MUST NOT wait until the very end of a session to document changes. As soon as a logical sub-task or feature is completed, or a plan changes:
