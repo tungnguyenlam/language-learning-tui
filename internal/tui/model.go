@@ -1355,7 +1355,7 @@ func (m *Model) templateKeyAtCursor() string {
 
 func (m *Model) renderSettings(x, y int) string {
 	var b strings.Builder
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).MarginBottom(1)
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).MarginBottom(1)
 	b.WriteString(titleStyle.Render("Settings") + "\n\n")
 
 	autoPlayStatus := "off"
@@ -2152,16 +2152,16 @@ func (m *Model) renderActiveViewPlainAt(layout viewportLayout) string {
 
 		headerBox := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("62")).
+			BorderForeground(lipgloss.Color("81")).
 			Padding(0, 1).
 			Width(maxInt(40, m.width-60)).
-			Render(fmt.Sprintf("Active Deck: %s", lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render(m.deckLabel())))
+			Render(fmt.Sprintf("Active Deck: %s", lipgloss.NewStyle().Foreground(lipgloss.Color("159")).Render(m.deckLabel())))
 
 		statsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("226")).Bold(true)
 
 		reviewQueue := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("63")).
+			BorderForeground(lipgloss.Color("81")).
 			Padding(0, 1).
 			Render(statsStyle.Render("Review Queue") + "\n" +
 				fmt.Sprintf("  Due cards:   %d\n", len(m.dueCards)) +
@@ -2169,7 +2169,7 @@ func (m *Model) renderActiveViewPlainAt(layout viewportLayout) string {
 
 		collectionStats := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("64")).
+			BorderForeground(lipgloss.Color("208")).
 			Padding(0, 1).
 			Render(statsStyle.Render("Collection") + "\n" +
 				fmt.Sprintf("  Leech:       %d\n", m.stats.LeechCards) +
@@ -2178,7 +2178,7 @@ func (m *Model) renderActiveViewPlainAt(layout viewportLayout) string {
 		goalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Bold(true)
 		progressBox := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("65")).
+			BorderForeground(lipgloss.Color("46")).
 			Padding(0, 1).
 			Render(goalStyle.Render("Today's Progress") + "\n" +
 				fmt.Sprintf("  Reviews:     %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal) +
@@ -2302,7 +2302,7 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 	// Streak with fire emoji if > 0
 	streakIndicator := ""
 	if m.stats.CurrentStreak > 0 {
-		streakIndicator = " 🔥"
+		streakIndicator = " ✨"
 	}
 	content.WriteString(fmt.Sprintf("Current Streak: %d days%s\n", m.stats.CurrentStreak, streakIndicator))
 	content.WriteString(fmt.Sprintf("Success Rate:  %.1f%%\n\n", m.stats.SuccessRate*100))
@@ -2310,8 +2310,17 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 	content.WriteString("Session Stats:\n")
 	content.WriteString(fmt.Sprintf("  Reviewed:    %d\n", m.sessionReviewed))
 	if m.sessionReviewed > 0 {
+		accuracy := float64(m.sessionCorrect) / float64(m.sessionReviewed) * 100
+		var accuracyColor string
+		if accuracy >= 80 {
+			accuracyColor = "46" // green
+		} else if accuracy >= 60 {
+			accuracyColor = "226" // yellow
+		} else {
+			accuracyColor = "197" // red
+		}
 		content.WriteString(fmt.Sprintf("  Correct:     %d\n", m.sessionCorrect))
-		content.WriteString(fmt.Sprintf("  Accuracy:     %.1f%%\n\n", float64(m.sessionCorrect)/float64(m.sessionReviewed)*100))
+		content.WriteString(fmt.Sprintf("  Accuracy:    %s%.1f%%%s\n\n", lipgloss.Color(accuracyColor), accuracy, lipgloss.Color("248")))
 	} else {
 		content.WriteString("  (no reviews yet)\n\n")
 	}
@@ -2464,7 +2473,7 @@ func (m *Model) renderDecks(x, y int) string {
 
 		newStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81"))
 		dueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("208"))
-		totalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
+		totalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("159"))
 
 		counts := fmt.Sprintf("%s new, %s due, %s total",
 			newStyle.Render(strconv.Itoa(deck.NewCards)),
@@ -2493,7 +2502,7 @@ func (m *Model) renderDecks(x, y int) string {
 
 func (m *Model) renderImport(x, y int) string {
 	var b strings.Builder
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).MarginBottom(1)
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).MarginBottom(1)
 	b.WriteString(titleStyle.Render("Import / Export") + "\n\n")
 
 	importPathLabel := "Import file: " + m.importPath
@@ -2784,16 +2793,15 @@ func (m *Model) toggleBrowserSuspension() tea.Cmd {
 
 func (m *Model) renderBrowserAt(layout viewportLayout) string {
 	var b strings.Builder
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).MarginBottom(1)
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).MarginBottom(1)
 	b.WriteString(titleStyle.Render("Card Browser") + "\n")
 
 	searchBorderColor := "62"
 	searchLabel := "Search"
 	if m.searchingBrowser {
-		searchBorderColor = "212"
+		searchBorderColor = "81"
 		searchLabel = "SEARCHING"
 	}
-
 	searchStyle := lipgloss.NewStyle().
 		Border(lipgloss.NormalBorder()).
 		BorderForeground(lipgloss.Color(searchBorderColor)).
@@ -2936,7 +2944,8 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		if card.Audio != "" {
 			audioIndicator = " [Audio]"
 		}
-		b.WriteString("Cram Review\n\n")
+		titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
+		b.WriteString(titleStyle.Render("Cram Review") + "\n\n")
 		b.WriteString(fmt.Sprintf("Prompt: %s%s\n\n", card.Prompt, audioIndicator))
 		if m.cramRevealed {
 			b.WriteString(fmt.Sprintf("Answer: %s\n\n", card.Answer))
@@ -2959,7 +2968,7 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 			}
 			revealedRunes := []rune(fullText)[:revealedChars]
 			remainingBlocks := numChars - revealedChars
-			animationText := string(revealedRunes) + strings.Repeat("█", remainingBlocks)
+			animationText := string(revealedRunes) + strings.Repeat("▌", remainingBlocks-1)
 			b.WriteString(fmt.Sprintf("Answer: %s\n\n", animationText))
 			b.WriteString("Press space or enter to finish reveal.\n")
 		} else {
@@ -3248,17 +3257,17 @@ func (m *Model) renderReview(x, y int) string {
 		}
 		revealedRunes := []rune(fullText)[:revealedChars]
 		remainingBlocks := numChars - revealedChars
-		answer = string(revealedRunes) + strings.Repeat("█", remainingBlocks)
+		answer = string(revealedRunes) + "▌" + strings.Repeat("▌", remainingBlocks-1)
 	} else {
 		answer = "Press space or enter to reveal."
 	}
 
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205"))
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
 	header := fmt.Sprintf("%s%s %d/%d", titleStyle.Render("Review"), filterBanner, m.cursor+1, len(m.dueCards))
 
 	mature := ""
 	if card.Mature {
-		mature = " ⭐"
+		mature = " ✨"
 	}
 	view := fmt.Sprintf("%s\n%s | %s\n%s%s%s\n\n%s%s\n\n%s", header, bookmark, keys, leech, suspended, audioIndicator, card.Prompt, mature, answer)
 	if m.showReviewHistory && m.reviewHistoryCard == card.ID {
