@@ -48,6 +48,7 @@ Autonomous Feature Pass 18: Final Polish and Handoff
 
 ### Documentation
 - [x] **Updated README.md** to reflect the current production-ready state, including advanced views, interactive mouse support, and robust test metrics.
+- [x] **Documented TUI Tester** as a standalone utility with updated `tui_tester/README.md` and a new `tui_tester/AGENTS.md` guide.
 - [x] Updated project notices and index to maintain agent continuity.
 
 ### Current Status (Verification)

@@ -380,7 +380,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case revealTickMsg:
 		if m.revealState == RevealRevealing {
-			m.revealProgress += 20 // 5 steps from 0 to 100
+			m.revealProgress += 10 // 10 steps from 0 to 100 for smoother animation
 			if m.revealProgress >= 100 {
 				m.revealProgress = 100
 				m.revealState = RevealRevealed
@@ -623,7 +623,7 @@ func (m *Model) startRevealAnimation(audioPath string) tea.Cmd {
 }
 
 func (m *Model) tickReveal() tea.Cmd {
-	return tea.Tick(time.Millisecond*50, func(t time.Time) tea.Msg {
+	return tea.Tick(time.Millisecond*60, func(t time.Time) tea.Msg {
 		return revealTickMsg{}
 	})
 }
@@ -3217,7 +3217,7 @@ func (m *Model) renderReview(x, y int) string {
 			}
 			revealedRunes := []rune(fullText)[:revealedChars]
 			remainingBlocks := numChars - revealedChars
-			animationText := string(revealedRunes) + strings.Repeat("█", remainingBlocks)
+			animationText := string(revealedRunes) + strings.Repeat("▌", remainingBlocks-1)
 			answer = fmt.Sprintf("1-4 select answer\n\n%s", renderMCQChoices(card.Choices, m.mcqChoice))
 			// Replace the answer in choices display
 			answer = strings.Replace(answer, fullText, animationText, 1)

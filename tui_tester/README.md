@@ -3,12 +3,13 @@
 A standalone, headless TUI-testing utility designed specifically for agent-based workflows.
 
 ## Features
+- **Language Agnostic:** Test TUIs written in Go, Rust, Python, C++, etc. Treatments the app as a black box.
+- **Full Mouse Support:** Simulate clicks, motion, and **drag-to-scroll** interactions using the xterm SGR protocol.
 - **Headless PTY Management:** Uses `pexpect` for cross-platform pseudo-terminal manipulation.
 - **ANSI Screen Buffer:** Uses `pyte` to parse escape sequences and maintain a realistic virtual screen.
 - **Smart Synchronization:** Wait for text, regex patterns, or screen stability before acting.
-- **Agent Loop Ready:** High-level `TUIAgent` wrapper makes writing LLM agents straightforward.
-- **Rich Diagnostics:** Failed assertions automatically attach visual screen dumps.
-- **CLI Daemon:** Start applications in the background and interact with them interactively from the command line over a persistent session.
+- **Agent Loop Ready:** High-level `TUIAgent` wrapper and `AGENTS.md` guide make LLM integration straightforward.
+- **CLI Daemon:** Control persistent TUI sessions over multiple shell commands.
 
 ## Installation
 
@@ -70,13 +71,16 @@ while not tui.done:
 tui.close()
 ```
 
-## Extracting to a Separate Repository
+## Publishing as a Skill or MCP Server
 
-This utility is completely self-contained. To extract it:
+### As a Gemini CLI Skill
+You can package this utility as a "Skill" to give Gemini CLI native TUI-testing capabilities.
+1.  Add a `SKILL.md` file to the root of the repository.
+2.  Define the tools (start, observe, act, wait) using the format expected by the `skill-creator`.
+3.  Users can then activate it with `activate_skill("tui-tester")`.
 
-1. Copy the `tui_tester/` folder to a new location, OR
-2. Use `git subtree split`:
-   ```bash
-   git subtree split --prefix=tui_tester -b tui-tester-branch
-   ```
-3. Inside the folder, you can run `git init` and push to a new GitHub repository.
+### As an MCP Server (Model Context Protocol)
+To use this with other LLM clients (like Claude Desktop), you can wrap the CLI in an MCP server.
+1.  Use the `python-mcp-sdk`.
+2.  Expose the `TUIAgent` methods as MCP Tools.
+3.  This allows any MCP-compatible agent to "see" and "touch" terminal applications.

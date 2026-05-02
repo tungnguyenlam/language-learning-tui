@@ -18,6 +18,7 @@
 - **Resolved navigation "traps"** by ensuring global keyboard shortcuts (1-9, ?) take precedence over unhandled local view keys.
 - **Fixed deck selection bug** and **secured Cram mode cursor**, improving the reliability of filtered collection management.
 - **Fixed audio auto-play and error reporting**, ensuring reliable playback feedback for learners.
+- **Documented TUI Tester** as a standalone utility with detailed `README.md` and `AGENTS.md` guides, including instructions for publishing as a Gemini Skill or MCP server.
 - Enhanced `tui-tester` with `move_mouse` and `drag_mouse` simulation capabilities.
 - Verified all 76 E2E tests passing.
 - **Parallelized E2E tests** with `pytest-xdist`, reducing full verification time from ~5.5 minutes to ~45 seconds.
