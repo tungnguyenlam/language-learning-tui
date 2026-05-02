@@ -69,13 +69,10 @@ def test_mcq_review_shows_choices():
             # First find an MCQ in the browser to make sure we know what to look for
             agent.act("8")
             agent.wait_for_text("Card Browser")
-            # Don't send / as the browser doesn't need it to start searching
-            agent.act("I")
-            agent.act("c")
-            agent.act("h")
+            # Enter search mode with /
+            agent.act("/Ich")
             # agent.act("<Enter>") # Enter toggles history, doesn't finish search
             agent.wait_for_text("[MCQ]")
-            
             # Go back to dashboard then review
             agent.act("1")
             agent.wait_for_text("DASHBOARD")
@@ -183,7 +180,8 @@ def test_card_browser_search_filter():
             agent.wait_for_text("Card Browser")
             agent.wait_for_text("52 cards found")
 
-            agent.act("Ap")
+            # Enter search mode and type query
+            agent.act("/Ap")
             agent.wait_for_text("der Apfel")
             # Verify only matching cards shown
             agent.wait_for_text("1 cards found")

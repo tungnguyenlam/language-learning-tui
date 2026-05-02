@@ -1217,6 +1217,7 @@ func TestBrowserSearchFilter(t *testing.T) {
 	model.activeView = ViewBrowser
 	model.browserDeckID = "deck-1"
 
+	model.updateBrowserKey(tea.KeyPressMsg{Code: '/'})
 	model.updateBrowserKey(tea.KeyPressMsg{Code: 'A'})
 	model.updateBrowserKey(tea.KeyPressMsg{Code: 'p'})
 	// Execute the cmd to load browser cards with search

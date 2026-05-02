@@ -138,6 +138,7 @@ type Model struct {
 	dragTrackStartY    int
 	dragVisible        int
 	dragTotal          int
+	searchingBrowser   bool
 }
 
 func NewModel(repo core.Repository, scheduler core.Scheduler) *Model {
@@ -1073,7 +1074,30 @@ func (m *Model) updateSettingsKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 }
 
 func (m *Model) updateBrowserKey(msg tea.KeyMsg) (tea.Cmd, bool) {
+	if m.searchingBrowser {
+		switch msg.String() {
+		case "esc", "enter":
+			m.searchingBrowser = false
+			return nil, true
+		case "backspace":
+			if len(m.browserSearch) > 0 {
+				m.browserSearch = m.browserSearch[:len(m.browserSearch)-1]
+				m.clearReviewHistory()
+				return m.loadBrowserCards(), true
+			}
+		}
+		if len(msg.String()) == 1 && msg.String() >= " " && msg.String() <= "~" {
+			m.browserSearch += msg.String()
+			m.clearReviewHistory()
+			return m.loadBrowserCards(), true
+		}
+		return nil, true
+	}
+
 	switch msg.String() {
+	case "/":
+		m.searchingBrowser = true
+		return nil, true
 	case "up", "k":
 		m.moveBrowserCursor(-1)
 		return nil, true
@@ -1082,17 +1106,17 @@ func (m *Model) updateBrowserKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 		return nil, true
 	case "enter":
 		return m.toggleBrowserHistory(), true
+	case "b":
+		return m.toggleBrowserBookmark(), true
+	case "x":
+		return m.toggleBrowserSuspension(), true
 	case "backspace":
+		// Allow clearing search in normal mode too
 		if len(m.browserSearch) > 0 {
 			m.browserSearch = m.browserSearch[:len(m.browserSearch)-1]
 			m.clearReviewHistory()
 			return m.loadBrowserCards(), true
 		}
-	}
-	if len(msg.String()) == 1 && msg.String() >= " " && msg.String() <= "~" {
-		m.browserSearch += msg.String()
-		m.clearReviewHistory()
-		return m.loadBrowserCards(), true
 	}
 	return nil, true
 }
@@ -1882,7 +1906,11 @@ func (m *Model) render() string {
 			helpHint = "| Filter: 1-5"
 		}
 	case ViewBrowser:
-		helpHint = "| Search: type text"
+		if m.searchingBrowser {
+			helpHint = "| Searching... | Stop: Esc/Enter"
+		} else {
+			helpHint = "| Search: / | Bookmark: b | Suspend: x"
+		}
 	case ViewSettings:
 		helpHint = "| Nav: j/k | Edit: Enter"
 	case ViewImport:
@@ -2550,21 +2578,92 @@ func (m *Model) renderBrowser() string {
 	return m.renderBrowserAt(m.activeViewContentLayout())
 }
 
+func (m *Model) toggleBrowserBookmark() tea.Cmd {
+	if len(m.browserCards) == 0 {
+		return nil
+	}
+	card := m.browserCards[m.browserCursor]
+	next := !card.Bookmarked
+	m.status = "Saving bookmark..."
+	// Update local state immediately for responsiveness
+	m.browserCards[m.browserCursor].Bookmarked = next
+	// Also update in allDue if present
+	for i := range m.allDue {
+		if m.allDue[i].ID == card.ID {
+			m.allDue[i].Bookmarked = next
+			break
+		}
+	}
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if err := m.repo.SetCardBookmark(ctx, card.ID, next); err != nil {
+			return err
+		}
+		return bookmarkToggledMsg{cardID: card.ID, bookmarked: next}
+	}
+}
+
+func (m *Model) toggleBrowserSuspension() tea.Cmd {
+	if len(m.browserCards) == 0 {
+		return nil
+	}
+	card := m.browserCards[m.browserCursor]
+	next := !card.Suspended
+	m.status = "Updating suspension..."
+	// Update local state
+	m.browserCards[m.browserCursor].Suspended = next
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if err := m.repo.SetCardSuspended(ctx, card.ID, next); err != nil {
+			return err
+		}
+		// Refresh everything to ensure stats and lists are consistent
+		var cards []core.Card
+		var err error
+		if m.bookmarkFilter {
+			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
+		} else {
+			cards, err = m.repo.DueCards(ctx, time.Now(), 500)
+		}
+		if err != nil {
+			return err
+		}
+		decks, err := m.repo.Decks(ctx)
+		if err != nil {
+			return err
+		}
+		stats, err := m.repo.Statistics(ctx)
+		if err != nil {
+			return err
+		}
+		return cardSuspendedMsg{cardID: card.ID, cards: cards, decks: decks, stats: stats}
+	}
+}
+
 func (m *Model) renderBrowserAt(layout viewportLayout) string {
 	var b strings.Builder
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).MarginBottom(1)
 	b.WriteString(titleStyle.Render("Card Browser") + "\n")
 
+	searchBorderColor := "62"
+	searchLabel := "Search"
+	if m.searchingBrowser {
+		searchBorderColor = "212"
+		searchLabel = "SEARCHING"
+	}
+
 	searchStyle := lipgloss.NewStyle().
 		Border(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color("62")).
+		BorderForeground(lipgloss.Color(searchBorderColor)).
 		Padding(0, 1).
 		Width(maxInt(30, m.width-60))
 
-	b.WriteString(searchStyle.Render(fmt.Sprintf("Search: %s_", m.browserSearch)) + "\n\n")
+	b.WriteString(searchStyle.Render(fmt.Sprintf("%s: %s_", searchLabel, m.browserSearch)) + "\n\n")
 
 	if len(m.browserCards) == 0 {
-		b.WriteString("No cards found. Type to search.\n\n")
+		b.WriteString("No cards found. Press / to search.\n\n")
 		b.WriteString(mutedStyle.Render("Use left/right/[ to change deck filter.\n"))
 		return b.String()
 	}
