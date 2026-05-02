@@ -172,8 +172,38 @@ def test_browser_card_actions():
             # Undo bookmark
             agent.act("b")
             agent.wait_until_stable()
-            # Since [B] might be in multiple places, we need to be careful, 
-            # but for the first card it should disappear.
-            # Actually, let's just check it doesn't fail.
+        finally:
+            agent.close()
+
+def test_settings_mouse_interaction():
+    """Verify that settings can be adjusted via interactive hitboxes."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir)
+        try:
+            # Go to Settings
+            agent.act("7")
+            agent.wait_for_text("Settings")
+            agent.assert_text("Daily Goal: 10")
+            
+            # Click [+] button
+            # In 90 col medium layout:
+            # layout.X = 3 (border 1 + padding 2)
+            # Label "  Daily Goal: 10 " is 17 chars (3..19)
+            # Minus "[-] " is 4 chars (20..23)
+            # Plus "[+] " is 4 chars (24..27)
+            # 1-based: Label (4..20), Minus (21..24), Plus (25..28)
+            
+            # Click Plus [+] (X=26, Y=16)
+            agent.click(26, 16) 
+            agent.wait_for_text("Daily Goal: 11")
+            
+            # Click Minus [-] (X=22, Y=16)
+            agent.click(22, 16)
+            agent.wait_for_text("Daily Goal: 10")
+            
+            # Click Auto-play audio (next line Y=17)
+            agent.assert_text("Auto-play audio: off")
+            agent.click(10, 17)
+            agent.wait_for_text("Auto-play audio: on")
         finally:
             agent.close()

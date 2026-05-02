@@ -17,6 +17,7 @@ Autonomous Feature Pass 18: Final Polish and UI Interactive Elements
 - [x] **Improved AI view** with interactive [Approve] and [Discard] buttons for each draft
 - [x] **Added detailed Preview** to the AI view for the selected draft (showing Extra info, Tags, and Examples)
 - [x] **Refactored Browser view** with an explicit **Search Mode** (via `/`) and quick card actions (**b** to bookmark, **x** to suspend)
+- [x] **Enhanced Settings view** with interactive hitboxes, section headers, and clickable [+] [-] goal adjustment buttons
 - [x] Reworked active panel hitbox coordinates to derive content origin from Lip Gloss frame metrics
 - [x] Added interactive scrollbar tracks for Browser and Cram views
 - [x] Unified all breakpoints (Compact, Medium, Wide) to use a consistent bordered panel for active views

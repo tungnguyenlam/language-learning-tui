@@ -1031,46 +1031,51 @@ func (m *Model) updateSettingsKey(msg tea.KeyMsg) (tea.Cmd, bool) {
 			m.settingsCursor++
 		}
 		return nil, true
+	case "enter":
+		return m.handleSettingsEnter(), true
 	case "+", "=":
 		return m.setDailyGoal(m.stats.DailyGoal + 1), true
 	case "-":
 		return m.setDailyGoal(m.stats.DailyGoal - 1), true
-	case "enter":
-		if m.settingsCursor == 0 {
-			switch m.aiProviderName {
-			case "offline":
-				m.aiProviderName = "template"
-				m.aiProvider = ai.TemplateProvider{Templates: m.aiTemplates}
-			case "template":
-				m.aiProviderName = "disabled"
-				m.aiProvider = nil
-			default:
-				m.aiProviderName = "offline"
-				m.aiProvider = ai.OfflineProvider{}
-			}
-			m.status = fmt.Sprintf("Switched to %s AI provider", m.aiProviderName)
-			if m.onConfigChange != nil {
-				m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio)
-			}
-			return nil, true
-		}
-		if m.settingsCursor == 5 {
-			m.autoPlayAudio = !m.autoPlayAudio
-			status := "disabled"
-			if m.autoPlayAudio {
-				status = "enabled"
-			}
-			m.status = fmt.Sprintf("Auto-play audio %s", status)
-			if m.onConfigChange != nil {
-				m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio)
-			}
-			return nil, true
-		} else if m.settingsCursor > 0 && m.settingsCursor < 4 {
-			m.editingTemplate = true
-			return nil, true
-		}
 	}
 	return nil, false
+}
+
+func (m *Model) handleSettingsEnter() tea.Cmd {
+	if m.settingsCursor == 0 {
+		switch m.aiProviderName {
+		case "offline":
+			m.aiProviderName = "template"
+			m.aiProvider = ai.TemplateProvider{Templates: m.aiTemplates}
+		case "template":
+			m.aiProviderName = "disabled"
+			m.aiProvider = nil
+		default:
+			m.aiProviderName = "offline"
+			m.aiProvider = ai.OfflineProvider{}
+		}
+		m.status = fmt.Sprintf("Switched to %s AI provider", m.aiProviderName)
+		if m.onConfigChange != nil {
+			m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio)
+		}
+		return nil
+	}
+	if m.settingsCursor == 5 {
+		m.autoPlayAudio = !m.autoPlayAudio
+		status := "disabled"
+		if m.autoPlayAudio {
+			status = "enabled"
+		}
+		m.status = fmt.Sprintf("Auto-play audio %s", status)
+		if m.onConfigChange != nil {
+			m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio)
+		}
+		return nil
+	} else if m.settingsCursor > 0 && m.settingsCursor < 4 {
+		m.editingTemplate = true
+		return nil
+	}
+	return nil
 }
 
 func (m *Model) updateBrowserKey(msg tea.KeyMsg) (tea.Cmd, bool) {
@@ -1356,25 +1361,29 @@ func (m *Model) templateKeyAtCursor() string {
 
 func (m *Model) renderSettings(x, y int) string {
 	var b strings.Builder
-	b.WriteString("Settings\n\n")
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).MarginBottom(1)
+	b.WriteString(titleStyle.Render("Settings") + "\n\n")
 
 	autoPlayStatus := "off"
 	if m.autoPlayAudio {
 		autoPlayStatus = "on"
 	}
-	options := []string{
+
+	sectionStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Bold(true).MarginTop(1)
+
+	b.WriteString(sectionStyle.Render("AI CONFIGURATION") + "\n")
+	aiOptions := []string{
 		fmt.Sprintf("AI Provider: %s", m.aiProviderName),
 		fmt.Sprintf("Front Template: %s", m.aiTemplates["front"]),
 		fmt.Sprintf("Back Template: %s", m.aiTemplates["back"]),
 		fmt.Sprintf("Example Template: %s", m.aiTemplates["example"]),
-		fmt.Sprintf("Daily Goal: %d", m.stats.DailyGoal),
-		fmt.Sprintf("Auto-play audio: %s", autoPlayStatus),
 	}
 
-	for i, opt := range options {
+	for i, opt := range aiOptions {
+		idx := i // 0-3
 		prefix := "  "
 		style := lipgloss.NewStyle()
-		if i == m.settingsCursor {
+		if idx == m.settingsCursor {
 			prefix = "> "
 			if m.editingTemplate {
 				style = style.Bold(true).Background(lipgloss.Color("62"))
@@ -1382,13 +1391,88 @@ func (m *Model) renderSettings(x, y int) string {
 				style = style.Bold(true).Foreground(lipgloss.Color("212"))
 			}
 		}
-		b.WriteString(style.Render(prefix+opt) + "\n")
+		item := prefix + opt
+		rowY := y + strings.Count(b.String(), "\n")
+		b.WriteString(style.Render(item) + "\n")
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     fmt.Sprintf("settings-%d", idx),
+			View:   ViewSettings,
+			X:      x,
+			Y:      rowY,
+			Width:  lipgloss.Width(item),
+			Height: 1,
+		})
 	}
 
+	b.WriteString(sectionStyle.Render("STUDY PREFERENCES") + "\n")
+
+	// Daily Goal with [+] [-] buttons
+	goalIdx := 4
+	prefix := "  "
+	style := lipgloss.NewStyle()
+	if goalIdx == m.settingsCursor {
+		prefix = "> "
+		style = style.Bold(true).Foreground(lipgloss.Color("212"))
+	}
+	goalLabel := fmt.Sprintf("%sDaily Goal: %d ", prefix, m.stats.DailyGoal)
+	rowY := y + strings.Count(b.String(), "\n")
+	b.WriteString(style.Render(goalLabel))
+
+	btnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
+	minusBtn := "[-] "
+	plusBtn := "[+] "
+	b.WriteString(btnStyle.Render(minusBtn))
+	b.WriteString(btnStyle.Render(plusBtn))
+	b.WriteString("\n")
+
+	m.hitboxes = append(m.hitboxes, Hitbox{
+		ID:     fmt.Sprintf("settings-%d", goalIdx),
+		View:   ViewSettings,
+		X:      x,
+		Y:      rowY,
+		Width:  lipgloss.Width(goalLabel),
+		Height: 1,
+	})
+	m.hitboxes = append(m.hitboxes, Hitbox{
+		ID:     "settings-goal-minus",
+		View:   ViewSettings,
+		X:      x + lipgloss.Width(goalLabel),
+		Y:      rowY,
+		Width:  lipgloss.Width(minusBtn),
+		Height: 1,
+	})
+	m.hitboxes = append(m.hitboxes, Hitbox{
+		ID:     "settings-goal-plus",
+		View:   ViewSettings,
+		X:      x + lipgloss.Width(goalLabel) + lipgloss.Width(minusBtn),
+		Y:      rowY,
+		Width:  lipgloss.Width(plusBtn),
+		Height: 1,
+	})
+
+	// Auto-play audio
+	audioIdx := 5
+	prefix = "  "
+	style = lipgloss.NewStyle()
+	if audioIdx == m.settingsCursor {
+		prefix = "> "
+		style = style.Bold(true).Foreground(lipgloss.Color("212"))
+	}
+	audioItem := fmt.Sprintf("%sAuto-play audio: %s", prefix, autoPlayStatus)
+	rowY = y + strings.Count(b.String(), "\n")
+	b.WriteString(style.Render(audioItem) + "\n")
+	m.hitboxes = append(m.hitboxes, Hitbox{
+		ID:     fmt.Sprintf("settings-%d", audioIdx),
+		View:   ViewSettings,
+		X:      x,
+		Y:      rowY,
+		Width:  lipgloss.Width(audioItem),
+		Height: 1,
+	})
 	if m.editingTemplate {
-		b.WriteString("\nEDITING - Enter to save, Esc to cancel.")
+		b.WriteString("\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("EDITING") + " - Enter to save, Esc to cancel.")
 	} else {
-		b.WriteString("\nUse j/k to move, +/- to adjust daily goal, Enter to toggle provider, audio, or edit template.")
+		b.WriteString("\n" + mutedStyle.Render("Use j/k to move, +/- to adjust goal, Enter to toggle/edit."))
 	}
 	return b.String()
 }
@@ -3242,6 +3326,19 @@ func (m *Model) activateHitbox(id string) tea.Cmd {
 		return m.gradeCard(core.GradeEasy)
 	case id == "draft-approve":
 		return m.approveDraft()
+	case strings.HasPrefix(id, "settings-"):
+		if id == "settings-goal-minus" {
+			return m.setDailyGoal(m.stats.DailyGoal - 1)
+		}
+		if id == "settings-goal-plus" {
+			return m.setDailyGoal(m.stats.DailyGoal + 1)
+		}
+		idx, err := strconv.Atoi(strings.TrimPrefix(id, "settings-"))
+		if err == nil && idx >= 0 && idx <= 5 {
+			m.settingsCursor = idx
+			return m.handleSettingsEnter()
+		}
+		return nil
 	case strings.HasPrefix(id, "draft-approve-"):
 		idx, err := strconv.Atoi(strings.TrimPrefix(id, "draft-approve-"))
 		if err == nil && idx >= 0 && idx < len(m.drafts) {
