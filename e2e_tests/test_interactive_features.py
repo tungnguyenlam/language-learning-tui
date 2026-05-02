@@ -207,3 +207,33 @@ def test_settings_mouse_interaction():
             agent.wait_for_text("Auto-play audio: on")
         finally:
             agent.close()
+
+def test_import_mouse_interaction():
+    """Verify that import paths can be selected and actions triggered via mouse."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir)
+        try:
+            # Go to Import
+            agent.act("5")
+            agent.wait_for_text("Import / Export")
+            
+            # Click Export path (row 8 in medium layout)
+            # 0-based Y: title=0, spacing=1, import=2, export=3
+            # In medium layout y=4, so row 8 is (4+3)=7 (0-based) = 8 (1-based)
+            agent.click(10, 8)
+            agent.wait_for_text("EDITING")
+            agent.assert_text("Export file:")
+            
+            # Cancel editing
+            agent.act("<Esc>")
+            agent.wait_until_stable()
+            agent.assert_not_text("EDITING")
+            
+            # Click Import button [i]
+            # rowY = y + 7 = 11 (0-based) = 12 (1-based)
+            agent.click(10, 12)
+            
+            # Status should update
+            agent.wait_for_text("Error:")
+        finally:
+            agent.close()

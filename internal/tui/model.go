@@ -2136,7 +2136,7 @@ func (m *Model) renderActiveViewPlainAt(layout viewportLayout) string {
 	case ViewStatistics:
 		return m.renderStatisticsAt(layout)
 	case ViewImport:
-		return m.renderImport()
+		return m.renderImport(layout.X, layout.Y)
 	case ViewAI:
 		return m.renderAI(layout.X, layout.Y)
 	case ViewSettings:
@@ -2497,49 +2497,106 @@ func (m *Model) renderDecks(x, y int) string {
 	return b.String()
 }
 
-func (m *Model) renderImport() string {
+func (m *Model) renderImport(x, y int) string {
 	var b strings.Builder
-	b.WriteString("Import / Export\n\n")
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).MarginBottom(1)
+	b.WriteString(titleStyle.Render("Import / Export") + "\n\n")
 
-	importLabel := "Import file: " + m.importPath
-	exportLabel := "Export file: " + m.exportPath
+	importPathLabel := "Import file: " + m.importPath
+	exportPathLabel := "Export file: " + m.exportPath
 
 	style := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212"))
 	editStyle := lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("62"))
 
+	// Import Path
+	importLabel := importPathLabel
+	prefix := "  "
 	if m.importCursor == 0 {
-		importLabel = "> " + importLabel
-		exportLabel = "  " + exportLabel
+		prefix = "> "
+		importLabel = prefix + importPathLabel
 		if m.editingImportPath {
 			importLabel = editStyle.Render(importLabel)
 		} else {
 			importLabel = style.Render(importLabel)
 		}
 	} else {
-		importLabel = "  " + importLabel
-		exportLabel = "> " + exportLabel
+		importLabel = prefix + importPathLabel
+	}
+	rowY := y + strings.Count(b.String(), "\n")
+	b.WriteString(importLabel + "\n")
+	m.hitboxes = append(m.hitboxes, Hitbox{
+		ID:     "import-path-0",
+		View:   ViewImport,
+		X:      x,
+		Y:      rowY,
+		Width:  lipgloss.Width(importLabel),
+		Height: 1,
+	})
+
+	// Export Path
+	exportLabel := exportPathLabel
+	prefix = "  "
+	if m.importCursor == 1 {
+		prefix = "> "
+		exportLabel = prefix + exportPathLabel
 		if m.editingImportPath {
 			exportLabel = editStyle.Render(exportLabel)
 		} else {
 			exportLabel = style.Render(exportLabel)
 		}
+	} else {
+		exportLabel = prefix + exportPathLabel
 	}
-
-	b.WriteString(importLabel + "\n")
+	rowY = y + strings.Count(b.String(), "\n")
 	b.WriteString(exportLabel + "\n\n")
+	m.hitboxes = append(m.hitboxes, Hitbox{
+		ID:     "import-path-1",
+		View:   ViewImport,
+		X:      x,
+		Y:      rowY,
+		Width:  lipgloss.Width(exportLabel),
+		Height: 1,
+	})
 
 	b.WriteString("Actions:\n")
-	b.WriteString("  i         : Import TSV\n")
-	b.WriteString("  I         : Import APKG\n")
-	b.WriteString("  x         : Export TSV\n")
-	b.WriteString("  X         : Export APKG\n\n")
+	actions := []struct {
+		id    string
+		label string
+		key   string
+	}{
+		{"import-tsv", "Import TSV", "i"},
+		{"import-apkg", "Import APKG", "I"},
+		{"export-tsv", "Export TSV", "x"},
+		{"export-apkg", "Export APKG", "X"},
+	}
+
+	btnStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("255")).
+		Background(lipgloss.Color("62")).
+		Padding(0, 1).
+		MarginRight(1)
+
+	rowY = y + strings.Count(b.String(), "\n")
+	for i, action := range actions {
+		btn := fmt.Sprintf("[%s] %s", action.key, action.label)
+		b.WriteString(btnStyle.Render(btn))
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     action.id,
+			View:   ViewImport,
+			X:      x + (i * 20), // Rough spacing
+			Y:      rowY,
+			Width:  lipgloss.Width(btn) + 2,
+			Height: 1,
+		})
+	}
+	b.WriteString("\n\n")
 
 	b.WriteString(fmt.Sprintf("Current Deck: %s\n\n", m.deckLabel()))
 
 	if m.editingImportPath {
-		b.WriteString("EDITING - Enter to save, Esc to cancel.")
+		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("EDITING") + " - Enter to save, Esc to cancel.")
 	} else {
-		b.WriteString("Use j/k to select path, Enter to edit, i/I/x/X to execute.")
+		b.WriteString(mutedStyle.Render("Use j/k to select path, Enter to edit, or click buttons above."))
 	}
 
 	return b.String()
@@ -3339,6 +3396,21 @@ func (m *Model) activateHitbox(id string) tea.Cmd {
 			return m.handleSettingsEnter()
 		}
 		return nil
+	case strings.HasPrefix(id, "import-path-"):
+		idx, err := strconv.Atoi(strings.TrimPrefix(id, "import-path-"))
+		if err == nil && (idx == 0 || idx == 1) {
+			m.importCursor = idx
+			m.editingImportPath = true
+		}
+		return nil
+	case id == "import-tsv":
+		return m.importTSV()
+	case id == "import-apkg":
+		return m.importAPKG()
+	case id == "export-tsv":
+		return m.exportTSV()
+	case id == "export-apkg":
+		return m.exportAPKG()
 	case strings.HasPrefix(id, "draft-approve-"):
 		idx, err := strconv.Atoi(strings.TrimPrefix(id, "draft-approve-"))
 		if err == nil && idx >= 0 && idx < len(m.drafts) {

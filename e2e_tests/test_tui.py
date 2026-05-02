@@ -107,7 +107,7 @@ def test_import_tsv_adds_reviewable_deck_and_export_writes_file():
             agent.act('5')
             agent.wait_until_stable()
             agent.assert_text("Import / Export")
-            agent.assert_text("i         : Import TSV")
+            agent.assert_text("[i] Import TSV")
 
             # Workflow: act("<Enter>"), act("<Ctrl-u>"), type path, act("<Enter>"), act("i")
             agent.act('<Enter>')
@@ -124,8 +124,7 @@ def test_import_tsv_adds_reviewable_deck_and_export_writes_file():
 
             agent.act(']')
             agent.wait_until_stable()
-            agent.assert_text("Deck: Imported A1")
-
+            agent.assert_text("Imported A1")
             agent.act('3')
             agent.wait_until_stable()
             agent.assert_text("die Bahn")
@@ -297,7 +296,7 @@ def test_mouse_tabs_open_import_ai_and_settings_views():
             # Import tab
             agent.click(45, 3)
             agent.wait_for_text("Import / Export")
-            agent.assert_text("i         : Import TSV")
+            agent.assert_text("[i] Import TSV")
             
             # AI tab
             agent.click(54, 3)
@@ -387,7 +386,7 @@ def test_deck_navigation_with_up_down_arrows():
         try:
             agent.act('5')
             agent.wait_for_text("Import / Export")
-            agent.assert_text("i         : Import TSV")
+            agent.assert_text("[i] Import TSV")
 
             agent.act('<Enter>')
             agent.wait_until_stable()

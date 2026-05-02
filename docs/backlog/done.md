@@ -10,6 +10,7 @@
 - **Improved AI view UX** with interactive [Approve] and [Discard] buttons and a detailed draft preview section.
 - **Refactored Card Browser** with a modal **Search Mode** (triggered by `/`) and direct card management via **b** (bookmark) and **x** (suspend).
 - **Enhanced Settings view** with interactive hitboxes and clickable [+] and [-] buttons for adjusting the daily goal.
+- **Enhanced Import view** with a modern button-like layout and interactive hitboxes for path editing and triggering actions.
 - Enhanced `tui-tester` with `move_mouse` and `drag_mouse` simulation capabilities.
 - Added 4 new E2E tests in `e2e_tests/test_interactive_features.py` covering:
     - Mouse navigation between all views using tabs/sidebar.
