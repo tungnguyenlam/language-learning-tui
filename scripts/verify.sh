@@ -14,10 +14,12 @@ go vet ./...
 ./scripts/tui_smoke.sh
 
 if [ -d "tui_tester/venv" ]; then
-	printf 'Running E2E tests...\n'
+	printf 'Running E2E tests in parallel...\n'
 	# Use a subshell to avoid affecting the current shell's environment
 	(
 		. tui_tester/venv/bin/activate
-		python3 -m pytest e2e_tests/ -q
+		# Install pytest-xdist if missing (for robustness in different environments)
+		python3 -m pip install pytest-xdist --quiet
+		python3 -m pytest e2e_tests/ -n auto -q
 	)
 fi

@@ -9,5 +9,6 @@
     - Browser cursor movement and history toggle.
     - Statistics scrollbar track interaction.
 - Verified all 71 E2E tests passing.
+- **Parallelized E2E tests** with `pytest-xdist`, reducing full verification time from ~5.5 minutes to ~45 seconds.
 - Verified all Go unit tests passing.
 - Updated project notices and index to reflect architectural requirements for reveal synchronization.

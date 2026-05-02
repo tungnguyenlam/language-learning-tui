@@ -17,6 +17,7 @@ Last updated: 2026-05-02
 - `docs/agent/notices/2026-05-02-arrow-key-navigation-fix.md`: Arrow key navigation fix for Review view.
 - `docs/agent/notices/2026-05-02-scrollbar-hitbox-layout.md`: derive active-panel hitboxes from Lip Gloss frame metrics instead of per-view offsets.
 - `docs/agent/notices/2026-05-02-review-reveal-sync.md`: only show grading options when card is fully revealed to prevent race conditions.
+- `docs/agent/notices/2026-05-02-parallel-e2e-tests.md`: E2E tests are parallelized with pytest-xdist for 8x speedup.
 
 ## Verification Status
 
