@@ -87,6 +87,7 @@ type Model struct {
 	revealState        RevealState
 	revealProgress     float64
 	lastReviewedCardID string
+	lastReviewedGrade  core.ReviewGrade
 	status             string
 	mouseX             int
 	mouseY             int
@@ -391,6 +392,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.width = msg.Width
 		m.height = msg.Height
 		m.breakpoint = breakpointForWidth(msg.Width)
+		m.isDragging = false
+		return m, nil
 	case error:
 		m.drafting = false
 		m.status = friendlyError(msg)
@@ -456,6 +459,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.status = fmt.Sprintf("Exported %d notes to %s", msg.count, filepath.Base(msg.path))
 	case reviewRecordedMsg:
 		m.lastReviewedCardID = msg.cardID
+		m.lastReviewedGrade = msg.grade
 		m.decks = msg.decks
 		m.stats = msg.stats
 		m.allDue = msg.cards
@@ -492,6 +496,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.status = fmt.Sprintf("Daily goal set to %d", m.stats.DailyGoal)
 	case reviewUndoMsg:
 		m.lastReviewedCardID = ""
+		// Decrement session stats
+		if m.sessionReviewed > 0 {
+			m.sessionReviewed--
+			if m.lastReviewedGrade != core.GradeAgain && m.sessionCorrect > 0 {
+				m.sessionCorrect--
+			}
+		}
 		m.decks = msg.decks
 		m.stats = msg.stats
 		m.allDue = msg.cards
@@ -3301,6 +3312,7 @@ func (m *Model) previousViewCmd() tea.Cmd {
 
 func (m *Model) updateView(view View) tea.Cmd {
 	m.activeView = view
+	m.isDragging = false
 	m.clearReviewHistory()
 	if view == ViewStatistics {
 		return m.loadStatistics()
@@ -3373,6 +3385,7 @@ func (m *Model) applyDeckFilter() {
 	if m.cursor >= len(m.dueCards) {
 		m.cursor = maxInt(0, len(m.dueCards)-1)
 	}
+	m.resetMCQState()
 	m.revealState = RevealIdle
 	m.revealProgress = 0
 	if len(m.dueCards) == 0 {

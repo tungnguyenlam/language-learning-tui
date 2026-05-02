@@ -32,6 +32,9 @@ Autonomous Feature Pass 18: Final Polish and UI Interactive Elements
 - [x] Resolved regression in `renderCompact` where panels were missing
 - [x] Fixed TUI unit tests failing due to signature changes
 - [x] **Fixed race condition in Review reveal** by only showing grading hints and hitboxes when fully revealed (synchronizing visual state with interaction)
+- [x] **Fixed session statistics undo bug** by correctly decrementing reviewed and correct counts when a review is undone
+- [x] **Fixed persistent dragging state** by clearing `isDragging` on view changes and window resizes
+- [x] **Fixed MCQ state leakage** by resetting `mcqChoice` and `mcqAnswered` in `applyDeckFilter`
 
 ### Testing
 - [x] Added 3 new interactive E2E tests in `e2e_tests/test_interactive_features.py` (mouse navigation, browser movement, scrollbar interaction)
@@ -43,7 +46,7 @@ Autonomous Feature Pass 18: Final Polish and UI Interactive Elements
 - [x] Core user interactions respond as expected (flashcard reveal, grading, navigation)
 - [x] State successfully persisted to SQLite
 - [x] All Go unit tests pass (9 test suites)
-- [x] All 71 E2E tests pass
+- [x] All 76 E2E tests pass
 - [x] ./scripts/verify.sh executes successfully
 
 ## Planned Features
@@ -52,7 +55,7 @@ Autonomous Feature Pass 18: Final Polish and UI Interactive Elements
 
 ## Last Verification
 
-- 2026-05-02: `./scripts/verify.sh` passed, including all 71 E2E tests.
+- 2026-05-02: `./scripts/verify.sh` passed, including all 76 E2E tests.
 
 ## Next Action
 
@@ -62,7 +65,7 @@ Final commit and handoff.
 
 The deutsche-tui application is now production-ready with comprehensive German learning content:
 - ✅ All 9 Go unit test suites passing
-- ✅ All 68 E2E tests passing  
+- ✅ All 76 E2E tests passing  
 - ✅ App launches without errors
 - ✅ All views render correctly
 - ✅ Core interactions working
