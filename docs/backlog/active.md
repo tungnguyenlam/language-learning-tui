@@ -14,6 +14,11 @@ Autonomous Feature Pass 16: TBD
 - [x] Fixed horizontal and vertical truncation in TUI layout
 - [x] Added 3 new E2E tests for the Daily Digest view
 
+### UI/UX Improvements
+- [x] Implemented vertical scrolling for Statistics view to prevent terminal height cropping
+- [x] Standardized Review Grade display capitalization and formatting
+- [x] All 68 E2E tests passing after UI updates
+
 ## Planned Features
 
 - TBD

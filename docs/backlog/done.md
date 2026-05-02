@@ -1,5 +1,12 @@
 # Done
 
+## Autonomous Feature Pass 16: UI Robustness and Scrolling ✅
+- Implemented vertical scrolling for the Statistics view to prevent terminal height cropping.
+- Added scroll position indicator and j/k navigation support for Statistics.
+- Standardized Review Grade display (again, hard, good, easy) for better visibility.
+- Fixed Statistics E2E tests to match new rendering and capitalization.
+- All 68 E2E tests passing.
+
 ## Autonomous Feature Pass 10: Deck Tags and Filtering ✅
 - Added SQLite migration for tags column on decks table
 - Updated repository for deck tag persistence
