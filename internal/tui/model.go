@@ -1,10 +1,7 @@
 package tui
 
 import (
-	"context"
-	"errors"
 	"fmt"
-	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -13,7 +10,6 @@ import (
 	"time"
 
 	"deutsch-tui/internal/ai"
-	"deutsch-tui/internal/content"
 	"deutsch-tui/internal/core"
 
 	tea "charm.land/bubbletea/v2"
@@ -49,19 +45,6 @@ const (
 	BreakpointMedium  Breakpoint = "medium"
 	BreakpointWide    Breakpoint = "wide"
 )
-
-type Hitbox struct {
-	ID     string
-	View   View
-	X      int
-	Y      int
-	Width  int
-	Height int
-}
-
-func (h Hitbox) Contains(x, y int) bool {
-	return x >= h.X && x < h.X+h.Width && y >= h.Y && y < h.Y+h.Height
-}
 
 type viewportLayout struct {
 	X      int
@@ -100,11 +83,12 @@ type Model struct {
 	settingsCursor     int
 	editingTemplate    bool
 	aiInput            string
+	draftSource        string
 	drafts             []ai.Draft
 	draftCursor        int
 	importPath         string
 	exportPath         string
-	importCursor       int // 0 for importPath, 1 for exportPath
+	importCursor       int
 	editingImportPath  bool
 	onConfigChange     func(string, map[string]string, bool)
 	bookmarkFilter     bool
@@ -120,7 +104,7 @@ type Model struct {
 	showHelp           bool
 	cramCards          []core.Card
 	cramCursor         int
-	cramType           string // "bookmarked", "suspended", "leech", "flagged", or "all"
+	cramType           string
 	cramReviewed       int
 	cramCorrect        int
 	cramActive         bool
@@ -130,7 +114,7 @@ type Model struct {
 	reviewHistoryCard  string
 	showReviewHistory  bool
 	spinnerFrame       int
-	deckFilter         string // New field for deck filtering
+	deckFilter         string
 	drafting           bool
 	statsScroll        int
 	statsTotalLines    int
@@ -140,6 +124,7 @@ type Model struct {
 	dragVisible        int
 	dragTotal          int
 	searchingBrowser   bool
+	statusSeq          int
 }
 
 func NewModel(repo core.Repository, scheduler core.Scheduler) *Model {
@@ -250,11 +235,12 @@ type cardSuspendedMsg struct {
 	stats  core.Statistics
 }
 type dailyGoalSetMsg core.Statistics
-type reviewUndoMsg struct {
+type reviewUndoneMsg struct {
 	cardID string
 	cards  []core.Card
 	decks  []core.Deck
 	stats  core.Statistics
+	grade  core.ReviewGrade
 }
 type cramCardsMsg []core.Card
 type browserCardsMsg []core.Card
@@ -263,111 +249,12 @@ type reviewHistoryMsg struct {
 	cardID string
 	logs   []core.ReviewLog
 }
+type statusMsg struct {
+	text string
+}
 
 func (m *Model) Init() tea.Cmd {
-	return tea.Batch(m.loadDueCards, m.loadDecks, m.loadStatistics(), m.loadReviewsPerDay())
-}
-
-func (m *Model) loadBrowserCards() tea.Cmd {
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-		cards, err := m.repo.Cards(ctx, m.browserDeckID, m.browserSearch)
-		if err != nil {
-			return err
-		}
-		return browserCardsMsg(cards)
-	}
-}
-
-func (m *Model) loadDueCards() tea.Msg {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	cards, err := m.repo.DueCards(ctx, time.Now(), 500)
-	if err != nil {
-		return err
-	}
-	return dueCardsMsg(cards)
-}
-
-func (m *Model) loadBookmarkedDueCards() tea.Msg {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	cards, err := m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
-	if err != nil {
-		return err
-	}
-	return bookmarkedDueCardsMsg(cards)
-}
-
-func (m *Model) loadCramCards() tea.Cmd {
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-		cards, err := m.repo.Cards(ctx, "", "")
-		if err != nil {
-			return err
-		}
-		return cramCardsMsg(cards)
-	}
-}
-
-func (m *Model) loadDecks() tea.Msg {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	decks, err := m.repo.Decks(ctx)
-	if err != nil {
-		return err
-	}
-	return decksMsg(decks)
-}
-
-func (m *Model) loadStatistics() tea.Cmd {
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-		stats, err := m.repo.Statistics(ctx)
-		if err != nil {
-			return err
-		}
-		return statsMsg(stats)
-	}
-}
-
-func (m *Model) loadReviewsPerDay() tea.Cmd {
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-		data, err := m.repo.ReviewsPerDay(ctx, 30)
-		if err != nil {
-			return err
-		}
-		return reviewsPerDayMsg(data)
-	}
-}
-
-func (m *Model) loadReviewHistory(cardID string) tea.Cmd {
-	if strings.TrimSpace(cardID) == "" {
-		return nil
-	}
-	m.status = "Loading review history..."
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-		logs, err := m.repo.ReviewHistory(ctx, cardID, 5)
-		if err != nil {
-			return err
-		}
-		return reviewHistoryMsg{cardID: cardID, logs: logs}
-	}
-}
-
-type spinnerTickMsg struct{}
-
-func (m *Model) tickSpinner() tea.Cmd {
-	return tea.Tick(time.Millisecond*100, func(t time.Time) tea.Msg {
-		return spinnerTickMsg{}
-	})
+	return tea.Sequence(m.loadDueCards, m.loadDecks, m.loadStatistics(), m.loadReviewsPerDay())
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -380,7 +267,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case revealTickMsg:
 		if m.revealState == RevealRevealing {
-			m.revealProgress += 10 // 10 steps from 0 to 100 for smoother animation
+			m.revealProgress += 10
 			if m.revealProgress >= 100 {
 				m.revealProgress = 100
 				m.revealState = RevealRevealed
@@ -411,6 +298,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.status = fmt.Sprintf("%d bookmarked cards due", len(m.allDue))
 		}
+
 	case statsMsg:
 		m.stats = core.Statistics(msg)
 	case reviewsPerDayMsg:
@@ -432,7 +320,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if len(m.drafts) == 0 {
 			m.status = "No drafts generated"
 		} else {
-			m.status = fmt.Sprintf("%d draft ready", len(m.drafts))
+			m.status = fmt.Sprintf("%d drafts ready", len(m.drafts))
 		}
 	case draftApprovedMsg:
 		m.removeDraft(msg.noteID)
@@ -443,9 +331,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.syncDecks(msg.decks)
 		m.allDue = msg.cards
 		m.applyDeckFilter()
-		m.status = fmt.Sprintf("Imported %d notes from %s", msg.count, filepath.Base(msg.path))
-	case exportDoneMsg:
-		m.status = fmt.Sprintf("Exported %d notes to %s", msg.count, filepath.Base(msg.path))
+		return m, m.setStatus(fmt.Sprintf("Imported %d notes from %s", msg.count, filepath.Base(msg.path)), 3*time.Second)
+	case statusMsg:
+		return m, m.setStatus(msg.text, 3*time.Second)
+	case timedClearStatusMsg:
+		if msg.seq == m.statusSeq {
+			m.status = "Ready"
+		}
+		return m, nil
+
 	case reviewRecordedMsg:
 		m.lastReviewedCardID = msg.cardID
 		m.lastReviewedGrade = msg.grade
@@ -453,17 +347,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.stats = msg.stats
 		m.allDue = msg.cards
 		m.applyDeckFilter()
-		// Track session stats
 		m.sessionReviewed++
 		if msg.grade != core.GradeAgain {
 			m.sessionCorrect++
-		}
-		// Track cram stats if in cram view
-		if m.activeView == ViewCram {
-			m.cramReviewed++
-			if msg.grade != core.GradeAgain {
-				m.cramCorrect++
-			}
 		}
 		return m, m.loadReviewsPerDay()
 	case bookmarkToggledMsg:
@@ -483,12 +369,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case dailyGoalSetMsg:
 		m.stats = core.Statistics(msg)
 		m.status = fmt.Sprintf("Daily goal set to %d", m.stats.DailyGoal)
-	case reviewUndoMsg:
+	case reviewUndoneMsg:
 		m.lastReviewedCardID = ""
-		// Decrement session stats
 		if m.sessionReviewed > 0 {
 			m.sessionReviewed--
-			if m.lastReviewedGrade != core.GradeAgain && m.sessionCorrect > 0 {
+			if msg.grade != core.GradeAgain && m.sessionCorrect > 0 {
 				m.sessionCorrect--
 			}
 		}
@@ -507,7 +392,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case cramCardsMsg:
 		allCards := []core.Card(msg)
-		// Filter cards based on cram type
 		m.cramCards = m.cramCards[:0]
 		for _, card := range allCards {
 			switch m.cramType {
@@ -531,15 +415,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cramCards = append(m.cramCards, card)
 			}
 		}
+		if m.cramCursor >= len(m.cramCards) {
+			m.cramCursor = maxInt(0, len(m.cramCards)-1)
+		}
 		if len(m.cramCards) == 0 {
 			m.status = "No cards found for this filter"
 		} else {
 			m.status = fmt.Sprintf("%d cards in cram mode", len(m.cramCards))
 		}
-		if m.cramCursor >= len(m.cramCards) {
-			m.cramCursor = maxInt(0, len(m.cramCards)-1)
-		}
-	case tea.KeyMsg:
+	case tea.KeyPressMsg:
 		return m.updateKey(msg)
 	case tea.MouseMsg:
 		mouse := msg.Mouse()
@@ -550,18 +434,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.MouseClickMsg, *tea.MouseClickMsg:
 			if mouse.Button == tea.MouseLeft {
 				if hit, ok := m.hitboxAt(mouse.X, mouse.Y); ok {
-					// Check if this is a scrollbar hitbox to initiate dragging
 					if strings.Contains(hit.ID, "-scroll-") {
 						m.isDragging = true
 						m.dragView = hit.View
-						// Deduce track start Y from the row index in hit.ID
 						parts := strings.Split(hit.ID, "-")
 						if len(parts) > 0 {
 							if row, err := strconv.Atoi(parts[len(parts)-1]); err == nil {
 								m.dragTrackStartY = mouse.Y - row
 							}
 						}
-						// Capture current visibility metrics
 						layout := m.activeViewContentLayout()
 						switch hit.View {
 						case ViewStatistics:
@@ -605,1348 +486,17 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.moveCramCursor(1)
 				}
 			}
-		default:
-			m.status += fmt.Sprintf(" Unknown:%T", msg)
 		}
 	}
 	return m, nil
-}
-
-type revealTickMsg struct{}
-
-func (m *Model) startRevealAnimation(audioPath string) tea.Cmd {
-	cmds := []tea.Cmd{m.tickReveal()}
-	if audioPath != "" && m.autoPlayAudio {
-		cmds = append(cmds, m.playAudio(audioPath))
-	}
-	return tea.Batch(cmds...)
-}
-
-func (m *Model) tickReveal() tea.Cmd {
-	return tea.Tick(time.Millisecond*60, func(t time.Time) tea.Msg {
-		return revealTickMsg{}
-	})
-}
-
-func (m *Model) playAudio(audioPath string) tea.Cmd {
-	if audioPath == "" {
-		return nil
-	}
-	return func() tea.Msg {
-		var cmd *exec.Cmd
-		if runtime.GOOS == "darwin" {
-			cmd = exec.Command("afplay", audioPath)
-		} else {
-			cmd = exec.Command("play", audioPath)
-		}
-		if err := cmd.Run(); err != nil {
-			return err
-		}
-		return nil
-	}
-}
-
-func (m *Model) updateKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
-	key := msg.String()
-
-	// 1. Global critical keys
-	switch key {
-	case "ctrl+c":
-		return m, tea.Quit
-	case "q":
-		if !m.textInputActive() {
-			if m.activeView == ViewCram && m.cramActive {
-				m.cramActive = false
-				return m, nil
-			}
-			return m, tea.Quit
-		}
-	case "?":
-		if !m.textInputActive() {
-			m.showHelp = !m.showHelp
-			if m.showHelp {
-				m.status = "Help overlay shown. Press ? to close."
-			} else {
-				m.status = "Help overlay closed."
-			}
-			return m, nil
-		}
-	}
-
-	// 2. Text input trapping
-	if m.textInputActive() {
-		// Only allow certain keys to escape trapping
-		if key != "enter" && key != "esc" && key != "tab" && key != "shift+tab" {
-			// If it's a view-specific key for the active editing view, handle it
-			if cmd, handled := m.updateActiveViewKey(msg); handled {
-				return m, cmd
-			}
-			return m, nil // Trap everything else
-		}
-	}
-
-	// 3. Global navigation
-	switch key {
-	case "tab", "right", "s":
-		if !m.textInputActive() {
-			return m, m.nextViewCmd()
-		}
-	case "shift+tab", "left", "w":
-		if !m.textInputActive() {
-			return m, m.previousViewCmd()
-		}
-	case "[":
-		if !m.textInputActive() || m.activeView == ViewBrowser {
-			if m.activeView == ViewBrowser {
-				m.previousDeck()
-				return m, m.reloadBrowserForSelectedDeck()
-			}
-			m.previousDeck()
-			return m, nil
-		}
-	case "]":
-		if !m.textInputActive() || m.activeView == ViewBrowser {
-			if m.activeView == ViewBrowser {
-				m.nextDeck()
-				return m, m.reloadBrowserForSelectedDeck()
-			}
-			m.nextDeck()
-			return m, nil
-		}
-	}
-
-	if cmd, handled := m.updateNumberKey(msg); handled {
-		return m, cmd
-	}
-
-	// 4. View-specific keys
-	if cmd, handled := m.updateActiveViewKey(msg); handled {
-		return m, cmd
-	}
-
-	// 5. Shared navigation keys (if not handled by view)
-	switch key {
-	case "up", "k":
-		if m.activeView == ViewReview {
-			if m.cursor > 0 {
-				m.cursor--
-				m.resetMCQState()
-				m.clearReviewHistory()
-			}
-			return m, nil
-		}
-	case "down", "j":
-		if m.activeView == ViewReview {
-			if m.cursor < len(m.dueCards)-1 {
-				m.cursor++
-				m.resetMCQState()
-				m.clearReviewHistory()
-			}
-			return m, nil
-		}
-	case "p":
-		if m.activeView == ViewReview && len(m.dueCards) > 0 {
-			return m, m.playAudio(m.dueCards[m.cursor].Audio)
-		}
-		if m.activeView == ViewCram && m.cramActive && len(m.cramCards) > 0 {
-			return m, m.playAudio(m.cramCards[m.cramCursor].Audio)
-		}
-	}
-
-	return m, nil
-}
-
-func (m *Model) textInputActive() bool {
-	return (m.activeView == ViewImport && m.editingImportPath) ||
-		(m.activeView == ViewSettings && m.editingTemplate)
-}
-
-func (m *Model) activeViewHandlesVerticalNavigation() bool {
-	switch m.activeView {
-	case ViewAI, ViewBrowser, ViewCram, ViewDecks, ViewReview, ViewSettings, ViewImport, ViewStatistics:
-		return true
-	default:
-		return false
-	}
-}
-
-func (m *Model) updateNumberKey(msg tea.KeyMsg) (tea.Cmd, bool) {
-	key := msg.String()
-	if m.activeView == ViewCram && (key == "1" || key == "2" || key == "3" || key == "4" || key == "5") {
-		return nil, false
-	}
-	if m.activeView == ViewCram && m.cramActive {
-		return nil, false
-	}
-	if m.textInputActive() {
-		return nil, false
-	}
-	if m.activeView == ViewReview && len(m.dueCards) > 0 && m.dueCards[m.cursor].Kind == core.CardKindMCQ && m.revealState == RevealRevealed && !m.mcqAnswered {
-		switch key {
-		case "1", "2", "3", "4":
-			m.selectMCQChoice(key)
-			return nil, true
-		}
-	}
-
-	switch key {
-	case "1":
-		return m.updateView(ViewDashboard), true
-	case "2":
-		return m.updateView(ViewDecks), true
-	case "3":
-		return m.updateView(ViewReview), true
-	case "4":
-		return m.updateView(ViewStatistics), true
-	case "5":
-		return m.updateView(ViewImport), true
-	case "6":
-		return m.updateView(ViewAI), true
-	case "7":
-		return m.updateView(ViewSettings), true
-	case "8":
-		return m.updateView(ViewBrowser), true
-	case "9":
-		return m.updateView(ViewCram), true
-	default:
-		return nil, false
-	}
-}
-
-func (m *Model) updateActiveViewKey(msg tea.KeyMsg) (tea.Cmd, bool) {
-	switch m.activeView {
-	case ViewReview:
-		return m.updateReviewKey(msg)
-	case ViewAI:
-		return m.updateAIKey(msg)
-	case ViewImport:
-		return m.updateImportKey(msg)
-	case ViewBrowser:
-		return m.updateBrowserKey(msg)
-	case ViewSettings:
-		return m.updateSettingsKey(msg)
-	case ViewCram:
-		return m.updateCramKey(msg)
-	case ViewDecks:
-		return m.updateDecksKey(msg)
-	case ViewStatistics:
-		return m.updateStatisticsKey(msg)
-	default:
-		return nil, false
-	}
-}
-
-func (m *Model) updateReviewKey(msg tea.KeyMsg) (tea.Cmd, bool) {
-	switch msg.String() {
-	case "enter", "space", " ":
-		card := m.dueCards[m.cursor]
-		if m.revealState == RevealRevealed {
-			m.revealState = RevealIdle
-			m.revealProgress = 0
-		} else {
-			m.revealState = RevealRevealing
-			m.revealProgress = 0
-		}
-		m.mcqChoice = -1
-		m.mcqAnswered = false
-		// Start animation ticker
-		return m.startRevealAnimation(card.Audio), true
-
-	case "b":
-		return m.toggleBookmark(), true
-	case "B":
-		return m.toggleBookmarkFilter(), true
-	case "x":
-		return m.suspendCard(), true
-	case "u":
-		return m.undoLastReview(), true
-	case "r":
-		return m.toggleReviewHistory(), true
-	case "a":
-		return m.gradeCard(core.GradeAgain), true
-	case "h":
-		return m.gradeCard(core.GradeHard), true
-	case "g":
-		return m.gradeCard(core.GradeGood), true
-	case "e":
-		return m.gradeCard(core.GradeEasy), true
-	}
-	return nil, false
-}
-
-func (m *Model) updateStatisticsKey(msg tea.KeyMsg) (tea.Cmd, bool) {
-	switch msg.String() {
-	case "up", "k":
-		m.scrollStats(-1)
-		return nil, true
-	case "down", "j":
-		m.scrollStats(1)
-		return nil, true
-	}
-	return nil, false
-}
-
-func (m *Model) updateDecksKey(msg tea.KeyMsg) (tea.Cmd, bool) {
-	filtered := m.filteredDecks()
-	switch msg.String() {
-	case "up", "k":
-		if m.deckCursor > 0 {
-			m.deckCursor--
-		}
-		return nil, true
-	case "down", "j":
-		if m.deckCursor < len(filtered)-1 {
-			m.deckCursor++
-		}
-		return nil, true
-	case "enter":
-		if len(filtered) > 0 {
-			m.selectDeckByID(filtered[m.deckCursor].ID)
-			m.activeView = ViewDashboard
-		}
-		return nil, true
-	case "backspace":
-		if len(m.deckFilter) > 0 {
-			m.deckFilter = m.deckFilter[:len(m.deckFilter)-1]
-			m.deckCursor = 0 // Reset cursor when filter changes
-		}
-		return nil, true
-	case "esc":
-		m.deckFilter = ""
-		m.deckCursor = 0 // Reset cursor when filter is cleared
-		return nil, true
-	}
-
-	// Handle text input for filtering
-	if len(msg.String()) == 1 {
-		m.deckFilter += msg.String()
-		m.deckCursor = 0 // Reset cursor when filter changes
-		return nil, true
-	}
-
-	return nil, false
-}
-
-func (m *Model) updateImportKey(msg tea.KeyMsg) (tea.Cmd, bool) {
-	if m.editingImportPath {
-		switch msg.String() {
-		case "enter", "esc":
-			m.editingImportPath = false
-			return nil, true
-		case "backspace":
-			if m.importCursor == 0 {
-				if len(m.importPath) > 0 {
-					m.importPath = m.importPath[:len(m.importPath)-1]
-				}
-			} else {
-				if len(m.exportPath) > 0 {
-					m.exportPath = m.exportPath[:len(m.exportPath)-1]
-				}
-			}
-			return nil, true
-		case "ctrl+u":
-			if m.importCursor == 0 {
-				m.importPath = ""
-			} else {
-				m.exportPath = ""
-			}
-			return nil, true
-		}
-		if len(msg.String()) == 1 {
-			if m.importCursor == 0 {
-				m.importPath += msg.String()
-			} else {
-				m.exportPath += msg.String()
-			}
-			return nil, true
-		}
-		return nil, true
-	}
-
-	switch msg.String() {
-	case "up", "k":
-		if m.importCursor > 0 {
-			m.importCursor--
-		}
-		return nil, true
-	case "down", "j":
-		if m.importCursor < 1 {
-			m.importCursor++
-		}
-		return nil, true
-	case "enter":
-		m.editingImportPath = true
-		return nil, true
-	case "i":
-		return m.importTSV(), true
-	case "I": // Shift+i for APKG import
-		return m.importAPKG(), true
-	case "x":
-		return m.exportTSV(), true
-	case "X": // Shift+x for APKG export
-		return m.exportAPKG(), true
-	}
-	return nil, false
-}
-
-func (m *Model) updateSettingsKey(msg tea.KeyMsg) (tea.Cmd, bool) {
-	if m.editingTemplate {
-		switch msg.String() {
-		case "enter", "esc":
-			m.editingTemplate = false
-			if m.aiProviderName == "template" {
-				m.aiProvider = ai.TemplateProvider{Templates: m.aiTemplates}
-			}
-			if m.onConfigChange != nil {
-				m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio)
-			}
-			return nil, true
-		case "backspace":
-			key := m.templateKeyAtCursor()
-			if val := m.aiTemplates[key]; len(val) > 0 {
-				m.aiTemplates[key] = val[:len(val)-1]
-			}
-			return nil, true
-		}
-		if len(msg.String()) == 1 {
-			key := m.templateKeyAtCursor()
-			m.aiTemplates[key] += msg.String()
-			return nil, true
-		}
-		return nil, true
-	}
-
-	switch msg.String() {
-	case "up", "k":
-		if m.settingsCursor > 0 {
-			m.settingsCursor--
-		}
-		return nil, true
-	case "down", "j":
-		if m.settingsCursor < 5 {
-			m.settingsCursor++
-		}
-		return nil, true
-	case "enter":
-		return m.handleSettingsEnter(), true
-	case "+", "=":
-		return m.setDailyGoal(m.stats.DailyGoal + 1), true
-	case "-":
-		return m.setDailyGoal(m.stats.DailyGoal - 1), true
-	}
-	return nil, false
-}
-
-func (m *Model) handleSettingsEnter() tea.Cmd {
-	if m.settingsCursor == 0 {
-		switch m.aiProviderName {
-		case "offline":
-			m.aiProviderName = "template"
-			m.aiProvider = ai.TemplateProvider{Templates: m.aiTemplates}
-		case "template":
-			m.aiProviderName = "disabled"
-			m.aiProvider = nil
-		default:
-			m.aiProviderName = "offline"
-			m.aiProvider = ai.OfflineProvider{}
-		}
-		m.status = fmt.Sprintf("Switched to %s AI provider", m.aiProviderName)
-		if m.onConfigChange != nil {
-			m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio)
-		}
-		return nil
-	}
-	if m.settingsCursor == 5 {
-		m.autoPlayAudio = !m.autoPlayAudio
-		status := "disabled"
-		if m.autoPlayAudio {
-			status = "enabled"
-		}
-		m.status = fmt.Sprintf("Auto-play audio %s", status)
-		if m.onConfigChange != nil {
-			m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio)
-		}
-		return nil
-	} else if m.settingsCursor > 0 && m.settingsCursor < 4 {
-		m.editingTemplate = true
-		return nil
-	}
-	return nil
-}
-
-func (m *Model) updateBrowserKey(msg tea.KeyMsg) (tea.Cmd, bool) {
-	if m.searchingBrowser {
-		switch msg.String() {
-		case "esc", "enter":
-			m.searchingBrowser = false
-			return nil, true
-		case "backspace":
-			if len(m.browserSearch) > 0 {
-				m.browserSearch = m.browserSearch[:len(m.browserSearch)-1]
-				m.clearReviewHistory()
-				return m.loadBrowserCards(), true
-			}
-		}
-		if len(msg.String()) == 1 && msg.String() >= " " && msg.String() <= "~" {
-			m.browserSearch += msg.String()
-			m.clearReviewHistory()
-			return m.loadBrowserCards(), true
-		}
-		return nil, true
-	}
-
-	switch msg.String() {
-	case "/":
-		m.searchingBrowser = true
-		return nil, true
-	case "up", "k":
-		m.moveBrowserCursor(-1)
-		return nil, true
-	case "down", "j":
-		m.moveBrowserCursor(1)
-		return nil, true
-	case "enter":
-		return m.toggleBrowserHistory(), true
-	case "b":
-		return m.toggleBrowserBookmark(), true
-	case "x":
-		return m.toggleBrowserSuspension(), true
-	case "backspace":
-		// Allow clearing search in normal mode too
-		if len(m.browserSearch) > 0 {
-			m.browserSearch = m.browserSearch[:len(m.browserSearch)-1]
-			m.clearReviewHistory()
-			return m.loadBrowserCards(), true
-		}
-	}
-	return nil, false
-}
-
-func (m *Model) updateCramKey(msg tea.KeyMsg) (tea.Cmd, bool) {
-	if m.cramActive {
-		switch msg.String() {
-		case "esc":
-			m.cramActive = false
-			return nil, true
-		case "space", " ", "enter":
-			if !m.cramRevealed {
-				m.cramRevealed = true
-				var audioPath string
-				if m.autoPlayAudio {
-					card := m.cramCards[m.cramCursor]
-					audioPath = card.Audio
-					if audioPath != "" {
-						return tea.Batch(m.startRevealAnimation(audioPath), m.playAudio(audioPath)), true
-					}
-				}
-				// Start cram reveal animation
-				return m.startRevealAnimation(audioPath), true
-			}
-		case "a", "1":
-			if m.cramRevealed {
-				m.cramReviewed++
-				m.cramActive = false
-				m.nextCramCard()
-				return nil, true
-			}
-		case "h", "g", "e", "2", "3", "4":
-			if m.cramRevealed {
-				m.cramReviewed++
-				m.cramCorrect++
-				m.cramActive = false
-				m.nextCramCard()
-				return nil, true
-			}
-		}
-		return nil, true
-	}
-
-	switch msg.String() {
-	case "up", "k":
-		m.moveCramCursor(-1)
-		return nil, true
-	case "down", "j":
-		m.moveCramCursor(1)
-		return nil, true
-	case "enter":
-		if len(m.cramCards) > 0 {
-			m.cramActive = true
-			m.cramRevealed = false
-			return nil, true
-		}
-	case "1", "2", "3", "4", "5":
-		idx, _ := strconv.Atoi(msg.String())
-		return m.setCramFilter(idx), true
-	}
-	return nil, false
-}
-
-func (m *Model) setCramFilter(idx int) tea.Cmd {
-	switch idx {
-	case 1:
-		m.cramType = "bookmarked"
-	case 2:
-		m.cramType = "suspended"
-	case 3:
-		m.cramType = "leech"
-	case 4:
-		m.cramType = "flagged"
-	case 5:
-		m.cramType = "all"
-	default:
-		return nil
-	}
-	m.cramCursor = 0
-	m.cramCards = nil
-	return m.loadCramCards()
-}
-
-func (m *Model) scrollStats(delta int) {
-	m.setStatsScroll(m.statsScroll + delta)
-}
-
-func (m *Model) setStatsScroll(next int) {
-	m.statsScroll = clampInt(next, 0, m.statsMaxScroll())
-}
-
-func (m *Model) handleMouseDrag(y int) {
-	if !m.isDragging {
-		return
-	}
-	trackRow := y - m.dragTrackStartY
-	if m.dragVisible <= 1 {
-		return
-	}
-
-	switch m.dragView {
-	case ViewStatistics:
-		m.setStatsScroll(scrollOffsetForTrackRow(m.dragTotal, m.dragVisible, trackRow))
-	case ViewBrowser:
-		if m.dragTotal > 0 {
-			next := selectedIndexForTrackRow(m.dragTotal, m.dragVisible, trackRow)
-			if next != m.browserCursor {
-				m.browserCursor = next
-				m.clearReviewHistory()
-			}
-		}
-	case ViewCram:
-		if m.dragTotal > 0 {
-			m.cramCursor = selectedIndexForTrackRow(m.dragTotal, m.dragVisible, trackRow)
-		}
-	}
-}
-
-func (m *Model) statsMaxScroll() int {
-	if m.statsTotalLines <= 0 {
-		return 0
-	}
-	return maxInt(0, m.statsTotalLines-m.statisticsVisibleLines(m.activeViewContentLayout().Height))
-}
-
-func (m *Model) moveBrowserCursor(delta int) {
-	if len(m.browserCards) == 0 {
-		m.browserCursor = 0
-		return
-	}
-	next := clampInt(m.browserCursor+delta, 0, len(m.browserCards)-1)
-	if next != m.browserCursor {
-		m.browserCursor = next
-		m.clearReviewHistory()
-	}
-}
-
-func (m *Model) moveCramCursor(delta int) {
-	if len(m.cramCards) == 0 {
-		m.cramCursor = 0
-		return
-	}
-	m.cramCursor = clampInt(m.cramCursor+delta, 0, len(m.cramCards)-1)
-}
-
-func (m *Model) nextCramCard() {
-	if len(m.cramCards) > 0 {
-		m.cramCursor = (m.cramCursor + 1) % len(m.cramCards)
-	}
-}
-
-func (m *Model) clearReviewHistory() {
-	m.reviewHistory = nil
-	m.reviewHistoryCard = ""
-	m.showReviewHistory = false
-}
-
-func (m *Model) toggleReviewHistory() tea.Cmd {
-	if m.activeView != ViewReview || len(m.dueCards) == 0 {
-		return nil
-	}
-	cardID := m.dueCards[m.cursor].ID
-	if m.showReviewHistory && m.reviewHistoryCard == cardID {
-		m.clearReviewHistory()
-		m.status = "Review history hidden"
-		return nil
-	}
-	m.reviewHistoryCard = cardID
-	m.reviewHistory = nil
-	m.showReviewHistory = true
-	return m.loadReviewHistory(cardID)
-}
-
-func (m *Model) toggleBrowserHistory() tea.Cmd {
-	if m.activeView != ViewBrowser || len(m.browserCards) == 0 {
-		return nil
-	}
-	cardID := m.browserCards[m.browserCursor].ID
-	if m.showReviewHistory && m.reviewHistoryCard == cardID {
-		m.clearReviewHistory()
-		m.status = "Review history hidden"
-		return nil
-	}
-	m.reviewHistoryCard = cardID
-	m.reviewHistory = nil
-	m.showReviewHistory = true
-	return m.loadReviewHistory(cardID)
-}
-
-func (m *Model) filteredDecks() []core.Deck {
-	if m.deckFilter == "" {
-		return m.decks
-	}
-
-	filtered := make([]core.Deck, 0)
-	filterLower := strings.ToLower(m.deckFilter)
-
-	for _, deck := range m.decks {
-		// Check if deck name matches filter
-		if strings.Contains(strings.ToLower(deck.Name), filterLower) {
-			filtered = append(filtered, deck)
-			continue
-		}
-
-		// Check if deck description matches filter
-		if strings.Contains(strings.ToLower(deck.Description), filterLower) {
-			filtered = append(filtered, deck)
-			continue
-		}
-
-		// Check if any deck tags match filter
-		for _, tag := range deck.Tags {
-			if strings.Contains(strings.ToLower(tag), filterLower) {
-				filtered = append(filtered, deck)
-				break
-			}
-		}
-	}
-
-	return filtered
-}
-
-func (m *Model) templateKeyAtCursor() string {
-	switch m.settingsCursor {
-	case 1:
-		return "front"
-	case 2:
-		return "back"
-	case 3:
-		return "example"
-	default:
-		return ""
-	}
-}
-
-func (m *Model) renderSettings(x, y int) string {
-	var b strings.Builder
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).MarginBottom(1)
-	b.WriteString(titleStyle.Render("Settings") + "\n\n")
-
-	autoPlayStatus := "off"
-	if m.autoPlayAudio {
-		autoPlayStatus = "on"
-	}
-
-	sectionStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Bold(true).MarginTop(1)
-
-	b.WriteString(sectionStyle.Render("AI CONFIGURATION") + "\n")
-	aiOptions := []string{
-		fmt.Sprintf("AI Provider: %s", m.aiProviderName),
-		fmt.Sprintf("Front Template: %s", m.aiTemplates["front"]),
-		fmt.Sprintf("Back Template: %s", m.aiTemplates["back"]),
-		fmt.Sprintf("Example Template: %s", m.aiTemplates["example"]),
-	}
-
-	for i, opt := range aiOptions {
-		idx := i // 0-3
-		prefix := "  "
-		style := lipgloss.NewStyle()
-		if idx == m.settingsCursor {
-			prefix = "> "
-			if m.editingTemplate {
-				style = style.Bold(true).Background(lipgloss.Color("62"))
-			} else {
-				style = style.Bold(true).Foreground(lipgloss.Color("212"))
-			}
-		}
-		item := prefix + opt
-		rowY := y + strings.Count(b.String(), "\n")
-		b.WriteString(style.Render(item) + "\n")
-		m.hitboxes = append(m.hitboxes, Hitbox{
-			ID:     fmt.Sprintf("settings-%d", idx),
-			View:   ViewSettings,
-			X:      x,
-			Y:      rowY,
-			Width:  lipgloss.Width(item),
-			Height: 1,
-		})
-	}
-
-	b.WriteString(sectionStyle.Render("STUDY PREFERENCES") + "\n")
-
-	// Daily Goal with [+] [-] buttons
-	goalIdx := 4
-	prefix := "  "
-	style := lipgloss.NewStyle()
-	if goalIdx == m.settingsCursor {
-		prefix = "> "
-		style = style.Bold(true).Foreground(lipgloss.Color("212"))
-	}
-	goalLabel := fmt.Sprintf("%sDaily Goal: %d ", prefix, m.stats.DailyGoal)
-	rowY := y + strings.Count(b.String(), "\n")
-	b.WriteString(style.Render(goalLabel))
-
-	btnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-	minusBtn := "[-] "
-	plusBtn := "[+] "
-	b.WriteString(btnStyle.Render(minusBtn))
-	b.WriteString(btnStyle.Render(plusBtn))
-	b.WriteString("\n")
-
-	m.hitboxes = append(m.hitboxes, Hitbox{
-		ID:     fmt.Sprintf("settings-%d", goalIdx),
-		View:   ViewSettings,
-		X:      x,
-		Y:      rowY,
-		Width:  lipgloss.Width(goalLabel),
-		Height: 1,
-	})
-	m.hitboxes = append(m.hitboxes, Hitbox{
-		ID:     "settings-goal-minus",
-		View:   ViewSettings,
-		X:      x + lipgloss.Width(goalLabel),
-		Y:      rowY,
-		Width:  lipgloss.Width(minusBtn),
-		Height: 1,
-	})
-	m.hitboxes = append(m.hitboxes, Hitbox{
-		ID:     "settings-goal-plus",
-		View:   ViewSettings,
-		X:      x + lipgloss.Width(goalLabel) + lipgloss.Width(minusBtn),
-		Y:      rowY,
-		Width:  lipgloss.Width(plusBtn),
-		Height: 1,
-	})
-
-	// Auto-play audio
-	audioIdx := 5
-	prefix = "  "
-	style = lipgloss.NewStyle()
-	if audioIdx == m.settingsCursor {
-		prefix = "> "
-		style = style.Bold(true).Foreground(lipgloss.Color("212"))
-	}
-	audioItem := fmt.Sprintf("%sAuto-play audio: %s", prefix, autoPlayStatus)
-	rowY = y + strings.Count(b.String(), "\n")
-	b.WriteString(style.Render(audioItem) + "\n")
-	m.hitboxes = append(m.hitboxes, Hitbox{
-		ID:     fmt.Sprintf("settings-%d", audioIdx),
-		View:   ViewSettings,
-		X:      x,
-		Y:      rowY,
-		Width:  lipgloss.Width(audioItem),
-		Height: 1,
-	})
-	if m.editingTemplate {
-		b.WriteString("\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("EDITING") + " - Enter to save, Esc to cancel.")
-	} else {
-		b.WriteString("\n" + mutedStyle.Render("Use j/k to move, +/- to adjust goal, Enter to toggle/edit."))
-	}
-	return b.String()
-}
-
-func (m *Model) setDailyGoal(goal int) tea.Cmd {
-	if goal < 1 {
-		goal = 1
-	}
-	m.status = "Saving daily goal..."
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		if err := m.repo.SetDailyGoal(ctx, goal); err != nil {
-			return err
-		}
-		stats, err := m.repo.Statistics(ctx)
-		if err != nil {
-			return err
-		}
-		return dailyGoalSetMsg(stats)
-	}
-}
-
-func (m *Model) updateAIKey(msg tea.KeyMsg) (tea.Cmd, bool) {
-	switch msg.String() {
-	case "esc":
-		m.aiInput = ""
-		return nil, true
-	case "enter":
-		return tea.Batch(m.generateDrafts(), m.tickSpinner()), true
-	case "backspace":
-		if len(m.aiInput) > 0 {
-			m.aiInput = m.aiInput[:len(m.aiInput)-1]
-		}
-		return nil, true
-	case "up", "k":
-		if m.draftCursor > 0 {
-			m.draftCursor--
-		}
-		return nil, true
-	case "down", "j":
-		if m.draftCursor < len(m.drafts)-1 {
-			m.draftCursor++
-		}
-		return nil, true
-	case "a":
-		if len(m.drafts) > 0 {
-			return m.approveDraft(), true
-		}
-	case "d":
-		if len(m.drafts) > 0 {
-			m.discardDraft()
-			return nil, true
-		}
-	}
-	if len(msg.String()) == 1 && msg.String() >= " " && msg.String() <= "~" {
-		m.aiInput += msg.String()
-		return nil, true
-	}
-	return nil, false
-}
-
-func (m *Model) generateDrafts() tea.Cmd {
-	if m.aiProvider == nil {
-		m.status = "AI provider unavailable"
-		return nil
-	}
-	if strings.TrimSpace(m.deck.ID) == "" {
-		m.status = "Select a deck before drafting"
-		return nil
-	}
-	request := ai.DraftRequest{
-		SourceText: m.aiInput,
-		DeckID:     m.deck.ID,
-		Tags:       []string{"reviewed"},
-	}
-	m.status = "Generating draft..."
-	m.drafting = true
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		drafts, err := m.aiProvider.GenerateDrafts(ctx, request)
-		if err != nil {
-			return err
-		}
-		if err := ai.ValidateDrafts(drafts); err != nil {
-			return err
-		}
-		return draftsMsg(drafts)
-	}
-}
-
-func (m *Model) approveDraft() tea.Cmd {
-	if len(m.drafts) == 0 || m.draftCursor >= len(m.drafts) {
-		m.status = "No draft selected"
-		return nil
-	}
-	draft := m.drafts[m.draftCursor]
-	if err := ai.ValidateDraft(draft); err != nil {
-		m.status = fmt.Sprintf("Error: %v", err)
-		return nil
-	}
-	m.status = "Approving draft..."
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		deck := m.deck
-		deck.Notes = []core.Note{draft.Note}
-		if err := m.repo.UpsertDeck(ctx, deck); err != nil {
-			return err
-		}
-		cards, err := m.repo.DueCards(ctx, time.Now(), 500)
-		if err != nil {
-			return err
-		}
-		return draftApprovedMsg{noteID: draft.Note.ID, cards: cards}
-	}
-}
-
-func (m *Model) importTSV() tea.Cmd {
-	path := m.importPath
-	m.status = "Importing TSV..."
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-
-		file, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-
-		notes, err := content.ImportAnkiTSV(file, content.ImportOptions{DefaultDeck: m.deck.ID})
-		if err != nil {
-			return err
-		}
-		decks := decksFromNotes(notes)
-		for _, deck := range decks {
-			if err := m.repo.UpsertDeck(ctx, deck); err != nil {
-				return err
-			}
-		}
-		loadedDecks, err := m.repo.Decks(ctx)
-		if err != nil {
-			return err
-		}
-		cards, err := m.repo.DueCards(ctx, time.Now(), 500)
-		if err != nil {
-			return err
-		}
-		return importDoneMsg{decks: loadedDecks, cards: cards, count: len(notes), path: path}
-	}
-}
-
-func (m *Model) exportTSV() tea.Cmd {
-	deckID := m.deck.ID
-	path := m.exportPath
-	if strings.TrimSpace(deckID) == "" {
-		m.status = "Select a deck before exporting"
-		return nil
-	}
-	m.status = "Exporting TSV..."
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-
-		deck, err := m.repo.GetDeck(ctx, deckID)
-		if err != nil {
-			return err
-		}
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-			return err
-		}
-		file, err := os.Create(path)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		if err := content.ExportAnkiTSV(file, deck.Notes); err != nil {
-			return err
-		}
-		return exportDoneMsg{count: len(deck.Notes), path: path}
-	}
-}
-
-func (m *Model) exportAPKG() tea.Cmd {
-	deckID := m.deck.ID
-	path := m.exportPath
-	if strings.TrimSpace(deckID) == "" {
-		m.status = "Select a deck before exporting"
-		return nil
-	}
-	m.status = "Exporting APKG..."
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		deck, err := m.repo.GetDeck(ctx, deckID)
-		if err != nil {
-			return err
-		}
-		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-			return err
-		}
-		file, err := os.Create(path)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		if err := content.ExportAnkiAPKG(file, deck.Notes); err != nil {
-			return err
-		}
-		return exportDoneMsg{count: len(deck.Notes), path: path}
-	}
-}
-
-func (m *Model) importAPKG() tea.Cmd {
-	path := m.importPath
-	m.status = "Importing APKG..."
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
-
-		file, err := os.Open(path)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-
-		notes, err := content.ImportAnkiAPKG(file)
-		if err != nil {
-			return err
-		}
-		decks := decksFromNotes(notes)
-		for _, deck := range decks {
-			if err := m.repo.UpsertDeck(ctx, deck); err != nil {
-				return err
-			}
-		}
-		loadedDecks, err := m.repo.Decks(ctx)
-		if err != nil {
-			return err
-		}
-		cards, err := m.repo.DueCards(ctx, time.Now(), 500)
-		if err != nil {
-			return err
-		}
-		return importDoneMsg{decks: loadedDecks, cards: cards, count: len(notes), path: path}
-	}
-}
-
-func (m *Model) discardDraft() {
-	if len(m.drafts) == 0 || m.draftCursor >= len(m.drafts) {
-		m.status = "No draft selected"
-		return
-	}
-	m.drafts = append(m.drafts[:m.draftCursor], m.drafts[m.draftCursor+1:]...)
-	if m.draftCursor >= len(m.drafts) {
-		m.draftCursor = maxInt(0, len(m.drafts)-1)
-	}
-	m.status = "Draft discarded"
-}
-
-func (m *Model) removeDraft(noteID string) {
-	for i, draft := range m.drafts {
-		if draft.Note.ID == noteID {
-			m.drafts = append(m.drafts[:i], m.drafts[i+1:]...)
-			break
-		}
-	}
-	if m.draftCursor >= len(m.drafts) {
-		m.draftCursor = maxInt(0, len(m.drafts)-1)
-	}
-}
-
-func (m *Model) gradeCard(grade core.ReviewGrade) tea.Cmd {
-	if m.activeView != ViewReview || len(m.dueCards) == 0 || m.revealState == RevealIdle {
-		return nil
-	}
-
-	m.status = fmt.Sprintf("Grade: %s", strings.ToUpper(string(grade[:1]))+string(grade[1:]))
-	card := m.dueCards[m.cursor]
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-
-		now := time.Now()
-		state, err := m.repo.GetReviewState(ctx, card.ID)
-		if err != nil {
-			return err
-		}
-
-		next, err := m.scheduler.Review(state, grade, now)
-		if err != nil {
-			return err
-		}
-
-		result := core.ReviewResult{
-			CardID:   card.ID,
-			Grade:    grade,
-			Reviewed: now,
-			Next:     next,
-		}
-
-		if err := m.repo.RecordReview(ctx, result); err != nil {
-			return err
-		}
-
-		var cards []core.Card
-		if m.bookmarkFilter {
-			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
-		} else {
-			cards, err = m.repo.DueCards(ctx, time.Now(), 500)
-		}
-		if err != nil {
-			return err
-		}
-		decks, err := m.repo.Decks(ctx)
-		if err != nil {
-			return err
-		}
-		stats, err := m.repo.Statistics(ctx)
-		if err != nil {
-			return err
-		}
-		return reviewRecordedMsg{cardID: card.ID, cards: cards, decks: decks, stats: stats, grade: grade}
-	}
-}
-
-func (m *Model) toggleBookmark() tea.Cmd {
-	if m.activeView != ViewReview || len(m.dueCards) == 0 {
-		return nil
-	}
-	card := m.dueCards[m.cursor]
-	next := !card.Bookmarked
-	m.status = "Saving bookmark..."
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		if err := m.repo.SetCardBookmark(ctx, card.ID, next); err != nil {
-			return err
-		}
-		return bookmarkToggledMsg{cardID: card.ID, bookmarked: next}
-	}
-}
-
-func (m *Model) suspendCard() tea.Cmd {
-	if m.activeView != ViewReview || len(m.dueCards) == 0 {
-		return nil
-	}
-	card := m.dueCards[m.cursor]
-	m.status = "Suspending card..."
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		if err := m.repo.SetCardSuspended(ctx, card.ID, true); err != nil {
-			return err
-		}
-		var cards []core.Card
-		var err error
-		if m.bookmarkFilter {
-			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
-		} else {
-			cards, err = m.repo.DueCards(ctx, time.Now(), 500)
-		}
-		if err != nil {
-			return err
-		}
-		decks, err := m.repo.Decks(ctx)
-		if err != nil {
-			return err
-		}
-		stats, err := m.repo.Statistics(ctx)
-		if err != nil {
-			return err
-		}
-		return cardSuspendedMsg{cardID: card.ID, cards: cards, decks: decks, stats: stats}
-	}
-}
-
-func (m *Model) undoLastReview() tea.Cmd {
-	if strings.TrimSpace(m.lastReviewedCardID) == "" {
-		m.status = "No review to undo"
-		return nil
-	}
-	cardID := m.lastReviewedCardID
-	m.status = "Undoing last review..."
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		if err := m.repo.UndoLastReview(ctx, cardID); err != nil {
-			return err
-		}
-		var cards []core.Card
-		var err error
-		if m.bookmarkFilter {
-			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
-		} else {
-			cards, err = m.repo.DueCards(ctx, time.Now(), 500)
-		}
-		if err != nil {
-			return err
-		}
-		decks, err := m.repo.Decks(ctx)
-		if err != nil {
-			return err
-		}
-		stats, err := m.repo.Statistics(ctx)
-		if err != nil {
-			return err
-		}
-		return reviewUndoMsg{cardID: cardID, cards: cards, decks: decks, stats: stats}
-	}
-}
-
-func (m *Model) toggleBookmarkFilter() tea.Cmd {
-	m.bookmarkFilter = !m.bookmarkFilter
-	m.revealState = RevealIdle
-	m.revealProgress = 0
-	m.cursor = 0
-	m.clearReviewHistory()
-	if m.bookmarkFilter {
-		m.status = "Loading bookmarked cards..."
-		return m.loadBookmarkedDueCards
-	}
-	m.status = "Loading all cards..."
-	return m.loadDueCards
-}
-
-func (m *Model) selectMCQChoice(key string) {
-	choiceIdx := -1
-	switch key {
-	case "1":
-		choiceIdx = 0
-	case "2":
-		choiceIdx = 1
-	case "3":
-		choiceIdx = 2
-	case "4":
-		choiceIdx = 3
-	}
-	if choiceIdx < 0 || choiceIdx >= len(m.dueCards[m.cursor].Choices) {
-		return
-	}
-	m.mcqChoice = choiceIdx
-	m.mcqAnswered = true
-	m.revealState = RevealRevealed
-	m.revealProgress = 100
-	chosen := m.dueCards[m.cursor].Choices[choiceIdx]
-	m.mcqCorrect = chosen == m.dueCards[m.cursor].Answer
-}
-
-func (m *Model) resetMCQState() {
-	m.mcqChoice = -1
-	m.mcqAnswered = false
-	m.mcqCorrect = false
-}
-
-func (m *Model) setCardBookmarkLocal(cardID string, bookmarked bool) {
-	for i := range m.allDue {
-		if m.allDue[i].ID == cardID {
-			m.allDue[i].Bookmarked = bookmarked
-		}
-	}
-	for i := range m.dueCards {
-		if m.dueCards[i].ID == cardID {
-			m.dueCards[i].Bookmarked = bookmarked
-		}
-	}
 }
 
 func (m *Model) View() tea.View {
-	view := tea.NewView(m.render())
-	view.AltScreen = true
-	view.MouseMode = tea.MouseModeAllMotion
-	return view
-}
+	if m.width < 20 || m.height < 10 {
+		return tea.View{Content: "Terminal too small"}
+	}
 
-func (m *Model) render() string {
-	m.hitboxes = nil
+	m.hitboxes = m.hitboxes[:0]
 	var b strings.Builder
 
 	header := headerStyle.Render("deutsch-tui") + " " + mutedStyle.Render(string(m.breakpoint))
@@ -1962,7 +512,6 @@ func (m *Model) render() string {
 		b.WriteString(m.renderCompact())
 	}
 
-	// Add contextual help hints based on active view
 	helpHint := ""
 	switch m.activeView {
 	case ViewReview:
@@ -1999,10 +548,7 @@ func (m *Model) render() string {
 
 	statusLine := fmt.Sprintf("status: %s", singleLine(m.status))
 	if m.sessionReviewed > 0 {
-		accuracy := 0.0
-		if m.sessionReviewed > 0 {
-			accuracy = float64(m.sessionCorrect) / float64(m.sessionReviewed) * 100
-		}
+		accuracy := float64(m.sessionCorrect) / float64(m.sessionReviewed) * 100
 		statusLine += fmt.Sprintf(" | session: %d/%d (%.0f%%)", m.sessionCorrect, m.sessionReviewed, accuracy)
 	}
 	footer := fmt.Sprintf("tab/arrows views | 1-9 views | ? help | q quit | mouse %d,%d %s", m.mouseX, m.mouseY, helpHint)
@@ -2015,14 +561,50 @@ func (m *Model) render() string {
 		b.WriteString("\n\n")
 		b.WriteString(m.renderHelp())
 	}
-	return b.String()
+
+	return tea.View{
+		Content:   b.String(),
+		AltScreen: false,
+		MouseMode: tea.MouseModeAllMotion,
+	}
 }
 
 func (m *Model) renderWide() string {
-	sidebar := m.renderNav(0, 2)
-	main := m.renderActiveView(20, 1)
+	nav := m.renderNav(0, 2)
+	content := m.renderActiveView(20, 1)
 	detail := panelStyle.Width(28).Render("Deck\n" + m.deckLabel() + "\n\nCards due\n" + fmt.Sprint(len(m.dueCards)) + "\n\n[ ] switch deck")
-	return lipgloss.JoinHorizontal(lipgloss.Top, sidebar, main, detail)
+
+	navLines := strings.Split(nav, "\n")
+	contentLines := strings.Split(content, "\n")
+	detailLines := strings.Split(detail, "\n")
+
+	maxLines := maxInt(len(navLines), maxInt(len(contentLines), len(detailLines)))
+	var b strings.Builder
+	for i := 0; i < maxLines; i++ {
+		navLine := ""
+		if i < len(navLines) {
+			navLine = navLines[i]
+		}
+
+		contentLine := ""
+		if i < len(contentLines) {
+			contentLine = contentLines[i]
+		}
+
+		detailLine := ""
+		if i < len(detailLines) {
+			detailLine = detailLines[i]
+		}
+
+		b.WriteString(padLine(navLine, 20))
+		b.WriteString(contentLine)
+		b.WriteString(detailLine)
+		if i < maxLines-1 {
+			b.WriteString("\n")
+		}
+	}
+
+	return b.String()
 }
 
 func (m *Model) renderMedium() string {
@@ -2049,48 +631,102 @@ func (m *Model) renderNav(x, y int) string {
 		{"nav-browser", ViewBrowser, "8 Browser"},
 		{"nav-cram", ViewCram, "9 Cram"},
 	}
-	lines := make([]string, 0, len(labels))
-	for i, label := range labels {
-		m.hitboxes = append(m.hitboxes, Hitbox{ID: label.id, View: label.view, X: x, Y: y + i, Width: 18, Height: 1})
+
+	var b strings.Builder
+	b.WriteString(headerStyle.Render("deutsch-tui") + "\n\n")
+	for i, l := range labels {
 		style := navStyle
-		if m.activeView == label.view {
+		if m.activeView == l.view {
 			style = navActiveStyle
 		}
-		lines = append(lines, style.Render(label.text))
+		item := style.Render(l.text)
+		b.WriteString(item + "\n")
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     l.id,
+			View:   l.view,
+			X:      x,
+			Y:      y + 2 + i,
+			Width:  lipgloss.Width(item),
+			Height: 1,
+		})
 	}
-	return panelStyle.Width(20).Render(strings.Join(lines, "\n"))
+	return b.String()
 }
 
 func (m *Model) renderTabs(x, y int) string {
-	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser, ViewCram}
-	labels := []string{"Dashboard", "Decks", "Review", "Statistics", "Import", "AI", "Settings", "Browser", "Cram"}
-	parts := make([]string, 0, len(views))
-	offset := x
-	for i, view := range views {
-		id := "tab-" + string(view)
-		m.hitboxes = append(m.hitboxes, Hitbox{ID: id, View: view, X: offset, Y: y, Width: len(labels[i]) + 2, Height: 1})
+	tabs := []struct {
+		id   string
+		view View
+		text string
+	}{
+		{"tab-dashboard", ViewDashboard, "Dashboard"},
+		{"tab-decks", ViewDecks, "Decks"},
+		{"tab-review", ViewReview, "Review"},
+		{"tab-statistics", ViewStatistics, "Statistics"},
+		{"tab-import", ViewImport, "Import"},
+		{"tab-ai", ViewAI, "AI"},
+		{"tab-settings", ViewSettings, "Settings"},
+		{"tab-browser", ViewBrowser, "Browser"},
+		{"tab-cram", ViewCram, "Cram"},
+	}
+
+	var renderedTabs []string
+	currentX := x
+	for _, t := range tabs {
 		style := tabStyle
-		if m.activeView == view {
+		if m.activeView == t.view {
 			style = tabActiveStyle
 		}
-		rendered := style.Render(labels[i])
-		parts = append(parts, rendered)
-		offset += len(labels[i]) + 3
+		item := style.Render(t.text)
+		renderedTabs = append(renderedTabs, item)
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     t.id,
+			View:   t.view,
+			X:      currentX,
+			Y:      y,
+			Width:  lipgloss.Width(item),
+			Height: 1,
+		})
+		currentX += lipgloss.Width(item) + 1
 	}
-	return strings.Join(parts, " ")
+
+	return lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs...)
 }
 
-func (m *Model) activePanelSize() (int, int) {
-	width := maxInt(30, m.width-54)
-	height := maxInt(15, m.height-10)
-	if m.breakpoint == BreakpointMedium {
-		width = maxInt(30, m.width-4)
-		height = maxInt(15, m.height-12)
-	} else if m.breakpoint == BreakpointCompact {
-		width = maxInt(20, m.width-2)
-		height = maxInt(10, m.height-12)
+func (m *Model) renderActiveView(x, y int) string {
+	width, height := m.activePanelSize()
+	style := panelStyle.Width(width).Height(height)
+	layout := contentLayoutForStyle(style, x, y)
+
+	return style.Render(m.renderActiveViewPlainAt(layout))
+}
+
+func (m *Model) renderActiveViewPlainAt(layout viewportLayout) string {
+	var content string
+	switch m.activeView {
+	case ViewDashboard:
+		content = m.renderDashboard(layout)
+	case ViewDecks:
+		content = m.renderDecks(layout.X, layout.Y)
+	case ViewReview:
+		content = m.renderReview(layout.X, layout.Y)
+	case ViewStatistics:
+		content = m.renderStatisticsAt(layout)
+	case ViewImport:
+		content = m.renderImport(layout.X, layout.Y)
+	case ViewAI:
+		content = m.renderAI(layout.X, layout.Y)
+	case ViewSettings:
+		content = m.renderSettings(layout.X, layout.Y)
+	case ViewBrowser:
+		content = m.renderBrowserAt(layout)
+	case ViewCram:
+		content = m.renderCramAt(layout)
+	default:
+		content = "Unknown View"
 	}
-	return width, height
+
+	return content
 }
 
 func (m *Model) activeViewContentLayout() viewportLayout {
@@ -2107,1284 +743,63 @@ func contentLayoutForStyle(style lipgloss.Style, x, y int) viewportLayout {
 	}
 }
 
-func (m *Model) renderActiveView(x, y int) string {
-	width, height := m.activePanelSize()
-	style := panelStyle.Width(width).Height(height)
-	layout := contentLayoutForStyle(style, x, y)
-	return style.Render(m.renderActiveViewPlainAt(layout))
+func (m *Model) activePanelSize() (int, int) {
+	width := maxInt(30, m.width-54)
+	height := maxInt(15, m.height-10)
+	if m.breakpoint == BreakpointMedium {
+		width = maxInt(30, m.width-4)
+		height = maxInt(15, m.height-12)
+	} else if m.breakpoint == BreakpointCompact {
+		width = maxInt(20, m.width-2)
+		height = maxInt(10, m.height-12)
+	}
+	return width, height
 }
 
-func (m *Model) renderActiveViewPlain(x, y int) string {
-	layout := m.activeViewContentLayout()
-	layout.X = x
-	layout.Y = y
-	return m.renderActiveViewPlainAt(layout)
-}
-
-func (m *Model) renderActiveViewPlainAt(layout viewportLayout) string {
-	switch m.activeView {
-	case ViewDecks:
-		return m.renderDecks(layout.X, layout.Y)
-	case ViewReview:
-		return m.renderReview(layout.X, layout.Y)
-	case ViewStatistics:
-		return m.renderStatisticsAt(layout)
-	case ViewImport:
-		return m.renderImport(layout.X, layout.Y)
-	case ViewAI:
-		return m.renderAI(layout.X, layout.Y)
-	case ViewSettings:
-		return m.renderSettings(layout.X, layout.Y)
-	case ViewBrowser:
-		return m.renderBrowserAt(layout)
-	case ViewCram:
-		return m.renderCramAt(layout)
-	default:
-		streakIndicator := ""
-		if m.stats.CurrentStreak > 0 {
-			streakIndicator = " 🔥"
-		}
-
-		titleStyle := lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color("205")).
-			MarginBottom(1)
-
-		headerBox := lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("81")).
-			Padding(0, 1).
-			Width(maxInt(40, m.width-60)).
-			Render(fmt.Sprintf("Active Deck: %s", lipgloss.NewStyle().Foreground(lipgloss.Color("159")).Render(m.deckLabel())))
-
-		statsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("226")).Bold(true)
-
-		reviewQueue := lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("81")).
-			Padding(0, 1).
-			Render(statsStyle.Render("Review Queue") + "\n" +
-				fmt.Sprintf("  Due cards:   %d\n", len(m.dueCards)) +
-				fmt.Sprintf("  Bookmarked:  %d (%d due)", m.stats.BookmarkedCards, m.stats.BookmarkedDue))
-
-		collectionStats := lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("208")).
-			Padding(0, 1).
-			Render(statsStyle.Render("Collection") + "\n" +
-				fmt.Sprintf("  Leech:       %d\n", m.stats.LeechCards) +
-				fmt.Sprintf("  Suspended:   %d", m.stats.SuspendedCards))
-
-		goalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Bold(true)
-		progressBox := lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("46")).
-			Padding(0, 1).
-			Render(goalStyle.Render("Today's Progress") + "\n" +
-				fmt.Sprintf("  Reviews:     %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal) +
-				fmt.Sprintf("  Streak:      %d days%s", m.stats.CurrentStreak, streakIndicator))
-
-		digestStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("213")).Bold(true)
-		message := "All caught up!"
-		if len(m.dueCards) > 0 {
-			message = fmt.Sprintf("%d due today.", len(m.dueCards))
-		}
-		if m.stats.CurrentStreak == 0 && len(m.dueCards) > 0 {
-			message = fmt.Sprintf("%d cards waiting.", len(m.dueCards))
-		}
-
-		dailyDigestBox := lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("213")).
-			Padding(0, 1).
-			Render(digestStyle.Render("Daily Digest") + "\n" +
-				fmt.Sprintf("  %s\n", message) +
-				fmt.Sprintf("  M:%d Y:%d N:%d", m.stats.MatureCards, m.stats.YoungCards, m.stats.NewCards))
-
-		var db strings.Builder
-		db.WriteString(titleStyle.Render("DASHBOARD") + "\n")
-		db.WriteString(headerBox + "\n")
-		db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, reviewQueue, " ", collectionStats) + "\n")
-		db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, progressBox, " ", dailyDigestBox) + "\n")
-
-		// Only show grammar tip if there is enough vertical space
-		if layout.Height > 20 {
-			tip := content.GetDailyGrammarTip()
-			tipStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Bold(true)
-			tipBox := lipgloss.NewStyle().
-				Border(lipgloss.RoundedBorder()).
-				BorderForeground(lipgloss.Color("39")).
-				Padding(0, 1).
-				Width(layout.Width - 4). // Use layout width
-				Render(tipStyle.Render("Grammar Tip: "+tip.Title) + "\n" +
-					fmt.Sprintf("  %s", tip.Tip))
-			db.WriteString(tipBox + "\n")
-		}
-
-		db.WriteString(mutedStyle.Render("Use [ and ] to switch decks.\nUse Review (3) to start studying."))
-
-		return db.String()
-	}
-}
-
-func (m *Model) statisticsVisibleLines(viewportHeight int) int {
-	return maxInt(1, viewportHeight-2)
-}
-
-func (m *Model) listVisibleLines(viewportHeight int) int {
-	return clampInt(viewportHeight-8, 3, 10)
-}
-
-func scrollbarLineWidth(viewportWidth int) int {
-	return maxInt(1, viewportWidth-2)
-}
-
-func padLine(line string, width int) string {
-	padding := width - lipgloss.Width(line)
-	if padding <= 0 {
-		return line
-	}
-	return line + strings.Repeat(" ", padding)
-}
-
-func scrollbarThumb(totalLines, visibleLines, offset int) (int, int) {
-	if totalLines <= 0 || visibleLines <= 0 || totalLines <= visibleLines {
-		return 0, 0
-	}
-	thumbHeight := maxInt(1, (visibleLines*visibleLines)/totalLines)
-	thumbHeight = minInt(visibleLines, thumbHeight)
-	maxScroll := maxInt(1, totalLines-visibleLines)
-	maxThumbStart := maxInt(0, visibleLines-thumbHeight)
-	thumbStart := (clampInt(offset, 0, maxScroll) * maxThumbStart) / maxScroll
-	return thumbStart, thumbHeight
-}
-
-func scrollOffsetForTrackRow(totalLines, visibleLines, row int) int {
-	maxScroll := maxInt(0, totalLines-visibleLines)
-	if maxScroll == 0 || visibleLines <= 1 {
-		return 0
-	}
-	return clampInt((clampInt(row, 0, visibleLines-1)*maxScroll)/(visibleLines-1), 0, maxScroll)
-}
-
-func selectedIndexForTrackRow(totalItems, visibleLines, row int) int {
-	if totalItems <= 0 || visibleLines <= 1 {
-		return 0
-	}
-	return clampInt((clampInt(row, 0, visibleLines-1)*(totalItems-1))/(visibleLines-1), 0, totalItems-1)
-}
-
-func (m *Model) renderStatistics(x, y int) string {
-	layout := m.activeViewContentLayout()
-	layout.X = x
-	layout.Y = y
-	return m.renderStatisticsAt(layout)
-}
-
-func (m *Model) renderStatisticsAt(layout viewportLayout) string {
-	var content strings.Builder
-	content.WriteString("Statistics\n\n")
-
-	content.WriteString(fmt.Sprintf("Total Cards:   %d\n", m.stats.TotalCards))
-	content.WriteString(fmt.Sprintf("  New:         %d\n", m.stats.NewCards))
-	content.WriteString(fmt.Sprintf("  Young:       %d\n", m.stats.YoungCards))
-	content.WriteString(fmt.Sprintf("  Mature:      %d\n\n", m.stats.MatureCards))
-	content.WriteString(fmt.Sprintf("  Bookmarked:  %d (%d due)\n", m.stats.BookmarkedCards, m.stats.BookmarkedDue))
-	content.WriteString(fmt.Sprintf("  Leech:       %d\n", m.stats.LeechCards))
-	content.WriteString(fmt.Sprintf("  Suspended:   %d\n\n", m.stats.SuspendedCards))
-
-	content.WriteString(fmt.Sprintf("Total Reviews: %d\n", m.stats.TotalReviews))
-	content.WriteString(fmt.Sprintf("Reviews Today: %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal))
-	// Colored progress bar for daily goal
-	progressWidth := 30
-	progress := 0
-	if m.stats.DailyGoal > 0 {
-		progress = (m.stats.ReviewsToday * progressWidth) / m.stats.DailyGoal
-		if progress > progressWidth {
-			progress = progressWidth
-		}
-	}
-	// Color: green if complete, yellow if halfway, red otherwise
-	barColor := "196" // red
-	if progress >= progressWidth {
-		barColor = "46" // green
-	} else if progress >= progressWidth/2 {
-		barColor = "226" // yellow
-	}
-	barStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(barColor))
-	bar := strings.Repeat("█", progress) + strings.Repeat("░", progressWidth-progress)
-	content.WriteString(fmt.Sprintf("  %s %d%%\n", barStyle.Render(bar), (m.stats.ReviewsToday*100)/maxInt(m.stats.DailyGoal, 1)))
-	// Streak with fire emoji if > 0
-	streakIndicator := ""
-	if m.stats.CurrentStreak > 0 {
-		streakIndicator = " ✨"
-	}
-	content.WriteString(fmt.Sprintf("Current Streak: %d days%s\n", m.stats.CurrentStreak, streakIndicator))
-	content.WriteString(fmt.Sprintf("Success Rate:  %.1f%%\n\n", m.stats.SuccessRate*100))
-
-	content.WriteString("Session Stats:\n")
-	content.WriteString(fmt.Sprintf("  Reviewed:    %d\n", m.sessionReviewed))
-	if m.sessionReviewed > 0 {
-		accuracy := float64(m.sessionCorrect) / float64(m.sessionReviewed) * 100
-		var accuracyColor string
-		if accuracy >= 80 {
-			accuracyColor = "46" // green
-		} else if accuracy >= 60 {
-			accuracyColor = "226" // yellow
-		} else {
-			accuracyColor = "197" // red
-		}
-		content.WriteString(fmt.Sprintf("  Correct:     %d\n", m.sessionCorrect))
-		content.WriteString(fmt.Sprintf("  Accuracy:    %s%.1f%%%s\n\n", lipgloss.Color(accuracyColor), accuracy, lipgloss.Color("248")))
-	} else {
-		content.WriteString("  (no reviews yet)\n\n")
-	}
-
-	content.WriteString("Reviews by Grade:\n")
-	grades := []core.ReviewGrade{core.GradeAgain, core.GradeHard, core.GradeGood, core.GradeEasy}
-	for _, g := range grades {
-		count := m.stats.Grades[g]
-		content.WriteString(fmt.Sprintf("  %s: %d\n", g, count))
-	}
-
-	// Review Activity (last 14 days) with colored bars
-	content.WriteString("\nReview Activity (last 14 days):\n")
-	if len(m.reviewsPerDay) == 0 {
-		content.WriteString("  (no review data yet)\n")
-	} else {
-		now := time.Now().UTC()
-		maxPerDay := 0
-		for i := 13; i >= 0; i-- {
-			day := now.AddDate(0, 0, -i)
-			dayStr := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC).Format("2006-01-02")
-			count := m.reviewsPerDay[dayStr]
-			if count > maxPerDay {
-				maxPerDay = count
-			}
-		}
-		if maxPerDay == 0 {
-			maxPerDay = 1
-		}
-		barWidth := 30
-		for i := 13; i >= 0; i-- {
-			day := now.AddDate(0, 0, -i)
-			dayStr := time.Date(day.Year(), day.Month(), day.Day(), 0, 0, 0, 0, time.UTC).Format("2006-01-02")
-			count := m.reviewsPerDay[dayStr]
-			barLen := (count * barWidth) / maxPerDay
-			if barLen == 0 && count > 0 {
-				barLen = 1
-			}
-			// Color based on count: green for high, yellow for medium, red for low
-			barColor := "244" // muted/default
-			if count > 0 {
-				if count >= maxPerDay*3/4 {
-					barColor = "46" // green
-				} else if count >= maxPerDay/2 {
-					barColor = "226" // yellow
-				} else {
-					barColor = "196" // red
-				}
-			}
-			barStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(barColor))
-			bar := strings.Repeat("█", barLen)
-			content.WriteString(fmt.Sprintf("  %s %2d %s\n", day.Format("01-02"), count, barStyle.Render(bar)))
-		}
-	}
-
-	lines := strings.Split(content.String(), "\n")
-	totalLines := len(lines)
-	m.statsTotalLines = totalLines
-	maxVisible := m.statisticsVisibleLines(layout.Height)
-
-	m.statsScroll = clampInt(m.statsScroll, 0, maxInt(0, totalLines-maxVisible))
-	lineWidth := scrollbarLineWidth(layout.Width)
-	thumbStart, thumbHeight := scrollbarThumb(totalLines, maxVisible, m.statsScroll)
-
-	var visibleContent strings.Builder
-	for i := m.statsScroll; i < m.statsScroll+maxVisible && i < totalLines; i++ {
-		line := padLine(lines[i], lineWidth)
-		if totalLines > maxVisible {
-			scrollbarChar := "│"
-			currentPos := i - m.statsScroll
-			if currentPos >= thumbStart && currentPos < thumbStart+thumbHeight {
-				scrollbarChar = "█"
-			}
-			line = line + " " + scrollbarChar
-
-			// Register hitbox for this line of the scrollbar
-			m.hitboxes = append(m.hitboxes, Hitbox{
-				ID:     fmt.Sprintf("stats-scroll-%d", currentPos),
-				View:   ViewStatistics,
-				X:      layout.X + lineWidth + 1,
-				Y:      layout.Y + currentPos,
-				Width:  1,
-				Height: 1,
-			})
-		}
-		visibleContent.WriteString(line + "\n")
-	}
-
-	footer := ""
-	if totalLines > maxVisible {
-		footer = fmt.Sprintf("\n%s", mutedStyle.Render(fmt.Sprintf("Use j/k or Mouse Wheel to scroll. Lines %d-%d of %d.", m.statsScroll+1, minInt(m.statsScroll+maxVisible, totalLines), totalLines)))
-	}
-
-	return visibleContent.String() + footer
-}
-
-func (m *Model) renderDecks(x, y int) string {
-	var b strings.Builder
-	b.WriteString("Decks\n\n")
-
-	// Show filter if active
-	if m.deckFilter != "" {
-		b.WriteString(fmt.Sprintf("Filter: %s_\n\n", m.deckFilter))
-	}
-
-	filteredDecks := m.filteredDecks()
-	if len(filteredDecks) == 0 {
-		if m.deckFilter != "" {
-			b.WriteString("No decks match filter. Press Esc to clear filter.\n")
-		} else {
-			b.WriteString("No decks found. Use Import to add notes.\n")
-		}
-		b.WriteString("\nPress Esc to clear filter.")
-		return b.String()
-	}
-
-	start := 0
-	end := len(filteredDecks)
-	maxVisible := 5
-	if m.height > 20 {
-		maxVisible = (m.height - 15) / 3 // Each deck takes about 3 lines
-	}
-	if maxVisible < 3 {
-		maxVisible = 3
-	}
-
-	if end > maxVisible {
-		start = m.deckCursor - maxVisible/2
-		if start < 0 {
-			start = 0
-		}
-		end = start + maxVisible
-		if end > len(filteredDecks) {
-			end = len(filteredDecks)
-			start = end - maxVisible
-			if start < 0 {
-				start = 0
-			}
-		}
-	}
-
-	for i := start; i < end; i++ {
-		deck := filteredDecks[i]
-		prefix := "  "
-		style := lipgloss.NewStyle()
-		if i == m.deckCursor {
-			prefix = "> "
-			style = style.Bold(true).Foreground(lipgloss.Color("212"))
-		}
-
-		newStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81"))
-		dueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("208"))
-		totalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("159"))
-
-		counts := fmt.Sprintf("%s new, %s due, %s total",
-			newStyle.Render(strconv.Itoa(deck.NewCards)),
-			dueStyle.Render(strconv.Itoa(deck.DueCards)),
-			totalStyle.Render(strconv.Itoa(deck.TotalCards)))
-
-		label := fmt.Sprintf("%s%s (%s, today %d, %.0f%% success)",
-			prefix, deck.Name, counts, deck.ReviewsToday, deck.SuccessRate*100)
-		b.WriteString(style.Render(label))
-		b.WriteString("\n")
-		if deck.Description != "" {
-			b.WriteString(fmt.Sprintf("     %s\n", mutedStyle.Render(deck.Description)))
-		}
-		// Show tags if they exist
-		if len(deck.Tags) > 0 {
-			tags := strings.Join(deck.Tags, ", ")
-			b.WriteString(fmt.Sprintf("     Tags: %s\n", mutedStyle.Render(tags)))
-		}
-	}
-	b.WriteString("\nPress enter to select deck. Type to filter. Esc to clear filter.")
-	if len(filteredDecks) > maxVisible {
-		b.WriteString(fmt.Sprintf(" (Showing %d-%d of %d)", start+1, end, len(filteredDecks)))
-	}
-	return b.String()
-}
-
-func (m *Model) renderImport(x, y int) string {
-	var b strings.Builder
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).MarginBottom(1)
-	b.WriteString(titleStyle.Render("Import / Export") + "\n\n")
-
-	importPathLabel := "Import file: " + m.importPath
-	exportPathLabel := "Export file: " + m.exportPath
-
-	style := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212"))
-	editStyle := lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("62"))
-
-	// Import Path
-	importLabel := importPathLabel
-	prefix := "  "
-	if m.importCursor == 0 {
-		prefix = "> "
-		importLabel = prefix + importPathLabel
-		if m.editingImportPath {
-			importLabel = editStyle.Render(importLabel)
-		} else {
-			importLabel = style.Render(importLabel)
-		}
-	} else {
-		importLabel = prefix + importPathLabel
-	}
-	rowY := y + strings.Count(b.String(), "\n")
-	b.WriteString(importLabel + "\n")
-	m.hitboxes = append(m.hitboxes, Hitbox{
-		ID:     "import-path-0",
-		View:   ViewImport,
-		X:      x,
-		Y:      rowY,
-		Width:  lipgloss.Width(importLabel),
-		Height: 1,
-	})
-
-	// Export Path
-	exportLabel := exportPathLabel
-	prefix = "  "
-	if m.importCursor == 1 {
-		prefix = "> "
-		exportLabel = prefix + exportPathLabel
-		if m.editingImportPath {
-			exportLabel = editStyle.Render(exportLabel)
-		} else {
-			exportLabel = style.Render(exportLabel)
-		}
-	} else {
-		exportLabel = prefix + exportPathLabel
-	}
-	rowY = y + strings.Count(b.String(), "\n")
-	b.WriteString(exportLabel + "\n\n")
-	m.hitboxes = append(m.hitboxes, Hitbox{
-		ID:     "import-path-1",
-		View:   ViewImport,
-		X:      x,
-		Y:      rowY,
-		Width:  lipgloss.Width(exportLabel),
-		Height: 1,
-	})
-
-	b.WriteString("Actions:\n")
-	actions := []struct {
-		id    string
-		label string
-		key   string
-	}{
-		{"import-tsv", "Import TSV", "i"},
-		{"import-apkg", "Import APKG", "I"},
-		{"export-tsv", "Export TSV", "x"},
-		{"export-apkg", "Export APKG", "X"},
-	}
-
-	btnStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("255")).
-		Background(lipgloss.Color("62")).
-		Padding(0, 1).
-		MarginRight(1)
-
-	rowY = y + strings.Count(b.String(), "\n")
-	currentX := x
-	for _, action := range actions {
-		btn := fmt.Sprintf("[%s] %s", action.key, action.label)
-		renderedBtn := btnStyle.Render(btn)
-		btnWidth := lipgloss.Width(renderedBtn)
-
-		m.hitboxes = append(m.hitboxes, Hitbox{
-			ID:     action.id,
-			View:   ViewImport,
-			X:      currentX,
-			Y:      rowY,
-			Width:  btnWidth,
-			Height: 1,
-		})
-		b.WriteString(renderedBtn)
-		currentX += btnWidth + 1 // Add 1 for margin
-	}
-	b.WriteString("\n\n")
-
-	b.WriteString(fmt.Sprintf("Current Deck: %s\n\n", m.deckLabel()))
-
-	if m.editingImportPath {
-		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("EDITING") + " - Enter to save, Esc to cancel.")
-	} else {
-		b.WriteString(mutedStyle.Render("Use j/k to select path, Enter to edit, or click buttons above."))
-	}
-
-	return b.String()
-}
-
-func (m *Model) renderAI(x, y int) string {
-	var b strings.Builder
-	spinner := ""
+func (m *Model) renderStatus(x, y int) string {
+	w := m.width
+	status := m.status
 	if m.drafting {
 		frames := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
-		spinner = " " + frames[m.spinnerFrame%len(frames)]
-	}
-	fmt.Fprintf(&b, "AI Drafts%s\n\nDeck: %s\nTopic: %s\n\nEnter generate | a approve | d discard | esc clear\n", spinner, m.deckLabel(), m.aiInput)
-	if len(m.drafts) == 0 {
-		if m.drafting {
-			b.WriteString("\nDrafting in progress...")
-		} else {
-			b.WriteString("\nNo drafts yet.")
-		}
-		return b.String()
+		status = frames[m.spinnerFrame%len(frames)] + " " + status
 	}
 
-	start := 0
-	end := len(m.drafts)
-	maxVisible := 10
-	if m.height > 20 {
-		maxVisible = m.height - 15
-	}
-	if maxVisible < 5 {
-		maxVisible = 5
+	sessionStats := ""
+	if m.sessionReviewed > 0 {
+		accuracy := float64(m.sessionCorrect) / float64(m.sessionReviewed) * 100
+		sessionStats = fmt.Sprintf(" | Session: %d rev, %.0f%% acc", m.sessionReviewed, accuracy)
 	}
 
-	if end > maxVisible {
-		start = m.draftCursor - maxVisible/2
-		if start < 0 {
-			start = 0
-		}
-		end = start + maxVisible
-		if end > len(m.drafts) {
-			end = len(m.drafts)
-			start = end - maxVisible
-			if start < 0 {
-				start = 0
-			}
-		}
-	}
-
-	for i := start; i < end; i++ {
-		draft := m.drafts[i]
-		prefix := "  "
-		style := lipgloss.NewStyle()
-		if i == m.draftCursor {
-			prefix = "> "
-			style = style.Bold(true).Foreground(lipgloss.Color("212"))
-		}
-
-		item := fmt.Sprintf("%s%s -> %s", prefix, draft.Note.Front, draft.Note.Back)
-		b.WriteString(style.Render(item))
-
-		// Add interactive buttons
-		btnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
-		approveBtn := " [Approve]"
-		discardBtn := " [Discard]"
-
-		if i == m.draftCursor {
-			btnStyle = btnStyle.Foreground(lipgloss.Color("81"))
-		}
-
-		b.WriteString(btnStyle.Render(approveBtn))
-		b.WriteString(btnStyle.Render(discardBtn))
-		b.WriteString("\n")
-
-		// Register hitboxes
-		rowY := y + 6 + (i - start)
-		approveX := x + lipgloss.Width(item)
-		discardX := approveX + lipgloss.Width(approveBtn)
-
-		m.hitboxes = append(m.hitboxes, Hitbox{
-			ID:     fmt.Sprintf("draft-approve-%d", i),
-			View:   ViewAI,
-			X:      approveX,
-			Y:      rowY,
-			Width:  lipgloss.Width(approveBtn),
-			Height: 1,
-		})
-		m.hitboxes = append(m.hitboxes, Hitbox{
-			ID:     fmt.Sprintf("draft-discard-%d", i),
-			View:   ViewAI,
-			X:      discardX,
-			Y:      rowY,
-			Width:  lipgloss.Width(discardBtn),
-			Height: 1,
-		})
-	}
-
-	// Show detailed preview for selected draft
-	if len(m.drafts) > 0 && m.draftCursor < len(m.drafts) {
-		selected := m.drafts[m.draftCursor]
-		previewTitleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205"))
-		b.WriteString("\n" + previewTitleStyle.Render("Preview:") + "\n")
-		b.WriteString(fmt.Sprintf("  Extra:    %s\n", selected.Note.Extra))
-		if len(selected.Note.Tags) > 0 {
-			b.WriteString(fmt.Sprintf("  Tags:     %s\n", strings.Join(selected.Note.Tags, ", ")))
-		}
-		if len(selected.Note.Examples) > 0 {
-			b.WriteString("  Examples:\n")
-			for _, ex := range selected.Note.Examples {
-				b.WriteString(fmt.Sprintf("    - %s\n", ex))
-			}
-		}
-	}
-
-	if len(m.drafts) > maxVisible {
-		b.WriteString(fmt.Sprintf("\n(Showing %d-%d of %d)", start+1, end, len(m.drafts)))
-	}
-	return b.String()
+	res := statusStyle.Width(w).Render(fmt.Sprintf(" %s%s", status, sessionStats))
+	return res
 }
 
-func (m *Model) renderBrowser() string {
-	return m.renderBrowserAt(m.activeViewContentLayout())
-}
+func (m *Model) applyOverlay(base, overlay string) string {
+	baseLines := strings.Split(base, "\n")
+	overlayLines := strings.Split(overlay, "\n")
 
-func (m *Model) toggleBrowserBookmark() tea.Cmd {
-	if len(m.browserCards) == 0 {
-		return nil
+	startY := (len(baseLines) - len(overlayLines)) / 2
+	if startY < 0 {
+		startY = 0
 	}
-	card := m.browserCards[m.browserCursor]
-	next := !card.Bookmarked
-	m.status = "Saving bookmark..."
-	// Update local state immediately for responsiveness
-	m.browserCards[m.browserCursor].Bookmarked = next
-	// Also update in allDue if present
-	for i := range m.allDue {
-		if m.allDue[i].ID == card.ID {
-			m.allDue[i].Bookmarked = next
+	startX := (m.width - lipgloss.Width(overlayLines[0])) / 2
+	if startX < 0 {
+		startX = 0
+	}
+
+	for i, line := range overlayLines {
+		if startY+i >= len(baseLines) {
 			break
 		}
-	}
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		if err := m.repo.SetCardBookmark(ctx, card.ID, next); err != nil {
-			return err
-		}
-		return bookmarkToggledMsg{cardID: card.ID, bookmarked: next}
-	}
-}
-
-func (m *Model) toggleBrowserSuspension() tea.Cmd {
-	if len(m.browserCards) == 0 {
-		return nil
-	}
-	card := m.browserCards[m.browserCursor]
-	next := !card.Suspended
-	m.status = "Updating suspension..."
-	// Update local state
-	m.browserCards[m.browserCursor].Suspended = next
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-		defer cancel()
-		if err := m.repo.SetCardSuspended(ctx, card.ID, next); err != nil {
-			return err
-		}
-		// Refresh everything to ensure stats and lists are consistent
-		var cards []core.Card
-		var err error
-		if m.bookmarkFilter {
-			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
-		} else {
-			cards, err = m.repo.DueCards(ctx, time.Now(), 500)
-		}
-		if err != nil {
-			return err
-		}
-		decks, err := m.repo.Decks(ctx)
-		if err != nil {
-			return err
-		}
-		stats, err := m.repo.Statistics(ctx)
-		if err != nil {
-			return err
-		}
-		return cardSuspendedMsg{cardID: card.ID, cards: cards, decks: decks, stats: stats}
-	}
-}
-
-func (m *Model) renderBrowserAt(layout viewportLayout) string {
-	var b strings.Builder
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).MarginBottom(1)
-	b.WriteString(titleStyle.Render("Card Browser") + "\n")
-
-	searchBorderColor := "62"
-	searchLabel := "Search"
-	if m.searchingBrowser {
-		searchBorderColor = "81"
-		searchLabel = "SEARCHING"
-	}
-	searchStyle := lipgloss.NewStyle().
-		Border(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color(searchBorderColor)).
-		Padding(0, 1).
-		Width(maxInt(30, m.width-60))
-
-	b.WriteString(searchStyle.Render(fmt.Sprintf("%s: %s_", searchLabel, m.browserSearch)) + "\n\n")
-
-	if len(m.browserCards) == 0 {
-		b.WriteString("No cards found. Press / to search.\n\n")
-		b.WriteString(mutedStyle.Render("Use left/right/[ to change deck filter.\n"))
-		return b.String()
-	}
-	start := 0
-	end := len(m.browserCards)
-	maxVisible := m.listVisibleLines(layout.Height)
-	if end > maxVisible {
-		start = m.browserCursor - maxVisible/2
-		if start < 0 {
-			start = 0
-		}
-		end = start + maxVisible
-		if end > len(m.browserCards) {
-			end = len(m.browserCards)
-			start = end - maxVisible
-			if start < 0 {
-				start = 0
-			}
-		}
-	}
-	listStartY := strings.Count(b.String(), "\n")
-	lineWidth := scrollbarLineWidth(layout.Width)
-	thumbStart, thumbHeight := scrollbarThumb(len(m.browserCards), maxVisible, start)
-	for i := start; i < end; i++ {
-		card := m.browserCards[i]
-		prefix := "  "
-		style := lipgloss.NewStyle()
-		if i == m.browserCursor {
-			prefix = "> "
-			style = style.Bold(true).Foreground(lipgloss.Color("212"))
-		}
-		kind := "FC"
-		if card.Kind == core.CardKindMCQ {
-			kind = "MCQ"
-		}
-		bookmark := ""
-		if card.Bookmarked {
-			bookmark = " [B]"
-		}
-		leech := ""
-		if card.Leech {
-			leech = " [L]"
-		}
-		suspended := ""
-		if card.Suspended {
-			suspended = " [S]"
-		}
-		mature := ""
-		if card.Mature {
-			mature = " ⭐"
-		}
-		label := fmt.Sprintf("%s[%s] %s%s%s%s%s", prefix, kind, card.Prompt, mature, bookmark, leech, suspended)
-		line := padLine(style.Render(label), lineWidth)
-		if len(m.browserCards) > maxVisible {
-			currentPos := i - start
-			scrollbarChar := "│"
-			if currentPos >= thumbStart && currentPos < thumbStart+thumbHeight {
-				scrollbarChar = "█"
-			}
-			line += " " + scrollbarChar
-			m.hitboxes = append(m.hitboxes, Hitbox{
-				ID:     fmt.Sprintf("browser-scroll-%d", currentPos),
-				View:   ViewBrowser,
-				X:      layout.X + lineWidth + 1,
-				Y:      layout.Y + listStartY + currentPos,
-				Width:  1,
-				Height: 1,
-			})
-		}
-		b.WriteString(line)
-		b.WriteString("\n")
-	}
-	if m.showReviewHistory && m.browserCursor < len(m.browserCards) && m.reviewHistoryCard == m.browserCards[m.browserCursor].ID {
-		b.WriteString("\n")
-		b.WriteString(m.renderReviewHistory(m.browserCards[m.browserCursor].Prompt))
-		b.WriteString("\n")
-	}
-	b.WriteString("\nUse j/k to navigate, type to search, Enter for history, backspace to delete.\n")
-	return b.String()
-}
-
-func (m *Model) renderReviewHistory(label string) string {
-	var b strings.Builder
-	b.WriteString(fmt.Sprintf("Review History: %s\n", label))
-	if len(m.reviewHistory) == 0 {
-		b.WriteString("  No reviews yet.")
-		return b.String()
-	}
-	for i, log := range m.reviewHistory {
-		fmt.Fprintf(&b, "  %d. %s at %s -> next %s (%s, reviews %d, lapses %d)\n",
-			i+1,
-			log.Grade,
-			log.Reviewed.Local().Format("Jan 02 15:04"),
-			log.Due.Local().Format("Jan 02"),
-			formatReviewInterval(log.Interval),
-			log.Reviews,
-			log.Lapses,
-		)
-	}
-	return strings.TrimRight(b.String(), "\n")
-}
-
-func formatReviewInterval(interval time.Duration) string {
-	if interval <= 0 {
-		return "same day"
-	}
-	hours := int(interval.Hours())
-	if hours < 24 {
-		if hours <= 1 {
-			return "1 hour"
-		}
-		return fmt.Sprintf("%d hours", hours)
-	}
-	days := hours / 24
-	if days == 1 {
-		return "1 day"
-	}
-	return fmt.Sprintf("%d days", days)
-}
-
-func (m *Model) renderCram() string {
-	return m.renderCramAt(m.activeViewContentLayout())
-}
-
-func (m *Model) renderCramAt(layout viewportLayout) string {
-	if m.cramActive {
-		var b strings.Builder
-		card := m.cramCards[m.cramCursor]
-		audioIndicator := ""
-		if card.Audio != "" {
-			audioIndicator = " [Audio]"
-		}
-		titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
-		b.WriteString(titleStyle.Render("Cram Review") + "\n\n")
-		b.WriteString(fmt.Sprintf("Prompt: %s%s\n\n", card.Prompt, audioIndicator))
-		if m.cramRevealed {
-			b.WriteString(fmt.Sprintf("Answer: %s\n\n", card.Answer))
-			b.WriteString("Grade: a Again | h Hard | g Good | e Easy\n")
-		} else if m.revealState == RevealRevealing {
-			// Show gradual reveal animation with blocks
-			progress := int(m.revealProgress)
-			if progress > 100 {
-				progress = 100
-			}
-			// Calculate how many characters to reveal
-			fullText := card.Answer
-			numChars := len([]rune(fullText))
-			revealedChars := (numChars * progress) / 100
-			if revealedChars < 0 {
-				revealedChars = 0
-			}
-			if revealedChars > numChars {
-				revealedChars = numChars
-			}
-			revealedRunes := []rune(fullText)[:revealedChars]
-			remainingBlocks := numChars - revealedChars
-			animationText := string(revealedRunes) + strings.Repeat("▌", remainingBlocks-1)
-			b.WriteString(fmt.Sprintf("Answer: %s\n\n", animationText))
-			b.WriteString("Press space or enter to finish reveal.\n")
-		} else {
-			b.WriteString("Press space or enter to reveal.\n")
-		}
-		b.WriteString("\np play audio | q to exit cram review.")
-		return b.String()
+		baseLines[startY+i] = baseLines[startY+i][:startX] + line + baseLines[startY+i][minInt(len(baseLines[startY+i]), startX+lipgloss.Width(line)):]
 	}
 
-	var b strings.Builder
-	b.WriteString("Cram Mode\n\n")
-	b.WriteString(fmt.Sprintf("Filter: %s\n\n", m.cramType))
-	if len(m.cramCards) == 0 {
-		b.WriteString("No cards found for this filter.\n\n")
-	}
-
-	b.WriteString("Click a filter to load cards:\n")
-	filters := []struct {
-		id    string
-		label string
-	}{
-		{"cram-filter-1", "Bookmarked"},
-		{"cram-filter-2", "Suspended"},
-		{"cram-filter-3", "Leeches"},
-		{"cram-filter-4", "All flagged"},
-		{"cram-filter-5", "All cards"},
-	}
-
-	filterStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("255")).
-		Background(lipgloss.Color("62")).
-		Padding(0, 1).
-		MarginBottom(1)
-
-	for i, f := range filters {
-		idx := i + 1
-		item := fmt.Sprintf("  %d: %s", idx, f.label)
-		rowY := layout.Y + strings.Count(b.String(), "\n")
-		b.WriteString(filterStyle.Render(item) + "\n")
-
-		m.hitboxes = append(m.hitboxes, Hitbox{
-			ID:     f.id,
-			View:   ViewCram,
-			X:      layout.X,
-			Y:      rowY,
-			Width:  lipgloss.Width(item) + 2,
-			Height: 1,
-		})
-	}
-
-	if len(m.cramCards) > 0 {
-		b.WriteString(fmt.Sprintf("\n%d cards loaded.\n", len(m.cramCards)))
-		b.WriteString("Press enter to start cramming.\n")
-	}
-
-	start := 0
-	end := len(m.cramCards)
-	maxVisible := m.listVisibleLines(layout.Height)
-	if end > maxVisible {
-		start = m.cramCursor - maxVisible/2
-		if start < 0 {
-			start = 0
-		}
-		end = start + maxVisible
-		if end > len(m.cramCards) {
-			end = len(m.cramCards)
-			start = end - maxVisible
-			if start < 0 {
-				start = 0
-			}
-		}
-	}
-	listStartY := strings.Count(b.String(), "\n")
-	lineWidth := scrollbarLineWidth(layout.Width)
-	thumbStart, thumbHeight := scrollbarThumb(len(m.cramCards), maxVisible, start)
-	for i := start; i < end; i++ {
-		card := m.cramCards[i]
-		prefix := "  "
-		style := lipgloss.NewStyle()
-		if i == m.cramCursor {
-			prefix = "> "
-			style = style.Bold(true).Foreground(lipgloss.Color("212"))
-		}
-		kind := "FC"
-		if card.Kind == core.CardKindMCQ {
-			kind = "MCQ"
-		}
-		bookmark := ""
-		if card.Bookmarked {
-			bookmark = " [B]"
-		}
-		leech := ""
-		if card.Leech {
-			leech = " [L]"
-		}
-		suspended := ""
-		if card.Suspended {
-			suspended = " [S]"
-		}
-		mature := ""
-		if card.Mature {
-			mature = " ⭐"
-		}
-		label := fmt.Sprintf("%s[%s] %s%s%s%s%s", prefix, kind, card.Prompt, mature, bookmark, leech, suspended)
-		line := padLine(style.Render(label), lineWidth)
-		if len(m.cramCards) > maxVisible {
-			currentPos := i - start
-			scrollbarChar := "│"
-			if currentPos >= thumbStart && currentPos < thumbStart+thumbHeight {
-				scrollbarChar = "█"
-			}
-			line += " " + scrollbarChar
-			m.hitboxes = append(m.hitboxes, Hitbox{
-				ID:     fmt.Sprintf("cram-scroll-%d", currentPos),
-				View:   ViewCram,
-				X:      layout.X + lineWidth + 1,
-				Y:      layout.Y + listStartY + currentPos,
-				Width:  1,
-				Height: 1,
-			})
-		}
-		b.WriteString(line)
-		b.WriteString("\n")
-	}
-	if m.cramReviewed > 0 {
-		accuracy := 0.0
-		if m.cramReviewed > 0 {
-			accuracy = float64(m.cramCorrect) / float64(m.cramReviewed) * 100
-		}
-		b.WriteString(fmt.Sprintf("\nCram Stats: %d reviewed, %d correct (%.1f%%)\n", m.cramReviewed, m.cramCorrect, accuracy))
-	}
-	b.WriteString("\nUse j/k to navigate. Type 1-5 for filter. q to quit.\n")
-	return b.String()
-}
-
-func (m *Model) renderHelp() string {
-	var b strings.Builder
-	b.WriteString("Keyboard Shortcuts\n\n")
-	b.WriteString("Global:\n")
-	b.WriteString("  1-9          Switch to view\n")
-	b.WriteString("  Tab/arrows   Cycle views\n")
-	b.WriteString("  w/s          Previous/next view\n")
-	b.WriteString("  ?            Toggle this help\n")
-	b.WriteString("  q/Ctrl+c     Quit\n\n")
-
-	b.WriteString("Dashboard/Decks:\n")
-	b.WriteString("  [ ]          Previous/next deck\n")
-	b.WriteString("  Enter        Select deck (Decks view)\n\n")
-
-	b.WriteString("Review:\n")
-	b.WriteString("  Space/Enter  Reveal answer\n")
-	b.WriteString("  a/h/g/e      Grade Again/Hard/Good/Easy\n")
-	b.WriteString("  b            Toggle bookmark\n")
-	b.WriteString("  B            Toggle bookmarked-only mode\n")
-	b.WriteString("  x            Suspend card\n")
-	b.WriteString("  u            Undo last review\n")
-	b.WriteString("  r            Toggle card review history\n")
-	b.WriteString("  p            Play audio\n")
-	b.WriteString("  1-4          Select MCQ choice\n\n")
-
-	b.WriteString("Browser:\n")
-	b.WriteString("  j/k          Navigate cards\n")
-	b.WriteString("  Enter        Toggle card review history\n")
-	b.WriteString("  Type         Search cards\n")
-	b.WriteString("  Backspace    Delete search char\n\n")
-
-	b.WriteString("Cram:\n")
-	b.WriteString("  j/k          Navigate cards\n")
-	b.WriteString("  Enter        Start cram review\n")
-	b.WriteString("  p            Play audio (in review)\n")
-	b.WriteString("  1-5          Filter: bookmarked/suspended/leech/flagged/all\n\n")
-
-	b.WriteString("Import:\n")
-	b.WriteString("  j/k          Select field\n")
-	b.WriteString("  Enter        Start/stop editing path\n")
-	b.WriteString("  i/I          Import TSV/APKG\n")
-	b.WriteString("  x/X          Export TSV/APKG\n\n")
-
-	b.WriteString("Settings:\n")
-	b.WriteString("  j/k          Navigate options\n")
-	b.WriteString("  +/-          Adjust daily goal\n")
-	b.WriteString("  Enter        Toggle AI provider / edit template")
-
-	return panelStyle.Width(60).Render(b.String())
-}
-
-func (m *Model) renderReview(x, y int) string {
-	if len(m.dueCards) == 0 {
-		if m.bookmarkFilter {
-			return "Review (Bookmarked)\n\nNo bookmarked cards due."
-		}
-		return "Review\n\nNo cards due."
-	}
-	card := m.dueCards[m.cursor]
-	bookmark := "Bookmark: off"
-	if card.Bookmarked {
-		bookmark = "Bookmark: on"
-	}
-	leech := ""
-	if card.Leech {
-		leech = " | LEECH"
-	}
-	suspended := ""
-	if card.Suspended {
-		suspended = " | SUSPENDED"
-	}
-	filterBanner := ""
-	if m.bookmarkFilter {
-		filterBanner = " (Bookmarked)"
-	}
-	keys := "b toggle | x suspend | B filter | u undo | r history | p audio"
-	if m.bookmarkFilter {
-		keys = "b toggle | x suspend | B all cards | u undo | r history | p audio"
-	}
-	audioIndicator := ""
-	if card.Audio != "" {
-		audioIndicator = " [Audio]"
-	}
-
-	var answer string
-	if card.Kind == core.CardKindMCQ && len(card.Choices) > 0 {
-		if m.revealState == RevealRevealed {
-			if m.mcqAnswered {
-				feedback := "Incorrect"
-				if m.mcqCorrect {
-					feedback = "Correct"
-				}
-				answer = fmt.Sprintf("%s: %s\n\n%s\n\nGrade: a Again | h Hard | g Good | e Easy", feedback, card.Answer, renderMCQChoices(card.Choices, m.mcqChoice))
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: x + 7, Y: y + 10, Width: 5, Height: 1})
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: x + 17, Y: y + 10, Width: 4, Height: 1})
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: x + 26, Y: y + 10, Width: 4, Height: 1})
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + 35, Y: y + 10, Width: 4, Height: 1})
-			} else {
-				answer = fmt.Sprintf("1-4 select answer\n\n%s\n\nGrade: a Again | h Hard | g Good | e Easy", renderMCQChoices(card.Choices, m.mcqChoice))
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: x + 7, Y: y + 8, Width: 5, Height: 1})
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: x + 17, Y: y + 8, Width: 4, Height: 1})
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: x + 26, Y: y + 8, Width: 4, Height: 1})
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + 35, Y: y + 8, Width: 4, Height: 1})
-			}
-		} else if m.revealState == RevealRevealing {
-			// Show gradual reveal animation with blocks
-			progress := int(m.revealProgress)
-			if progress > 100 {
-				progress = 100
-			}
-			// Calculate how many characters to reveal
-			fullText := card.Answer
-			numChars := len([]rune(fullText))
-			revealedChars := (numChars * progress) / 100
-			if revealedChars < 0 {
-				revealedChars = 0
-			}
-			if revealedChars > numChars {
-				revealedChars = numChars
-			}
-			revealedRunes := []rune(fullText)[:revealedChars]
-			remainingBlocks := numChars - revealedChars
-			animationText := string(revealedRunes) + strings.Repeat("▌", remainingBlocks-1)
-			answer = fmt.Sprintf("1-4 select answer\n\n%s", renderMCQChoices(card.Choices, m.mcqChoice))
-			// Replace the answer in choices display
-			answer = strings.Replace(answer, fullText, animationText, 1)
-		} else {
-			answer = "Press space or enter to reveal choices."
-		}
-	} else if m.revealState == RevealRevealed {
-		answer = card.Answer + "\n\nGrade: a Again | h Hard | g Good | e Easy"
-		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: x + 7, Y: y + 6, Width: 5, Height: 1})
-		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: x + 17, Y: y + 6, Width: 4, Height: 1})
-		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: x + 26, Y: y + 6, Width: 4, Height: 1})
-		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + 35, Y: y + 6, Width: 4, Height: 1})
-	} else if m.revealState == RevealRevealing {
-		// Show gradual reveal animation with blocks
-		progress := int(m.revealProgress)
-		if progress > 100 {
-			progress = 100
-		}
-		// Calculate how many characters to reveal
-		fullText := card.Answer
-		numChars := len([]rune(fullText))
-		revealedChars := (numChars * progress) / 100
-		if revealedChars < 0 {
-			revealedChars = 0
-		}
-		if revealedChars > numChars {
-			revealedChars = numChars
-		}
-		revealedRunes := []rune(fullText)[:revealedChars]
-		remainingBlocks := numChars - revealedChars
-		answer = string(revealedRunes) + "▌" + strings.Repeat("▌", remainingBlocks-1)
-	} else {
-		answer = "Press space or enter to reveal."
-	}
-
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
-	header := fmt.Sprintf("%s%s %d/%d", titleStyle.Render("Review"), filterBanner, m.cursor+1, len(m.dueCards))
-
-	mature := ""
-	if card.Mature {
-		mature = " ✨"
-	}
-
-	promptDisplay := card.Prompt
-	if card.Kind == core.CardKindCloze {
-		// Highlight the [...] or [hint] in cloze prompt
-		promptDisplay = strings.Replace(promptDisplay, "[", lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("["), 1)
-		promptDisplay = strings.Replace(promptDisplay, "]", lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("]"), 1)
-	}
-
-	view := fmt.Sprintf("%s\n%s | %s\n%s%s%s\n\n%s%s\n\n%s", header, bookmark, keys, leech, suspended, audioIndicator, promptDisplay, mature, answer)
-	if m.showReviewHistory && m.reviewHistoryCard == card.ID {
-		view += "\n\n" + m.renderReviewHistory(card.Prompt)
-	}
-	return view
-}
-
-func renderMCQChoices(choices []string, selected int) string {
-	var b strings.Builder
-	for i, choice := range choices {
-		prefix := "  "
-		mark := " "
-		if i == selected {
-			mark = ">"
-		}
-		b.WriteString(fmt.Sprintf("%s%d: %s%s\n", prefix, i+1, mark, choice))
-	}
-	return strings.TrimRight(b.String(), "\n")
-}
-
-func (m *Model) nextViewCmd() tea.Cmd {
-	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser, ViewCram}
-	for i, view := range views {
-		if m.activeView == view {
-			return m.updateView(views[(i+1)%len(views)])
-		}
-	}
-	return m.updateView(ViewDashboard)
-}
-
-func (m *Model) previousViewCmd() tea.Cmd {
-	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser, ViewCram}
-	for i, view := range views {
-		if m.activeView == view {
-			return m.updateView(views[(i-1+len(views))%len(views)])
-		}
-	}
-	return m.updateView(ViewDashboard)
-}
-
-func (m *Model) updateView(view View) tea.Cmd {
-	m.activeView = view
-	m.isDragging = false
-	m.clearReviewHistory()
-	if view == ViewStatistics {
-		return m.loadStatistics()
-	}
-	if view == ViewBrowser {
-		m.browserSearch = ""
-		m.browserDeckID = m.deck.ID
-		m.browserCursor = 0
-		return m.loadBrowserCards()
-	}
-	if view == ViewCram {
-		m.cramType = "bookmarked"
-		m.cramCursor = 0
-		m.cramReviewed = 0
-		m.cramCorrect = 0
-		return m.loadCramCards()
-	}
-	return nil
-}
-
-func (m *Model) reloadBrowserForSelectedDeck() tea.Cmd {
-	m.browserDeckID = m.deck.ID
-	m.browserSearch = ""
-	m.browserCards = nil
-	m.browserCursor = 0
-	m.clearReviewHistory()
-	m.status = fmt.Sprintf("Browsing %s", m.deckLabel())
-	return m.loadBrowserCards()
-}
-
-func (m *Model) previousDeck() {
-	if len(m.decks) == 0 {
-		return
-	}
-	m.deckIndex = (m.deckIndex - 1 + len(m.decks)) % len(m.decks)
-	m.selectDeck(m.deckIndex)
-}
-
-func (m *Model) nextDeck() {
-	if len(m.decks) == 0 {
-		return
-	}
-	m.deckIndex = (m.deckIndex + 1) % len(m.decks)
-	m.selectDeck(m.deckIndex)
+	return strings.Join(baseLines, "\n")
 }
 
 func (m *Model) syncDecks(newDecks []core.Deck) {
 	m.decks = newDecks
 	if len(m.decks) > 0 {
-		// Try to find current deck in new list by ID
 		found := false
 		for i, d := range m.decks {
 			if d.ID == m.deck.ID {
@@ -3396,7 +811,6 @@ func (m *Model) syncDecks(newDecks []core.Deck) {
 			}
 		}
 		if !found {
-			// Fall back to current index if valid
 			if m.deckIndex >= len(m.decks) {
 				m.deckIndex = maxInt(0, len(m.decks)-1)
 			}
@@ -3410,173 +824,47 @@ func (m *Model) syncDecks(newDecks []core.Deck) {
 	}
 }
 
-func (m *Model) selectDeckByID(id string) {
-	for i, d := range m.decks {
-		if d.ID == id {
-			m.deckIndex = i
-			m.deck = d
-			m.deckCursor = i
-			m.applyDeckFilter()
-			return
-		}
-	}
+func (m *Model) tickSpinner() tea.Cmd {
+	return tea.Tick(time.Millisecond*100, func(t time.Time) tea.Msg {
+		return spinnerTickMsg{}
+	})
 }
 
-func (m *Model) selectDeck(index int) {
-	if len(m.decks) == 0 {
-		m.deck = core.Deck{}
-		m.deckCursor = 0
-		m.applyDeckFilter()
-		return
+type spinnerTickMsg struct{}
+type revealTickMsg struct{}
+
+func (m *Model) startRevealAnimation(audioPath string) tea.Cmd {
+	cmds := []tea.Cmd{m.tickReveal()}
+	if audioPath != "" && m.autoPlayAudio {
+		m.statusSeq++
+		m.status = "Auto-playing audio..."
+		cmds = append(cmds, m.playAudio(audioPath))
 	}
-	if index < 0 || index >= len(m.decks) {
-		index = 0
-	}
-	m.deckIndex = index
-	m.deck = m.decks[index]
-	m.deckCursor = index
-	m.applyDeckFilter()
+	return tea.Batch(cmds...)
 }
 
-func (m *Model) applyDeckFilter() {
-	m.dueCards = m.dueCards[:0]
-	for _, card := range m.allDue {
-		if m.deck.ID == "" || card.DeckID == m.deck.ID {
-			m.dueCards = append(m.dueCards, card)
-		}
-	}
-	if m.cursor >= len(m.dueCards) {
-		m.cursor = maxInt(0, len(m.dueCards)-1)
-	}
-	m.resetMCQState()
-	m.revealState = RevealIdle
-	m.revealProgress = 0
-	if len(m.dueCards) == 0 {
-		m.status = "All caught up!"
-	} else {
-		m.status = fmt.Sprintf("%d cards due", len(m.dueCards))
-	}
+func (m *Model) tickReveal() tea.Cmd {
+	return tea.Tick(time.Millisecond*60, func(t time.Time) tea.Msg {
+		return revealTickMsg{}
+	})
 }
 
-func (m *Model) deckLabel() string {
-	if strings.TrimSpace(m.deck.Name) != "" {
-		return m.deck.Name
+func (m *Model) playAudio(audioPath string) tea.Cmd {
+	if audioPath == "" {
+		return nil
 	}
-	return "No deck"
-}
-
-func (m *Model) hitboxAt(x, y int) (Hitbox, bool) {
-	for _, hitbox := range m.hitboxes {
-		if hitbox.Contains(x, y) {
-			return hitbox, true
+	return func() tea.Msg {
+		var cmd *exec.Cmd
+		if runtime.GOOS == "darwin" {
+			cmd = exec.Command("afplay", audioPath)
+		} else {
+			cmd = exec.Command("play", audioPath)
 		}
-	}
-	return Hitbox{}, false
-}
-
-func (m *Model) activateHitbox(id string) tea.Cmd {
-	switch {
-	case strings.HasPrefix(id, "nav-"):
-		return m.updateView(View(strings.TrimPrefix(id, "nav-")))
-	case strings.HasPrefix(id, "tab-"):
-		return m.updateView(View(strings.TrimPrefix(id, "tab-")))
-	case id == "grade-again":
-		return m.gradeCard(core.GradeAgain)
-	case id == "grade-hard":
-		return m.gradeCard(core.GradeHard)
-	case id == "grade-good":
-		return m.gradeCard(core.GradeGood)
-	case id == "grade-easy":
-		return m.gradeCard(core.GradeEasy)
-	case id == "draft-approve":
-		return m.approveDraft()
-	case strings.HasPrefix(id, "dash-"):
-		switch id {
-		case "dash-review":
-			return m.updateView(ViewReview)
-		case "dash-collection":
-			return m.updateView(ViewBrowser)
-		case "dash-progress":
-			return m.updateView(ViewStatistics)
-		case "dash-digest":
-			return m.updateView(ViewDecks)
-		}
-		return nil
-	case strings.HasPrefix(id, "cram-filter-"):
-		idx, err := strconv.Atoi(strings.TrimPrefix(id, "cram-filter-"))
-		if err == nil {
-			return m.setCramFilter(idx)
-		}
-		return nil
-	case strings.HasPrefix(id, "settings-"):
-		if id == "settings-goal-minus" {
-			return m.setDailyGoal(m.stats.DailyGoal - 1)
-		}
-		if id == "settings-goal-plus" {
-			return m.setDailyGoal(m.stats.DailyGoal + 1)
-		}
-		idx, err := strconv.Atoi(strings.TrimPrefix(id, "settings-"))
-		if err == nil && idx >= 0 && idx <= 5 {
-			m.settingsCursor = idx
-			return m.handleSettingsEnter()
-		}
-		return nil
-	case strings.HasPrefix(id, "import-path-"):
-		idx, err := strconv.Atoi(strings.TrimPrefix(id, "import-path-"))
-		if err == nil && (idx == 0 || idx == 1) {
-			m.importCursor = idx
-			m.editingImportPath = true
-		}
-		return nil
-	case id == "import-tsv":
-		return m.importTSV()
-	case id == "import-apkg":
-		return m.importAPKG()
-	case id == "export-tsv":
-		return m.exportTSV()
-	case id == "export-apkg":
-		return m.exportAPKG()
-	case strings.HasPrefix(id, "draft-approve-"):
-		idx, err := strconv.Atoi(strings.TrimPrefix(id, "draft-approve-"))
-		if err == nil && idx >= 0 && idx < len(m.drafts) {
-			m.draftCursor = idx
-			return m.approveDraft()
-		}
-		return nil
-	case strings.HasPrefix(id, "draft-discard-"):
-		idx, err := strconv.Atoi(strings.TrimPrefix(id, "draft-discard-"))
-		if err == nil && idx >= 0 && idx < len(m.drafts) {
-			m.draftCursor = idx
-			m.discardDraft()
-		}
-		return nil
-	case strings.HasPrefix(id, "stats-scroll-"):
-		line, err := strconv.Atoi(strings.TrimPrefix(id, "stats-scroll-"))
-		if err == nil {
-			visible := m.statisticsVisibleLines(m.activeViewContentLayout().Height)
-			m.setStatsScroll(scrollOffsetForTrackRow(m.statsTotalLines, visible, line))
-		}
-		return nil
-	case strings.HasPrefix(id, "browser-scroll-"):
-		line, err := strconv.Atoi(strings.TrimPrefix(id, "browser-scroll-"))
-		if err == nil && len(m.browserCards) > 0 {
-			visible := m.listVisibleLines(m.activeViewContentLayout().Height)
-			next := selectedIndexForTrackRow(len(m.browserCards), visible, line)
-			if next != m.browserCursor {
-				m.browserCursor = next
-				m.clearReviewHistory()
-			}
-		}
-		return nil
-	case strings.HasPrefix(id, "cram-scroll-"):
-		line, err := strconv.Atoi(strings.TrimPrefix(id, "cram-scroll-"))
-		if err == nil && len(m.cramCards) > 0 {
-			visible := m.listVisibleLines(m.activeViewContentLayout().Height)
-			m.cramCursor = selectedIndexForTrackRow(len(m.cramCards), visible, line)
+		if err := cmd.Run(); err != nil {
+			return err
 		}
 		return nil
 	}
-	return nil
 }
 
 func breakpointForWidth(width int) Breakpoint {
@@ -3588,96 +876,3 @@ func breakpointForWidth(width int) Breakpoint {
 	}
 	return BreakpointCompact
 }
-
-func maxInt(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func minInt(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func clampInt(v, low, high int) int {
-	if high < low {
-		return low
-	}
-	if v < low {
-		return low
-	}
-	if v > high {
-		return high
-	}
-	return v
-}
-
-func friendlyError(err error) string {
-	if errors.Is(err, os.ErrNotExist) {
-		var pathErr *os.PathError
-		if errors.As(err, &pathErr) {
-			return fmt.Sprintf("Error: no such file or directory: %s", filepath.Base(pathErr.Path))
-		}
-		return "Error: no such file or directory"
-	}
-	return fmt.Sprintf("Error: %v", err)
-}
-
-func singleLine(s string) string {
-	s = strings.ReplaceAll(s, "\n", " ")
-	s = strings.ReplaceAll(s, "\r", " ")
-	return strings.Join(strings.Fields(s), " ")
-}
-
-func truncateLine(s string, maxWidth int) string {
-	if maxWidth <= 0 || len(s) <= maxWidth {
-		return s
-	}
-	if maxWidth <= 1 {
-		return s[:maxWidth]
-	}
-	if maxWidth <= 3 {
-		return s[:maxWidth]
-	}
-	return s[:maxWidth-3] + "..."
-}
-
-func decksFromNotes(notes []core.Note) []core.Deck {
-	byID := make(map[string]int)
-	decks := make([]core.Deck, 0, 1)
-	for _, note := range notes {
-		deckID := strings.TrimSpace(note.DeckID)
-		if deckID == "" {
-			deckID = "Imported"
-			note.DeckID = deckID
-		}
-		index, ok := byID[deckID]
-		if !ok {
-			index = len(decks)
-			byID[deckID] = index
-			decks = append(decks, core.Deck{
-				ID:          deckID,
-				Name:        deckID,
-				Description: "Imported from Anki TSV.",
-			})
-		}
-		decks[index].Notes = append(decks[index].Notes, note)
-	}
-	return decks
-}
-
-var (
-	headerStyle    = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("229"))
-	mutedStyle     = lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
-	panelStyle     = lipgloss.NewStyle().Padding(1, 2).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("240"))
-	compactStyle   = lipgloss.NewStyle().Padding(1, 0)
-	navStyle       = lipgloss.NewStyle().PaddingRight(2)
-	navActiveStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212")).PaddingRight(2)
-	tabStyle       = lipgloss.NewStyle().Padding(0, 1).Foreground(lipgloss.Color("250"))
-	tabActiveStyle = lipgloss.NewStyle().Padding(0, 1).Bold(true).Foreground(lipgloss.Color("229")).Background(lipgloss.Color("57"))
-	statusStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("250")).Background(lipgloss.Color("236")).Padding(0, 1)
-)

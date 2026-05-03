@@ -1,6 +1,6 @@
 # Agent Context Index
 
-Last updated: 2026-05-02
+Last updated: 2026-05-03
 
 ## Active Backlog
 
@@ -21,7 +21,7 @@ Last updated: 2026-05-02
 
 ## Verification Status
 
-- ✅ All 76 E2E tests passing (as of 2026-05-03, including stability fix for parallel execution)
+- ✅ All 77 E2E tests passing (as of 2026-05-03, including Run 2 TUI refactor recovery)
 - ✅ All Go test suites passing (as of 2026-05-03)
 - ✅ App launches without errors (smoke test passing)
 - ✅ All views render correctly (Dashboard, Review, Import, AI, Settings, Browser, Cram)
@@ -29,6 +29,7 @@ Last updated: 2026-05-02
 - ✅ State successfully persisted to SQLite
 - ✅ Code formatting verified (gofmt)
 - ✅ Code quality verified (go vet)
+- ✅ Run 2 TUI refactor split recovered and verified with `./scripts/verify.sh` on 2026-05-03.
 
 ## Decisions
 

@@ -609,8 +609,20 @@ func (s *Store) Statistics(ctx context.Context) (core.Statistics, error) {
 	var stats core.Statistics
 	stats.Grades = make(map[core.ReviewGrade]int)
 
+	now := time.Now().UTC()
+
 	// Total cards
 	err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM cards`).Scan(&stats.TotalCards)
+	if err != nil {
+		return stats, err
+	}
+
+	// Total and active decks
+	err = s.db.QueryRowContext(ctx, `
+		SELECT
+			(SELECT COUNT(*) FROM decks),
+			(SELECT COUNT(DISTINCT deck_id) FROM cards c LEFT JOIN review_states rs ON rs.card_id = c.id WHERE rs.due_at IS NULL OR rs.due_at <= ?)
+	`, now).Scan(&stats.TotalDecks, &stats.ActiveDecks)
 	if err != nil {
 		return stats, err
 	}
@@ -639,7 +651,6 @@ func (s *Store) Statistics(ctx context.Context) (core.Statistics, error) {
 		return stats, err
 	}
 
-	now := time.Now().UTC()
 	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 	err = s.db.QueryRowContext(ctx, `
 		SELECT COUNT(*)
@@ -846,6 +857,32 @@ func (s *Store) ReviewHistory(ctx context.Context, cardID string, limit int) ([]
 		logs = append(logs, log)
 	}
 	return logs, rows.Err()
+}
+
+func (s *Store) DeleteCard(ctx context.Context, cardID string) error {
+	if cardID == "" {
+		return errors.New("card id is required")
+	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	if _, err := tx.ExecContext(ctx, `DELETE FROM reviews WHERE card_id = ?`, cardID); err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, `DELETE FROM review_states WHERE card_id = ?`, cardID); err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, `DELETE FROM card_flags WHERE card_id = ?`, cardID); err != nil {
+		return err
+	}
+	if _, err := tx.ExecContext(ctx, `DELETE FROM cards WHERE id = ?`, cardID); err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }
 
 func parseChoices(raw string) []string {

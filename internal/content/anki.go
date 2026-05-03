@@ -69,6 +69,7 @@ func ImportAnkiTSV(r io.Reader, opts ImportOptions) ([]core.Note, error) {
 			DeckID: noteDeck,
 			Front:  record[1],
 			Back:   record[2],
+			Type:   "Basic",
 		}
 		if len(record) > 3 {
 			note.Extra = record[3]
@@ -84,6 +85,11 @@ func ImportAnkiTSV(r io.Reader, opts ImportOptions) ([]core.Note, error) {
 				for i := range note.Choices {
 					note.Choices[i] = strings.TrimSpace(note.Choices[i])
 				}
+				note.Type = "MCQ"
+			} else if noteType == "Reverse" || noteType == "Basic (and reversed card)" || noteType == "BasicReversed" {
+				note.Type = "Reverse"
+			} else {
+				note.Type = noteType
 			}
 		}
 		if len(record) > 7 {

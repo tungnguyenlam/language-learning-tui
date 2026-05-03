@@ -1,10 +1,10 @@
 # Active Backlog
 
-Last updated: 2026-05-03
+Last updated: 2026-05-04
 
 ## Current Milestone
 
-Autonomous Feature Pass 18: Final Polish and Handoff
+Autonomous Feature Pass 19: Advanced Learning & UX Polish
 
 ## Completed Work
 
@@ -44,28 +44,24 @@ Autonomous Feature Pass 18: Final Polish and Handoff
 
 ## Planned Features
 
-(None at this time)
+### Advanced Learning
+- [ ] **Implement Reverse Flashcards** (Basic (and reversed card) type)
+- [ ] **Add "Reverse" support to TSV import** via `notetype:Reverse`
+- [ ] **Improve "Examples" card generation** to automatically create context-based MCQs
+
+### UX Polish & Dashboard
+- [ ] **Add "Total Decks" and "Active Decks" counters** to Dashboard statistics
+- [ ] **Enhance Review Visuals**: Add subtle color coding for Grade options (Again=Red, Good=Green, etc.)
+- [ ] **Improve Navigation**: Allow jumping to specific tabs using number keys (1-6)
+
+### Content Expansion
+- [ ] **Add "B1 - German Idioms" deck** to showcase advanced expressions
 
 ## Last Verification
 
-- 2026-05-03: `./scripts/verify.sh` passed, including all 76 E2E tests.
-- 2026-05-02: `./scripts/verify.sh` passed, including all 76 E2E tests.
+- 2026-05-04: `./scripts/verify.sh` passed baseline check.
+- 2026-05-03: `./scripts/verify.sh` passed, including all 77 E2E tests.
 
 ## Next Action
 
-Handoff complete - all verification passed.
-
-## Summary
-
-The deutsche-tui application is production-ready with comprehensive German learning content:
-- ✅ All 9 Go unit test suites passing
-- ✅ All 76 E2E tests passing  
-- ✅ App launches without errors
-- ✅ All views render correctly
-- ✅ Core interactions working
-- ✅ State persistence verified
-- ✅ 600+ vocabulary items across A1-B2 levels
-- ✅ 500+ importable TSV cards
-- ✅ Full Anki compatibility
-
-The application successfully meets all requirements for end-to-end functionality.
+Implement Reverse Flashcards logic in `internal/content/anki.go`.

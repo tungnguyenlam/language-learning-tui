@@ -42,6 +42,7 @@ type Deck struct {
 type Note struct {
 	ID       string
 	DeckID   string
+	Type     string
 	Front    string
 	Back     string
 	Extra    string
@@ -110,6 +111,8 @@ type Statistics struct {
 	ReviewsToday    int
 	DailyGoal       int
 	CurrentStreak   int
+	TotalDecks      int
+	ActiveDecks     int
 	SuccessRate     float64
 	Grades          map[ReviewGrade]int
 }
@@ -130,6 +133,7 @@ type Repository interface {
 	Cards(ctx context.Context, deckID string, search string) ([]Card, error)
 	ReviewsPerDay(ctx context.Context, days int) (map[string]int, error)
 	ReviewHistory(ctx context.Context, cardID string, limit int) ([]ReviewLog, error)
+	DeleteCard(ctx context.Context, cardID string) error
 }
 
 type Scheduler interface {

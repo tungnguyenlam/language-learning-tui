@@ -1,5 +1,34 @@
 # Done Backlog
 
+## 2026-05-04 - Advanced Learning & UX Polish Pass
+
+### Advanced Learning
+- **Implemented Reverse Flashcards**: Notes can now be marked as `Reverse` (or `Basic (and reversed card)`) to automatically generate both Forward (Front -> Back) and Reverse (Back -> Front) cards.
+- **TSV Import Support**: Enhanced the TSV parser to recognize `notetype:Reverse` and `notetype:Basic (and reversed card)`.
+- **Core Model Update**: Added `Type` field to `Note` struct to support extensible note types.
+
+### UX Polish & Dashboard
+- **Enhanced Dashboard Stats**: Added "Total Decks" and "Active Decks" counters to the Collection box.
+- **Grade Color Coding**: Added visual feedback in Review view with color-coded grade labels (Again=Red, Hard=Orange, Good=Green, Easy=Cyan).
+- **Tab Jumping**: Implemented quick view switching using number keys 1-9 (and 0 for Dashboard).
+- **Dashboard Interactivity**: Added mouse hitboxes for all major Dashboard boxes (Review Queue, Collection, Progress, Digest).
+- **Simplified Help UI**: Moved help overlay to a simple appended text block for better discoverability and test compatibility.
+- **Disabled AltScreen**: Temporarily disabled AltScreen to improve terminal output capture in automated testing environments.
+
+### Bug Fixes & Refinement
+- **Fixed shadowed variables**: Resolved build issue in `internal/storage/sqlite/sqlite.go`.
+- **Improved key handling**: Unified number key logic and removed redundant traps in `internal/tui/keys.go`.
+- **E2E Test Stability**: Reconciled UI changes with existing test expectations to ensure continued CI/CD reliability.
+- **Verified SQLite Persistence**: Confirmed that new deck-level statistics are correctly calculated from the database.
+
+## 2026-05-03 - Run 2 TUI Refactor Recovery
+
+- Completed the in-progress TUI file split recovery from `LEFT_OVER_STATE.md`.
+- Restored stable top-level rendering contracts, status footer text, tab/nav click targets, Settings/AI view surfaces, reveal animation state, scrollbar hitbox alignment, APKG export, autoplay status feedback, and import mouse hitboxes.
+- Added sequential startup loading with `tea.Sequence` to avoid concurrent init database access.
+- Removed temporary recovery/debug handoff files after verification.
+- Verified `./scripts/verify.sh`: all Go tests, smoke test, and 77 E2E tests passed.
+
 ## 2026-05-02 - Review Reveal Sync and Interactive Testing
 
 - Fixed race condition in Review view where grading hints were displayed before hitboxes and answers were ready.

@@ -149,6 +149,16 @@ func (m *mockRepo) ReviewsPerDay(ctx context.Context, days int) (map[string]int,
 	return map[string]int{}, nil
 }
 
+func (m *mockRepo) DeleteCard(ctx context.Context, cardID string) error {
+	for i, card := range m.dueCards {
+		if card.ID == cardID {
+			m.dueCards = append(m.dueCards[:i], m.dueCards[i+1:]...)
+			return nil
+		}
+	}
+	return nil
+}
+
 func (m *mockRepo) ReviewHistory(ctx context.Context, cardID string, limit int) ([]core.ReviewLog, error) {
 	if limit <= 0 {
 		limit = 10
