@@ -126,7 +126,7 @@ func (m *Model) textInputActive() bool {
 
 func (m *Model) updateNumberKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	key := msg.String()
-	if m.activeView == ViewCram && m.cramActive {
+	if m.activeView == ViewCram {
 		return nil, false
 	}
 	if m.textInputActive() {

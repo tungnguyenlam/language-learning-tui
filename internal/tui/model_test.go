@@ -791,6 +791,7 @@ func TestStatisticsShowsLeechAndBookmarkedDue(t *testing.T) {
 		decks:    []core.Deck{{ID: "deck-1", Name: "Deck One"}},
 	}
 	model := NewModel(repo, &mockScheduler{})
+	model.height = 40 // Ensure enough height to show all stats without scrolling
 	model.stats = core.Statistics{
 		TotalCards:      20,
 		NewCards:        5,

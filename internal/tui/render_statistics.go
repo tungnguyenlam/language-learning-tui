@@ -22,6 +22,7 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 	content.WriteString("Statistics\n\n")
 
 	content.WriteString(fmt.Sprintf("Total Cards:   %d\n", m.stats.TotalCards))
+	content.WriteString(fmt.Sprintf("Total Decks:   %d (%d active)\n", m.stats.TotalDecks, m.stats.ActiveDecks))
 	content.WriteString(fmt.Sprintf("  New:         %d\n", m.stats.NewCards))
 	content.WriteString(fmt.Sprintf("  Young:       %d\n", m.stats.YoungCards))
 	content.WriteString(fmt.Sprintf("  Mature:      %d\n\n", m.stats.MatureCards))

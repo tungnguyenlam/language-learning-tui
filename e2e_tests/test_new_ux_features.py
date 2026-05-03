@@ -1,6 +1,7 @@
 import os
 import sys
 import tempfile
+import time
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../tui_tester")))
 
@@ -28,8 +29,10 @@ def test_cram_mode_filter_types():
             agent.wait_for_text("Card suspended")
             
             # Go to Cram Mode
+            time.sleep(0.5)
             agent.act("9")
             agent.wait_for_text("Cram Mode")
+
             agent.wait_for_text("Filter: bookmarked")
             
             # Test suspended filter (press 2)

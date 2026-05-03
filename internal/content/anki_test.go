@@ -133,3 +133,92 @@ func TestImportMultiCloze(t *testing.T) {
 		t.Fatalf("clozeCount = %d, want 2", clozeCount)
 	}
 }
+
+func TestImportReverse(t *testing.T) {
+	input := "#separator:tab\n#deck:Reverse\nid-1\tder Apfel\tapple\t\t\t\tReverse\n"
+	notes, err := ImportAnkiTSV(strings.NewReader(input), ImportOptions{})
+	if err != nil {
+		t.Fatalf("import failed: %v", err)
+	}
+	if len(notes) != 1 {
+		t.Fatalf("notes = %d, want 1", len(notes))
+	}
+	note := notes[0]
+	if note.Type != "Reverse" {
+		t.Fatalf("note.Type = %q, want Reverse", note.Type)
+	}
+
+	if len(note.Cards) != 2 {
+		t.Fatalf("len(note.Cards) = %d, want 2", len(note.Cards))
+	}
+
+	frontCard := note.Cards[0]
+	if frontCard.Prompt != "der Apfel" || frontCard.Answer != "apple" {
+		t.Fatalf("unexpected front card: %+v", frontCard)
+	}
+
+	backCard := note.Cards[1]
+	if backCard.Prompt != "apple" || backCard.Answer != "der Apfel" {
+		t.Fatalf("unexpected back card: %+v", backCard)
+	}
+}
+
+func TestExportReverseRoundTrip(t *testing.T) {
+	note := core.Note{
+		ID:     "rev-1",
+		DeckID: "Default",
+		Type:   "Reverse",
+		Front:  "der Apfel",
+		Back:   "apple",
+	}
+	out, err := ExportAnkiTSVString([]core.Note{note})
+	if err != nil {
+		t.Fatalf("export failed: %v", err)
+	}
+	if !strings.Contains(out, "Reverse") {
+		t.Fatalf("exported TSV missing Reverse type: %q", out)
+	}
+
+	notes, err := ImportAnkiTSV(strings.NewReader(out), ImportOptions{})
+	if err != nil {
+		t.Fatalf("reimport failed: %v", err)
+	}
+	if len(notes) != 1 {
+		t.Fatalf("len(notes) = %d, want 1", len(notes))
+	}
+	if notes[0].Type != "Reverse" {
+		t.Fatalf("notes[0].Type = %q, want Reverse", notes[0].Type)
+	}
+	if len(notes[0].Cards) != 2 {
+		t.Fatalf("len(notes[0].Cards) = %d, want 2", len(notes[0].Cards))
+	}
+}
+
+func TestExampleCardGeneration(t *testing.T) {
+	note := core.Note{
+		ID:       "ex-1",
+		Front:    "der Apfel",
+		Back:     "apple",
+		Examples: []string{"Ich esse einen Apfel."},
+	}
+	cards := CardsForNote(note)
+
+	// Should have front card and example card
+	if len(cards) != 2 {
+		t.Fatalf("len(cards) = %d, want 2", len(cards))
+	}
+
+	exCard := cards[1]
+	if exCard.ID != "ex-1:example" {
+		t.Fatalf("id = %q, want ex-1:example", exCard.ID)
+	}
+	if !strings.Contains(exCard.Prompt, "___") {
+		t.Fatalf("prompt missing blank: %q", exCard.Prompt)
+	}
+	if !strings.Contains(exCard.Prompt, "(apple)") {
+		t.Fatalf("prompt missing hint: %q", exCard.Prompt)
+	}
+	if exCard.Answer != "Apfel" {
+		t.Fatalf("answer = %q, want Apfel", exCard.Answer)
+	}
+}

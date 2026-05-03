@@ -1,6 +1,16 @@
 # Done Backlog
 
-## 2026-05-04 - Advanced Learning & UX Polish Pass
+## 2026-05-04 - Advanced Learning & UX Polish Pass (Continued)
+
+### Advanced Learning
+- **Implemented Reverse Flashcards**: Notes marked as `Reverse` now automatically generate both Front->Back and Back->Front cards.
+- **Improved Example MCQs**: Example sentences are now scanned for the target word, creating fill-in-the-blank style MCQs when possible.
+- **B1 Idioms Deck**: Added a new thematic deck covering common German idioms with a mix of Basic and Reverse cards.
+
+### UX & Bug Fixes
+- **Dashboard/Stats Counters**: Added "Total Decks" and "Active Decks" to both the Dashboard and Statistics views for better progress tracking.
+- **Cram Mode Key Handling**: Fixed a critical bug where global number keys (1-9) were switching views instead of selecting filters in Cram Mode.
+- **Test Suite Alignment**: Updated E2E tests to handle shifted layouts and increased content height on the Dashboard.
 
 ### Advanced Learning
 - **Implemented Reverse Flashcards**: Notes can now be marked as `Reverse` (or `Basic (and reversed card)`) to automatically generate both Forward (Front -> Back) and Reverse (Back -> Front) cards.

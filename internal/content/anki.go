@@ -116,6 +116,8 @@ func ExportAnkiTSV(w io.Writer, notes []core.Note) error {
 		noteType := "Basic"
 		if len(note.Choices) > 0 {
 			noteType = "MCQ:" + strings.Join(note.Choices, ",")
+		} else if note.Type == "Reverse" {
+			noteType = "Reverse"
 		}
 		if err := writer.Write([]string{
 			note.ID,
@@ -176,6 +178,19 @@ func CardsForNote(note core.Note) []core.Card {
 		},
 	}
 
+	if note.Type == "Reverse" {
+		cards = append(cards, core.Card{
+			ID:     note.ID + ":back",
+			NoteID: note.ID,
+			DeckID: note.DeckID,
+			Kind:   core.CardKindFlashcard,
+			Prompt: note.Back,
+			Answer: note.Front,
+			Audio:  note.Audio,
+			Tags:   baseTags,
+		})
+	}
+
 	if len(note.Choices) > 0 {
 		cards = append(cards, core.Card{
 			ID:      note.ID + ":mcq",
@@ -189,14 +204,33 @@ func CardsForNote(note core.Note) []core.Card {
 			Tags:    baseTags,
 		})
 	} else if len(note.Examples) > 0 {
+		example := note.Examples[0]
+		cleanFront := stripArticles(note.Front)
+		start, end := findWordInSentence(example, cleanFront)
+
+		var prompt, answer string
+		var choices []string
+
+		if start != -1 {
+			actualWord := example[start:end]
+			prompt = example[:start] + "___" + example[end:]
+			prompt = fmt.Sprintf("%s (%s)", prompt, note.Back)
+			answer = actualWord
+			choices = []string{actualWord, note.Back}
+		} else {
+			prompt = example
+			answer = note.Front
+			choices = []string{note.Front, note.Back}
+		}
+
 		cards = append(cards, core.Card{
-			ID:      note.ID + ":mcq",
+			ID:      note.ID + ":example",
 			NoteID:  note.ID,
 			DeckID:  note.DeckID,
 			Kind:    core.CardKindMCQ,
-			Prompt:  note.Examples[0],
-			Answer:  note.Back,
-			Choices: []string{note.Back, note.Front},
+			Prompt:  prompt,
+			Answer:  answer,
+			Choices: choices,
 			Audio:   note.Audio,
 			Tags:    baseTags,
 		})

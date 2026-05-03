@@ -214,7 +214,7 @@ def test_session_stats_show_in_statistics():
 def test_help_overlay_shows_and_dismisses():
     """Pressing ? shows help overlay, pressing ? again dismisses it."""
     with tempfile.TemporaryDirectory() as tmpdir:
-        agent = start_agent(tmpdir)
+        agent = start_agent(tmpdir, lines=60)
         try:
             agent.act("?")
             agent.wait_for_text("Help overlay shown. Press ? to close.")

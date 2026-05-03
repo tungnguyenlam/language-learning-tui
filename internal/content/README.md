@@ -5,7 +5,7 @@ This module handles all deck content including:
 - German expanded comprehensive deck (A1-B2) - 600+ cards across 600+ notes
 - Anki TSV/APKG import/export
 - Thematic content (travel, business, food, daily life, emergency)
-- 6 ready-to-import TSV decks (500+ total cards)
+- `testdata/german-decks/` - 7 importable TSV decks (520+ cards total)
 
 ## Files
 
@@ -13,8 +13,9 @@ This module handles all deck content including:
 - `german_expanded.go` - Comprehensive German vocabulary (600+ notes) covering A1-B2
 - `anki.go` - Anki TSV import/export
 - `apkg.go` - Anki APKG import/export
-- `testdata/german-decks/` - 6 importable TSV decks (500+ cards total)
+- `testdata/german-decks/` - 7 importable TSV decks (520+ cards total)
 - `testdata/anki/` - Test fixtures and sample Anki decks
+
 
 ## German Content Overview
 
@@ -48,6 +49,7 @@ Located in `testdata/german-decks/`:
 - `a2-travel.tsv` - 50+ cards: Transportation and travel scenarios
 - `a2-daily-life.tsv` - 50+ cards: Routines, work, daily activities
 - `b1-business-professional.tsv` - 97+ cards: Business and professional terms
+- `b1-idioms.tsv` - 10+ cards: Common German idioms (Basic & Reverse)
 - `b2-advanced.tsv` - 225+ cards: Academic and cultural vocabulary
 
 ## Adding New Decks

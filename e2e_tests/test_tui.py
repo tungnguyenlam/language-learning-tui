@@ -8,7 +8,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../t
 
 from tui_tester import TUIAgent
 
-def start_agent(tmpdir, columns=100, lines=30):
+def start_agent(tmpdir, columns=100, lines=50):
+
     agent = TUIAgent(f'go run ./cmd/deutsch-tui -data-dir {tmpdir}', columns=columns, lines=lines)
     agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()

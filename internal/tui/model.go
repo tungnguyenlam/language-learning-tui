@@ -564,7 +564,7 @@ func (m *Model) View() tea.View {
 
 	return tea.View{
 		Content:   b.String(),
-		AltScreen: false,
+		AltScreen: true,
 		MouseMode: tea.MouseModeAllMotion,
 	}
 }
@@ -621,15 +621,15 @@ func (m *Model) renderNav(x, y int) string {
 		view View
 		text string
 	}{
-		{"nav-dashboard", ViewDashboard, "1 Dashboard"},
-		{"nav-decks", ViewDecks, "2 Decks"},
-		{"nav-review", ViewReview, "3 Review"},
-		{"nav-statistics", ViewStatistics, "4 Statistics"},
-		{"nav-import", ViewImport, "5 Import"},
-		{"nav-ai", ViewAI, "6 AI Drafts"},
-		{"nav-settings", ViewSettings, "7 Settings"},
-		{"nav-browser", ViewBrowser, "8 Browser"},
-		{"nav-cram", ViewCram, "9 Cram"},
+		{"nav-dashboard", ViewDashboard, "Dashboard"},
+		{"nav-decks", ViewDecks, "Decks"},
+		{"nav-review", ViewReview, "Review"},
+		{"nav-statistics", ViewStatistics, "Statistics"},
+		{"nav-import", ViewImport, "Import"},
+		{"nav-ai", ViewAI, "AI Drafts"},
+		{"nav-settings", ViewSettings, "Settings"},
+		{"nav-browser", ViewBrowser, "Browser"},
+		{"nav-cram", ViewCram, "Cram"},
 	}
 
 	var b strings.Builder
