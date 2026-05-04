@@ -193,3 +193,12 @@ type mockScheduler struct{}
 func (m *mockScheduler) Review(state core.ReviewState, grade core.ReviewGrade, now time.Time) (core.ReviewState, error) {
 	return state, nil
 }
+
+func (m *mockScheduler) Predict(state core.ReviewState, now time.Time) map[core.ReviewGrade]time.Duration {
+	return map[core.ReviewGrade]time.Duration{
+		core.GradeAgain: time.Minute,
+		core.GradeHard:  24 * time.Hour,
+		core.GradeGood:  3 * 24 * time.Hour,
+		core.GradeEasy:  7 * 24 * time.Hour,
+	}
+}

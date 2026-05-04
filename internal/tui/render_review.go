@@ -42,10 +42,27 @@ func (m *Model) renderReview(x, y int) string {
 		audioIndicator = " [Audio]"
 	}
 
-	gradeAgain := lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Render("Again")
-	gradeHard := lipgloss.NewStyle().Foreground(lipgloss.Color("208")).Render("Hard")
-	gradeGood := lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render("Good")
-	gradeEasy := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Easy")
+	gradeAgainText := "Again"
+	gradeHardText := "Hard"
+	gradeGoodText := "Good"
+	gradeEasyText := "Easy"
+
+	if m.reviewPredictions != nil {
+		gradeAgainText = fmt.Sprintf("Again (%s)", formatDuration(m.reviewPredictions[core.GradeAgain]))
+		gradeHardText = fmt.Sprintf("Hard (%s)", formatDuration(m.reviewPredictions[core.GradeHard]))
+		gradeGoodText = fmt.Sprintf("Good (%s)", formatDuration(m.reviewPredictions[core.GradeGood]))
+		gradeEasyText = fmt.Sprintf("Easy (%s)", formatDuration(m.reviewPredictions[core.GradeEasy]))
+	}
+
+	gradeAgain := lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Render(gradeAgainText)
+	gradeHard := lipgloss.NewStyle().Foreground(lipgloss.Color("208")).Render(gradeHardText)
+	gradeGood := lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render(gradeGoodText)
+	gradeEasy := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render(gradeEasyText)
+
+	gaW := lipgloss.Width(gradeAgain)
+	ghW := lipgloss.Width(gradeHard)
+	ggW := lipgloss.Width(gradeGood)
+	geW := lipgloss.Width(gradeEasy)
 
 	var answer string
 	if card.Kind == core.CardKindMCQ && len(card.Choices) > 0 {
@@ -56,24 +73,24 @@ func (m *Model) renderReview(x, y int) string {
 					feedback = "Correct"
 				}
 				answer = fmt.Sprintf("%s: %s\n\n%s\n\nGrade: a %s | h %s | g %s | e %s", feedback, card.Answer, renderMCQChoices(card.Choices, m.mcqChoice), gradeAgain, gradeHard, gradeGood, gradeEasy)
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: x + 7, Y: y + 10, Width: 5, Height: 1})
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: x + 17, Y: y + 10, Width: 4, Height: 1})
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: x + 26, Y: y + 10, Width: 4, Height: 1})
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + 35, Y: y + 10, Width: 4, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: x + 9, Y: y + 10, Width: gaW, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: x + 9 + gaW + 5, Y: y + 10, Width: ghW, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: x + 9 + gaW + 5 + ghW + 5, Y: y + 10, Width: ggW, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + 9 + gaW + 5 + ghW + 5 + ggW + 5, Y: y + 10, Width: geW, Height: 1})
 			} else {
 				answer = fmt.Sprintf("1-4 select answer\n\n%s\n\nGrade: a %s | h %s | g %s | e %s", renderMCQChoices(card.Choices, m.mcqChoice), gradeAgain, gradeHard, gradeGood, gradeEasy)
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: x + 7, Y: y + 8, Width: 5, Height: 1})
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: x + 17, Y: y + 8, Width: 4, Height: 1})
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: x + 26, Y: y + 8, Width: 4, Height: 1})
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + 35, Y: y + 8, Width: 4, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: x + 9, Y: y + 8, Width: gaW, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: x + 9 + gaW + 5, Y: y + 8, Width: ghW, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: x + 9 + gaW + 5 + ghW + 5, Y: y + 8, Width: ggW, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + 9 + gaW + 5 + ghW + 5 + ggW + 5, Y: y + 8, Width: geW, Height: 1})
 			}
 		} else if m.revealState == RevealRevealing {
-			// Show gradual reveal animation with blocks
+			// ... reveal animation logic ...
+			// (I'll keep the reveal animation text as is for now)
 			progress := int(m.revealProgress)
 			if progress > 100 {
 				progress = 100
 			}
-			// Calculate how many characters to reveal
 			fullText := card.Answer
 			numChars := len([]rune(fullText))
 			revealedChars := (numChars * progress) / 100
@@ -87,17 +104,16 @@ func (m *Model) renderReview(x, y int) string {
 			remainingBlocks := numChars - revealedChars
 			animationText := string(revealedRunes) + strings.Repeat("▌", remainingBlocks-1)
 			answer = fmt.Sprintf("1-4 select answer\n\n%s", renderMCQChoices(card.Choices, m.mcqChoice))
-			// Replace the answer in choices display
 			answer = strings.Replace(answer, fullText, animationText, 1)
 		} else {
 			answer = "Press space or enter to reveal choices."
 		}
 	} else if m.revealState == RevealRevealed {
 		answer = fmt.Sprintf("%s\n\nGrade: a %s | h %s | g %s | e %s", card.Answer, gradeAgain, gradeHard, gradeGood, gradeEasy)
-		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: x + 7, Y: y + 6, Width: 5, Height: 1})
-		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: x + 17, Y: y + 6, Width: 4, Height: 1})
-		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: x + 26, Y: y + 6, Width: 4, Height: 1})
-		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + 35, Y: y + 6, Width: 4, Height: 1})
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: x + 9, Y: y + 6, Width: gaW, Height: 1})
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: x + 9 + gaW + 5, Y: y + 6, Width: ghW, Height: 1})
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: x + 9 + gaW + 5 + ghW + 5, Y: y + 6, Width: ggW, Height: 1})
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + 9 + gaW + 5 + ghW + 5 + ggW + 5, Y: y + 6, Width: geW, Height: 1})
 	} else if m.revealState == RevealRevealing {
 		// Show gradual reveal animation with blocks
 		progress := int(m.revealProgress)

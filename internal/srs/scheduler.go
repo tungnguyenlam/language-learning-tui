@@ -32,6 +32,19 @@ func (s Scheduler) Review(state core.ReviewState, grade core.ReviewGrade, now ti
 	return next, nil
 }
 
+func (s Scheduler) Predict(state core.ReviewState, now time.Time) map[core.ReviewGrade]time.Duration {
+	card := fsrsCardFromState(state, now)
+	schedulingCards := s.fsrs.Repeat(card, now)
+
+	predictions := make(map[core.ReviewGrade]time.Duration)
+	predictions[core.GradeAgain] = time.Duration(schedulingCards[fsrs.Again].Card.ScheduledDays) * 24 * time.Hour
+	predictions[core.GradeHard] = time.Duration(schedulingCards[fsrs.Hard].Card.ScheduledDays) * 24 * time.Hour
+	predictions[core.GradeGood] = time.Duration(schedulingCards[fsrs.Good].Card.ScheduledDays) * 24 * time.Hour
+	predictions[core.GradeEasy] = time.Duration(schedulingCards[fsrs.Easy].Card.ScheduledDays) * 24 * time.Hour
+
+	return predictions
+}
+
 func ratingForGrade(grade core.ReviewGrade) (fsrs.Rating, error) {
 	switch grade {
 	case core.GradeAgain:

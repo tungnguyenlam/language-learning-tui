@@ -206,13 +206,14 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		if m.revealState == RevealRevealed {
 			m.revealState = RevealIdle
 			m.revealProgress = 0
+			m.reviewPredictions = nil
 		} else {
 			m.revealState = RevealRevealing
 			m.revealProgress = 0
 		}
 		m.mcqChoice = -1
 		m.mcqAnswered = false
-		return m.startRevealAnimation(card.Audio), true
+		return tea.Batch(m.startRevealAnimation(card.Audio), m.loadReviewPredictions(card.ID)), true
 
 	case "b":
 		return m.toggleBookmark(), true

@@ -173,6 +173,7 @@ func (m *Model) applyDeckFilter() {
 		m.cursor = maxInt(0, len(m.dueCards)-1)
 	}
 	m.resetMCQState()
+	m.clearReviewHistory()
 	m.revealState = RevealIdle
 	m.revealProgress = 0
 	if len(m.dueCards) == 0 {
@@ -192,6 +193,7 @@ func (m *Model) clearReviewHistory() {
 	m.reviewHistory = nil
 	m.showReviewHistory = false
 	m.reviewHistoryCard = ""
+	m.reviewPredictions = nil
 }
 
 func (m *Model) deckLabel() string {

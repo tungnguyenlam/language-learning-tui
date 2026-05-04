@@ -32,4 +32,4 @@ Autonomous Feature Pass 20: Multi-Deck Studies & SRS Refinement
 
 ## Next Action
 
-Find and implement the next high-impact feature (e.g., UI polish, content expansion, or animation improvements) for Autonomous Feature Pass 20.
+Improve Card Browser with more management features (e.g., bulk actions, tag editing, or note type conversion).

@@ -106,6 +106,19 @@ func (m *Model) loadReviewHistory(cardID string) tea.Cmd {
 	}
 }
 
+func (m *Model) loadReviewPredictions(cardID string) tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		state, err := m.repo.GetReviewState(ctx, cardID)
+		if err != nil {
+			return err
+		}
+		predictions := m.scheduler.Predict(state, time.Now())
+		return reviewPredictionsMsg(predictions)
+	}
+}
+
 func (m *Model) reloadBrowserForSelectedDeck() tea.Cmd {
 	m.browserDeckID = m.deck.ID
 	m.browserSearch = ""

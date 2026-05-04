@@ -138,6 +138,7 @@ type Repository interface {
 
 type Scheduler interface {
 	Review(state ReviewState, grade ReviewGrade, now time.Time) (ReviewState, error)
+	Predict(state ReviewState, now time.Time) map[ReviewGrade]time.Duration
 }
 
 func ValidateCard(card Card) error {

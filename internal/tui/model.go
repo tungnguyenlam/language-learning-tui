@@ -113,6 +113,7 @@ type Model struct {
 	reviewHistory      []core.ReviewLog
 	reviewHistoryCard  string
 	showReviewHistory  bool
+	reviewPredictions  map[core.ReviewGrade]time.Duration
 	spinnerFrame       int
 	deckFilter         string
 	drafting           bool
@@ -249,6 +250,7 @@ type reviewHistoryMsg struct {
 	cardID string
 	logs   []core.ReviewLog
 }
+type reviewPredictionsMsg map[core.ReviewGrade]time.Duration
 type statusMsg struct {
 	text string
 }
@@ -313,6 +315,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.status = fmt.Sprintf("%d review history entries", len(msg.logs))
 			}
 		}
+	case reviewPredictionsMsg:
+		m.reviewPredictions = map[core.ReviewGrade]time.Duration(msg)
 	case draftsMsg:
 		m.drafting = false
 		m.drafts = []ai.Draft(msg)
@@ -570,9 +574,36 @@ func (m *Model) View() tea.View {
 }
 
 func (m *Model) renderWide() string {
+	if m.width < 120 {
+		nav := m.renderNav(0, 2)
+		content := m.renderActiveView(20, 1)
+
+		navLines := strings.Split(nav, "\n")
+		contentLines := strings.Split(content, "\n")
+
+		maxLines := maxInt(len(navLines), len(contentLines))
+		var b strings.Builder
+		for i := 0; i < maxLines; i++ {
+			navLine := ""
+			if i < len(navLines) {
+				navLine = navLines[i]
+			}
+			contentLine := ""
+			if i < len(contentLines) {
+				contentLine = contentLines[i]
+			}
+			b.WriteString(padLine(navLine, 20))
+			b.WriteString(contentLine)
+			if i < maxLines-1 {
+				b.WriteString("\n")
+			}
+		}
+		return b.String()
+	}
+
 	nav := m.renderNav(0, 2)
 	content := m.renderActiveView(20, 1)
-	detail := panelStyle.Width(28).Render("Deck\n" + m.deckLabel() + "\n\nCards due\n" + fmt.Sprint(len(m.dueCards)) + "\n\n[ ] switch deck")
+	detail := panelStyle.Width(24).Render("Deck\n" + m.deckLabel() + "\n\nCards due\n" + fmt.Sprint(len(m.dueCards)) + "\n\n[ ] switch deck")
 
 	navLines := strings.Split(nav, "\n")
 	contentLines := strings.Split(content, "\n")
@@ -744,9 +775,15 @@ func contentLayoutForStyle(style lipgloss.Style, x, y int) viewportLayout {
 }
 
 func (m *Model) activePanelSize() (int, int) {
-	width := maxInt(30, m.width-54)
+	width := maxInt(30, m.width-50)
 	height := maxInt(15, m.height-10)
-	if m.breakpoint == BreakpointMedium {
+	if m.breakpoint == BreakpointWide {
+		if m.width < 120 {
+			width = maxInt(40, m.width-20)
+		} else {
+			width = maxInt(40, m.width-44)
+		}
+	} else if m.breakpoint == BreakpointMedium {
 		width = maxInt(30, m.width-4)
 		height = maxInt(15, m.height-12)
 	} else if m.breakpoint == BreakpointCompact {

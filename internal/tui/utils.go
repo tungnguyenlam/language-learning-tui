@@ -6,11 +6,28 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"deutsch-tui/internal/core"
 
 	"charm.land/lipgloss/v2"
 )
+
+func formatDuration(d time.Duration) string {
+	days := int(d.Hours() / 24)
+	if days > 0 {
+		return fmt.Sprintf("%dd", days)
+	}
+	hours := int(d.Hours())
+	if hours > 0 {
+		return fmt.Sprintf("%dh", hours)
+	}
+	minutes := int(d.Minutes())
+	if minutes > 0 {
+		return fmt.Sprintf("%dm", minutes)
+	}
+	return "now"
+}
 
 func maxInt(a, b int) int {
 	if a > b {

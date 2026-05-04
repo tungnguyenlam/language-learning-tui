@@ -1,5 +1,11 @@
 # Done Backlog
 
+## 2026-05-04 - Review Intervals & Layout Refinement
+- **Implemented Predicted Review Intervals**: The Review view now displays the predicted "Next Review" interval for each grading option (Again, Hard, Good, Easy) based on the FSRS algorithm. This helps users make informed grading decisions.
+- **Refactored Wide Mode Layout**: Implemented a dynamic 2/3 column design in Wide mode. The layout now uses 2 columns (Nav + Content) for widths between 100 and 120, and 3 columns (Nav + Content + Detail) for widths above 120. This prevents text wrapping in the content panel and fixed multiple E2E test regressions.
+- **Improved TUI Utility**: Added a `formatDuration` helper for user-friendly time interval display.
+- **Dynamic Hitboxes**: Updated grading hitboxes in the Review view to be calculated dynamically based on label widths.
+
 ## 2026-05-04 - Multi-Deck Studies
 - **Implemented Multi-Deck Study Sessions**: Added an "All Decks" virtual deck to the TUI. When selected, the app now interleaves due cards across all available decks, allowing users to perform comprehensive review sessions without manually switching decks.
 - **Updated E2E Tests**: Adjusted test assertions in `test_dashboard_features.py` and `test_tui.py` to expect the new "All Decks" default state.
