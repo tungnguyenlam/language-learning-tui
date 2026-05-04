@@ -885,6 +885,34 @@ func (s *Store) DeleteCard(ctx context.Context, cardID string) error {
 	return tx.Commit()
 }
 
+func (s *Store) SetCardKind(ctx context.Context, cardID string, kind core.CardKind) error {
+	if cardID == "" {
+		return errors.New("card id is required")
+	}
+
+	// If converting to MCQ, ensure we have at least some choices
+	if kind == core.CardKindMCQ {
+		var choicesStr, answer string
+		err := s.db.QueryRowContext(ctx, `SELECT choices, answer FROM cards WHERE id = ?`, cardID).Scan(&choicesStr, &answer)
+		if err != nil {
+			return err
+		}
+		choices := parseChoices(choicesStr)
+		if len(choices) < 2 {
+			// Add the answer and a dummy choice if not enough
+			choices = []string{answer, "???"}
+			newChoicesStr := strings.Join(choices, "|||")
+			_, err = s.db.ExecContext(ctx, `UPDATE cards SET choices = ? WHERE id = ?`, newChoicesStr, cardID)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	_, err := s.db.ExecContext(ctx, `UPDATE cards SET kind = ? WHERE id = ?`, string(kind), cardID)
+	return err
+}
+
 func parseChoices(raw string) []string {
 	if strings.TrimSpace(raw) == "" {
 		return nil

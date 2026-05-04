@@ -159,6 +159,16 @@ func (m *mockRepo) DeleteCard(ctx context.Context, cardID string) error {
 	return nil
 }
 
+func (m *mockRepo) SetCardKind(ctx context.Context, cardID string, kind core.CardKind) error {
+	for i := range m.dueCards {
+		if m.dueCards[i].ID == cardID {
+			m.dueCards[i].Kind = kind
+			return nil
+		}
+	}
+	return nil
+}
+
 func (m *mockRepo) ReviewHistory(ctx context.Context, cardID string, limit int) ([]core.ReviewLog, error) {
 	if limit <= 0 {
 		limit = 10

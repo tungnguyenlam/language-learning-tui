@@ -445,6 +445,11 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return m.bulkBrowserBookmark(false), true
 		}
 		return nil, false
+	case "t":
+		if len(m.getSelectedCardIDs()) > 0 {
+			return m.bulkBrowserToggleKind(), true
+		}
+		return m.toggleCardKind(), true
 	case "x":
 		if len(m.getSelectedCardIDs()) > 0 {
 			return m.bulkBrowserSuspend(true), true

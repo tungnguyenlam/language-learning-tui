@@ -139,6 +139,56 @@ func (m *Model) getSelectedCardIDs() []string {
 	return ids
 }
 
+func (m *Model) toggleCardKind() tea.Cmd {
+	if len(m.browserCards) == 0 {
+		return nil
+	}
+	card := m.browserCards[m.browserCursor]
+	next := core.CardKindFlashcard
+	if card.Kind == core.CardKindFlashcard {
+		next = core.CardKindMCQ
+	}
+	m.status = fmt.Sprintf("Converting to %s...", next)
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		if err := m.repo.SetCardKind(ctx, card.ID, next); err != nil {
+			return err
+		}
+		return m.loadBrowserCards()()
+	}
+}
+
+func (m *Model) bulkBrowserToggleKind() tea.Cmd {
+	selectedIDs := m.getSelectedCardIDs()
+	if len(selectedIDs) == 0 {
+		return nil
+	}
+	m.status = "Bulk converting kinds..."
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		for _, id := range selectedIDs {
+			// For bulk, we'll just toggle to Flashcard if it was MCQ, or MCQ if it was Flashcard
+			// but to keep it safe and predictable, let's just convert all to the opposite of the first selected
+			var card core.Card
+			cards, _ := m.repo.Cards(ctx, "", "")
+			for _, c := range cards {
+				if c.ID == id {
+					card = c
+					break
+				}
+			}
+			next := core.CardKindFlashcard
+			if card.Kind == core.CardKindFlashcard {
+				next = core.CardKindMCQ
+			}
+			_ = m.repo.SetCardKind(ctx, id, next)
+		}
+		return m.loadBrowserCards()()
+	}
+}
+
 func (m *Model) toggleBrowserSuspension() tea.Cmd {
 	if len(m.browserCards) == 0 {
 		return nil

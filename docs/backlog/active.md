@@ -32,4 +32,4 @@ Autonomous Feature Pass 20: Multi-Deck Studies & SRS Refinement
 
 ## Next Action
 
-Implement note type conversion (e.g., Flashcard <-> MCQ) in the Card Browser.
+Implement tag management in the Card Browser (add/remove tags from selected cards).

@@ -71,3 +71,23 @@ def test_browser_bulk_delete():
             assert "2 cards selected" not in text
         finally:
             agent.close()
+
+def test_browser_card_type_conversion():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir)
+        try:
+            agent.act("8") # Browser
+            agent.wait_for_text("Card Browser")
+            
+            # First card is [FC] by default
+            agent.assert_text("[FC]")
+            
+            # Toggle to MCQ
+            agent.act("t")
+            agent.wait_for_text("[MCQ]")
+            
+            # Toggle back to Flashcard
+            agent.act("t")
+            agent.wait_for_text("[FC]")
+        finally:
+            agent.close()

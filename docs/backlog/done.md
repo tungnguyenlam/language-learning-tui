@@ -1,5 +1,11 @@
 # Done Backlog
 
+## 2026-05-04 - Browser Management: Note Type Conversion
+- **Implemented Card Kind Conversion**: Users can now toggle cards between `Flashcard` and `MCQ` kinds directly in the Card Browser using the `t` key.
+- **Bulk Type Conversion**: Added support for bulk kind conversion when multiple cards are selected.
+- **Automated MCQ Choice Generation**: When converting a flashcard to MCQ, the system automatically ensures at least two choices exist by using the answer and a placeholder, maintaining data integrity.
+- **Repository Support**: Added `SetCardKind` to the `core.Repository` interface and implemented it in the SQLite store.
+
 ## 2026-05-04 - Browser Management: Bulk Actions
 - **Implemented Multi-Select in Card Browser**: Users can now select multiple cards using the 'm' key. Selected cards are indicated with `[x]` checkboxes and highlighted text.
 - **Added Bulk Actions**: Implemented bulk actions for bookmarking (`b`/`B`), suspending (`x`/`X`), and deleting (`backspace`/`delete`) multiple cards at once.

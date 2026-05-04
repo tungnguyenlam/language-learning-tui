@@ -134,6 +134,7 @@ type Repository interface {
 	ReviewsPerDay(ctx context.Context, days int) (map[string]int, error)
 	ReviewHistory(ctx context.Context, cardID string, limit int) ([]ReviewLog, error)
 	DeleteCard(ctx context.Context, cardID string) error
+	SetCardKind(ctx context.Context, cardID string, kind CardKind) error
 }
 
 type Scheduler interface {
