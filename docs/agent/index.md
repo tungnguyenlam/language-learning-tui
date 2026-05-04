@@ -21,15 +21,15 @@ Last updated: 2026-05-03
 
 ## Verification Status
 
-- ✅ All 77 E2E tests passing (as of 2026-05-03, including Run 2 TUI refactor recovery)
-- ✅ All Go test suites passing (as of 2026-05-03)
+- ✅ All 83 E2E tests passing (as of 2026-05-05, including new browser management tests)
+- ✅ All Go test suites passing (as of 2026-05-05)
 - ✅ App launches without errors (smoke test passing)
 - ✅ All views render correctly (Dashboard, Review, Import, AI, Settings, Browser, Cram)
-- ✅ Core user interactions respond as expected (flashcard reveal, grading, navigation)
+- ✅ Core user interactions respond as expected
 - ✅ State successfully persisted to SQLite
 - ✅ Code formatting verified (gofmt)
 - ✅ Code quality verified (go vet)
-- ✅ Run 2 TUI refactor split recovered and verified with `./scripts/verify.sh` on 2026-05-03.
+- ✅ Full verification passes with `./scripts/verify.sh`
 
 ## Decisions
 
@@ -40,7 +40,11 @@ Last updated: 2026-05-03
 
 ## Package Maps
 
-- `internal/tui/README.md`: Bubble Tea shell, responsive layout, input routing.
-- `internal/storage/README.md`: SQLite migrations and repository rules.
-- `internal/content/README.md`: deck files and Anki text interop.
-- `internal/ai/README.md`: AI provider adapter and draft validation.
+- `internal/core/README.md`: Domain models, interfaces, and architectural boundaries (Pure Go).
+- `internal/tui/README.md`: Responsive Bubble Tea shell, View/Model architecture, and mouse routing.
+- `internal/storage/README.md`: SQLite migrations, repository pattern, and persistence rules.
+- `internal/content/README.md`: TSV format, Anki interop, and embedded starter decks.
+- `internal/ai/README.md`: AI provider adapters, drafting workflow, and validation.
+- `internal/srs/README.md`: FSRS scheduling implementation and core mapping.
+- `internal/app/README.md`: Config defaults, logging, and data directory setup.
+- `tui_tester/README.md`: E2E testing utility and persistent agent mode.

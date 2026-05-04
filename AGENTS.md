@@ -23,6 +23,14 @@ The project is a Go Bubble Tea TUI for German flashcard and MCQ learning. It is 
 - When modifying instructions, make the note concrete and searchable: include the affected files, the required behavior, and when the note should be revisited.
 - Do not preserve stale instructions out of inertia. If an instruction becomes wrong, update or remove it in the same change that makes it obsolete.
 
+## Common Tasks
+
+- **Adding a new card type**: Read `internal/core/AGENTS.md` (models) and `internal/content/AGENTS.md` (parsing).
+- **Modifying the UI**: Read `internal/tui/AGENTS.md` (responsive rules, mouse support).
+- **Updating the Database**: Read `internal/storage/AGENTS.md` (migration rules).
+- **Adding an AI feature**: Read `internal/ai/AGENTS.md` (mocking, validation).
+- **Fixing a scheduling bug**: Read `internal/srs/AGENTS.md` (encapsulation).
+
 ## Search Hints
 
 - TUI behavior: `rg "type Model|Hitbox|WindowSizeMsg|Mouse" internal/tui`

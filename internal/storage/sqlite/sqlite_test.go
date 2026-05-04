@@ -831,6 +831,72 @@ func TestAudioPersistence(t *testing.T) {
 	}
 }
 
+func TestSetCardsTags(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	deck := core.Deck{ID: "d1", Name: "Test Deck"}
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+
+	note := core.Note{
+		ID:     "n1",
+		DeckID: "d1",
+		Front:  "Front",
+		Back:   "Back",
+		Tags:   []string{"initial"},
+	}
+	note.Cards = []core.Card{
+		{ID: "c1", NoteID: "n1", DeckID: "d1", Kind: core.CardKindFlashcard, Prompt: "Front", Answer: "Back", Tags: []string{"initial"}},
+		{ID: "c2", NoteID: "n1", DeckID: "d1", Kind: core.CardKindFlashcard, Prompt: "Back", Answer: "Front", Tags: []string{"initial"}},
+	}
+
+	if err := store.UpsertNote(ctx, note); err != nil {
+		t.Fatalf("upsert note: %v", err)
+	}
+
+	newTags := []string{"tag1", "tag2"}
+	if err := store.SetCardsTags(ctx, []string{"c1"}, newTags); err != nil {
+		t.Fatalf("set cards tags: %v", err)
+	}
+
+	// Verify both cards and note are updated (since they share noteID)
+	c1, err := store.cardsForNote(ctx, "n1")
+	if err != nil {
+		t.Fatalf("get cards: %v", err)
+	}
+	for _, c := range c1 {
+		if len(c.Tags) != 2 || c.Tags[0] != "tag1" || c.Tags[1] != "tag2" {
+			t.Errorf("card %s tags = %v, want %v", c.ID, c.Tags, newTags)
+		}
+	}
+
+	// Verify through Cards browser query too
+	cards, err := store.Cards(ctx, "d1", "")
+	if err != nil {
+		t.Fatalf("browser cards: %v", err)
+	}
+	for _, c := range cards {
+		if len(c.Tags) != 2 || c.Tags[0] != "tag1" || c.Tags[1] != "tag2" {
+			t.Errorf("browser card %s tags = %v, want %v", c.ID, c.Tags, newTags)
+		}
+	}
+
+	// Verify searching by tag
+	searchResult, err := store.Cards(ctx, "d1", "tag1")
+	if err != nil {
+		t.Fatalf("search browser cards: %v", err)
+	}
+	if len(searchResult) != 2 {
+		t.Errorf("search result length = %d, want 2", len(searchResult))
+	}
+}
+
 func TestStoreDeckTags(t *testing.T) {
 	ctx := context.Background()
 	store, err := OpenMemory()

@@ -71,10 +71,11 @@ def test_mcq_review_shows_choices():
             agent.wait_for_text("Card Browser")
             # Enter search mode with /
             agent.act("/Ich")
-            # agent.act("<Enter>") # Enter toggles history, doesn't finish search
+            agent.act("<Enter>")
             agent.wait_for_text("[MCQ]")
             # Go back to dashboard then review
             agent.act("1")
+
             agent.wait_for_text("DASHBOARD")
             
             agent.act("3")

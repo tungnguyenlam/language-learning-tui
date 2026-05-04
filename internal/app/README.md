@@ -1,5 +1,15 @@
 # internal/app
 
-Application-level runtime setup: config defaults, data directory files, and local logging.
+Application-level runtime setup, configuration, and infrastructure.
 
-Keep TUI rendering, storage repositories, and learning domain behavior out of this package.
+## Responsibilities
+
+- **Configuration**: `Config` struct and loading logic (from YAML/JSON or flags).
+- **Initialization**: Setting up the data directory, default deck creation, and logging.
+- **Logging**: Global logging configuration for the application.
+
+## Key Symbols
+
+- `Config`: Main application configuration.
+- `SetupDataDir`: Ensures the workspace directory exists and contains necessary subfolders.
+- `DefaultConfig`: Returns a sane default configuration for the app.

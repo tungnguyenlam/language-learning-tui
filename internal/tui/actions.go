@@ -437,7 +437,11 @@ func (m *Model) selectMCQChoice(key string) {
 	m.mcqChoice = idx - 1
 	m.mcqAnswered = true
 	card := m.dueCards[m.cursor]
-	m.mcqCorrect = card.Answer == card.Choices[m.mcqChoice]
+	if m.mcqChoice >= 0 && m.mcqChoice < len(card.Choices) {
+		m.mcqCorrect = card.Answer == card.Choices[m.mcqChoice]
+	} else {
+		m.mcqCorrect = false
+	}
 }
 
 func (m *Model) deleteSelectedCard() tea.Cmd {

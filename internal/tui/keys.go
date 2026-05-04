@@ -2,6 +2,7 @@ package tui
 
 import (
 	"strconv"
+	"strings"
 
 	"deutsch-tui/internal/ai"
 	"deutsch-tui/internal/core"
@@ -121,7 +122,10 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 func (m *Model) textInputActive() bool {
 	return (m.activeView == ViewImport && m.editingImportPath) ||
-		(m.activeView == ViewSettings && m.editingTemplate)
+		(m.activeView == ViewSettings && m.editingTemplate) ||
+		m.taggingCards ||
+		m.searchingBrowser ||
+		m.drafting // AI drafting also uses input
 }
 
 func (m *Model) updateNumberKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
@@ -400,6 +404,27 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 }
 
 func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
+	if m.taggingCards {
+		switch msg.String() {
+		case "enter":
+			return m.handleTagInput(), true
+		case "esc":
+			m.taggingCards = false
+			m.tagInput = ""
+			return nil, true
+		case "backspace":
+			if len(m.tagInput) > 0 {
+				m.tagInput = m.tagInput[:len(m.tagInput)-1]
+			}
+			return nil, true
+		}
+		if len(msg.String()) == 1 {
+			m.tagInput += msg.String()
+			return nil, true
+		}
+		return nil, true
+	}
+
 	if m.searchingBrowser {
 		switch msg.String() {
 		case "enter", "esc":
@@ -460,6 +485,16 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return m.bulkBrowserSuspend(false), true
 		}
 		return nil, false
+	case "T":
+		m.taggingCards = true
+		m.tagInput = ""
+		if len(m.browserCards) > 0 {
+			if len(m.getSelectedCardIDs()) == 0 {
+				// Pre-fill from current card
+				m.tagInput = strings.Join(m.browserCards[m.browserCursor].Tags, " ")
+			}
+		}
+		return nil, true
 	case "enter", "\r", "\n":
 		if len(m.browserCards) > 0 {
 			cardID := m.browserCards[m.browserCursor].ID

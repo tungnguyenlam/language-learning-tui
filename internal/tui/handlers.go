@@ -112,6 +112,32 @@ func (m *Model) bulkBrowserSuspend(suspended bool) tea.Cmd {
 	}
 }
 
+func (m *Model) handleTagInput() tea.Cmd {
+	m.taggingCards = false
+	tags := strings.Fields(m.tagInput)
+	selectedIDs := m.getSelectedCardIDs()
+
+	if len(selectedIDs) == 0 {
+		if len(m.browserCards) > 0 {
+			selectedIDs = []string{m.browserCards[m.browserCursor].ID}
+		}
+	}
+
+	if len(selectedIDs) == 0 {
+		return nil
+	}
+
+	m.status = "Updating tags..."
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := m.repo.SetCardsTags(ctx, selectedIDs, tags); err != nil {
+			return err
+		}
+		return tagsUpdatedMsg{cardIDs: selectedIDs, tags: tags}
+	}
+}
+
 func (m *Model) bulkBrowserDelete() tea.Cmd {
 	selectedIDs := m.getSelectedCardIDs()
 	if len(selectedIDs) == 0 {
@@ -296,6 +322,7 @@ func (m *Model) resetMCQState() {
 	m.mcqChoice = -1
 	m.mcqAnswered = false
 	m.mcqCorrect = false
+	m.reviewPredictions = nil
 }
 
 func (m *Model) clearReviewHistory() {

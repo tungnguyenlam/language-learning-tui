@@ -114,4 +114,11 @@ var migrations = []migration{
 		ID:  16,
 		SQL: `ALTER TABLE decks ADD COLUMN tags TEXT NOT NULL DEFAULT ''`,
 	},
+	{
+		ID: 17,
+		SQL: `
+			ALTER TABLE notes ADD COLUMN tags TEXT NOT NULL DEFAULT '';
+			ALTER TABLE cards ADD COLUMN tags TEXT NOT NULL DEFAULT '';
+		`,
+	},
 }

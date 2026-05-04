@@ -135,6 +135,8 @@ type Repository interface {
 	ReviewHistory(ctx context.Context, cardID string, limit int) ([]ReviewLog, error)
 	DeleteCard(ctx context.Context, cardID string) error
 	SetCardKind(ctx context.Context, cardID string, kind CardKind) error
+	SetCardTags(ctx context.Context, cardID string, tags []string) error
+	SetCardsTags(ctx context.Context, cardIDs []string, tags []string) error
 }
 
 type Scheduler interface {

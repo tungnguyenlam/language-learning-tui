@@ -169,6 +169,28 @@ func (m *mockRepo) SetCardKind(ctx context.Context, cardID string, kind core.Car
 	return nil
 }
 
+func (m *mockRepo) SetCardTags(ctx context.Context, cardID string, tags []string) error {
+	for i := range m.dueCards {
+		if m.dueCards[i].ID == cardID {
+			m.dueCards[i].Tags = tags
+		}
+	}
+	return nil
+}
+
+func (m *mockRepo) SetCardsTags(ctx context.Context, cardIDs []string, tags []string) error {
+	idMap := make(map[string]bool)
+	for _, id := range cardIDs {
+		idMap[id] = true
+	}
+	for i := range m.dueCards {
+		if idMap[m.dueCards[i].ID] {
+			m.dueCards[i].Tags = tags
+		}
+	}
+	return nil
+}
+
 func (m *mockRepo) ReviewHistory(ctx context.Context, cardID string, limit int) ([]core.ReviewLog, error) {
 	if limit <= 0 {
 		limit = 10

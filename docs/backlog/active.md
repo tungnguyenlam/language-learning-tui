@@ -8,6 +8,14 @@ Autonomous Feature Pass 20: Multi-Deck Studies & SRS Refinement
 
 ## Completed Work
 
+### Browser Management & Tagging (Pass 21)
+- [x] **Implemented Tag Management** in Card Browser (T key to add/remove tags).
+- [x] **Bulk Tagging Support**: Apply tags to multiple selected cards at once.
+- [x] **Note-Card Sync**: Tags are persisted at the note level and synchronized across all card kinds.
+- [x] **Tag Search**: Search by tags in the Browser using the `/` key.
+- [x] **Input Guard**: Prevented view switching while typing in Search or Tag prompts.
+- [x] **Storage Migrations**: Added `tags` column to `notes` and `cards` tables.
+
 ### Advanced Learning & UX Polish (Pass 19)
 - [x] **Implemented Reverse Flashcards** (Basic (and reversed card) type)
 - [x] **Add "Reverse" support to TSV import** via `notetype:Reverse`
@@ -30,6 +38,13 @@ Autonomous Feature Pass 20: Multi-Deck Studies & SRS Refinement
 - [x] **Created "German Grammar Essentials" deck** featuring both MCQ and Cloze exercises
 - [x] **Updated README.md and documentation** to reflect new learning capabilities
 
+### Documentation & Agent Instructions (Pass 20)
+- [x] **Expanded all package READMEs** in `internal/` with key symbols and responsibilities.
+- [x] **Added subtree `AGENTS.md`** for `core`, `app`, and `srs` packages.
+- [x] **Consolidated root `AGENTS.md`** with a "Common Tasks" index.
+- [x] **Updated `docs/agent/index.md`** to reflect the new documentation structure.
+- [x] **Refined Content and TUI docs** to include Cloze and responsive layout details.
+
 ## Next Action
 
-Implement tag management in the Card Browser (add/remove tags from selected cards).
+Implement deck search and filtering in the Decks view.

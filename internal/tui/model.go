@@ -126,6 +126,8 @@ type Model struct {
 	dragVisible        int
 	dragTotal          int
 	searchingBrowser   bool
+	taggingCards       bool
+	tagInput           string
 	statusSeq          int
 }
 
@@ -256,6 +258,10 @@ type reviewPredictionsMsg map[core.ReviewGrade]time.Duration
 type statusMsg struct {
 	text string
 }
+type tagsUpdatedMsg struct {
+	cardIDs []string
+	tags    []string
+}
 
 func (m *Model) Init() tea.Cmd {
 	return tea.Sequence(m.loadDueCards, m.loadDecks, m.loadStatistics(), m.loadReviewsPerDay())
@@ -340,6 +346,18 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.setStatus(fmt.Sprintf("Imported %d notes from %s", msg.count, filepath.Base(msg.path)), 3*time.Second)
 	case statusMsg:
 		return m, m.setStatus(msg.text, 3*time.Second)
+	case tagsUpdatedMsg:
+		m.taggingCards = false
+		m.tagInput = ""
+		// Update local browser cards if visible
+		for _, id := range msg.cardIDs {
+			for i := range m.browserCards {
+				if m.browserCards[i].ID == id {
+					m.browserCards[i].Tags = msg.tags
+				}
+			}
+		}
+		return m, m.setStatus(fmt.Sprintf("Updated tags for %d cards", len(msg.cardIDs)), 3*time.Second)
 	case timedClearStatusMsg:
 		if msg.seq == m.statusSeq {
 			m.status = "Ready"

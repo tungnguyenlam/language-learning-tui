@@ -16,7 +16,7 @@ If the user switches chats mid-task, treat `docs/backlog/active.md` as the hando
 
 ## Status Note
 
-As of 2026-05-03: Project is production-ready. All 77 E2E tests pass, all Go unit test suites pass, verification passes end-to-end. Run 2 TUI refactor recovery is complete and no outstanding issues are tracked.
+As of 2026-05-05: Project is production-ready and fully verified. All 83 E2E tests pass (including new browser tests), all Go unit test suites pass, verification passes end-to-end. Run 2 TUI refactor split is complete and stable. No outstanding issues tracked.
 
 ## Continuous Documentation
 

@@ -31,7 +31,13 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		Padding(0, 1).
 		Width(maxInt(30, m.width-60))
 
-	b.WriteString(searchStyle.Render(fmt.Sprintf("%s: %s_", searchLabel, m.browserSearch)) + "\n\n")
+	if m.taggingCards {
+		searchStyle = searchStyle.BorderForeground(lipgloss.Color("212"))
+		searchLabel = "TAGS"
+		b.WriteString(searchStyle.Render(fmt.Sprintf("%s: %s_", searchLabel, m.tagInput)) + "\n\n")
+	} else {
+		b.WriteString(searchStyle.Render(fmt.Sprintf("%s: %s_", searchLabel, m.browserSearch)) + "\n\n")
+	}
 
 	if len(m.browserCards) == 0 {
 		b.WriteString("No cards found. Press / to search.\n\n")
@@ -95,7 +101,11 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		if card.Mature {
 			mature = " ⭐"
 		}
-		label := fmt.Sprintf("%s%s[%s] %s%s%s%s%s%s", prefix, selected, kind, card.Prompt, mature, bookmark, leech, suspended, "")
+		tags := ""
+		if len(card.Tags) > 0 {
+			tags = " " + mutedStyle.Render("#"+strings.Join(card.Tags, " #"))
+		}
+		label := fmt.Sprintf("%s%s[%s] %s%s%s%s%s%s", prefix, selected, kind, card.Prompt, mature, bookmark, leech, suspended, tags)
 		line := padLine(style.Render(label), lineWidth)
 		if len(m.browserCards) > maxVisible {
 			currentPos := i - start
@@ -130,9 +140,9 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 	}
 
 	if numSelected > 0 {
-		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true).Render(fmt.Sprintf("\n%d cards selected. Bulk actions: B (bookmark) | X (suspend) | t (type) | Del (delete) | esc (clear selection)\n", numSelected)))
+		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true).Render(fmt.Sprintf("\n%d cards selected. Bulk actions: B (bookmark) | X (suspend) | t (type) | T (tags) | Del (delete) | esc (clear selection)\n", numSelected)))
 	} else {
-		b.WriteString("\nUse j/k to navigate, m to select, t to toggle kind, type to search, Enter for history, backspace to delete.\n")
+		b.WriteString("\nUse j/k to navigate, m to select, t to toggle kind, T for tags, type to search, Enter for history.\n")
 	}
 	return b.String()
 }

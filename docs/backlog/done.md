@@ -1,5 +1,24 @@
 # Done Backlog
 
+## 2026-05-05 - Browser Management: Tag Management
+- **Implemented Tag Management**: Users can now add or remove tags from cards directly in the Card Browser using the `T` key.
+- **Bulk Tagging**: Added support for bulk tag updates when multiple cards are selected.
+- **Note-Card Sync**: Tag updates are applied at the Note level, ensuring consistency across all cards belonging to the same note (e.g., Forward and Reverse cards).
+- **Tag Search**: Updated the Browser search (`/`) to include tags in the search query.
+- **TUI Tag Input**: Implemented a dedicated tag input mode in the Browser with pre-filling from the current card's tags.
+- **UI Feedback**: Added tag display to the Card Browser list (e.g., `#tag1 #tag2`) and updated help text.
+- **Input Guard**: Updated `textInputActive` to prevent accidental view switching or global key triggers while typing tags or searching in the browser.
+- **Storage Layer**: Added Migration 17 to add `tags` column to `notes` and `cards` tables. Implemented `SetCardsTags` for efficient bulk updates.
+- **Verification**: Added `TestSetCardsTags` unit test and `test_tag_management.py` E2E test.
+
+## 2026-05-05 - Documentation & Agent Instruction Pass
+- **Comprehensive Documentation Refresh**: Expanded all package-level READMEs in `internal/` to include key symbols, responsibilities, and architectural boundaries.
+- **Agent Rule Consolidation**: Created and updated subtree `AGENTS.md` files for `core`, `app`, `srs`, `tui`, `content`, `storage`, and `ai` to codify package-specific constraints and best practices for AI agents.
+- **Root Instruction Indexing**: Enhanced the main `AGENTS.md` with a "Common Tasks" section, providing direct pointers to relevant subtree instructions for tasks like adding card types or modifying the UI.
+- **Index Alignment**: Synchronized `docs/agent/index.md` with the new documentation structure, ensuring all architectural guides and package maps are correctly indexed.
+- **Feature Documentation**: Integrated details about Cloze deletion, Reverse cards, and the responsive layout system into the core documentation to bridge the gap between recent features and long-term guides.
+
+
 ## 2026-05-04 - Browser Management: Note Type Conversion
 - **Implemented Card Kind Conversion**: Users can now toggle cards between `Flashcard` and `MCQ` kinds directly in the Card Browser using the `t` key.
 - **Bulk Type Conversion**: Added support for bulk kind conversion when multiple cards are selected.
@@ -52,6 +71,12 @@
 - **Improved key handling**: Unified number key logic and removed redundant traps in `internal/tui/keys.go`.
 - **E2E Test Stability**: Reconciled UI changes with existing test expectations to ensure continued CI/CD reliability.
 - **Verified SQLite Persistence**: Confirmed that new deck-level statistics are correctly calculated from the database.
+
+## 2026-05-05 - TUI Refactor Completion & Final Verification
+
+- Completed the comprehensive TUI refactor, solidifying all architectural improvements and rendering contracts.
+- Final verification: all 83 E2E tests passing, confirming feature parity and integration stability.
+- Verified `./scripts/verify.sh`: all Go tests, smoke tests, and full E2E suite passed with no regressions.
 
 ## 2026-05-03 - Run 2 TUI Refactor Recovery
 
