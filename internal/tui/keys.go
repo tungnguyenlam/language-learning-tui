@@ -429,10 +429,32 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		m.searchingBrowser = true
 		m.browserSearch = ""
 		return nil, true
+	case "m":
+		if len(m.browserCards) > 0 {
+			cardID := m.browserCards[m.browserCursor].ID
+			m.browserSelected[cardID] = !m.browserSelected[cardID]
+		}
+		return nil, true
 	case "b":
+		if len(m.getSelectedCardIDs()) > 0 {
+			return m.bulkBrowserBookmark(true), true
+		}
 		return m.toggleBrowserBookmark(), true
+	case "B":
+		if len(m.getSelectedCardIDs()) > 0 {
+			return m.bulkBrowserBookmark(false), true
+		}
+		return nil, false
 	case "x":
+		if len(m.getSelectedCardIDs()) > 0 {
+			return m.bulkBrowserSuspend(true), true
+		}
 		return m.toggleBrowserSuspension(), true
+	case "X":
+		if len(m.getSelectedCardIDs()) > 0 {
+			return m.bulkBrowserSuspend(false), true
+		}
+		return nil, false
 	case "enter", "\r", "\n":
 		if len(m.browserCards) > 0 {
 			cardID := m.browserCards[m.browserCursor].ID
@@ -444,8 +466,16 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return m.loadReviewHistory(cardID), true
 		}
 		return nil, true
-	case "backspace":
+	case "backspace", "delete":
+		if len(m.getSelectedCardIDs()) > 0 {
+			return m.bulkBrowserDelete(), true
+		}
 		return m.deleteSelectedCard(), true
+	case "esc":
+		if len(m.getSelectedCardIDs()) > 0 {
+			m.browserSelected = make(map[string]bool)
+			return nil, true
+		}
 	}
 	return nil, false
 }

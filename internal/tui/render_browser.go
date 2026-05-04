@@ -66,6 +66,15 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 			prefix = "> "
 			style = style.Bold(true).Foreground(lipgloss.Color("212"))
 		}
+
+		selected := "[ ] "
+		if m.browserSelected[card.ID] {
+			selected = "[x] "
+			if i != m.browserCursor {
+				style = style.Foreground(lipgloss.Color("212"))
+			}
+		}
+
 		kind := "FC"
 		if card.Kind == core.CardKindMCQ {
 			kind = "MCQ"
@@ -86,7 +95,7 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		if card.Mature {
 			mature = " ⭐"
 		}
-		label := fmt.Sprintf("%s[%s] %s%s%s%s%s", prefix, kind, card.Prompt, mature, bookmark, leech, suspended)
+		label := fmt.Sprintf("%s%s[%s] %s%s%s%s%s%s", prefix, selected, kind, card.Prompt, mature, bookmark, leech, suspended, "")
 		line := padLine(style.Render(label), lineWidth)
 		if len(m.browserCards) > maxVisible {
 			currentPos := i - start
@@ -112,7 +121,19 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		b.WriteString(m.renderReviewHistory(m.browserCards[m.browserCursor].Prompt))
 		b.WriteString("\n")
 	}
-	b.WriteString("\nUse j/k to navigate, type to search, Enter for history, backspace to delete.\n")
+
+	numSelected := 0
+	for _, s := range m.browserSelected {
+		if s {
+			numSelected++
+		}
+	}
+
+	if numSelected > 0 {
+		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true).Render(fmt.Sprintf("\n%d cards selected. Bulk actions: B (bookmark) | X (suspend) | Del (delete) | esc (clear selection)\n", numSelected)))
+	} else {
+		b.WriteString("\nUse j/k to navigate, m to select, type to search, Enter for history, backspace to delete.\n")
+	}
 	return b.String()
 }
 

@@ -80,6 +80,65 @@ func (m *Model) toggleBrowserBookmark() tea.Cmd {
 	}
 }
 
+func (m *Model) bulkBrowserBookmark(bookmarked bool) tea.Cmd {
+	selectedIDs := m.getSelectedCardIDs()
+	if len(selectedIDs) == 0 {
+		return nil
+	}
+	m.status = "Bulk bookmarking..."
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		for _, id := range selectedIDs {
+			_ = m.repo.SetCardBookmark(ctx, id, bookmarked)
+		}
+		return m.loadBrowserCards()()
+	}
+}
+
+func (m *Model) bulkBrowserSuspend(suspended bool) tea.Cmd {
+	selectedIDs := m.getSelectedCardIDs()
+	if len(selectedIDs) == 0 {
+		return nil
+	}
+	m.status = "Bulk suspending..."
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		for _, id := range selectedIDs {
+			_ = m.repo.SetCardSuspended(ctx, id, suspended)
+		}
+		return m.loadBrowserCards()()
+	}
+}
+
+func (m *Model) bulkBrowserDelete() tea.Cmd {
+	selectedIDs := m.getSelectedCardIDs()
+	if len(selectedIDs) == 0 {
+		return nil
+	}
+	m.status = "Bulk deleting..."
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		for _, id := range selectedIDs {
+			_ = m.repo.DeleteCard(ctx, id)
+		}
+		m.browserSelected = make(map[string]bool)
+		return m.loadBrowserCards()()
+	}
+}
+
+func (m *Model) getSelectedCardIDs() []string {
+	var ids []string
+	for id, selected := range m.browserSelected {
+		if selected {
+			ids = append(ids, id)
+		}
+	}
+	return ids
+}
+
 func (m *Model) toggleBrowserSuspension() tea.Cmd {
 	if len(m.browserCards) == 0 {
 		return nil

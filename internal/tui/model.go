@@ -99,6 +99,7 @@ type Model struct {
 	browserCursor      int
 	browserSearch      string
 	browserDeckID      string
+	browserSelected    map[string]bool
 	sessionReviewed    int
 	sessionCorrect     int
 	showHelp           bool
@@ -181,21 +182,22 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		exportPath = "export.tsv"
 	}
 	return &Model{
-		repo:           repo,
-		scheduler:      scheduler,
-		aiProvider:     provider,
-		aiProviderName: providerName,
-		aiTemplates:    templates,
-		autoPlayAudio:  autoPlayAudio,
-		width:          80,
-		height:         24,
-		activeView:     ViewDashboard,
-		breakpoint:     BreakpointMedium,
-		status:         "Ready",
-		aiInput:        "der Kaffee",
-		importPath:     filepath.Clean(importPath),
-		exportPath:     filepath.Clean(exportPath),
-		onConfigChange: opts.OnConfigChange,
+		repo:            repo,
+		scheduler:       scheduler,
+		aiProvider:      provider,
+		aiProviderName:  providerName,
+		aiTemplates:     templates,
+		autoPlayAudio:   autoPlayAudio,
+		width:           80,
+		height:          24,
+		activeView:      ViewDashboard,
+		breakpoint:      BreakpointMedium,
+		status:          "Ready",
+		aiInput:         "der Kaffee",
+		importPath:      filepath.Clean(importPath),
+		exportPath:      filepath.Clean(exportPath),
+		onConfigChange:  opts.OnConfigChange,
+		browserSelected: make(map[string]bool),
 	}
 }
 

@@ -1,5 +1,11 @@
 # Done Backlog
 
+## 2026-05-04 - Browser Management: Bulk Actions
+- **Implemented Multi-Select in Card Browser**: Users can now select multiple cards using the 'm' key. Selected cards are indicated with `[x]` checkboxes and highlighted text.
+- **Added Bulk Actions**: Implemented bulk actions for bookmarking (`b`/`B`), suspending (`x`/`X`), and deleting (`backspace`/`delete`) multiple cards at once.
+- **Improved Browser UI**: Added a dynamic footer that appears when cards are selected, showing the count of selected cards and available bulk actions.
+- **Added Browser E2E Tests**: Created `e2e_tests/test_browser_management.py` to verify multi-select and bulk action workflows.
+
 ## 2026-05-04 - Review Intervals & Layout Refinement
 - **Implemented Predicted Review Intervals**: The Review view now displays the predicted "Next Review" interval for each grading option (Again, Hard, Good, Easy) based on the FSRS algorithm. This helps users make informed grading decisions.
 - **Refactored Wide Mode Layout**: Implemented a dynamic 2/3 column design in Wide mode. The layout now uses 2 columns (Nav + Content) for widths between 100 and 120, and 3 columns (Nav + Content + Detail) for widths above 120. This prevents text wrapping in the content panel and fixed multiple E2E test regressions.
