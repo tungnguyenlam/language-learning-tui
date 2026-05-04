@@ -36,15 +36,15 @@ def test_dashboard_deck_switching_updates_view():
         agent = start_agent(tmpdir)
         try:
             # Check initial deck
-            agent.assert_text("Deck: German A1 Survival")
+            agent.assert_text("Deck: All Decks")
             
-            # Switch deck right (only one deck exists initially, so it should stay the same)
+            # Switch deck right (should go to German A1 Survival)
             agent.act(']')
             agent.wait_for_text("Deck: German A1 Survival")
             
-            # Switch deck left
+            # Switch deck left (should go back to All Decks)
             agent.act('[')
-            agent.wait_for_text("Deck: German A1 Survival")
+            agent.wait_for_text("Deck: All Decks")
         finally:
             agent.close()
 

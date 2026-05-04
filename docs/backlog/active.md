@@ -32,4 +32,4 @@ Autonomous Feature Pass 20: Multi-Deck Studies & SRS Refinement
 
 ## Next Action
 
-Implement multi-deck study sessions in `internal/srs/scheduler.go`.
+Find and implement the next high-impact feature (e.g., UI polish, content expansion, or animation improvements) for Autonomous Feature Pass 20.

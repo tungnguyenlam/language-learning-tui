@@ -1,5 +1,9 @@
 # Done Backlog
 
+## 2026-05-04 - Multi-Deck Studies
+- **Implemented Multi-Deck Study Sessions**: Added an "All Decks" virtual deck to the TUI. When selected, the app now interleaves due cards across all available decks, allowing users to perform comprehensive review sessions without manually switching decks.
+- **Updated E2E Tests**: Adjusted test assertions in `test_dashboard_features.py` and `test_tui.py` to expect the new "All Decks" default state.
+
 ## 2026-05-04 - Advanced Learning & UX Polish Pass (Continued)
 
 ### Advanced Learning

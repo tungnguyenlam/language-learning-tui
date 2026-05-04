@@ -24,7 +24,7 @@ def test_dashboard_and_review_flow():
         try:
             # Verify dashboard content
             agent.assert_text("DASHBOARD")
-            agent.assert_text("Deck: German A1 Survival")
+            agent.assert_text("Deck: All Decks")
             agent.assert_text("Due cards:   52")
 
             # Switch to Review view

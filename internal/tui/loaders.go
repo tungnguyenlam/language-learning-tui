@@ -62,7 +62,8 @@ func (m *Model) loadDecks() tea.Msg {
 	if err != nil {
 		return err
 	}
-	return decksMsg(decks)
+	allDecks := append([]core.Deck{{ID: "", Name: "All Decks", Description: "Study cards from all decks combined."}}, decks...)
+	return decksMsg(allDecks)
 }
 
 func (m *Model) loadStatistics() tea.Cmd {
