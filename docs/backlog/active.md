@@ -22,6 +22,11 @@ Autonomous Feature Pass 21: Bulk Operations & Advanced Search
 - [x] **Unused Tags Cleanup**: Implemented 'C' key in Browser to remove tags not used by any cards.
 - [x] **AI Prompt Templates**: Refined templates to support multiple exercise types (Grammar, Articles, Conjugation) with easy switching.
 
+### Startup Compatibility Fix
+- [x] **Legacy AI Template Config Migration**: `make run` now accepts the previous flat `ai_templates.front/back/example` config shape and maps it into the `vocabulary` template set.
+- [x] **Verified Startup**: `make run` launches the TUI successfully with the existing user config.
+- [x] **Verified Tests**: `./scripts/verify.sh` passes with 93 E2E tests.
+
 ### Next Action
 
 Implement a "Session Overview" chart in the Statistics view showing grade distribution for the current day.

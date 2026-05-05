@@ -24,6 +24,68 @@ func TestLoadOrCreateConfig(t *testing.T) {
 	}
 }
 
+func TestLoadOrCreateConfigMigratesLegacyAITemplates(t *testing.T) {
+	dir := t.TempDir()
+	if err := EnsureDataDir(dir); err != nil {
+		t.Fatalf("ensure data dir: %v", err)
+	}
+	raw := []byte(`{
+  "theme": "system",
+  "keymap": "default",
+  "ai_provider": "template",
+  "log_level": "info",
+  "ai_templates": {
+    "front": "{{.Topic}}",
+    "back": "German prompt for {{.Topic}}.",
+    "example": "Practice sentence using {{.Topic}}."
+  }
+}`)
+	if err := os.WriteFile(filepath.Join(dir, ConfigFileName), raw, 0o644); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	cfg, err := LoadOrCreateConfig(dir)
+	if err != nil {
+		t.Fatalf("load legacy config: %v", err)
+	}
+	if got := cfg.AITemplates["vocabulary"]["front"]; got != "{{.Topic}}" {
+		t.Fatalf("vocabulary front = %q, want legacy template", got)
+	}
+	if _, ok := cfg.AITemplates["grammar"]; !ok {
+		t.Fatal("grammar default template was not restored")
+	}
+}
+
+func TestLoadOrCreateConfigKeepsNestedAITemplates(t *testing.T) {
+	dir := t.TempDir()
+	if err := EnsureDataDir(dir); err != nil {
+		t.Fatalf("ensure data dir: %v", err)
+	}
+	raw := []byte(`{
+  "ai_templates": {
+    "custom": {
+      "front": "Front {{.Topic}}",
+      "back": "Back {{.Topic}}",
+      "example": "Example {{.Topic}}"
+    }
+  }
+}`)
+	if err := os.WriteFile(filepath.Join(dir, ConfigFileName), raw, 0o644); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	cfg, err := LoadOrCreateConfig(dir)
+	if err != nil {
+		t.Fatalf("load nested config: %v", err)
+	}
+	if got := cfg.AITemplates["custom"]["front"]; got != "Front {{.Topic}}" {
+		t.Fatalf("custom front = %q, want nested template", got)
+	}
+	if _, ok := cfg.AITemplates["vocabulary"]; !ok {
+		t.Fatal("vocabulary default template was not restored")
+	}
+}
+
 func TestOpenLog(t *testing.T) {
 	dir := t.TempDir()
 	file, logger, err := OpenLog(dir)

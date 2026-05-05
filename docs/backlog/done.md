@@ -1,5 +1,10 @@
 # Done Backlog
 
+## 2026-05-05 - Startup Config Compatibility
+- **Fixed Legacy AI Template Loading**: Added config loading compatibility for the previous flat `ai_templates.front/back/example` shape after the new multi-set template schema was introduced.
+- **Default Template Preservation**: Legacy configs now keep their vocabulary template while restoring newer default template sets such as grammar, articles, and conjugation.
+- **Verification**: Confirmed `make run` launches with the existing user config and `./scripts/verify.sh` passes with 93 E2E tests.
+
 ## 2026-05-05 - AI View: Prompt Template Refinement
 - **Implemented Multi-Set AI Templates**: Refactored the configuration to support multiple template sets (e.g., 'vocabulary', 'grammar', 'articles', 'conjugation').
 - **Template Switching**: Added the ability to cycle through template sets in the AI view using the `[` and `]` keys, with immediate visual feedback.

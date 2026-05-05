@@ -82,7 +82,7 @@ func LoadOrCreateConfig(dataDir string) (Config, error) {
 		return Config{}, err
 	}
 	cfg := DefaultConfig()
-	if err := json.Unmarshal(raw, &cfg); err != nil {
+	if err := unmarshalConfig(raw, &cfg); err != nil {
 		return Config{}, err
 	}
 	return cfg.withDefaults(), nil
@@ -113,6 +113,48 @@ func (c Config) withDefaults() Config {
 	}
 	if c.AITemplates == nil {
 		c.AITemplates = defaults.AITemplates
+	} else {
+		for set, template := range defaults.AITemplates {
+			if _, ok := c.AITemplates[set]; !ok {
+				c.AITemplates[set] = template
+			}
+		}
 	}
 	return c
+}
+
+func unmarshalConfig(raw []byte, cfg *Config) error {
+	type configFile struct {
+		Theme         string          `json:"theme"`
+		Keymap        string          `json:"keymap"`
+		AIProvider    string          `json:"ai_provider"`
+		LogLevel      string          `json:"log_level"`
+		AutoPlayAudio bool            `json:"autoplay_audio"`
+		AITemplates   json.RawMessage `json:"ai_templates,omitempty"`
+	}
+
+	var file configFile
+	if err := json.Unmarshal(raw, &file); err != nil {
+		return err
+	}
+	cfg.Theme = file.Theme
+	cfg.Keymap = file.Keymap
+	cfg.AIProvider = file.AIProvider
+	cfg.LogLevel = file.LogLevel
+	cfg.AutoPlayAudio = file.AutoPlayAudio
+
+	if len(file.AITemplates) == 0 || string(file.AITemplates) == "null" {
+		return nil
+	}
+	var nested map[string]map[string]string
+	if err := json.Unmarshal(file.AITemplates, &nested); err == nil {
+		cfg.AITemplates = nested
+		return nil
+	}
+	var legacy map[string]string
+	if err := json.Unmarshal(file.AITemplates, &legacy); err != nil {
+		return err
+	}
+	cfg.AITemplates = map[string]map[string]string{"vocabulary": legacy}
+	return nil
 }
