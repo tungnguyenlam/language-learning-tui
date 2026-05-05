@@ -188,6 +188,7 @@ def test_settings_and_template_drafting():
             agent.act(' ')
             agent.act('<Enter>') # Save
             agent.wait_until_stable()
+            agent.wait_for_text("Front Template: {{.Topic}}P: ")
             agent.assert_text("Front Template: {{.Topic}}P: ")
 
             # Go to AI Drafts and verify template is used

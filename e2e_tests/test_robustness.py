@@ -38,25 +38,15 @@ def test_settings_template_editing_cancel():
             agent.act('Z')
             agent.assert_text("Front Template: {{.Topic}}XYZ")
             
-            # Cancel with Esc
+            # Cancel with Esc - should revert changes
             agent.act('<Esc>')
             agent.wait_until_stable()
             agent.assert_not_text("EDITING")
-            
-            # Revert to original? 
-            # Actually, let's see how the app handles Esc.
-            # Looking at internal/tui/model.go:
-            # case "enter", "esc":
-            #     m.editingTemplate = false
-            # It doesn't seem to have a "revert" buffer. It edits in-place.
-            # Wait, let's check updateSettingsKey.
-            # case "enter", "esc": m.editingTemplate = false
-            # Yes, it edits m.aiTemplates[key] directly.
-            
-            # If so, Esc just stops editing but keeps the changes?
-            # Let's verify this behavior.
-            agent.assert_text("Front Template: {{.Topic}}XYZ")
-            
+            # Esc should revert the template to its original value
+            agent.assert_text("Front Template: {{.Topic}}")
+            agent.assert_not_text("Front Template: {{.Topic}}XYZ")
+
+
         finally:
             agent.close()
 

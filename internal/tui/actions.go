@@ -512,6 +512,20 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 
 	case 1, 2, 3:
 		m.editingTemplate = true
+		activeSet := ""
+		if len(m.aiTemplateSets) > 0 {
+			activeSet = m.aiTemplateSets[m.aiTemplateIndex]
+		}
+		key := ""
+		switch m.settingsCursor {
+		case 1:
+			key = "front"
+		case 2:
+			key = "back"
+		case 3:
+			key = "example"
+		}
+		m.originalTemplateValue = m.aiTemplates[activeSet][key]
 	case 5:
 		m.autoPlayAudio = !m.autoPlayAudio
 		status := "disabled"

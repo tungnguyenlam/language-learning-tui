@@ -440,8 +440,25 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	if m.editingTemplate {
 		activeSet := m.aiTemplateSets[m.aiTemplateIndex]
 		switch msg.String() {
-		case "enter", "\r", "\n", "esc":
+		case "enter", "\r", "\n":
 			m.editingTemplate = false
+			m.originalTemplateValue = ""
+			if m.aiProviderName == "template" {
+				m.aiProvider = ai.TemplateProvider{
+					Templates: m.aiTemplates,
+					ActiveSet: activeSet,
+				}
+			}
+			if m.onConfigChange != nil {
+				m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio)
+			}
+			return nil, true
+		case "esc":
+			// Restore original value on cancel
+			templateKey := m.templateKeyAtCursor()
+			m.aiTemplates[activeSet][templateKey] = m.originalTemplateValue
+			m.editingTemplate = false
+			m.originalTemplateValue = ""
 			if m.aiProviderName == "template" {
 				m.aiProvider = ai.TemplateProvider{
 					Templates: m.aiTemplates,
