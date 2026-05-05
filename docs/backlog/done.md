@@ -1,5 +1,11 @@
 # Done Backlog
 
+## 2026-05-05 - TUI Refactor Completion & Verification
+- **Completed Run 2 TUI Refactor Recovery**: Restored stable rendering contracts, status footer, tab/nav targets, Settings/AI surfaces, reveal animation, scrollbar alignment, APKG export, autoplay feedback, and import mouse hitboxes.
+- **Verified `./scripts/verify.sh`**: All Go tests, smoke tests, and 83+ E2E tests passed with no regressions.
+- **Fixed Template Editing Cancel Behavior**: Esc during template editing now properly reverts changes (was keeping changes). Added `originalTemplateValue` field to preserve pre-edit state. Separated Enter/Esc handling in `updateSettingsKey`.
+- **Verified All 93 E2E Tests**: Full validation suite passing after E2E test updates.
+
 ## 2026-05-05 - Startup Config Compatibility
 - **Fixed Legacy AI Template Loading**: Added config loading compatibility for the previous flat `ai_templates.front/back/example` shape after the new multi-set template schema was introduced.
 - **Default Template Preservation**: Legacy configs now keep their vocabulary template while restoring newer default template sets such as grammar, articles, and conjugation.
