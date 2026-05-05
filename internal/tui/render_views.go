@@ -158,6 +158,53 @@ func (m *Model) renderImport(x, y int) string {
 	})
 	b.WriteString(exportLabel + "\n\n")
 
+	// Export Deck Filter
+	exportDeckLabel := "Export Deck: "
+	if m.exportDeckID == "" {
+		exportDeckLabel += "All Decks"
+	} else {
+		for _, d := range m.decks {
+			if d.ID == m.exportDeckID {
+				exportDeckLabel += d.Name
+				break
+			}
+		}
+	}
+	if m.importCursor == 2 {
+		b.WriteString("> " + style.Render(exportDeckLabel) + " (Use [ / ] to change)\n")
+	} else {
+		b.WriteString("  " + exportDeckLabel + "\n")
+	}
+	m.hitboxes = append(m.hitboxes, Hitbox{
+		ID:     "import-path-2",
+		View:   ViewImport,
+		X:      x,
+		Y:      y + 5,
+		Width:  lipgloss.Width(exportDeckLabel) + 2,
+		Height: 1,
+	})
+
+	// Export Tag Filter
+	exportTagLabel := "Export Tag: " + m.exportTag
+	if m.exportTag == "" {
+		exportTagLabel += "(None)"
+	}
+	if m.editingExportTag {
+		b.WriteString("  Export Tag: " + editStyle.Render(m.exportTag+"_") + "\n\n")
+	} else if m.importCursor == 3 {
+		b.WriteString("> " + style.Render(exportTagLabel) + " (Press t to edit)\n\n")
+	} else {
+		b.WriteString("  " + exportTagLabel + "\n\n")
+	}
+	m.hitboxes = append(m.hitboxes, Hitbox{
+		ID:     "import-path-3",
+		View:   ViewImport,
+		X:      x,
+		Y:      y + 6,
+		Width:  lipgloss.Width(exportTagLabel) + 2,
+		Height: 1,
+	})
+
 	b.WriteString("Actions:\n")
 	actions := []struct {
 		id    string
@@ -184,18 +231,19 @@ func (m *Model) renderImport(x, y int) string {
 			ID:     a.id,
 			View:   ViewImport,
 			X:      currentX,
-			Y:      y + 7,
+			Y:      y + 8,
 			Width:  lipgloss.Width(item) + 2,
 			Height: 1,
 		})
 		currentX += lipgloss.Width(item) + 3
 	}
 
-	b.WriteString("\n\nCurrent Deck: " + m.deckLabel() + "\n\n")
-	if m.editingImportPath {
-		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("EDITING - Enter to save, Esc to cancel.") + "\n\n")
+	if m.editingImportPath || m.editingExportTag {
+		b.WriteString("\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("EDITING - Enter to save, Esc to cancel.") + "\n\n")
+	} else {
+		b.WriteString("\n\nCurrent Deck: " + m.deckLabel() + "\n")
+		b.WriteString("Use j/k to navigate, Enter/t to edit, [ / ] to change deck, or click buttons.\n")
 	}
-	b.WriteString("Use j/k to select path, Enter to edit, or click buttons above.\n")
 
 	return b.String()
 }

@@ -60,6 +60,9 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			return m, m.previousViewCmd()
 		}
 	case "[":
+		if cmd, handled := m.updateActiveViewKey(msg); handled {
+			return m, cmd
+		}
 		if !m.textInputActive() || m.activeView == ViewBrowser {
 			if m.activeView == ViewBrowser {
 				m.previousDeck()
@@ -69,6 +72,9 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 	case "]":
+		if cmd, handled := m.updateActiveViewKey(msg); handled {
+			return m, cmd
+		}
 		if !m.textInputActive() || m.activeView == ViewBrowser {
 			if m.activeView == ViewBrowser {
 				m.nextDeck()
@@ -123,6 +129,7 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 func (m *Model) textInputActive() bool {
 	return (m.activeView == ViewImport && m.editingImportPath) ||
 		(m.activeView == ViewSettings && m.editingTemplate) ||
+		(m.activeView == ViewImport && m.editingExportTag) ||
 		m.taggingCards ||
 		m.searchingBrowser ||
 		m.searchingDecks ||
@@ -343,6 +350,27 @@ func (m *Model) updateImportKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, true
 	}
 
+	if m.editingExportTag {
+		switch msg.String() {
+		case "enter", "\r", "\n", "esc":
+			m.editingExportTag = false
+			return nil, true
+		case "backspace":
+			if len(m.exportTag) > 0 {
+				m.exportTag = m.exportTag[:len(m.exportTag)-1]
+			}
+			return nil, true
+		case "ctrl+u":
+			m.exportTag = ""
+			return nil, true
+		}
+		if len(msg.String()) == 1 {
+			m.exportTag += msg.String()
+			return nil, true
+		}
+		return nil, true
+	}
+
 	switch msg.String() {
 	case "up", "k":
 		if m.importCursor > 0 {
@@ -350,12 +378,30 @@ func (m *Model) updateImportKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "down", "j":
-		if m.importCursor < 1 {
+		if m.importCursor < 3 {
 			m.importCursor++
 		}
 		return nil, true
-	case "enter":
-		m.editingImportPath = true
+	case "[":
+		if m.importCursor == 2 {
+			m.previousExportDeck()
+			return nil, true
+		}
+	case "]":
+		if m.importCursor == 2 {
+			m.nextExportDeck()
+			return nil, true
+		}
+	case "enter", "\r", "\n":
+		if m.importCursor < 2 {
+			m.editingImportPath = true
+		} else if m.importCursor == 3 {
+			m.editingExportTag = true
+		}
+		return nil, true
+	case "t":
+		m.importCursor = 3
+		m.editingExportTag = true
 		return nil, true
 	case "i":
 		return m.importTSV(), true

@@ -137,8 +137,17 @@ func (m *mockRepo) Cards(ctx context.Context, deckID string, search string) ([]c
 		if deckID != "" && card.DeckID != deckID {
 			continue
 		}
-		if search != "" && !containsIgnoreCase(card.Prompt, search) && !containsIgnoreCase(card.Answer, search) {
-			continue
+		if search != "" {
+			found := containsIgnoreCase(card.Prompt, search) || containsIgnoreCase(card.Answer, search)
+			for _, t := range card.Tags {
+				if containsIgnoreCase(t, search) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				continue
+			}
 		}
 		cards = append(cards, card)
 	}

@@ -402,6 +402,9 @@ func TestExportTSVWritesSelectedDeck(t *testing.T) {
 		}},
 	}
 	repo := &mockRepo{decks: []core.Deck{deck}}
+	for _, note := range deck.Notes {
+		repo.dueCards = append(repo.dueCards, note.Cards...)
+	}
 	model := NewModelWithOptions(repo, &mockScheduler{}, ModelOptions{
 		AIProvider: ai.OfflineProvider{},
 		ImportPath: importPath,

@@ -77,12 +77,18 @@ func (m *Model) activateHitbox(id string) tea.Cmd {
 			m.settingsCursor = idx
 			return m.handleSettingsEnter()
 		}
-		return nil
 	case strings.HasPrefix(id, "import-path-"):
 		idx, err := strconv.Atoi(strings.TrimPrefix(id, "import-path-"))
-		if err == nil && (idx == 0 || idx == 1) {
+		if err == nil && (idx >= 0 && idx <= 3) {
 			m.importCursor = idx
-			m.editingImportPath = true
+			if idx < 2 {
+				m.editingImportPath = true
+			} else if idx == 2 {
+				m.nextExportDeck()
+			} else if idx == 3 {
+				m.editingExportTag = true
+			}
+			return nil
 		}
 		return nil
 	case id == "import-tsv":

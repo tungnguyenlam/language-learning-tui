@@ -88,8 +88,11 @@ type Model struct {
 	draftCursor        int
 	importPath         string
 	exportPath         string
-	importCursor       int
+	exportDeckID       string
+	exportTag          string
+	importCursor       int // 0: import path, 1: export path, 2: export deck, 3: export tag
 	editingImportPath  bool
+	editingExportTag   bool
 	onConfigChange     func(string, map[string]string, bool)
 	bookmarkFilter     bool
 	mcqChoice          int

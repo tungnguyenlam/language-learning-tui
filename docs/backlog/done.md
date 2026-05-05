@@ -1,5 +1,12 @@
 # Done Backlog
 
+## 2026-05-05 - Card Export Filtering & UI Robustness
+- **Implemented Export Filtering**: Added deck and tag filters to the Import/Export view, allowing users to export specific subsets of their collection.
+- **Improved UI Navigation**: Added support for keyboard (`j/k`, `[`/`]`, `t`) and mouse interaction for export filters.
+- **Synchronized Active Deck**: The export deck filter now defaults to the currently active deck for a more intuitive workflow.
+- **Fixed Key Interception**: Resolved a conflict where global navigation keys stole input from view-specific handlers, ensuring robust control in all views.
+- **Enhanced Test Suite**: Added 2 new E2E tests for export filtering and verified all 89 project tests passing.
+
 ## 2026-05-05 - Deck Search & Key Handling Refinement
 - **Implemented Robust Deck Search**: Added `/` search to Decks view with dedicated `searchingDecks` state and improved UI feedback.
 - **Fixed Enter Key Handling**: Resolved a bug where `\r` and `\n` were not recognized as Enter in multiple views (Import, Settings, Decks, Browser), improving cross-terminal and automated testing compatibility.

@@ -8,12 +8,18 @@ Autonomous Feature Pass 21: Bulk Operations & Advanced Search
 
 ## Completed Work
 
+### Export Filtering (Pass 21)
+- [x] **Implemented Export Filtering**: Added deck and tag filters to the Import/Export view.
+- [x] **UI & Key Fixes**: Resolved key prioritization conflicts and fixed shifted mouse hitboxes.
+- [x] **Active Deck Sync**: Synchronized default export deck with the currently active deck.
+- [x] **New E2E Tests**: Added `e2e_tests/test_export_filtering.py` with 2 new comprehensive tests.
+- [x] **Verified Suite**: 89 tests passing with zero failures.
+
 ### Deck Search & Key Handling (Pass 20)
 - [x] **Implemented Robust Deck Search**: Added `/` search to Decks view with dedicated `searchingDecks` state and improved UI feedback.
 - [x] **Fixed Enter Key Handling**: Resolved a bug where `\r` and `\n` were not recognized as Enter in multiple views (Import, Settings, Decks, Browser).
 - [x] **Improved Key Trapping**: Refactored `updateKey` to more robustly trap and delegate keys to active views during text input.
 - [x] **Added E2E Tests**: Created `e2e_tests/test_new_pass_20.py` with 3 new tests covering deck search, selection, and settings.
-- [x] **Verified Full Suite**: 87 tests passed with zero failures.
 
 ### Browser Management & Tagging (Pass 21)
 - [x] **Implemented Tag Management** in Card Browser (T key to add/remove tags).
@@ -35,4 +41,4 @@ Autonomous Feature Pass 21: Bulk Operations & Advanced Search
 
 ## Next Action
 
-Implement card export filtering (by tag/deck) in the Import/Export view.
+Implement multi-select in the Decks view for bulk deck deletion and merging.

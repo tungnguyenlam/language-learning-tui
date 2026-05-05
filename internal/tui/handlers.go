@@ -35,6 +35,16 @@ func (m *Model) updateView(view View) tea.Cmd {
 	m.activeView = view
 	m.isDragging = false
 	m.clearReviewHistory()
+	m.hitboxes = nil // Clear hitboxes for new view
+	m.importCursor = 0
+	m.settingsCursor = 0
+	m.editingImportPath = false
+	m.editingExportTag = false
+	m.editingTemplate = false
+
+	if view == ViewImport {
+		m.exportDeckID = m.deck.ID
+	}
 	if view == ViewStatistics {
 		return m.loadStatistics()
 	}
@@ -259,6 +269,52 @@ func (m *Model) previousDeck() {
 	}
 	m.deckIndex = (m.deckIndex - 1 + len(m.decks)) % len(m.decks)
 	m.selectDeck(m.deckIndex)
+}
+
+func (m *Model) nextExportDeck() {
+	if len(m.decks) == 0 {
+		return
+	}
+	currentIndex := -1
+	if m.exportDeckID == "" {
+		currentIndex = 0 // "All Decks" is virtual at index 0 in my head
+	} else {
+		for i, d := range m.decks {
+			if d.ID == m.exportDeckID {
+				currentIndex = i + 1
+				break
+			}
+		}
+	}
+	nextIndex := (currentIndex + 1) % (len(m.decks) + 1)
+	if nextIndex == 0 {
+		m.exportDeckID = ""
+	} else {
+		m.exportDeckID = m.decks[nextIndex-1].ID
+	}
+}
+
+func (m *Model) previousExportDeck() {
+	if len(m.decks) == 0 {
+		return
+	}
+	currentIndex := -1
+	if m.exportDeckID == "" {
+		currentIndex = 0
+	} else {
+		for i, d := range m.decks {
+			if d.ID == m.exportDeckID {
+				currentIndex = i + 1
+				break
+			}
+		}
+	}
+	prevIndex := (currentIndex - 1 + len(m.decks) + 1) % (len(m.decks) + 1)
+	if prevIndex == 0 {
+		m.exportDeckID = ""
+	} else {
+		m.exportDeckID = m.decks[prevIndex-1].ID
+	}
 }
 
 func (m *Model) nextDeck() {

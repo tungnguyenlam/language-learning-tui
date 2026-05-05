@@ -164,34 +164,32 @@ func (m *Model) importTSV() tea.Cmd {
 
 func (m *Model) exportTSV() tea.Cmd {
 	path := m.exportPath
+	deckID := m.exportDeckID
+	tag := m.exportTag
 	m.status = "Exporting TSV..."
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
 		var notes []core.Note
-		if len(m.deck.Notes) > 0 {
-			notes = m.deck.Notes
-		} else {
-			cards, err := m.repo.Cards(ctx, m.deck.ID, "")
-			if err != nil {
-				return err
+		cards, err := m.repo.Cards(ctx, deckID, tag)
+		if err != nil {
+			return err
+		}
+		seen := make(map[string]bool)
+		for _, c := range cards {
+			if seen[c.NoteID] {
+				continue
 			}
-			seen := make(map[string]bool)
-			for _, c := range cards {
-				if seen[c.NoteID] {
-					continue
-				}
-				seen[c.NoteID] = true
-				notes = append(notes, core.Note{
-					ID:     c.NoteID,
-					DeckID: c.DeckID,
-					Front:  c.Prompt,
-					Back:   c.Answer,
-					Tags:   c.Tags,
-					Audio:  c.Audio,
-				})
-			}
+			seen[c.NoteID] = true
+			notes = append(notes, core.Note{
+				ID:     c.NoteID,
+				DeckID: c.DeckID,
+				Front:  c.Prompt,
+				Back:   c.Answer,
+				Tags:   c.Tags,
+				Audio:  c.Audio,
+			})
 		}
 
 		file, err := os.Create(path)
@@ -244,12 +242,14 @@ func (m *Model) importAPKG() tea.Cmd {
 
 func (m *Model) exportAPKG() tea.Cmd {
 	path := m.exportPath
+	deckID := m.exportDeckID
+	tag := m.exportTag
 	m.status = "Exporting APKG..."
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		cards, err := m.repo.Cards(ctx, "", "")
+		cards, err := m.repo.Cards(ctx, deckID, tag)
 		if err != nil {
 			return err
 		}

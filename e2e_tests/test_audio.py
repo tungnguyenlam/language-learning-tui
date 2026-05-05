@@ -33,8 +33,8 @@ def test_audio_indicator_in_review():
                 agent.act(char)
                 time.sleep(0.05)
             agent.act("<Enter>") # FINISH EDITING
-            agent.act("i") # EXECUTE IMPORT TSV
-            agent.wait_for_text("Imported 1 notes", timeout=10.0)
+            agent.wait_until_stable()
+            agent.act("i") # EXECUTE IMPORT TSV            agent.wait_for_text("Imported 1 notes", timeout=10.0)
             
             # Select the new deck (use left arrows to avoid capturing '2')
             agent.act("<Left>")

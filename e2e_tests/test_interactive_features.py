@@ -232,9 +232,8 @@ def test_import_mouse_interaction():
             agent.assert_not_text("EDITING")
             
             # Click Import button [i]
-            # rowY = y + 7 = 11 (0-based) = 12 (1-based)
-            agent.click(10, 12)
-            
+            # rowY = y + 8 = 12 (0-based) = 13 (1-based)
+            agent.click(10, 13)            
             # Status should update
             agent.wait_for_text("Error:")
         finally:
