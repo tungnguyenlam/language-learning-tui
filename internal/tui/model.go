@@ -120,6 +120,7 @@ type Model struct {
 	reviewPredictions  map[core.ReviewGrade]time.Duration
 	spinnerFrame       int
 	deckFilter         string
+	deckSelected       map[string]bool
 	drafting           bool
 	statsScroll        int
 	statsTotalLines    int
@@ -204,6 +205,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		exportPath:      filepath.Clean(exportPath),
 		onConfigChange:  opts.OnConfigChange,
 		browserSelected: make(map[string]bool),
+		deckSelected:    make(map[string]bool),
 	}
 }
 

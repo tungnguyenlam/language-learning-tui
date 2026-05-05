@@ -264,8 +264,9 @@ func (m *Model) updateStatisticsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	if m.searchingDecks {
 		switch msg.String() {
-		case "enter", "\r", "\n", "esc":
+		case "enter", "\r", "\n", "esc", "ctrl+m", "ctrl+j", "\x1b":
 			m.searchingDecks = false
+			m.applyDeckFilter()
 			return nil, true
 		case "backspace":
 			if len(m.deckFilter) > 0 {
@@ -274,7 +275,7 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			}
 			return nil, true
 		}
-		if len(msg.String()) == 1 {
+		if len(msg.String()) == 1 && msg.String() >= " " {
 			m.deckFilter += msg.String()
 			m.deckCursor = 0
 			return nil, true
@@ -294,18 +295,38 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.deckCursor++
 		}
 		return nil, true
+	case " ":
+		if len(filtered) > 0 {
+			id := filtered[m.deckCursor].ID
+			m.deckSelected[id] = !m.deckSelected[id]
+		}
+		return nil, true
+	case "x":
+		if len(filtered) > 0 {
+			id := filtered[m.deckCursor].ID
+			m.deckSelected[id] = !m.deckSelected[id]
+		}
+		return nil, true
+	case "backspace", "delete":
+		return m.handleDeckDelete(), true
+	case "M":
+		return m.handleDeckMerge(), true
 	case "/":
 		m.searchingDecks = true
 		m.deckFilter = ""
 		m.deckCursor = 0
 		return nil, true
-	case "enter":
+	case "enter", "\r", "\n":
 		if len(filtered) > 0 {
 			m.selectDeckByID(filtered[m.deckCursor].ID)
 			m.activeView = ViewDashboard
 		}
 		return nil, true
 	case "esc":
+		if len(m.deckSelected) > 0 {
+			m.deckSelected = make(map[string]bool)
+			return nil, true
+		}
 		m.deckFilter = ""
 		m.deckCursor = 0
 		return nil, true

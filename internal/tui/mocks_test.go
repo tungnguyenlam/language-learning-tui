@@ -50,6 +50,42 @@ func (m *mockRepo) Decks(ctx context.Context) ([]core.Deck, error) {
 	}
 	return []core.Deck{{ID: "mock-1", Name: "Mock Deck"}}, nil
 }
+func (m *mockRepo) DeleteDecks(ctx context.Context, ids []string) error {
+	idMap := make(map[string]bool)
+	for _, id := range ids {
+		idMap[id] = true
+	}
+	var nextDecks []core.Deck
+	for _, d := range m.decks {
+		if !idMap[d.ID] {
+			nextDecks = append(nextDecks, d)
+		}
+	}
+	m.decks = nextDecks
+
+	var nextCards []core.Card
+	for _, c := range m.dueCards {
+		if !idMap[c.DeckID] {
+			nextCards = append(nextCards, c)
+		}
+	}
+	m.dueCards = nextCards
+	return nil
+}
+
+func (m *mockRepo) MergeDecks(ctx context.Context, sourceIDs []string, targetID string) error {
+	idMap := make(map[string]bool)
+	for _, id := range sourceIDs {
+		idMap[id] = true
+	}
+	for i := range m.dueCards {
+		if idMap[m.dueCards[i].DeckID] {
+			m.dueCards[i].DeckID = targetID
+		}
+	}
+	return m.DeleteDecks(ctx, sourceIDs)
+}
+
 func (m *mockRepo) RecordReview(ctx context.Context, result core.ReviewResult) error {
 	m.reviews = append(m.reviews, result)
 	return nil

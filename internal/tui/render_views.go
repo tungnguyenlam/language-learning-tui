@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"charm.land/lipgloss/v2"
@@ -74,17 +73,15 @@ func (m *Model) renderDecks(x, y int) string {
 			style = style.Bold(true).Foreground(lipgloss.Color("212"))
 		}
 
-		newStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81"))
-		dueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("208"))
-		totalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("159"))
+		selectMark := "[ ] "
+		if m.deckSelected[deck.ID] {
+			selectMark = "[x] "
+		}
 
-		counts := fmt.Sprintf("%s new, %s due, %s total",
-			newStyle.Render(strconv.Itoa(deck.NewCards)),
-			dueStyle.Render(strconv.Itoa(deck.DueCards)),
-			totalStyle.Render(strconv.Itoa(deck.TotalCards)))
+		counts := fmt.Sprintf("%d new, %d due, %d total", deck.NewCards, deck.DueCards, deck.TotalCards)
 
-		label := fmt.Sprintf("%s%s (%s, today %d, %.0f%% success)",
-			prefix, deck.Name, counts, deck.ReviewsToday, deck.SuccessRate*100)
+		label := fmt.Sprintf("%s%s%s (%s, today %d, %.0f%% success)",
+			prefix, selectMark, deck.Name, counts, deck.ReviewsToday, deck.SuccessRate*100)
 		b.WriteString(style.Render(label))
 		b.WriteString("\n")
 		if deck.Description != "" {
@@ -100,7 +97,17 @@ func (m *Model) renderDecks(x, y int) string {
 	if m.searchingDecks {
 		b.WriteString("\nPress Enter or Esc to finish searching.")
 	} else {
-		b.WriteString("\nPress enter to select deck. Press / to search. Esc to clear filter.")
+		selectedCount := 0
+		for _, s := range m.deckSelected {
+			if s {
+				selectedCount++
+			}
+		}
+		if selectedCount > 0 {
+			b.WriteString(fmt.Sprintf("\n%d decks selected. Press Backspace to delete, M to merge into current.", selectedCount))
+		} else {
+			b.WriteString("\nPress enter to select deck. Press / to search. x to multi-select. Esc to clear.")
+		}
 	}
 
 	if len(filteredDecks) > maxVisible {

@@ -1019,3 +1019,55 @@ func (s *Store) Cards(ctx context.Context, deckID string, search string) ([]core
 	}
 	return cards, rows.Err()
 }
+
+func (s *Store) DeleteDecks(ctx context.Context, ids []string) error {
+	if len(ids) == 0 {
+		return nil
+	}
+	query := `DELETE FROM decks WHERE id IN (` + strings.Repeat("?,", len(ids)-1) + `?)`
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		args[i] = id
+	}
+	_, err := s.db.ExecContext(ctx, query, args...)
+	return err
+}
+
+func (s *Store) MergeDecks(ctx context.Context, sourceIDs []string, targetID string) error {
+	if len(sourceIDs) == 0 {
+		return nil
+	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	sourceIn := `(` + strings.Repeat("?,", len(sourceIDs)-1) + `?)`
+	args := make([]interface{}, 0, len(sourceIDs)+1)
+	for _, id := range sourceIDs {
+		args = append(args, id)
+	}
+
+	// Update notes
+	noteQuery := `UPDATE notes SET deck_id = ? WHERE deck_id IN ` + sourceIn
+	noteArgs := append([]interface{}{targetID}, args...)
+	if _, err := tx.ExecContext(ctx, noteQuery, noteArgs...); err != nil {
+		return err
+	}
+
+	// Update cards
+	cardQuery := `UPDATE cards SET deck_id = ? WHERE deck_id IN ` + sourceIn
+	cardArgs := append([]interface{}{targetID}, args...)
+	if _, err := tx.ExecContext(ctx, cardQuery, cardArgs...); err != nil {
+		return err
+	}
+
+	// Delete source decks
+	deckQuery := `DELETE FROM decks WHERE id IN ` + sourceIn
+	if _, err := tx.ExecContext(ctx, deckQuery, args...); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}

@@ -271,6 +271,77 @@ func (m *Model) previousDeck() {
 	m.selectDeck(m.deckIndex)
 }
 
+func (m *Model) handleDeckDelete() tea.Cmd {
+	var ids []string
+	for id, selected := range m.deckSelected {
+		if selected {
+			ids = append(ids, id)
+		}
+	}
+	if len(ids) == 0 {
+		filtered := m.filteredDecks()
+		if len(filtered) > 0 {
+			ids = []string{filtered[m.deckCursor].ID}
+		}
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+
+	m.status = fmt.Sprintf("Deleting %d decks...", len(ids))
+	m.deckSelected = make(map[string]bool)
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := m.repo.DeleteDecks(ctx, ids); err != nil {
+			return err
+		}
+		return m.loadDecks()
+	}
+}
+
+func (m *Model) handleDeckMerge() tea.Cmd {
+	var sourceIDs []string
+	for id, selected := range m.deckSelected {
+		if selected {
+			sourceIDs = append(sourceIDs, id)
+		}
+	}
+	if len(sourceIDs) == 0 {
+		m.status = "Select source decks first (Space)"
+		return nil
+	}
+
+	filtered := m.filteredDecks()
+	if len(filtered) == 0 {
+		return nil
+	}
+	targetID := filtered[m.deckCursor].ID
+
+	// Remove target from sources if present
+	var cleanSources []string
+	for _, id := range sourceIDs {
+		if id != targetID {
+			cleanSources = append(cleanSources, id)
+		}
+	}
+	if len(cleanSources) == 0 {
+		m.status = "Cannot merge deck into itself"
+		return nil
+	}
+
+	m.status = fmt.Sprintf("Merging %d decks into %s...", len(cleanSources), filtered[m.deckCursor].Name)
+	m.deckSelected = make(map[string]bool)
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := m.repo.MergeDecks(ctx, cleanSources, targetID); err != nil {
+			return err
+		}
+		return m.loadDecks()
+	}
+}
+
 func (m *Model) nextExportDeck() {
 	if len(m.decks) == 0 {
 		return

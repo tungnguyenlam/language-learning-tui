@@ -404,7 +404,7 @@ def test_deck_navigation_with_up_down_arrows():
             agent.wait_for_text("Press enter to select deck.")
             
             agent.act('<Down>')
-            agent.wait_for_text("> Z-Imported")
+            agent.wait_for_text("> [ ] Z-Imported")
             
             agent.act('<Enter>')
             agent.wait_for_text("Use Review (3) to start studying.")

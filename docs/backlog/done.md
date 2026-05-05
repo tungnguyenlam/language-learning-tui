@@ -1,5 +1,12 @@
 # Done Backlog
 
+## 2026-05-05 - Decks View Bulk Operations
+- **Implemented Multi-Select**: Users can now select multiple decks in the Decks view using the `x` key.
+- **Bulk Deletion**: Added support for deleting multiple selected decks (or the current one) using `Backspace`.
+- **Deck Merging**: Implemented deck merging via the `M` key, allowing notes from all selected decks to be moved into the highlighted target deck.
+- **Repository Extensions**: Added `DeleteDecks` and `MergeDecks` to the core Repository interface and SQLite implementation, using transactional safety for merging.
+- **Enhanced E2E Tests**: Added `e2e_tests/test_bulk_decks.py` and updated existing tests to account for UI changes. All 91 tests verified passing.
+
 ## 2026-05-05 - Card Export Filtering & UI Robustness
 - **Implemented Export Filtering**: Added deck and tag filters to the Import/Export view, allowing users to export specific subsets of their collection.
 - **Improved UI Navigation**: Added support for keyboard (`j/k`, `[`/`]`, `t`) and mouse interaction for export filters.
