@@ -40,7 +40,7 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	// 2. Text input trapping
 	if m.textInputActive() {
 		// Only allow certain keys to escape trapping
-		if key != "enter" && key != "esc" && key != "tab" && key != "shift+tab" {
+		if key != "tab" && key != "shift+tab" {
 			// If it's a view-specific key for the active editing view, handle it
 			if cmd, handled := m.updateActiveViewKey(msg); handled {
 				return m, cmd
@@ -125,6 +125,7 @@ func (m *Model) textInputActive() bool {
 		(m.activeView == ViewSettings && m.editingTemplate) ||
 		m.taggingCards ||
 		m.searchingBrowser ||
+		m.searchingDecks ||
 		m.drafting // AI drafting also uses input
 }
 
@@ -254,6 +255,26 @@ func (m *Model) updateStatisticsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 }
 
 func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
+	if m.searchingDecks {
+		switch msg.String() {
+		case "enter", "\r", "\n", "esc":
+			m.searchingDecks = false
+			return nil, true
+		case "backspace":
+			if len(m.deckFilter) > 0 {
+				m.deckFilter = m.deckFilter[:len(m.deckFilter)-1]
+				m.deckCursor = 0
+			}
+			return nil, true
+		}
+		if len(msg.String()) == 1 {
+			m.deckFilter += msg.String()
+			m.deckCursor = 0
+			return nil, true
+		}
+		return nil, true
+	}
+
 	filtered := m.filteredDecks()
 	switch msg.String() {
 	case "up", "k":
@@ -266,26 +287,19 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.deckCursor++
 		}
 		return nil, true
-	case "enter", "\r", "\n":
+	case "/":
+		m.searchingDecks = true
+		m.deckFilter = ""
+		m.deckCursor = 0
+		return nil, true
+	case "enter":
 		if len(filtered) > 0 {
 			m.selectDeckByID(filtered[m.deckCursor].ID)
 			m.activeView = ViewDashboard
 		}
 		return nil, true
-	case "backspace":
-		if len(m.deckFilter) > 0 {
-			m.deckFilter = m.deckFilter[:len(m.deckFilter)-1]
-			m.deckCursor = 0
-		}
-		return nil, true
 	case "esc":
 		m.deckFilter = ""
-		m.deckCursor = 0
-		return nil, true
-	}
-
-	if len(msg.String()) == 1 {
-		m.deckFilter += msg.String()
 		m.deckCursor = 0
 		return nil, true
 	}
@@ -296,7 +310,7 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 func (m *Model) updateImportKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	if m.editingImportPath {
 		switch msg.String() {
-		case "enter", "esc":
+		case "enter", "\r", "\n", "esc":
 			m.editingImportPath = false
 			return nil, true
 		case "backspace":
@@ -340,7 +354,7 @@ func (m *Model) updateImportKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.importCursor++
 		}
 		return nil, true
-	case "enter", "\r", "\n":
+	case "enter":
 		m.editingImportPath = true
 		return nil, true
 	case "i":
@@ -358,7 +372,7 @@ func (m *Model) updateImportKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	if m.editingTemplate {
 		switch msg.String() {
-		case "enter", "esc":
+		case "enter", "\r", "\n", "esc":
 			m.editingTemplate = false
 			if m.aiProviderName == "template" {
 				m.aiProvider = ai.TemplateProvider{Templates: m.aiTemplates}
@@ -393,7 +407,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.settingsCursor++
 		}
 		return nil, true
-	case "enter", "\r", "\n":
+	case "enter":
 		return m.handleSettingsEnter(), true
 	case "+":
 		return m.setDailyGoal(m.stats.DailyGoal + 1), true
@@ -406,7 +420,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	if m.taggingCards {
 		switch msg.String() {
-		case "enter":
+		case "enter", "\r", "\n":
 			return m.handleTagInput(), true
 		case "esc":
 			m.taggingCards = false
@@ -427,7 +441,7 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 
 	if m.searchingBrowser {
 		switch msg.String() {
-		case "enter", "esc":
+		case "enter", "\r", "\n", "esc":
 			m.searchingBrowser = false
 			return m.loadBrowserCards(), true
 		case "backspace":

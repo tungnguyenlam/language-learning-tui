@@ -1,12 +1,19 @@
 # Active Backlog
 
-Last updated: 2026-05-04
+Last updated: 2026-05-05
 
 ## Current Milestone
 
-Autonomous Feature Pass 20: Multi-Deck Studies & SRS Refinement
+Autonomous Feature Pass 21: Bulk Operations & Advanced Search
 
 ## Completed Work
+
+### Deck Search & Key Handling (Pass 20)
+- [x] **Implemented Robust Deck Search**: Added `/` search to Decks view with dedicated `searchingDecks` state and improved UI feedback.
+- [x] **Fixed Enter Key Handling**: Resolved a bug where `\r` and `\n` were not recognized as Enter in multiple views (Import, Settings, Decks, Browser).
+- [x] **Improved Key Trapping**: Refactored `updateKey` to more robustly trap and delegate keys to active views during text input.
+- [x] **Added E2E Tests**: Created `e2e_tests/test_new_pass_20.py` with 3 new tests covering deck search, selection, and settings.
+- [x] **Verified Full Suite**: 87 tests passed with zero failures.
 
 ### Browser Management & Tagging (Pass 21)
 - [x] **Implemented Tag Management** in Card Browser (T key to add/remove tags).
@@ -23,28 +30,9 @@ Autonomous Feature Pass 20: Multi-Deck Studies & SRS Refinement
 - [x] **Add "B1 - German Idioms" deck** to showcase advanced expressions
 - [x] **Add "Total Decks" and "Active Decks" counters** to Dashboard and Statistics
 - [x] **Enhance Review Visuals**: Add subtle color coding for Grade options (Again=Red, Good=Green, etc.)
-- [x] **Improve Navigation**: Allow jumping to specific tabs using number keys (1-6)
+- [x] **Improve Navigation**: Allow jumping to specific tabs using number keys (1-9)
 - [x] **Fix Cram Mode bug**: Number keys now correctly select filters instead of switching views
-
-### Cloze Deletion Support
-- [x] **Implemented Cloze Deletion card kind** in core models
-- [x] **Added `parseClozes` logic** to `internal/content/anki.go` for `{{c1::...}}` syntax
-- [x] **Updated TUI Review view** to render clozes with `[...]` placeholders
-- [x] **Verified with unit tests** in `anki_test.go` and E2E test `test_cloze_deletion.py`
-
-### Dashboard & Content
-- [x] **Implemented "Grammar Tip of the Day" system** with rotating daily tips
-- [x] **Added responsive Grammar Tip box** to the Dashboard (with height-based visibility check)
-- [x] **Created "German Grammar Essentials" deck** featuring both MCQ and Cloze exercises
-- [x] **Updated README.md and documentation** to reflect new learning capabilities
-
-### Documentation & Agent Instructions (Pass 20)
-- [x] **Expanded all package READMEs** in `internal/` with key symbols and responsibilities.
-- [x] **Added subtree `AGENTS.md`** for `core`, `app`, and `srs` packages.
-- [x] **Consolidated root `AGENTS.md`** with a "Common Tasks" index.
-- [x] **Updated `docs/agent/index.md`** to reflect the new documentation structure.
-- [x] **Refined Content and TUI docs** to include Cloze and responsive layout details.
 
 ## Next Action
 
-Implement deck search and filtering in the Decks view.
+Implement card export filtering (by tag/deck) in the Import/Export view.

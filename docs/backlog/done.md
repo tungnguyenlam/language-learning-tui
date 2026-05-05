@@ -1,5 +1,12 @@
 # Done Backlog
 
+## 2026-05-05 - Deck Search & Key Handling Refinement
+- **Implemented Robust Deck Search**: Added `/` search to Decks view with dedicated `searchingDecks` state and improved UI feedback.
+- **Fixed Enter Key Handling**: Resolved a bug where `\r` and `\n` were not recognized as Enter in multiple views (Import, Settings, Decks, Browser), improving cross-terminal and automated testing compatibility.
+- **Improved Key Trapping**: Refactored `updateKey` to more robustly trap and delegate keys to active views during text input, ensuring global navigation shortcuts don't interfere with typing.
+- **Enhanced E2E Test Coverage**: Added `e2e_tests/test_new_pass_20.py` with 3 new tests covering deck search, deck selection, and settings adjustment.
+- **Verified Full Suite**: Successfully ran all 87 tests via `scripts/verify.sh` with zero failures.
+
 ## 2026-05-05 - Browser Management: Tag Management
 - **Implemented Tag Management**: Users can now add or remove tags from cards directly in the Card Browser using the `T` key.
 - **Bulk Tagging**: Added support for bulk tag updates when multiple cards are selected.

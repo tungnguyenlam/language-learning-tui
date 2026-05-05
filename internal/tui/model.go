@@ -126,6 +126,7 @@ type Model struct {
 	dragVisible        int
 	dragTotal          int
 	searchingBrowser   bool
+	searchingDecks     bool
 	taggingCards       bool
 	tagInput           string
 	statusSeq          int

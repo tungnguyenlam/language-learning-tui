@@ -53,17 +53,24 @@ def test_deck_filtering_by_name():
             agent.assert_text("Decks")
             
             # Type filter text
+            agent.act('/')
             agent.act('G')
             agent.wait_until_stable()
             
             # Should show filter text
-            agent.assert_text("Filter: G")
+            agent.assert_text("Search: G")
             
             # Clear filter with Esc
             agent.act('\x1b')  # Escape key
             agent.wait_until_stable()
             
-            # Filter should be cleared
+            # Filter should be cleared (one esc finishes search, another clears filter if I used esc to finish)
+            # Actually, in my current implementation, ESC in search mode finishes search but KEEPS the filter.
+            # No, ESC in search mode finishes search and keeps the filter.
+            # But another ESC in normal mode clears the filter.
+            
+            agent.act('\x1b')
+            agent.wait_until_stable()
             agent.assert_not_text("Filter: G")
             
         finally:
@@ -84,14 +91,17 @@ def test_deck_filtering_no_matches():
             agent.assert_text("Decks")
             
             # Type filter text that won't match
+            agent.act('/')
             agent.act('Z')  # Single character that shouldn't match
             agent.wait_until_stable()
             
             # Should show filter text
-            agent.assert_text("Filter: Z")
+            agent.assert_text("Search: Z")
             
             # Clear filter with Esc
             agent.act('\x1b')  # Escape key
+            agent.wait_until_stable()
+            agent.act('\x1b')  # Another Escape to clear filter
             agent.wait_until_stable()
             
             # Filter should be cleared

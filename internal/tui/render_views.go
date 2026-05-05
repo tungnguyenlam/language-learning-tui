@@ -16,19 +16,27 @@ func (m *Model) renderDecks(x, y int) string {
 	var b strings.Builder
 	b.WriteString("Decks\n\n")
 
-	// Show filter if active
-	if m.deckFilter != "" {
-		b.WriteString(fmt.Sprintf("Filter: %s_\n\n", m.deckFilter))
+	// Show filter if active or searching
+	if m.searchingDecks || m.deckFilter != "" {
+		if m.searchingDecks {
+			b.WriteString(fmt.Sprintf("Search: %s_\n\n", m.deckFilter))
+		} else {
+			b.WriteString(fmt.Sprintf("Filter: %s (Press / to edit)\n\n", m.deckFilter))
+		}
 	}
 
 	filteredDecks := m.filteredDecks()
 	if len(filteredDecks) == 0 {
 		if m.deckFilter != "" {
-			b.WriteString("No decks match filter. Press Esc to clear filter.\n")
+			b.WriteString("No decks match search. Press Esc to clear.\n")
 		} else {
 			b.WriteString("No decks found. Use Import to add notes.\n")
 		}
-		b.WriteString("\nPress Esc to clear filter.")
+		if m.searchingDecks {
+			b.WriteString("\nPress Enter or Esc to finish.")
+		} else {
+			b.WriteString("\nPress Esc to clear filter.")
+		}
 		return b.String()
 	}
 
@@ -88,7 +96,13 @@ func (m *Model) renderDecks(x, y int) string {
 			b.WriteString(fmt.Sprintf("     Tags: %s\n", mutedStyle.Render(tags)))
 		}
 	}
-	b.WriteString("\nPress enter to select deck. Type to filter. Esc to clear filter.")
+
+	if m.searchingDecks {
+		b.WriteString("\nPress Enter or Esc to finish searching.")
+	} else {
+		b.WriteString("\nPress enter to select deck. Press / to search. Esc to clear filter.")
+	}
+
 	if len(filteredDecks) > maxVisible {
 		b.WriteString(fmt.Sprintf(" (Showing %d-%d of %d)", start+1, end, len(filteredDecks)))
 	}
