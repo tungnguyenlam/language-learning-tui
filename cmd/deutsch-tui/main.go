@@ -80,7 +80,7 @@ func main() {
 		AutoPlayAudio:  cfg.AutoPlayAudio,
 		ImportPath:     filepath.Join(dir, "import.tsv"),
 		ExportPath:     filepath.Join(dir, "export.tsv"),
-		OnConfigChange: func(name string, tmpls map[string]string, autoPlayAudio bool) {
+		OnConfigChange: func(name string, tmpls map[string]map[string]string, autoPlayAudio bool) {
 			cfg.AIProvider = name
 			cfg.AITemplates = tmpls
 			cfg.AutoPlayAudio = autoPlayAudio

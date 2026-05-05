@@ -77,7 +77,9 @@ type Model struct {
 	hitboxes           []Hitbox
 	aiProvider         ai.Provider
 	aiProviderName     string
-	aiTemplates        map[string]string
+	aiTemplates        map[string]map[string]string
+	aiTemplateSets     []string
+	aiTemplateIndex    int
 	autoPlayAudio      bool
 	stats              core.Statistics
 	settingsCursor     int
@@ -93,7 +95,7 @@ type Model struct {
 	importCursor       int // 0: import path, 1: export path, 2: export deck, 3: export tag
 	editingImportPath  bool
 	editingExportTag   bool
-	onConfigChange     func(string, map[string]string, bool)
+	onConfigChange     func(string, map[string]map[string]string, bool)
 	bookmarkFilter     bool
 	mcqChoice          int
 	mcqAnswered        bool
@@ -150,11 +152,11 @@ func NewModelWithAI(repo core.Repository, scheduler core.Scheduler, provider ai.
 type ModelOptions struct {
 	AIProvider     ai.Provider
 	AIProviderName string
-	AITemplates    map[string]string
+	AITemplates    map[string]map[string]string
 	AutoPlayAudio  bool
 	ImportPath     string
 	ExportPath     string
-	OnConfigChange func(string, map[string]string, bool)
+	OnConfigChange func(string, map[string]map[string]string, bool)
 }
 
 func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts ModelOptions) *Model {
@@ -164,18 +166,29 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 	}
 	templates := opts.AITemplates
 	if templates == nil {
-		templates = map[string]string{
-			"front":   "{{.Topic}}",
-			"back":    "German prompt for {{.Topic}}",
-			"example": "Practice sentence using {{.Topic}}.",
+		templates = map[string]map[string]string{
+			"vocabulary": {
+				"front":   "{{.Topic}}",
+				"back":    "German prompt for {{.Topic}}",
+				"example": "Practice sentence using {{.Topic}}.",
+			},
 		}
 	}
+
+	var sets []string
+	for k := range templates {
+		sets = append(sets, k)
+	}
+
 	autoPlayAudio := opts.AutoPlayAudio
 	provider := opts.AIProvider
 	if provider == nil {
 		switch providerName {
 		case "template":
-			provider = ai.TemplateProvider{Templates: templates}
+			provider = ai.TemplateProvider{
+				Templates: templates,
+				ActiveSet: sets[0],
+			}
 		default:
 			provider = ai.OfflineProvider{}
 		}
@@ -194,6 +207,8 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		aiProvider:      provider,
 		aiProviderName:  providerName,
 		aiTemplates:     templates,
+		aiTemplateSets:  sets,
+		aiTemplateIndex: 0,
 		autoPlayAudio:   autoPlayAudio,
 		width:           80,
 		height:          24,

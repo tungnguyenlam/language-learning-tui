@@ -1,5 +1,13 @@
 # Done Backlog
 
+## 2026-05-05 - AI View: Prompt Template Refinement
+- **Implemented Multi-Set AI Templates**: Refactored the configuration to support multiple template sets (e.g., 'vocabulary', 'grammar', 'articles', 'conjugation').
+- **Template Switching**: Added the ability to cycle through template sets in the AI view using the `[` and `]` keys, with immediate visual feedback.
+- **Specialized Exercise Templates**: Added default templates for German articles (MCQ) and verb conjugation (Cloze) to facilitate diverse study material generation.
+- **Nested Template Editing**: Updated the Settings view to support editing templates within the currently active set.
+- **Robustness**: Updated `TemplateProvider` to use the selected set and refined `onConfigChange` to correctly persist nested map structures.
+- **Verification**: Updated Go unit tests and adjusted E2E mouse interaction tests to account for layout shifts. All 93 tests verified passing.
+
 ## 2026-05-05 - Browser Management: Unused Tags Cleanup
 - **Implemented Unused Tags Cleanup**: Added the 'C' key in the Card Browser to automatically remove tags from the current deck that are no longer associated with any cards.
 - **Repository Support**: Added `CleanupTags` to the `core.Repository` interface and implemented it in the SQLite store using efficient tag extraction and consolidation.

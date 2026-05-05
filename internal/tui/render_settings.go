@@ -17,14 +17,22 @@ func (m *Model) renderSettings(x, y int) string {
 		autoPlayStatus = "on"
 	}
 
+	aiProviderName := m.aiProviderName
+	activeSet := "none"
+	if len(m.aiTemplateSets) > 0 {
+		activeSet = m.aiTemplateSets[m.aiTemplateIndex]
+	}
+
 	sectionStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Bold(true).MarginTop(1)
 	b.WriteString(sectionStyle.Render("AI CONFIGURATION") + "\n")
+	b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Render(fmt.Sprintf("  Template Set: %s", activeSet)) + "\n")
 
+	setMap := m.aiTemplates[activeSet]
 	aiOptions := []string{
-		fmt.Sprintf("AI Provider: %s", m.aiProviderName),
-		fmt.Sprintf("Front Template: %s", m.aiTemplates["front"]),
-		fmt.Sprintf("Back Template: %s", m.aiTemplates["back"]),
-		fmt.Sprintf("Example Template: %s", m.aiTemplates["example"]),
+		fmt.Sprintf("AI Provider: %s", aiProviderName),
+		fmt.Sprintf("Front Template: %s", setMap["front"]),
+		fmt.Sprintf("Back Template: %s", setMap["back"]),
+		fmt.Sprintf("Example Template: %s", setMap["example"]),
 	}
 	for i, opt := range aiOptions {
 		prefix := "  "

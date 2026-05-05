@@ -68,7 +68,8 @@ func (p OfflineProvider) GenerateDrafts(ctx context.Context, request DraftReques
 }
 
 type TemplateProvider struct {
-	Templates map[string]string
+	Templates map[string]map[string]string
+	ActiveSet string
 }
 
 func (p TemplateProvider) GenerateDrafts(ctx context.Context, request DraftRequest) ([]Draft, error) {
@@ -85,18 +86,27 @@ func (p TemplateProvider) GenerateDrafts(ctx context.Context, request DraftReque
 		return nil, errors.New("draft deck id is required")
 	}
 
-	front := p.applyTemplate("front", topic, topic)
-	back := p.applyTemplate("back", topic, fmt.Sprintf("German prompt for %s", topic))
-	example := p.applyTemplate("example", topic, fmt.Sprintf("Practice sentence using %s.", topic))
+	activeSet := p.ActiveSet
+	if activeSet == "" {
+		// Default to first available set
+		for k := range p.Templates {
+			activeSet = k
+			break
+		}
+	}
+
+	front := p.applyTemplate(activeSet, "front", topic, topic)
+	back := p.applyTemplate(activeSet, "back", topic, fmt.Sprintf("German prompt for %s", topic))
+	example := p.applyTemplate(activeSet, "example", topic, fmt.Sprintf("Practice sentence using %s.", topic))
 
 	idBase := draftIDBase(topic)
-	tags := append([]string{"ai-draft"}, request.Tags...)
+	tags := append([]string{"ai-draft", activeSet}, request.Tags...)
 	note := core.Note{
 		ID:       fmt.Sprintf("ai-%s", idBase),
 		DeckID:   deckID,
 		Front:    front,
 		Back:     back,
-		Extra:    "Template draft. Review before keeping.",
+		Extra:    fmt.Sprintf("Template draft (%s). Review before keeping.", activeSet),
 		Tags:     tags,
 		Examples: []string{example},
 	}
@@ -104,8 +114,12 @@ func (p TemplateProvider) GenerateDrafts(ctx context.Context, request DraftReque
 	return []Draft{{Note: note}}, nil
 }
 
-func (p TemplateProvider) applyTemplate(key, topic, fallback string) string {
-	tmpl, ok := p.Templates[key]
+func (p TemplateProvider) applyTemplate(set, key, topic, fallback string) string {
+	setMap, ok := p.Templates[set]
+	if !ok {
+		return fallback
+	}
+	tmpl, ok := setMap[key]
 	if !ok || tmpl == "" {
 		return fallback
 	}

@@ -20,10 +20,8 @@ Autonomous Feature Pass 21: Bulk Operations & Advanced Search
 - [x] **UI & Key Fixes**: Resolved key prioritization and hitbox alignment.
 - [x] **Active Deck Sync**: Default export deck matches current view.
 - [x] **Unused Tags Cleanup**: Implemented 'C' key in Browser to remove tags not used by any cards.
+- [x] **AI Prompt Templates**: Refined templates to support multiple exercise types (Grammar, Articles, Conjugation) with easy switching.
 
-### Deck Search & Key Handling (Pass 20)
-...
+### Next Action
 
-## Next Action
-
-Refine the AI view's prompt templates to better handle German grammar exercises.
+Implement a "Session Overview" chart in the Statistics view showing grade distribution for the current day.

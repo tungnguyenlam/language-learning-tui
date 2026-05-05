@@ -14,7 +14,12 @@ func (m *Model) renderAI(x, y int) string {
 		frames := []string{"-", "\\", "|", "/"}
 		spinner = " " + frames[m.spinnerFrame%len(frames)]
 	}
-	fmt.Fprintf(&b, "AI Drafts%s\n\nDeck: %s\nTopic: %s\n\nEnter generate | a approve | d discard | esc clear\n", spinner, m.deckLabel(), m.aiInput)
+	templateName := "None"
+	if len(m.aiTemplateSets) > 0 {
+		templateName = m.aiTemplateSets[m.aiTemplateIndex]
+	}
+
+	fmt.Fprintf(&b, "AI Drafts%s\n\nDeck: %s\nTemplate: %s (use [ / ])\nTopic: %s\n\nEnter generate | a approve | d discard | esc clear\n", spinner, m.deckLabel(), templateName, m.aiInput)
 
 	if len(m.drafts) == 0 {
 		if m.drafting {

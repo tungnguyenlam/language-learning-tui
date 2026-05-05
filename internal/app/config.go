@@ -13,12 +13,12 @@ const (
 )
 
 type Config struct {
-	Theme         string            `json:"theme"`
-	Keymap        string            `json:"keymap"`
-	AIProvider    string            `json:"ai_provider"`
-	LogLevel      string            `json:"log_level"`
-	AutoPlayAudio bool              `json:"autoplay_audio"`
-	AITemplates   map[string]string `json:"ai_templates,omitempty"`
+	Theme         string                       `json:"theme"`
+	Keymap        string                       `json:"keymap"`
+	AIProvider    string                       `json:"ai_provider"`
+	LogLevel      string                       `json:"log_level"`
+	AutoPlayAudio bool                         `json:"autoplay_audio"`
+	AITemplates   map[string]map[string]string `json:"ai_templates,omitempty"`
 }
 
 func DefaultConfig() Config {
@@ -28,10 +28,27 @@ func DefaultConfig() Config {
 		AIProvider:    "disabled",
 		LogLevel:      "info",
 		AutoPlayAudio: false,
-		AITemplates: map[string]string{
-			"front":   "{{.Topic}}",
-			"back":    "German prompt for {{.Topic}}.",
-			"example": "Practice sentence using {{.Topic}}.",
+		AITemplates: map[string]map[string]string{
+			"vocabulary": {
+				"front":   "{{.Topic}}",
+				"back":    "German prompt for {{.Topic}}.",
+				"example": "Practice sentence using {{.Topic}}.",
+			},
+			"grammar": {
+				"front":   "Ich {{c1::...}} {{.Topic}}.",
+				"back":    "Grammar: {{.Topic}}",
+				"example": "Ich {{c1::bin}} {{.Topic}}.",
+			},
+			"articles": {
+				"front":   "{{c1::...}} {{.Topic}}",
+				"back":    "Article for {{.Topic}}",
+				"example": "MCQ:der,die,das",
+			},
+			"conjugation": {
+				"front":   "{{.Topic}} (ich) -> {{c1::...}}",
+				"back":    "Conjugate {{.Topic}}",
+				"example": "Ich {{c1::lerne}} Deutsch.",
+			},
 		},
 	}
 }

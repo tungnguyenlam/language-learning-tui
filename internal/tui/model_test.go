@@ -550,8 +550,9 @@ func TestSettingsTemplateEditing(t *testing.T) {
 	}
 
 	want := "{{.Topic}X" // default is {{.Topic}}, minus one char plus X
-	if model.aiTemplates["front"] != want {
-		t.Fatalf("template = %q, want %q", model.aiTemplates["front"], want)
+	activeSet := model.aiTemplateSets[model.aiTemplateIndex]
+	if model.aiTemplates[activeSet]["front"] != want {
+		t.Fatalf("template = %q, want %q", model.aiTemplates[activeSet]["front"], want)
 	}
 }
 
@@ -559,8 +560,10 @@ func TestAIDraftWithTemplateProvider(t *testing.T) {
 	repo := &mockRepo{decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}}}
 	model := NewModelWithOptions(repo, &mockScheduler{}, ModelOptions{
 		AIProviderName: "template",
-		AITemplates: map[string]string{
-			"front": "Prefix: {{.Topic}}",
+		AITemplates: map[string]map[string]string{
+			"vocabulary": {
+				"front": "Prefix: {{.Topic}}",
+			},
 		},
 	})
 	model.Update(decksMsg(repo.decks))

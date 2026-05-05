@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"deutsch-tui/internal/ai"
 	"deutsch-tui/internal/core"
 
 	tea "charm.land/bubbletea/v2"
@@ -546,6 +547,34 @@ func (m *Model) statisticsVisibleLines(viewportHeight int) int {
 
 func (m *Model) listVisibleLines(viewportHeight int) int {
 	return clampInt(viewportHeight-8, 3, 10)
+}
+
+func (m *Model) nextAITemplate() {
+	if len(m.aiTemplateSets) == 0 {
+		return
+	}
+	m.aiTemplateIndex = (m.aiTemplateIndex + 1) % len(m.aiTemplateSets)
+	m.updateActiveAITemplate()
+}
+
+func (m *Model) previousAITemplate() {
+	if len(m.aiTemplateSets) == 0 {
+		return
+	}
+	m.aiTemplateIndex = (m.aiTemplateIndex - 1 + len(m.aiTemplateSets)) % len(m.aiTemplateSets)
+	m.updateActiveAITemplate()
+}
+
+func (m *Model) updateActiveAITemplate() {
+	if len(m.aiTemplateSets) == 0 {
+		return
+	}
+	setName := m.aiTemplateSets[m.aiTemplateIndex]
+	if tp, ok := m.aiProvider.(ai.TemplateProvider); ok {
+		tp.ActiveSet = setName
+		m.aiProvider = tp
+	}
+	m.status = fmt.Sprintf("AI Template: %s", setName)
 }
 
 func (m *Model) setStatus(text string, d time.Duration) tea.Cmd {

@@ -63,11 +63,14 @@ func TestOfflineProviderRequiresSourceText(t *testing.T) {
 
 func TestTemplateProvider(t *testing.T) {
 	provider := TemplateProvider{
-		Templates: map[string]string{
-			"front":   "Word: {{.Topic}}",
-			"back":    "German for {{.Topic}} is ...",
-			"example": "Ich mag {{.Topic}}.",
+		Templates: map[string]map[string]string{
+			"default": {
+				"front":   "Word: {{.Topic}}",
+				"back":    "German for {{.Topic}} is ...",
+				"example": "Ich mag {{.Topic}}.",
+			},
 		},
+		ActiveSet: "default",
 	}
 	drafts, err := provider.GenerateDrafts(context.Background(), DraftRequest{
 		SourceText: "Coffee",

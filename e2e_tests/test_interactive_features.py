@@ -195,17 +195,17 @@ def test_settings_mouse_interaction():
             # Plus "[+] " is 4 chars (24..27)
             # 1-based: Label (4..20), Minus (21..24), Plus (25..28)
             
-            # Click Plus [+] (X=26, Y=16)
-            agent.click(26, 16) 
+            # Click Plus [+] (X=26, Y=17)
+            agent.click(26, 17) 
             agent.wait_for_text("Daily Goal: 11")
             
-            # Click Minus [-] (X=22, Y=16)
-            agent.click(22, 16)
+            # Click Minus [-] (X=22, Y=17)
+            agent.click(22, 17)
             agent.wait_for_text("Daily Goal: 10")
             
-            # Click Auto-play audio (next line Y=17)
+            # Click Auto-play audio (next line Y=18)
             agent.assert_text("Auto-play audio: off")
-            agent.click(10, 17)
+            agent.click(10, 18)
             agent.wait_for_text("Auto-play audio: on")
         finally:
             agent.close()

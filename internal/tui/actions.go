@@ -490,7 +490,14 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		switch m.aiProviderName {
 		case "offline":
 			m.aiProviderName = "template"
-			m.aiProvider = ai.TemplateProvider{Templates: m.aiTemplates}
+			activeSet := ""
+			if len(m.aiTemplateSets) > 0 {
+				activeSet = m.aiTemplateSets[m.aiTemplateIndex]
+			}
+			m.aiProvider = ai.TemplateProvider{
+				Templates: m.aiTemplates,
+				ActiveSet: activeSet,
+			}
 		case "template":
 			m.aiProviderName = "disabled"
 			m.aiProvider = nil

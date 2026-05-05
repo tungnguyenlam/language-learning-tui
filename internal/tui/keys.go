@@ -438,11 +438,15 @@ func (m *Model) updateImportKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 
 func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	if m.editingTemplate {
+		activeSet := m.aiTemplateSets[m.aiTemplateIndex]
 		switch msg.String() {
 		case "enter", "\r", "\n", "esc":
 			m.editingTemplate = false
 			if m.aiProviderName == "template" {
-				m.aiProvider = ai.TemplateProvider{Templates: m.aiTemplates}
+				m.aiProvider = ai.TemplateProvider{
+					Templates: m.aiTemplates,
+					ActiveSet: activeSet,
+				}
 			}
 			if m.onConfigChange != nil {
 				m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio)
@@ -450,14 +454,15 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return nil, true
 		case "backspace":
 			templateKey := m.templateKeyAtCursor()
-			if len(m.aiTemplates[templateKey]) > 0 {
-				m.aiTemplates[templateKey] = m.aiTemplates[templateKey][:len(m.aiTemplates[templateKey])-1]
+			val := m.aiTemplates[activeSet][templateKey]
+			if len(val) > 0 {
+				m.aiTemplates[activeSet][templateKey] = val[:len(val)-1]
 			}
 			return nil, true
 		}
 		if len(msg.String()) == 1 {
 			templateKey := m.templateKeyAtCursor()
-			m.aiTemplates[templateKey] += msg.String()
+			m.aiTemplates[activeSet][templateKey] += msg.String()
 			return nil, true
 		}
 		return nil, true
@@ -663,6 +668,12 @@ func (m *Model) updateAIKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	switch msg.String() {
 	case "esc":
 		m.aiInput = ""
+		return nil, true
+	case "[":
+		m.previousAITemplate()
+		return nil, true
+	case "]":
+		m.nextAITemplate()
 		return nil, true
 	case "up", "k":
 		if m.draftCursor > 0 {
