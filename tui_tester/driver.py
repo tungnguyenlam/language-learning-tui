@@ -23,7 +23,7 @@ class Driver:
             self.command,
             env=self.env,
             dimensions=(self.lines, self.columns),
-            encoding='utf-8',
+            encoding=None, # Use None to get bytes and handle decoding manually
             echo=False
         )
 
@@ -32,7 +32,7 @@ class Driver:
         if not self.child:
             raise TUIProcessExitException("Process not started.")
         
-        data = ""
+        data = b""
         try:
             while True:
                 chunk = self.child.read_nonblocking(size=4096, timeout=timeout)
@@ -44,13 +44,13 @@ class Driver:
         except pexpect.EOF:
             pass
             
-        return data
+        return data.decode('utf-8', errors='replace')
 
     def write(self, data: str) -> None:
         """Write data to the PTY."""
         if not self.child or not self.child.isalive():
             raise TUIProcessExitException("Cannot write, process is dead.")
-        self.child.send(data)
+        self.child.send(data.encode('utf-8'))
 
     def close(self) -> None:
         """Terminate the process and close the PTY."""

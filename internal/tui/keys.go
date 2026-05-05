@@ -13,6 +13,23 @@ import (
 func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	key := msg.String()
 
+	// 0. Deletion confirmation trapping
+	if m.confirmingDelete {
+		switch key {
+		case "y", "Y", "enter":
+			m.confirmingDelete = false
+			if m.deleteAction != nil {
+				return m, m.deleteAction()
+			}
+		case "n", "N", "esc":
+			m.confirmingDelete = false
+			m.deleteAction = nil
+			m.status = "Deletion cancelled"
+			return m, nil
+		}
+		return m, nil // Trap everything else during confirmation
+	}
+
 	// 1. Global critical keys
 	switch key {
 	case "ctrl+c":
@@ -502,6 +519,12 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return m.setDailyGoal(m.stats.DailyGoal + 1), true
 	case "-":
 		return m.setDailyGoal(m.stats.DailyGoal - 1), true
+	case "[":
+		m.previousAITemplate()
+		return nil, true
+	case "]":
+		m.nextAITemplate()
+		return nil, true
 	}
 	return nil, false
 }

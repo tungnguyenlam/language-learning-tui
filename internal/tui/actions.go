@@ -449,6 +449,17 @@ func (m *Model) deleteSelectedCard() tea.Cmd {
 		return nil
 	}
 	card := m.browserCards[m.browserCursor]
+	m.confirmingDelete = true
+	m.deleteAction = m.executeDeleteSelectedCard
+	m.status = fmt.Sprintf("Delete card '%s'? (y/n)", card.Prompt)
+	return nil
+}
+
+func (m *Model) executeDeleteSelectedCard() tea.Cmd {
+	if len(m.browserCards) == 0 {
+		return nil
+	}
+	card := m.browserCards[m.browserCursor]
 	m.status = "Deleting card..."
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)

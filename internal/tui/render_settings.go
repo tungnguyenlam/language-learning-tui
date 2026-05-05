@@ -8,6 +8,10 @@ import (
 )
 
 func (m *Model) renderSettings(x, y int) string {
+	width, height := m.activePanelSize()
+	style := panelStyle.Width(width).Height(height)
+	layout := contentLayoutForStyle(style, x, y)
+
 	var b strings.Builder
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).MarginBottom(1)
 	b.WriteString(titleStyle.Render("Settings") + "\n\n")
@@ -34,24 +38,26 @@ func (m *Model) renderSettings(x, y int) string {
 		fmt.Sprintf("Back Template: %s", setMap["back"]),
 		fmt.Sprintf("Example Template: %s", setMap["example"]),
 	}
+	var rowY int
+	var prefix string
 	for i, opt := range aiOptions {
-		prefix := "  "
-		style := lipgloss.NewStyle()
+		prefix = "  "
+		itemStyle := lipgloss.NewStyle()
 		if i == m.settingsCursor {
 			prefix = "> "
 			if m.editingTemplate {
-				style = style.Bold(true).Background(lipgloss.Color("62"))
+				itemStyle = itemStyle.Bold(true).Background(lipgloss.Color("62"))
 			} else {
-				style = style.Bold(true).Foreground(lipgloss.Color("212"))
+				itemStyle = itemStyle.Bold(true).Foreground(lipgloss.Color("212"))
 			}
 		}
 		item := prefix + opt
-		rowY := y + strings.Count(b.String(), "\n")
-		b.WriteString(style.Render(item) + "\n")
+		rowY = layout.Y + strings.Count(b.String(), "\n")
+		b.WriteString(itemStyle.Render(item) + "\n")
 		m.hitboxes = append(m.hitboxes, Hitbox{
 			ID:     fmt.Sprintf("settings-%d", i),
 			View:   ViewSettings,
-			X:      x,
+			X:      layout.X,
 			Y:      rowY,
 			Width:  lipgloss.Width(item),
 			Height: 1,
@@ -61,15 +67,15 @@ func (m *Model) renderSettings(x, y int) string {
 	b.WriteString(sectionStyle.Render("STUDY PREFERENCES") + "\n")
 
 	goalIdx := 4
-	prefix := "  "
-	style := lipgloss.NewStyle()
+	prefix = "  "
+	itemStyle := lipgloss.NewStyle()
 	if goalIdx == m.settingsCursor {
 		prefix = "> "
-		style = style.Bold(true).Foreground(lipgloss.Color("212"))
+		itemStyle = itemStyle.Bold(true).Foreground(lipgloss.Color("212"))
 	}
 	goalLabel := fmt.Sprintf("%sDaily Goal: %d ", prefix, m.stats.DailyGoal)
-	rowY := y + strings.Count(b.String(), "\n")
-	b.WriteString(style.Render(goalLabel))
+	rowY = layout.Y + strings.Count(b.String(), "\n")
+	b.WriteString(itemStyle.Render(goalLabel))
 
 	btnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 	minusBtn := "[-] "
@@ -81,7 +87,7 @@ func (m *Model) renderSettings(x, y int) string {
 	m.hitboxes = append(m.hitboxes, Hitbox{
 		ID:     fmt.Sprintf("settings-%d", goalIdx),
 		View:   ViewSettings,
-		X:      x,
+		X:      layout.X,
 		Y:      rowY,
 		Width:  lipgloss.Width(goalLabel),
 		Height: 1,
@@ -89,7 +95,7 @@ func (m *Model) renderSettings(x, y int) string {
 	m.hitboxes = append(m.hitboxes, Hitbox{
 		ID:     "settings-goal-minus",
 		View:   ViewSettings,
-		X:      x + lipgloss.Width(goalLabel),
+		X:      layout.X + lipgloss.Width(goalLabel),
 		Y:      rowY,
 		Width:  lipgloss.Width(minusBtn),
 		Height: 1,
@@ -97,7 +103,7 @@ func (m *Model) renderSettings(x, y int) string {
 	m.hitboxes = append(m.hitboxes, Hitbox{
 		ID:     "settings-goal-plus",
 		View:   ViewSettings,
-		X:      x + lipgloss.Width(goalLabel) + lipgloss.Width(minusBtn),
+		X:      layout.X + lipgloss.Width(goalLabel) + lipgloss.Width(minusBtn),
 		Y:      rowY,
 		Width:  lipgloss.Width(plusBtn),
 		Height: 1,
@@ -105,18 +111,18 @@ func (m *Model) renderSettings(x, y int) string {
 
 	audioIdx := 5
 	prefix = "  "
-	style = lipgloss.NewStyle()
+	itemStyle = lipgloss.NewStyle()
 	if audioIdx == m.settingsCursor {
 		prefix = "> "
-		style = style.Bold(true).Foreground(lipgloss.Color("212"))
+		itemStyle = itemStyle.Bold(true).Foreground(lipgloss.Color("212"))
 	}
 	audioItem := fmt.Sprintf("%sAuto-play audio: %s", prefix, autoPlayStatus)
-	rowY = y + strings.Count(b.String(), "\n")
-	b.WriteString(style.Render(audioItem) + "\n")
+	rowY = layout.Y + strings.Count(b.String(), "\n")
+	b.WriteString(itemStyle.Render(audioItem) + "\n")
 	m.hitboxes = append(m.hitboxes, Hitbox{
 		ID:     fmt.Sprintf("settings-%d", audioIdx),
 		View:   ViewSettings,
-		X:      x,
+		X:      layout.X,
 		Y:      rowY,
 		Width:  lipgloss.Width(audioItem),
 		Height: 1,

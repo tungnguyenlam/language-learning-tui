@@ -11,9 +11,8 @@ import (
 )
 
 func (m *Model) renderStatistics(x, y int) string {
-	layout := m.activeViewContentLayout()
-	layout.X = x
-	layout.Y = y
+	width, height := m.activePanelSize()
+	layout := contentLayoutForStyle(panelStyle.Width(width).Height(height), x, y)
 	return m.renderStatisticsAt(layout)
 }
 

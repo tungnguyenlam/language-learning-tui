@@ -10,7 +10,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../t
 from tui_tester import TUIAgent
 
 def start_agent(tmpdir, columns=100, lines=30):
-    agent = TUIAgent(f'go run ./cmd/deutsch-tui -data-dir {tmpdir}', columns=columns, lines=lines)
+    app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
+    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir}', columns=columns, lines=lines)
     agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()
     return agent
@@ -70,8 +71,9 @@ def test_bulk_deck_deletion():
             
             # Delete both
             agent.act('<Backspace>')
+            agent.wait_for_text("CONFIRM DELETION")
+            agent.act('y')
             agent.wait_until_stable()
-            
             # Verify they are gone (need to clear filter first or wait for list refresh)
             agent.act('<Esc>')
             agent.wait_until_stable()

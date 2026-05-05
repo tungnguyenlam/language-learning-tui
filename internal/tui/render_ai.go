@@ -8,6 +8,10 @@ import (
 )
 
 func (m *Model) renderAI(x, y int) string {
+	width, height := m.activePanelSize()
+	style := panelStyle.Width(width).Height(height)
+	layout := contentLayoutForStyle(style, x, y)
+
 	var b strings.Builder
 	spinner := ""
 	if m.drafting {
@@ -63,6 +67,8 @@ func (m *Model) renderAI(x, y int) string {
 		}
 		draft := m.drafts[i]
 		item := fmt.Sprintf("%s%s -> %s", prefix, draft.Note.Front, draft.Note.Back)
+
+		rowY := layout.Y + strings.Count(b.String(), "\n")
 		b.WriteString(style.Render(item))
 
 		// Add interactive buttons
@@ -74,15 +80,14 @@ func (m *Model) renderAI(x, y int) string {
 			btnStyle = btnStyle.Foreground(lipgloss.Color("81"))
 		}
 
+		approveX := layout.X + lipgloss.Width(item)
+		discardX := approveX + lipgloss.Width(approveBtn)
+
 		b.WriteString(btnStyle.Render(approveBtn))
 		b.WriteString(btnStyle.Render(discardBtn))
 		b.WriteString("\n")
 
 		// Register hitboxes
-		rowY := y + 6 + (i - start)
-		approveX := x + lipgloss.Width(item)
-		discardX := approveX + lipgloss.Width(approveBtn)
-
 		m.hitboxes = append(m.hitboxes, Hitbox{
 			ID:     fmt.Sprintf("draft-approve-%d", i),
 			View:   ViewAI,

@@ -41,9 +41,9 @@ TUI Refactor Completion & Final Verification
 
 ## Next Action
 
-Investigate and resolve intermittent E2E test failures in full parallel test suite (resource contention).
+Optimize E2E tests by building the binary once and address unconfirmed deletions.
 
-- Last verified: `./scripts/verify.sh` - 93/93 E2E tests pass, all Go tests pass
-- Issue: Occasional resource contention with parallel test execution
-- Likely files: `e2e_tests/test_robustness.py`, `e2e_tests/test_tui.py`
-- Blockers: Resource cleanup timing, TTY availability in CI
+- [ ] Build binary once in `scripts/verify.sh` and use in E2E tests
+- [ ] Add confirmation dialogs for card/deck deletions
+- [ ] Align Browser scrollbar hitboxes with Lip Gloss metrics
+- [ ] Investigate and fix intermittent parallel test failures (if they persist)

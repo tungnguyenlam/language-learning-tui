@@ -114,8 +114,14 @@ func (s *Store) UpsertDeck(ctx context.Context, deck core.Deck) error {
 	if deck.ID == "" {
 		return errors.New("deck id is required")
 	}
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	tags := strings.Join(deck.Tags, " ")
-	_, err := s.db.ExecContext(ctx, `
+	_, err = tx.ExecContext(ctx, `
 		INSERT INTO decks (id, name, description, tags)
 		VALUES (?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET name = excluded.name, description = excluded.description, tags = excluded.tags
@@ -127,11 +133,11 @@ func (s *Store) UpsertDeck(ctx context.Context, deck core.Deck) error {
 		if note.DeckID == "" {
 			note.DeckID = deck.ID
 		}
-		if err := s.UpsertNote(ctx, note); err != nil {
+		if err := s.upsertNoteTx(ctx, tx, note); err != nil {
 			return err
 		}
 	}
-	return nil
+	return tx.Commit()
 }
 
 func (s *Store) GetDeck(ctx context.Context, id string) (core.Deck, error) {
@@ -218,11 +224,23 @@ func (s *Store) Decks(ctx context.Context) ([]core.Deck, error) {
 }
 
 func (s *Store) UpsertNote(ctx context.Context, note core.Note) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if err := s.upsertNoteTx(ctx, tx, note); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func (s *Store) upsertNoteTx(ctx context.Context, tx *sql.Tx, note core.Note) error {
 	if note.ID == "" {
 		return errors.New("note id is required")
 	}
 	tags := strings.Join(note.Tags, " ")
-	_, err := s.db.ExecContext(ctx, `
+	_, err := tx.ExecContext(ctx, `
 		INSERT INTO notes (id, deck_id, front, back, extra, audio, tags)
 		VALUES (?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
@@ -243,7 +261,7 @@ func (s *Store) UpsertNote(ctx context.Context, note core.Note) error {
 		if card.DeckID == "" {
 			card.DeckID = note.DeckID
 		}
-		if err := s.UpsertCard(ctx, card); err != nil {
+		if err := s.upsertCardTx(ctx, tx, card); err != nil {
 			return err
 		}
 	}
@@ -329,12 +347,24 @@ func (s *Store) cardsForNote(ctx context.Context, noteID string) ([]core.Card, e
 }
 
 func (s *Store) UpsertCard(ctx context.Context, card core.Card) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+	if err := s.upsertCardTx(ctx, tx, card); err != nil {
+		return err
+	}
+	return tx.Commit()
+}
+
+func (s *Store) upsertCardTx(ctx context.Context, tx *sql.Tx, card core.Card) error {
 	if err := core.ValidateCard(card); err != nil {
 		return err
 	}
 	choices := strings.Join(card.Choices, "|||")
 	tags := strings.Join(card.Tags, " ")
-	_, err := s.db.ExecContext(ctx, `
+	_, err := tx.ExecContext(ctx, `
 		INSERT INTO cards (id, note_id, deck_id, kind, prompt, answer, choices, audio, tags)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET

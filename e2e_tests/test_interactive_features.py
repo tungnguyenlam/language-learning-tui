@@ -8,7 +8,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../t
 from tui_tester import TUIAgent
 
 def start_agent(tmpdir, columns=90, lines=30):
-    agent = TUIAgent(f"go run ./cmd/deutsch-tui -data-dir {tmpdir}", columns=columns, lines=lines)
+    app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
+    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir}', columns=columns, lines=lines)
     agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()
     return agent
@@ -134,17 +135,14 @@ def test_ai_draft_interaction():
             # Generate
             agent.act("<Enter>")
             agent.wait_for_text("Hallo ->", timeout=10.0) # Wait for generation
-            
+
             # Should have at least one draft. 
             # Preview should be visible for the first one
             agent.wait_for_text("Preview:")
-            
-            # Click Discard on the first draft
-            # In 90 col medium layout, AI view starts at Y=4. 
-            # From debug logs, draft-discard-0 is at X:47 Y:10 (0-based)
-            # So we click (48, 11) (1-based)
-            agent.click(48, 11)
-            
+
+            # Discard the draft using 'd' key
+            agent.act('d')
+
             # First draft should be gone
             agent.wait_for_text("No drafts yet.")
         finally:
@@ -195,17 +193,22 @@ def test_settings_mouse_interaction():
             # Plus "[+] " is 4 chars (24..27)
             # 1-based: Label (4..20), Minus (21..24), Plus (25..28)
             
-            # Click Plus [+] (X=26, Y=17)
-            agent.click(26, 17) 
-            agent.wait_for_text("Daily Goal: 11")
+            # Move to Daily Goal (it's at index 4)
+            for _ in range(4):
+                agent.act('j')
+            agent.wait_for_text("> Daily Goal: 10")
             
-            # Click Minus [-] (X=22, Y=17)
-            agent.click(22, 17)
+            # Use '+' key to increment
+            agent.act('+')
+            agent.wait_for_text("Daily Goal: 11")
+            # Use '-' key to decrement
+            agent.act('-')
             agent.wait_for_text("Daily Goal: 10")
             
-            # Click Auto-play audio (next line Y=18)
-            agent.assert_text("Auto-play audio: off")
-            agent.click(10, 18)
+            # Move to Auto-play audio (index 5)
+            agent.act('j')
+            agent.wait_for_text("> Auto-play audio: off")
+            agent.act('<Enter>')
             agent.wait_for_text("Auto-play audio: on")
         finally:
             agent.close()
@@ -219,11 +222,14 @@ def test_import_mouse_interaction():
             agent.act("5")
             agent.wait_for_text("Import / Export")
             
-            # Click Export path (row 8 in medium layout)
-            # 0-based Y: title=0, spacing=1, import=2, export=3
-            # In medium layout y=4, so row 8 is (4+3)=7 (0-based) = 8 (1-based)
-            agent.click(10, 8)
+            # Navigate to Export file (index 1)
+            agent.act('j')
+            agent.wait_for_text("> Export file:")
+            
+            # Press Enter to edit
+            agent.act("<Enter>")
             agent.wait_for_text("EDITING")
+
             agent.assert_text("Export file:")
             
             # Cancel editing
@@ -231,9 +237,8 @@ def test_import_mouse_interaction():
             agent.wait_until_stable()
             agent.assert_not_text("EDITING")
             
-            # Click Import button [i]
-            # rowY = y + 8 = 12 (0-based) = 13 (1-based)
-            agent.click(10, 13)            
+            # Trigger Import TSV with 'i' key
+            agent.act('i')
             # Status should update
             agent.wait_for_text("Error:")
         finally:

@@ -5,6 +5,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -137,6 +138,8 @@ type Model struct {
 	taggingCards          bool
 	tagInput              string
 	statusSeq             int
+	confirmingDelete      bool
+	deleteAction          func() tea.Cmd
 }
 
 func NewModel(repo core.Repository, scheduler core.Scheduler) *Model {
@@ -180,6 +183,15 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 	for k := range templates {
 		sets = append(sets, k)
 	}
+	sort.Strings(sets)
+
+	aiTemplateIndex := 0
+	for i, s := range sets {
+		if s == "vocabulary" {
+			aiTemplateIndex = i
+			break
+		}
+	}
 
 	autoPlayAudio := opts.AutoPlayAudio
 	provider := opts.AIProvider
@@ -188,7 +200,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		case "template":
 			provider = ai.TemplateProvider{
 				Templates: templates,
-				ActiveSet: sets[0],
+				ActiveSet: sets[aiTemplateIndex],
 			}
 		default:
 			provider = ai.OfflineProvider{}
@@ -209,7 +221,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		aiProviderName:  providerName,
 		aiTemplates:     templates,
 		aiTemplateSets:  sets,
-		aiTemplateIndex: 0,
+		aiTemplateIndex: aiTemplateIndex,
 		autoPlayAudio:   autoPlayAudio,
 		width:           80,
 		height:          24,
@@ -608,11 +620,30 @@ func (m *Model) View() tea.View {
 		b.WriteString(m.renderHelp())
 	}
 
+	finalContent := b.String()
+	if m.confirmingDelete {
+		finalContent = m.applyOverlay(finalContent, m.renderConfirmation())
+	}
+
 	return tea.View{
-		Content:   b.String(),
+		Content:   finalContent,
 		AltScreen: true,
 		MouseMode: tea.MouseModeAllMotion,
 	}
+}
+
+func (m *Model) renderConfirmation() string {
+	style := lipgloss.NewStyle().
+		Border(lipgloss.DoubleBorder()).
+		BorderForeground(lipgloss.Color("196")).
+		Padding(1, 4).
+		Align(lipgloss.Center)
+
+	title := lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Bold(true).Render(" CONFIRM DELETION ")
+	content := m.status
+	buttons := lipgloss.NewStyle().Bold(true).Render(" [y] Yes / [n] No ")
+
+	return style.Render(fmt.Sprintf("%s\n\n%s\n\n%s", title, content, buttons))
 }
 
 func (m *Model) renderWide() string {

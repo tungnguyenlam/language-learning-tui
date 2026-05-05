@@ -334,7 +334,7 @@ func TestAIDraftMouseApproval(t *testing.T) {
 	model.Update(draftsMsg([]ai.Draft{{Note: note}}))
 	model.View()
 
-	cmd := model.activateHitbox("draft-approve")
+	cmd := model.activateHitbox("draft-approve-0")
 	if cmd == nil {
 		t.Fatal("draft approval hitbox should return command")
 	}

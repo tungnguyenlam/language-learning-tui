@@ -5,4 +5,5 @@ export GOCACHE="${GOCACHE:-/tmp/deutsch-tui-gocache}"
 tmpdir="$(mktemp -d)"
 trap 'rm -rf "$tmpdir"' EXIT
 
-go run ./cmd/deutsch-tui --data-dir "$tmpdir" --smoke
+DEUTSCH_TUI_BIN="${DEUTSCH_TUI_BIN:-go run ./cmd/deutsch-tui}"
+$DEUTSCH_TUI_BIN --data-dir "$tmpdir" --smoke

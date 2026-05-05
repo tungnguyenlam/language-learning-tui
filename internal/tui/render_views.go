@@ -117,6 +117,10 @@ func (m *Model) renderDecks(x, y int) string {
 }
 
 func (m *Model) renderImport(x, y int) string {
+	width, height := m.activePanelSize()
+	style := panelStyle.Width(width).Height(height)
+	layout := contentLayoutForStyle(style, x, y)
+
 	var b strings.Builder
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).MarginBottom(1)
 	b.WriteString(titleStyle.Render("Import / Export") + "\n\n")
@@ -124,23 +128,24 @@ func (m *Model) renderImport(x, y int) string {
 	importPathLabel := "Import file: " + m.importPath
 	exportPathLabel := "Export file: " + m.exportPath
 
-	style := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212"))
+	btnActiveStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212"))
 	editStyle := lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("62"))
 
 	// Import Path
 	importLabel := importPathLabel
+	rowY := layout.Y + strings.Count(b.String(), "\n")
 	if m.editingImportPath && m.importCursor == 0 {
 		importLabel = "Import file: " + editStyle.Render(m.importPath+"_")
 	} else if m.importCursor == 0 {
-		importLabel = "> " + style.Render(importPathLabel)
+		importLabel = "> " + btnActiveStyle.Render(importPathLabel)
 	} else {
 		importLabel = "  " + importPathLabel
 	}
 	m.hitboxes = append(m.hitboxes, Hitbox{
 		ID:     "import-path-0",
 		View:   ViewImport,
-		X:      x,
-		Y:      y + 2,
+		X:      layout.X,
+		Y:      rowY,
 		Width:  lipgloss.Width(importPathLabel) + 2,
 		Height: 1,
 	})
@@ -148,20 +153,21 @@ func (m *Model) renderImport(x, y int) string {
 
 	// Export Path
 	exportLabel := exportPathLabel
+	rowY = layout.Y + strings.Count(b.String(), "\n")
 	if m.editingImportPath && m.importCursor == 1 {
 		exportLabel = "Export file: " + editStyle.Render(m.exportPath+"_")
 	} else if m.importCursor == 1 {
-		exportLabel = "> " + style.Render(exportPathLabel)
+		exportLabel = "> " + btnActiveStyle.Render(exportPathLabel)
 	} else {
 		exportLabel = "  " + exportPathLabel
 	}
 	m.hitboxes = append(m.hitboxes, Hitbox{
 		ID:     "import-path-1",
 		View:   ViewImport,
-		X:      x,
-		Y:      y + 3,
+		X:      layout.X,
+		Y:      rowY,
 		Width:  lipgloss.Width(exportPathLabel) + 2,
-		Height: 3,
+		Height: 1,
 	})
 	b.WriteString(exportLabel + "\n\n")
 
@@ -177,16 +183,17 @@ func (m *Model) renderImport(x, y int) string {
 			}
 		}
 	}
+	rowY = layout.Y + strings.Count(b.String(), "\n")
 	if m.importCursor == 2 {
-		b.WriteString("> " + style.Render(exportDeckLabel) + " (Use [ / ] to change)\n")
+		b.WriteString("> " + btnActiveStyle.Render(exportDeckLabel) + " (Use [ / ] to change)\n")
 	} else {
 		b.WriteString("  " + exportDeckLabel + "\n")
 	}
 	m.hitboxes = append(m.hitboxes, Hitbox{
 		ID:     "import-path-2",
 		View:   ViewImport,
-		X:      x,
-		Y:      y + 5,
+		X:      layout.X,
+		Y:      rowY,
 		Width:  lipgloss.Width(exportDeckLabel) + 2,
 		Height: 1,
 	})
@@ -196,18 +203,19 @@ func (m *Model) renderImport(x, y int) string {
 	if m.exportTag == "" {
 		exportTagLabel += "(None)"
 	}
+	rowY = layout.Y + strings.Count(b.String(), "\n")
 	if m.editingExportTag {
 		b.WriteString("  Export Tag: " + editStyle.Render(m.exportTag+"_") + "\n\n")
 	} else if m.importCursor == 3 {
-		b.WriteString("> " + style.Render(exportTagLabel) + " (Press t to edit)\n\n")
+		b.WriteString("> " + btnActiveStyle.Render(exportTagLabel) + " (Press t to edit)\n\n")
 	} else {
 		b.WriteString("  " + exportTagLabel + "\n\n")
 	}
 	m.hitboxes = append(m.hitboxes, Hitbox{
 		ID:     "import-path-3",
 		View:   ViewImport,
-		X:      x,
-		Y:      y + 6,
+		X:      layout.X,
+		Y:      rowY,
 		Width:  lipgloss.Width(exportTagLabel) + 2,
 		Height: 1,
 	})
@@ -230,7 +238,8 @@ func (m *Model) renderImport(x, y int) string {
 		Padding(0, 1).
 		MarginRight(1)
 
-	currentX := x
+	rowY = layout.Y + strings.Count(b.String(), "\n")
+	currentX := layout.X
 	for _, a := range actions {
 		item := fmt.Sprintf("[%s] %s", a.key, a.label)
 		b.WriteString(btnStyle.Render(item))
@@ -238,7 +247,7 @@ func (m *Model) renderImport(x, y int) string {
 			ID:     a.id,
 			View:   ViewImport,
 			X:      currentX,
-			Y:      y + 8,
+			Y:      rowY,
 			Width:  lipgloss.Width(item) + 2,
 			Height: 1,
 		})

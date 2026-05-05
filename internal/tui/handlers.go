@@ -170,6 +170,17 @@ func (m *Model) bulkBrowserDelete() tea.Cmd {
 	if len(selectedIDs) == 0 {
 		return nil
 	}
+	m.confirmingDelete = true
+	m.deleteAction = m.executeBulkBrowserDelete
+	m.status = fmt.Sprintf("Delete %d selected cards? (y/n)", len(selectedIDs))
+	return nil
+}
+
+func (m *Model) executeBulkBrowserDelete() tea.Cmd {
+	selectedIDs := m.getSelectedCardIDs()
+	if len(selectedIDs) == 0 {
+		return nil
+	}
 	m.status = "Bulk deleting..."
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -289,6 +300,29 @@ func (m *Model) previousDeck() {
 }
 
 func (m *Model) handleDeckDelete() tea.Cmd {
+	var ids []string
+	for id, selected := range m.deckSelected {
+		if selected {
+			ids = append(ids, id)
+		}
+	}
+	if len(ids) == 0 {
+		filtered := m.filteredDecks()
+		if len(filtered) > 0 {
+			ids = []string{filtered[m.deckCursor].ID}
+		}
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+
+	m.confirmingDelete = true
+	m.deleteAction = m.executeDeckDelete
+	m.status = fmt.Sprintf("Delete %d decks and ALL their cards? (y/n)", len(ids))
+	return nil
+}
+
+func (m *Model) executeDeckDelete() tea.Cmd {
 	var ids []string
 	for id, selected := range m.deckSelected {
 		if selected {

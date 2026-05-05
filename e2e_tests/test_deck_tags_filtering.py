@@ -13,7 +13,8 @@ project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
 binary_path = os.path.join(project_root, 'cmd', 'deutsch-tui')
 
 def start_agent(tmpdir, columns=100, lines=30):
-    agent = TUIAgent(f'go run {binary_path} -data-dir {tmpdir}', columns=columns, lines=lines)
+    app_cmd = os.getenv('DEUTSCH_TUI_BIN', f'go run {binary_path}')
+    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir}', columns=columns, lines=lines)
     agent.wait_for_text("Dashboard", timeout=15.0)
     agent.wait_until_stable()
     return agent

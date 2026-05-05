@@ -45,8 +45,20 @@ func (m *Model) activateHitbox(id string) tea.Cmd {
 		return m.gradeCard(core.GradeGood)
 	case id == "grade-easy":
 		return m.gradeCard(core.GradeEasy)
-	case id == "draft-approve":
-		return m.approveDraft()
+	case strings.HasPrefix(id, "draft-approve-"):
+		idx, err := strconv.Atoi(strings.TrimPrefix(id, "draft-approve-"))
+		if err == nil {
+			m.draftCursor = idx
+			return m.approveDraft()
+		}
+		return nil
+	case strings.HasPrefix(id, "draft-discard-"):
+		idx, err := strconv.Atoi(strings.TrimPrefix(id, "draft-discard-"))
+		if err == nil {
+			m.draftCursor = idx
+			return m.discardDraft()
+		}
+		return nil
 	case strings.HasPrefix(id, "dash-"):
 		switch id {
 		case "dash-review":
