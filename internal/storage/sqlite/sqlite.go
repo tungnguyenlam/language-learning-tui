@@ -1071,3 +1071,40 @@ func (s *Store) MergeDecks(ctx context.Context, sourceIDs []string, targetID str
 
 	return tx.Commit()
 }
+
+func (s *Store) CleanupTags(ctx context.Context, deckID string) error {
+	if deckID == "" {
+		// If no deck specified, we could clean up all decks, but for now let's just return
+		return nil
+	}
+
+	// 1. Get all tags from cards in this deck
+	rows, err := s.db.QueryContext(ctx, `SELECT tags FROM cards WHERE deck_id = ?`, deckID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	tagMap := make(map[string]bool)
+	for rows.Next() {
+		var tagsStr string
+		if err := rows.Scan(&tagsStr); err != nil {
+			return err
+		}
+		for _, tag := range strings.Fields(tagsStr) {
+			if tag != "" {
+				tagMap[tag] = true
+			}
+		}
+	}
+
+	uniqueTags := make([]string, 0, len(tagMap))
+	for tag := range tagMap {
+		uniqueTags = append(uniqueTags, tag)
+	}
+
+	// 2. Update the deck table
+	tagsStr := strings.Join(uniqueTags, " ")
+	_, err = s.db.ExecContext(ctx, `UPDATE decks SET tags = ? WHERE id = ?`, tagsStr, deckID)
+	return err
+}

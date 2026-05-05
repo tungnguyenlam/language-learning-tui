@@ -959,3 +959,73 @@ func TestStoreDeckTags(t *testing.T) {
 		}
 	}
 }
+
+func TestCleanupTags(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	deckID := "deck1"
+	deck := core.Deck{
+		ID:   deckID,
+		Name: "Deck 1",
+		Tags: []string{"unused", "will-be-kept"},
+	}
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+
+	note := core.Note{
+		ID:     "n1",
+		DeckID: deckID,
+		Front:  "Front",
+		Back:   "Back",
+		Tags:   []string{"will-be-kept", "new-tag"},
+	}
+	note.Cards = []core.Card{
+		{
+			ID:     "c1",
+			NoteID: "n1",
+			DeckID: deckID,
+			Kind:   core.CardKindFlashcard,
+			Prompt: "Front",
+			Answer: "Back",
+			Tags:   []string{"will-be-kept", "new-tag"},
+		},
+	}
+	if err := store.UpsertNote(ctx, note); err != nil {
+		t.Fatalf("upsert note: %v", err)
+	}
+
+	// Initial cleanup
+	if err := store.CleanupTags(ctx, deckID); err != nil {
+		t.Fatalf("cleanup tags: %v", err)
+	}
+
+	retrieved, err := store.GetDeck(ctx, deckID)
+	if err != nil {
+		t.Fatalf("get deck: %v", err)
+	}
+
+	// Tags should be "will-be-kept" and "new-tag" (order may vary)
+	tagMap := make(map[string]bool)
+	for _, tag := range retrieved.Tags {
+		tagMap[tag] = true
+	}
+
+	if len(tagMap) != 2 {
+		t.Errorf("expected 2 tags, got %v", retrieved.Tags)
+	}
+	if !tagMap["will-be-kept"] {
+		t.Errorf("missing tag 'will-be-kept'")
+	}
+	if !tagMap["new-tag"] {
+		t.Errorf("missing tag 'new-tag'")
+	}
+	if tagMap["unused"] {
+		t.Errorf("tag 'unused' should have been removed")
+	}
+}

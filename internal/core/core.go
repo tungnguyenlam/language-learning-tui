@@ -139,6 +139,7 @@ type Repository interface {
 	SetCardKind(ctx context.Context, cardID string, kind CardKind) error
 	SetCardTags(ctx context.Context, cardID string, tags []string) error
 	SetCardsTags(ctx context.Context, cardIDs []string, tags []string) error
+	CleanupTags(ctx context.Context, deckID string) error
 }
 
 type Scheduler interface {

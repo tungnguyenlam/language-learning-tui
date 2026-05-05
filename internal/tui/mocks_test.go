@@ -236,6 +236,31 @@ func (m *mockRepo) SetCardsTags(ctx context.Context, cardIDs []string, tags []st
 	return nil
 }
 
+func (m *mockRepo) CleanupTags(ctx context.Context, deckID string) error {
+	if deckID == "" {
+		return nil
+	}
+	tagMap := make(map[string]bool)
+	for _, card := range m.dueCards {
+		if card.DeckID == deckID {
+			for _, t := range card.Tags {
+				tagMap[t] = true
+			}
+		}
+	}
+	uniqueTags := make([]string, 0, len(tagMap))
+	for t := range tagMap {
+		uniqueTags = append(uniqueTags, t)
+	}
+	for i := range m.decks {
+		if m.decks[i].ID == deckID {
+			m.decks[i].Tags = uniqueTags
+			break
+		}
+	}
+	return nil
+}
+
 func (m *mockRepo) ReviewHistory(ctx context.Context, cardID string, limit int) ([]core.ReviewLog, error) {
 	if limit <= 0 {
 		limit = 10

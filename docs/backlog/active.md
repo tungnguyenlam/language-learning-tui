@@ -19,10 +19,11 @@ Autonomous Feature Pass 21: Bulk Operations & Advanced Search
 - [x] **Implemented Export Filtering**: Added deck/tag filters to Import/Export view.
 - [x] **UI & Key Fixes**: Resolved key prioritization and hitbox alignment.
 - [x] **Active Deck Sync**: Default export deck matches current view.
+- [x] **Unused Tags Cleanup**: Implemented 'C' key in Browser to remove tags not used by any cards.
 
 ### Deck Search & Key Handling (Pass 20)
 ...
 
 ## Next Action
 
-Implement an "Unused Tags" cleanup action in the Browser view.
+Refine the AI view's prompt templates to better handle German grammar exercises.

@@ -142,7 +142,7 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 	if numSelected > 0 {
 		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true).Render(fmt.Sprintf("\n%d cards selected. Bulk actions: B (bookmark) | X (suspend) | t (type) | T (tags) | Del (delete) | esc (clear selection)\n", numSelected)))
 	} else {
-		b.WriteString("\nUse j/k to navigate, m to select, t to toggle kind, T for tags, type to search, Enter for history.\n")
+		b.WriteString("\nUse j/k to navigate, m to select, t to toggle kind, T for tags, C to cleanup tags, type to search, Enter for history.\n")
 	}
 	return b.String()
 }

@@ -576,6 +576,8 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			}
 		}
 		return nil, true
+	case "C":
+		return m.cleanupBrowserTags(), true
 	case "enter", "\r", "\n":
 		if len(m.browserCards) > 0 {
 			cardID := m.browserCards[m.browserCursor].ID

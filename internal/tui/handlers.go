@@ -148,6 +148,22 @@ func (m *Model) handleTagInput() tea.Cmd {
 	}
 }
 
+func (m *Model) cleanupBrowserTags() tea.Cmd {
+	m.statusSeq++ // Prevent previous timed clear from clearing this
+	m.status = "Cleaning up unused tags..."
+	deckID := m.browserDeckID
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := m.repo.CleanupTags(ctx, deckID); err != nil {
+			return err
+		}
+		// Reload decks to see updated tags in UI if we ever switch back to Decks view
+		decks, _ := m.repo.Decks(ctx)
+		return decksMsg(decks)
+	}
+}
+
 func (m *Model) bulkBrowserDelete() tea.Cmd {
 	selectedIDs := m.getSelectedCardIDs()
 	if len(selectedIDs) == 0 {
@@ -438,10 +454,12 @@ func (m *Model) applyDeckFilter() {
 	m.clearReviewHistory()
 	m.revealState = RevealIdle
 	m.revealProgress = 0
-	if len(m.dueCards) == 0 {
-		m.status = "All caught up!"
-	} else {
-		m.status = fmt.Sprintf("%d cards due", len(m.dueCards))
+	if m.activeView == ViewReview || m.activeView == ViewDashboard {
+		if len(m.dueCards) == 0 {
+			m.status = "All caught up!"
+		} else {
+			m.status = fmt.Sprintf("%d cards due", len(m.dueCards))
+		}
 	}
 }
 

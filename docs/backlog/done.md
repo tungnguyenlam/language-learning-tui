@@ -1,5 +1,12 @@
 # Done Backlog
 
+## 2026-05-05 - Browser Management: Unused Tags Cleanup
+- **Implemented Unused Tags Cleanup**: Added the 'C' key in the Card Browser to automatically remove tags from the current deck that are no longer associated with any cards.
+- **Repository Support**: Added `CleanupTags` to the `core.Repository` interface and implemented it in the SQLite store using efficient tag extraction and consolidation.
+- **TUI Integration**: Added a dedicated cleanup handler and updated the Browser view help text and global help overlay.
+- **Improved Status Management**: Refined status message handling to prevent action-specific messages (like "Cleaning up...") from being prematurely overwritten by general background status updates.
+- **Enhanced Verification**: Added `TestCleanupTags` unit test and `test_tag_cleanup.py` E2E test. Verified all 93 project tests passing.
+
 ## 2026-05-05 - Decks View Bulk Operations
 - **Implemented Multi-Select**: Users can now select multiple decks in the Decks view using the `x` key.
 - **Bulk Deletion**: Added support for deleting multiple selected decks (or the current one) using `Backspace`.
