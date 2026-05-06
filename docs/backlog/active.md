@@ -28,6 +28,6 @@ Monitor long-term stability of parallel tests and consider adding more German gr
 
 ## Verification State
 
-- Last verified: `./scripts/verify.sh` - 100/100 E2E tests pass, all Go tests pass.
+- Last verified: `./scripts/verify.sh` - 102/102 E2E tests pass, all Go tests pass.
 - Environment: Darwin, Go 1.x, Python 3.12.
-- Stability: Very High. Logic bugs (MCQ, Modal trap, UTF-8 truncation) resolved.
+- Stability: Very High. Multi-topic AI drafting and deck-level stats verified.

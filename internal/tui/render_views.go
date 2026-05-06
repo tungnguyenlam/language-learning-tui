@@ -106,7 +106,7 @@ func (m *Model) renderDecks(x, y int) string {
 		if selectedCount > 0 {
 			b.WriteString(fmt.Sprintf("\n%d decks selected. Press Backspace to delete, M to merge into current.", selectedCount))
 		} else {
-			b.WriteString("\nPress enter to select deck. Press / to search. x to multi-select. Esc to clear.")
+			b.WriteString("\nPress enter to select deck. Press / to search. v to view stats. x to multi-select. Esc to clear.")
 		}
 	}
 

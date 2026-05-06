@@ -70,7 +70,16 @@ func (m *Model) loadStatistics() tea.Cmd {
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		stats, err := m.repo.Statistics(ctx)
+
+		var stats core.Statistics
+		var err error
+
+		if m.deck.ID != "" {
+			stats, err = m.repo.DeckStatistics(ctx, m.deck.ID)
+		} else {
+			stats, err = m.repo.Statistics(ctx)
+		}
+
 		if err != nil {
 			return err
 		}

@@ -647,43 +647,81 @@ func (s *Store) dailyGoal(ctx context.Context) (int, error) {
 }
 
 func (s *Store) Statistics(ctx context.Context) (core.Statistics, error) {
+	return s.statistics(ctx, "")
+}
+
+func (s *Store) DeckStatistics(ctx context.Context, deckID string) (core.Statistics, error) {
+	return s.statistics(ctx, deckID)
+}
+
+func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics, error) {
 	var stats core.Statistics
 	stats.Grades = make(map[core.ReviewGrade]int)
 
 	now := time.Now().UTC()
 
 	// Total cards
-	err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM cards`).Scan(&stats.TotalCards)
+	cardQuery := `SELECT COUNT(*) FROM cards`
+	var cardArgs []interface{}
+	if deckID != "" {
+		cardQuery += ` WHERE deck_id = ?`
+		cardArgs = append(cardArgs, deckID)
+	}
+	err := s.db.QueryRowContext(ctx, cardQuery, cardArgs...).Scan(&stats.TotalCards)
 	if err != nil {
 		return stats, err
 	}
 
 	// Total and active decks
-	err = s.db.QueryRowContext(ctx, `
-		SELECT
-			(SELECT COUNT(*) FROM decks),
-			(SELECT COUNT(DISTINCT deck_id) FROM cards c LEFT JOIN review_states rs ON rs.card_id = c.id WHERE rs.due_at IS NULL OR rs.due_at <= ?)
-	`, now).Scan(&stats.TotalDecks, &stats.ActiveDecks)
-	if err != nil {
-		return stats, err
+	if deckID == "" {
+		err = s.db.QueryRowContext(ctx, `
+			SELECT
+				(SELECT COUNT(*) FROM decks),
+				(SELECT COUNT(DISTINCT deck_id) FROM cards c LEFT JOIN review_states rs ON rs.card_id = c.id WHERE rs.due_at IS NULL OR rs.due_at <= ?)
+		`, now).Scan(&stats.TotalDecks, &stats.ActiveDecks)
+		if err != nil {
+			return stats, err
+		}
+	} else {
+		stats.TotalDecks = 1
+		var isActive int
+		err = s.db.QueryRowContext(ctx, `
+			SELECT COUNT(DISTINCT deck_id) FROM cards c LEFT JOIN review_states rs ON rs.card_id = c.id 
+			WHERE c.deck_id = ? AND (rs.due_at IS NULL OR rs.due_at <= ?)
+		`, deckID, now).Scan(&isActive)
+		if err != nil {
+			return stats, err
+		}
+		stats.ActiveDecks = isActive
 	}
 
 	// Card maturity: New (no reviews), Young (interval < 21 days), Mature (interval >= 21 days)
-	// 21 days is a common threshold in Anki.
-	err = s.db.QueryRowContext(ctx, `
+	maturityQuery := `
 		SELECT
 			COALESCE(SUM(CASE WHEN rs.reviews = 0 OR rs.reviews IS NULL THEN 1 ELSE 0 END), 0) as new,
 			COALESCE(SUM(CASE WHEN rs.reviews > 0 AND rs.interval_seconds < 1814400 THEN 1 ELSE 0 END), 0) as young,
 			COALESCE(SUM(CASE WHEN rs.reviews > 0 AND rs.interval_seconds >= 1814400 THEN 1 ELSE 0 END), 0) as mature
 		FROM cards c
 		LEFT JOIN review_states rs ON rs.card_id = c.id
-	`).Scan(&stats.NewCards, &stats.YoungCards, &stats.MatureCards)
+	`
+	var maturityArgs []interface{}
+	if deckID != "" {
+		maturityQuery += ` WHERE c.deck_id = ?`
+		maturityArgs = append(maturityArgs, deckID)
+	}
+	err = s.db.QueryRowContext(ctx, maturityQuery, maturityArgs...).Scan(&stats.NewCards, &stats.YoungCards, &stats.MatureCards)
 	if err != nil {
 		return stats, err
 	}
 
 	// Total reviews
-	err = s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM reviews`).Scan(&stats.TotalReviews)
+	reviewsQuery := `SELECT COUNT(*) FROM reviews r`
+	var reviewsArgs []interface{}
+	if deckID != "" {
+		reviewsQuery += ` INNER JOIN cards c ON c.id = r.card_id WHERE c.deck_id = ?`
+		reviewsArgs = append(reviewsArgs, deckID)
+	}
+	err = s.db.QueryRowContext(ctx, reviewsQuery, reviewsArgs...).Scan(&stats.TotalReviews)
 	if err != nil {
 		return stats, err
 	}
@@ -693,51 +731,102 @@ func (s *Store) Statistics(ctx context.Context) (core.Statistics, error) {
 	}
 
 	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-	err = s.db.QueryRowContext(ctx, `
+	todayQuery := `
 		SELECT COUNT(*)
-		FROM reviews
-		WHERE reviewed_at >= ? AND reviewed_at < ?
-	`, todayStart, todayStart.AddDate(0, 0, 1)).Scan(&stats.ReviewsToday)
+		FROM reviews r
+	`
+	var todayArgs []interface{}
+	todayQuery += ` WHERE r.reviewed_at >= ? AND r.reviewed_at < ?`
+	todayArgs = append(todayArgs, todayStart, todayStart.AddDate(0, 0, 1))
+	if deckID != "" {
+		todayQuery += ` AND EXISTS (SELECT 1 FROM cards c WHERE c.id = r.card_id AND c.deck_id = ?)`
+		todayArgs = append(todayArgs, deckID)
+	}
+	err = s.db.QueryRowContext(ctx, todayQuery, todayArgs...).Scan(&stats.ReviewsToday)
 	if err != nil {
 		return stats, err
 	}
 
-	err = s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM card_flags WHERE bookmarked = 1`).Scan(&stats.BookmarkedCards)
+	bookmarkQuery := `SELECT COUNT(*) FROM card_flags cf`
+	var bookmarkArgs []interface{}
+	if deckID != "" {
+		bookmarkQuery += ` INNER JOIN cards c ON c.id = cf.card_id WHERE c.deck_id = ? AND cf.bookmarked = 1`
+		bookmarkArgs = append(bookmarkArgs, deckID)
+	} else {
+		bookmarkQuery += ` WHERE cf.bookmarked = 1`
+	}
+	err = s.db.QueryRowContext(ctx, bookmarkQuery, bookmarkArgs...).Scan(&stats.BookmarkedCards)
 	if err != nil {
 		return stats, err
 	}
 
-	err = s.db.QueryRowContext(ctx, `
+	bookmarkDueQuery := `
 		SELECT COUNT(*)
 		FROM cards c
 		INNER JOIN card_flags cf ON cf.card_id = c.id AND cf.bookmarked = 1
 		LEFT JOIN review_states rs ON rs.card_id = c.id
-		WHERE rs.due_at IS NULL OR rs.due_at <= ?
-	`, now).Scan(&stats.BookmarkedDue)
+		WHERE (rs.due_at IS NULL OR rs.due_at <= ?)
+	`
+	bookmarkDueArgs := []interface{}{now}
+	if deckID != "" {
+		bookmarkDueQuery += ` AND c.deck_id = ?`
+		bookmarkDueArgs = append(bookmarkDueArgs, deckID)
+	}
+	err = s.db.QueryRowContext(ctx, bookmarkDueQuery, bookmarkDueArgs...).Scan(&stats.BookmarkedDue)
 	if err != nil {
 		return stats, err
 	}
 
-	err = s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM card_flags WHERE leech = 1`).Scan(&stats.LeechCards)
+	leechQuery := `SELECT COUNT(*) FROM card_flags cf`
+	var leechArgs []interface{}
+	if deckID != "" {
+		leechQuery += ` INNER JOIN cards c ON c.id = cf.card_id WHERE c.deck_id = ? AND cf.leech = 1`
+		leechArgs = append(leechArgs, deckID)
+	} else {
+		leechQuery += ` WHERE cf.leech = 1`
+	}
+	err = s.db.QueryRowContext(ctx, leechQuery, leechArgs...).Scan(&stats.LeechCards)
 	if err != nil {
 		return stats, err
 	}
 
-	err = s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM card_flags WHERE suspended = 1`).Scan(&stats.SuspendedCards)
+	suspendedQuery := `SELECT COUNT(*) FROM card_flags cf`
+	var suspendedArgs []interface{}
+	if deckID != "" {
+		suspendedQuery += ` INNER JOIN cards c ON c.id = cf.card_id WHERE c.deck_id = ? AND cf.suspended = 1`
+		suspendedArgs = append(suspendedArgs, deckID)
+	} else {
+		suspendedQuery += ` WHERE cf.suspended = 1`
+	}
+	err = s.db.QueryRowContext(ctx, suspendedQuery, suspendedArgs...).Scan(&stats.SuspendedCards)
 	if err != nil {
 		return stats, err
 	}
 
-	streak, err := s.currentStreak(ctx, now)
-	if err != nil {
-		return stats, err
+	if deckID == "" {
+		streak, err := s.currentStreak(ctx, now)
+		if err != nil {
+			return stats, err
+		}
+		stats.CurrentStreak = streak
+	} else {
+		streak, err := s.deckCurrentStreak(ctx, deckID, now)
+		if err != nil {
+			return stats, err
+		}
+		stats.CurrentStreak = streak
 	}
-	stats.CurrentStreak = streak
 
 	// Success rate (Grade != Again)
 	if stats.TotalReviews > 0 {
 		var successCount int
-		err = s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM reviews WHERE grade != ?`, string(core.GradeAgain)).Scan(&successCount)
+		successQuery := `SELECT COUNT(*) FROM reviews r WHERE r.grade != ?`
+		successArgs := []interface{}{string(core.GradeAgain)}
+		if deckID != "" {
+			successQuery += ` AND EXISTS (SELECT 1 FROM cards c WHERE c.id = r.card_id AND c.deck_id = ?)`
+			successArgs = append(successArgs, deckID)
+		}
+		err = s.db.QueryRowContext(ctx, successQuery, successArgs...).Scan(&successCount)
 		if err != nil {
 			return stats, err
 		}
@@ -745,7 +834,14 @@ func (s *Store) Statistics(ctx context.Context) (core.Statistics, error) {
 	}
 
 	// Reviews by grade
-	rows, err := s.db.QueryContext(ctx, `SELECT grade, COUNT(*) FROM reviews GROUP BY grade`)
+	gradeQuery := `SELECT r.grade, COUNT(*) FROM reviews r`
+	var gradeArgs []interface{}
+	if deckID != "" {
+		gradeQuery += ` INNER JOIN cards c ON c.id = r.card_id WHERE c.deck_id = ?`
+		gradeArgs = append(gradeArgs, deckID)
+	}
+	gradeQuery += ` GROUP BY r.grade`
+	rows, err := s.db.QueryContext(ctx, gradeQuery, gradeArgs...)
 	if err != nil {
 		return stats, err
 	}
@@ -763,6 +859,65 @@ func (s *Store) Statistics(ctx context.Context) (core.Statistics, error) {
 	return stats, nil
 }
 
+func (s *Store) deckCurrentStreak(ctx context.Context, deckID string, now time.Time) (int, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT reviewed_at
+		FROM reviews r
+		INNER JOIN cards c ON c.id = r.card_id
+		WHERE c.deck_id = ? AND reviewed_at IS NOT NULL
+		ORDER BY reviewed_at DESC
+		LIMIT 1000
+	`, deckID)
+	if err != nil {
+		return 0, err
+	}
+	defer rows.Close()
+
+	return s.calculateStreak(rows, now)
+}
+
+func (s *Store) calculateStreak(rows *sql.Rows, now time.Time) (int, error) {
+	seen := make(map[string]bool)
+	var dates []time.Time
+	for rows.Next() {
+		var t time.Time
+		if err := rows.Scan(&t); err != nil {
+			return 0, err
+		}
+		d := t.In(time.Local).Format("2006-01-02")
+		if !seen[d] {
+			seen[d] = true
+			dt, _ := time.ParseInLocation("2006-01-02", d, time.Local)
+			dates = append(dates, dt)
+		}
+	}
+
+	if len(dates) == 0 {
+		return 0, nil
+	}
+
+	streak := 0
+	today := now.In(time.Local).Format("2006-01-02")
+	yesterday := now.In(time.Local).AddDate(0, 0, -1).Format("2006-01-02")
+
+	lastDate := dates[0].Format("2006-01-02")
+	if lastDate != today && lastDate != yesterday {
+		return 0, nil
+	}
+
+	streak = 1
+	for i := 1; i < len(dates); i++ {
+		expected := dates[i-1].AddDate(0, 0, -1).Format("2006-01-02")
+		if dates[i].Format("2006-01-02") == expected {
+			streak++
+		} else {
+			break
+		}
+	}
+
+	return streak, nil
+}
+
 func (s *Store) currentStreak(ctx context.Context, now time.Time) (int, error) {
 	// Query for unique dates where reviews happened, up to 1 year back
 	// We select the raw TIMESTAMP and convert to date in Go to avoid SQLite DATE() inconsistencies
@@ -778,45 +933,7 @@ func (s *Store) currentStreak(ctx context.Context, now time.Time) (int, error) {
 	}
 	defer rows.Close()
 
-	dates := make(map[string]bool)
-	for rows.Next() {
-		var reviewed time.Time
-		if err := rows.Scan(&reviewed); err != nil {
-			return 0, err
-		}
-		day := reviewed.UTC()
-		dates[day.Format("2006-01-02")] = true
-	}
-	if err := rows.Err(); err != nil {
-		return 0, err
-	}
-
-	if len(dates) == 0 {
-		return 0, nil
-	}
-
-	// We count streak backwards from 'now' (today) or 'yesterday'
-	day := now.UTC()
-	dayStr := day.Format("2006-01-02")
-
-	// If no review today, check if there was one yesterday to continue a streak
-	if !dates[dayStr] {
-		yesterday := day.AddDate(0, 0, -1)
-		yesterdayStr := yesterday.Format("2006-01-02")
-		if !dates[yesterdayStr] {
-			return 0, nil
-		}
-		dayStr = yesterdayStr
-		day = yesterday
-	}
-
-	streak := 0
-	for dates[dayStr] {
-		streak++
-		day = day.AddDate(0, 0, -1)
-		dayStr = day.Format("2006-01-02")
-	}
-	return streak, nil
+	return s.calculateStreak(rows, now)
 }
 
 func (s *Store) ReviewsPerDay(ctx context.Context, days int) (map[string]int, error) {

@@ -38,6 +38,22 @@ var grammarTips = []GrammarTip{
 		Title: "Perfect Tense",
 		Tip:   "Most verbs use 'haben' as an auxiliary verb, but verbs of movement or change of state use 'sein'.",
 	},
+	{
+		Title: "Imperative Mood",
+		Tip:   "For the 'du' form of imperative, usually just remove the -en and -st (Lerne! instead of du lernst).",
+	},
+	{
+		Title: "Reflexive Verbs",
+		Tip:   "Reflexive pronouns: mich, dich, sich, uns, euch, sich. Used when the subject and object are the same.",
+	},
+	{
+		Title: "Separable Verbs",
+		Tip:   "In simple sentences, the prefix of a separable verb (like 'aufstehen') moves to the very end.",
+	},
+	{
+		Title: "Comparison of Adjectives",
+		Tip:   "Positive: schnell; Comparative: schneller; Superlative: am schnellsten.",
+	},
 }
 
 func GetDailyGrammarTip() GrammarTip {

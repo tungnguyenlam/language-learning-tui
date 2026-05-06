@@ -54,10 +54,23 @@ func TestOfflineProviderGeneratesValidDraft(t *testing.T) {
 	}
 }
 
-func TestOfflineProviderRequiresSourceText(t *testing.T) {
+func TestOfflineProviderMultipleTopics(t *testing.T) {
 	provider := OfflineProvider{}
-	if _, err := provider.GenerateDrafts(context.Background(), DraftRequest{DeckID: "a1"}); err == nil {
-		t.Fatal("expected missing source text error")
+	drafts, err := provider.GenerateDrafts(context.Background(), DraftRequest{
+		SourceText: "Kaffee, Tee\nMilch",
+		DeckID:     "a1",
+	})
+	if err != nil {
+		t.Fatalf("generate: %v", err)
+	}
+	if len(drafts) != 3 {
+		t.Fatalf("len(drafts) = %d, want 3", len(drafts))
+	}
+	want := []string{"ai-kaffee", "ai-tee", "ai-milch"}
+	for i, d := range drafts {
+		if d.Note.ID != want[i] {
+			t.Errorf("draft[%d].ID = %q, want %q", i, d.Note.ID, want[i])
+		}
 	}
 }
 
@@ -92,5 +105,29 @@ func TestTemplateProvider(t *testing.T) {
 	}
 	if note.Examples[0] != "Ich mag Coffee." {
 		t.Errorf("example = %q, want %q", note.Examples[0], "Ich mag Coffee.")
+	}
+}
+
+func TestTemplateProviderMultipleTopics(t *testing.T) {
+	provider := TemplateProvider{
+		Templates: map[string]map[string]string{
+			"default": {
+				"front": "{{.Topic}}",
+			},
+		},
+		ActiveSet: "default",
+	}
+	drafts, err := provider.GenerateDrafts(context.Background(), DraftRequest{
+		SourceText: "One, Two",
+		DeckID:     "a1",
+	})
+	if err != nil {
+		t.Fatalf("generate: %v", err)
+	}
+	if len(drafts) != 2 {
+		t.Fatalf("len(drafts) = %d, want 2", len(drafts))
+	}
+	if drafts[0].Note.Front != "One" || drafts[1].Note.Front != "Two" {
+		t.Errorf("fronts = %q, %q; want One, Two", drafts[0].Note.Front, drafts[1].Note.Front)
 	}
 }

@@ -130,6 +130,7 @@ type Repository interface {
 	SetCardSuspended(ctx context.Context, cardID string, suspended bool) error
 	SetDailyGoal(ctx context.Context, goal int) error
 	Statistics(ctx context.Context) (Statistics, error)
+	DeckStatistics(ctx context.Context, deckID string) (Statistics, error)
 	Cards(ctx context.Context, deckID string, search string) ([]Card, error)
 	ReviewsPerDay(ctx context.Context, days int) (map[string]int, error)
 	ReviewHistory(ctx context.Context, cardID string, limit int) ([]ReviewLog, error)

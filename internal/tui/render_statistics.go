@@ -18,7 +18,8 @@ func (m *Model) renderStatistics(x, y int) string {
 
 func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 	var content strings.Builder
-	content.WriteString("Statistics\n\n")
+	title := "Statistics: " + m.deckLabel()
+	content.WriteString(lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).Render(title) + "\n\n")
 
 	content.WriteString(fmt.Sprintf("Total Cards:   %d\n", m.stats.TotalCards))
 	content.WriteString(fmt.Sprintf("Total Decks:   %d (%d active)\n", m.stats.TotalDecks, m.stats.ActiveDecks))

@@ -341,6 +341,13 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		m.deckFilter = ""
 		m.deckCursor = 0
 		return nil, true
+	case "v":
+		if len(filtered) > 0 {
+			m.selectDeckByID(filtered[m.deckCursor].ID)
+			m.activeView = ViewStatistics
+			return m.loadStatistics(), true
+		}
+		return nil, true
 	case "enter", "\r", "\n":
 		if len(filtered) > 0 {
 			m.selectDeckByID(filtered[m.deckCursor].ID)

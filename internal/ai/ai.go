@@ -43,8 +43,8 @@ func (p OfflineProvider) GenerateDrafts(ctx context.Context, request DraftReques
 		return nil, err
 	}
 
-	topic := strings.TrimSpace(request.SourceText)
-	if topic == "" {
+	rawText := strings.TrimSpace(request.SourceText)
+	if rawText == "" {
 		return nil, errors.New("draft source text is required")
 	}
 	deckID := strings.TrimSpace(request.DeckID)
@@ -52,19 +52,37 @@ func (p OfflineProvider) GenerateDrafts(ctx context.Context, request DraftReques
 		return nil, errors.New("draft deck id is required")
 	}
 
-	idBase := draftIDBase(topic)
-	tags := append([]string{"ai-draft"}, request.Tags...)
-	note := core.Note{
-		ID:       fmt.Sprintf("ai-%s", idBase),
-		DeckID:   deckID,
-		Front:    topic,
-		Back:     fmt.Sprintf("German prompt for %s", topic),
-		Extra:    "Offline draft. Review before keeping.",
-		Tags:     tags,
-		Examples: []string{fmt.Sprintf("Practice sentence using %s.", topic)},
+	// Split by comma or newline
+	topics := strings.FieldsFunc(rawText, func(r rune) bool {
+		return r == ',' || r == '\n' || r == '\r'
+	})
+
+	var drafts []Draft
+	for _, topic := range topics {
+		topic = strings.TrimSpace(topic)
+		if topic == "" {
+			continue
+		}
+		idBase := draftIDBase(topic)
+		tags := append([]string{"ai-draft"}, request.Tags...)
+		note := core.Note{
+			ID:       fmt.Sprintf("ai-%s", idBase),
+			DeckID:   deckID,
+			Front:    topic,
+			Back:     fmt.Sprintf("German prompt for %s", topic),
+			Extra:    "Offline draft. Review before keeping.",
+			Tags:     tags,
+			Examples: []string{fmt.Sprintf("Practice sentence using %s.", topic)},
+		}
+		note.Cards = content.CardsForNote(note)
+		drafts = append(drafts, Draft{Note: note})
 	}
-	note.Cards = content.CardsForNote(note)
-	return []Draft{{Note: note}}, nil
+
+	if len(drafts) == 0 {
+		return nil, errors.New("no valid topics found in input")
+	}
+
+	return drafts, nil
 }
 
 type TemplateProvider struct {
@@ -77,8 +95,8 @@ func (p TemplateProvider) GenerateDrafts(ctx context.Context, request DraftReque
 		return nil, err
 	}
 
-	topic := strings.TrimSpace(request.SourceText)
-	if topic == "" {
+	rawText := strings.TrimSpace(request.SourceText)
+	if rawText == "" {
 		return nil, errors.New("draft source text is required")
 	}
 	deckID := strings.TrimSpace(request.DeckID)
@@ -95,23 +113,42 @@ func (p TemplateProvider) GenerateDrafts(ctx context.Context, request DraftReque
 		}
 	}
 
-	front := p.applyTemplate(activeSet, "front", topic, topic)
-	back := p.applyTemplate(activeSet, "back", topic, fmt.Sprintf("German prompt for %s", topic))
-	example := p.applyTemplate(activeSet, "example", topic, fmt.Sprintf("Practice sentence using %s.", topic))
+	// Split by comma or newline
+	topics := strings.FieldsFunc(rawText, func(r rune) bool {
+		return r == ',' || r == '\n' || r == '\r'
+	})
 
-	idBase := draftIDBase(topic)
-	tags := append([]string{"ai-draft", activeSet}, request.Tags...)
-	note := core.Note{
-		ID:       fmt.Sprintf("ai-%s", idBase),
-		DeckID:   deckID,
-		Front:    front,
-		Back:     back,
-		Extra:    fmt.Sprintf("Template draft (%s). Review before keeping.", activeSet),
-		Tags:     tags,
-		Examples: []string{example},
+	var drafts []Draft
+	for _, topic := range topics {
+		topic = strings.TrimSpace(topic)
+		if topic == "" {
+			continue
+		}
+
+		front := p.applyTemplate(activeSet, "front", topic, topic)
+		back := p.applyTemplate(activeSet, "back", topic, fmt.Sprintf("German prompt for %s", topic))
+		example := p.applyTemplate(activeSet, "example", topic, fmt.Sprintf("Practice sentence using %s.", topic))
+
+		idBase := draftIDBase(topic)
+		tags := append([]string{"ai-draft", activeSet}, request.Tags...)
+		note := core.Note{
+			ID:       fmt.Sprintf("ai-%s", idBase),
+			DeckID:   deckID,
+			Front:    front,
+			Back:     back,
+			Extra:    fmt.Sprintf("Template draft (%s). Review before keeping.", activeSet),
+			Tags:     tags,
+			Examples: []string{example},
+		}
+		note.Cards = content.CardsForNote(note)
+		drafts = append(drafts, Draft{Note: note})
 	}
-	note.Cards = content.CardsForNote(note)
-	return []Draft{{Note: note}}, nil
+
+	if len(drafts) == 0 {
+		return nil, errors.New("no valid topics found in input")
+	}
+
+	return drafts, nil
 }
 
 func (p TemplateProvider) applyTemplate(set, key, topic, fallback string) string {

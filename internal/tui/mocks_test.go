@@ -167,6 +167,19 @@ func (m *mockRepo) Statistics(ctx context.Context) (core.Statistics, error) {
 	}
 	return stats, nil
 }
+func (m *mockRepo) DeckStatistics(ctx context.Context, deckID string) (core.Statistics, error) {
+	stats, err := m.Statistics(ctx)
+	if err != nil {
+		return stats, err
+	}
+	// For mock, just return total cards in deck if possible
+	for _, card := range m.dueCards {
+		if card.DeckID == deckID {
+			stats.TotalCards++
+		}
+	}
+	return stats, nil
+}
 func (m *mockRepo) Cards(ctx context.Context, deckID string, search string) ([]core.Card, error) {
 	var cards []core.Card
 	for _, card := range m.dueCards {
