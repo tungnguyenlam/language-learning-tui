@@ -22,8 +22,7 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		BorderForeground(lipgloss.Color("81")).
 		Padding(0, 1).
 		Width(maxInt(40, m.width-60)).
-		Render(fmt.Sprintf("Active Deck: %s\nDeck: %s",
-			lipgloss.NewStyle().Foreground(lipgloss.Color("159")).Render(m.deckLabel()),
+		Render(fmt.Sprintf("Active Deck: %s",
 			lipgloss.NewStyle().Foreground(lipgloss.Color("159")).Render(m.deckLabel())))
 	statsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("226")).Bold(true)
 

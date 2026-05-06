@@ -1,11 +1,15 @@
 # Done Backlog
 
-## 2026-05-06: Bug Hunting & Robustness Improvements
-- **UI Robustness**: Refactored Review and Dashboard hitboxes to use dynamic line counting and string width calculations instead of hardcoded offsets.
-- **Bug Fix**: Fixed Statistics view accuracy color rendering which was previously showing internal object representations.
-- **Bug Fix**: Resolved duplicate and unsafe case statements in hitbox activation logic.
-- **Data Integrity**: Switched MCQ choice separator from comma to `|||` in TSV import/export to prevent parsing errors with complex choices.
-- **Test Coverage**: Added 3 new E2E tests (MCQ robustness, Multiline rendering, AI generation) and verified 100% pass rate (100/100).
+## 2026-05-06: Bug Hunting & Robustness Improvements (STABILIZED)
+- **Bug Fix**: Fixed MCQ spoiler bug where the correct answer was prematurely revealed during animation.
+- **Bug Fix**: Resolved key collision between MCQ choices and view switching by implementing correct precedence.
+- **Bug Fix**: Fixed Modal Interaction Trap where mouse clicks could trigger background actions during confirmation.
+- **Bug Fix**: Improved `truncateLine` to be rune-aware, preventing UTF-8 corruption with German characters.
+- **Bug Fix**: Fixed case-insensitive word matching to handle German `ẞ` correctly (byte-length changes).
+- **Bug Fix**: Improved FSRS interval prediction accuracy for short-term reviews.
+- **UX Improvement**: Added explicit edit mode (`/`) for AI topic input to resolve navigation key collisions.
+- **UI Polish**: Unified emojis across views (`🔥` for streak, `✨` for mature) and removed redundant dashboard header lines.
+- **Test Coverage**: Verified all 100 E2E tests pass after logic and UI updates.
 
 ## 2026-05-05: TUI Stabilisation & UX Polish
 - **E2E Performance**: Built binary once in `verify.sh`, reducing test suite time and resource contention.

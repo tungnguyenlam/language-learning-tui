@@ -53,7 +53,7 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 	// Streak with fire emoji if > 0
 	streakIndicator := ""
 	if m.stats.CurrentStreak > 0 {
-		streakIndicator = " ✨"
+		streakIndicator = " 🔥"
 	}
 	content.WriteString(fmt.Sprintf("Current Streak: %d days%s\n", m.stats.CurrentStreak, streakIndicator))
 	content.WriteString(fmt.Sprintf("Success Rate:  %.1f%%\n\n", m.stats.SuccessRate*100))

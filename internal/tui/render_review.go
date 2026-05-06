@@ -116,28 +116,7 @@ func (m *Model) renderReview(x, y int) string {
 				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + lipgloss.Width(labelEasy), Y: y + answerYOffset, Width: geW, Height: 1})
 			}
 		} else if m.revealState == RevealRevealing {
-			// ... reveal animation logic ...
-			progress := int(m.revealProgress)
-			if progress > 100 {
-				progress = 100
-			}
-			fullText := card.Answer
-			numChars := len([]rune(fullText))
-			revealedChars := (numChars * progress) / 100
-			if revealedChars < 0 {
-				revealedChars = 0
-			}
-			if revealedChars > numChars {
-				revealedChars = numChars
-			}
-			revealedRunes := []rune(fullText)[:revealedChars]
-			remainingBlocks := numChars - revealedChars
-			animationText := string(revealedRunes) + strings.Repeat("▌", maxInt(0, remainingBlocks))
 			answer = fmt.Sprintf("1-4 select answer\n\n%s", renderMCQChoices(card.Choices, m.mcqChoice))
-			// Only replace the first occurrence if it exists (it might not if answer is empty or something)
-			if strings.Contains(answer, fullText) {
-				answer = strings.Replace(answer, fullText, animationText, 1)
-			}
 		} else {
 			answer = "Press space or enter to reveal choices."
 		}

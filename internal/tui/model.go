@@ -133,6 +133,7 @@ type Model struct {
 	dragTrackStartY       int
 	dragVisible           int
 	dragTotal             int
+	searchingAI           bool
 	searchingBrowser      bool
 	searchingDecks        bool
 	taggingCards          bool
@@ -490,6 +491,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		switch msg.(type) {
 		case tea.MouseClickMsg, *tea.MouseClickMsg:
+			if m.confirmingDelete {
+				return m, nil
+			}
 			if mouse.Button == tea.MouseLeft {
 				if hit, ok := m.hitboxAt(mouse.X, mouse.Y); ok {
 					if strings.Contains(hit.ID, "-scroll-") {

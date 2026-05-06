@@ -129,6 +129,7 @@ def test_ai_draft_interaction():
             agent.wait_until_stable()
 
             # Type a topic
+            agent.act("/")
             agent.act("Hallo")
             agent.wait_for_text("Topic: Hallo")
             

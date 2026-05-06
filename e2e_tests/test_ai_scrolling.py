@@ -20,6 +20,9 @@ def test_ai_draft_generation():
             agent.act("6") # AI view
             agent.wait_for_text("AI Drafts")
             
+            # Enter edit mode
+            agent.act("/")
+            
             # Clear default input with Ctrl-U and Backspaces
             agent.act("<Ctrl-u>")
             for _ in range(20):

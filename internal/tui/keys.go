@@ -102,12 +102,12 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	if cmd, handled := m.updateNumberKey(msg); handled {
+	// 3. View-specific keys
+	if cmd, handled := m.updateActiveViewKey(msg); handled {
 		return m, cmd
 	}
 
-	// 4. View-specific keys
-	if cmd, handled := m.updateActiveViewKey(msg); handled {
+	if cmd, handled := m.updateNumberKey(msg); handled {
 		return m, cmd
 	}
 
@@ -150,6 +150,7 @@ func (m *Model) textInputActive() bool {
 		m.taggingCards ||
 		m.searchingBrowser ||
 		m.searchingDecks ||
+		m.searchingAI ||
 		m.drafting // AI drafting also uses input
 }
 
@@ -160,13 +161,6 @@ func (m *Model) updateNumberKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	}
 	if m.textInputActive() {
 		return nil, false
-	}
-	if m.activeView == ViewReview && len(m.dueCards) > 0 && m.dueCards[m.cursor].Kind == core.CardKindMCQ && m.revealState == RevealRevealed && !m.mcqAnswered {
-		switch key {
-		case "1", "2", "3", "4":
-			m.selectMCQChoice(key)
-			return nil, true
-		}
 	}
 
 	switch key {
@@ -226,7 +220,21 @@ func (m *Model) updateActiveViewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 }
 
 func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
-	switch msg.String() {
+	key := msg.String()
+	if len(m.dueCards) > 0 {
+		card := m.dueCards[m.cursor]
+		if card.Kind == core.CardKindMCQ && !m.mcqAnswered {
+			switch key {
+			case "1", "2", "3", "4":
+				m.selectMCQChoice(key)
+				m.revealState = RevealRevealed
+				m.revealProgress = 100
+				return m.loadReviewPredictions(card.ID), true
+			}
+		}
+	}
+
+	switch key {
 	case "enter", "space", "\r", "\n", " ":
 		if len(m.dueCards) == 0 {
 			return nil, false
@@ -705,7 +713,31 @@ func (m *Model) updateCramKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 }
 
 func (m *Model) updateAIKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
+	if m.searchingAI {
+		switch msg.String() {
+		case "enter", "\r", "\n":
+			m.searchingAI = false
+			return m.startDrafting(), true
+		case "esc":
+			m.searchingAI = false
+			return nil, true
+		case "backspace":
+			if len(m.aiInput) > 0 {
+				m.aiInput = m.aiInput[:len(m.aiInput)-1]
+			}
+			return nil, true
+		}
+		if len(msg.String()) == 1 && msg.String() >= " " {
+			m.aiInput += msg.String()
+			return nil, true
+		}
+		return nil, true
+	}
+
 	switch msg.String() {
+	case "/":
+		m.searchingAI = true
+		return nil, true
 	case "esc":
 		m.aiInput = ""
 		return nil, true
@@ -751,14 +783,8 @@ func (m *Model) updateAIKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	case "backspace":
 		if len(m.drafts) > 0 {
 			m.discardDraft()
-		} else if len(m.aiInput) > 0 {
-			m.aiInput = m.aiInput[:len(m.aiInput)-1]
+			return nil, true
 		}
-		return nil, true
-	}
-	if len(msg.String()) == 1 && msg.String() >= " " && msg.String() <= "~" {
-		m.aiInput += msg.String()
-		return nil, true
 	}
 	return nil, false
 }

@@ -99,7 +99,7 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		}
 		mature := ""
 		if card.Mature {
-			mature = " ⭐"
+			mature = " ✨"
 		}
 		tags := ""
 		if len(card.Tags) > 0 {

@@ -84,11 +84,18 @@ func truncateLine(s string, maxWidth int) string {
 		return s
 	}
 	if maxWidth <= 3 {
-		return "..."[:maxWidth]
+		return strings.Repeat(".", maxWidth)
 	}
-	// Note: this doesn't handle multi-byte characters perfectly for truncation,
-	// but it's okay for basic terminal use.
-	return s[:maxWidth-3] + "..."
+
+	runes := []rune(s)
+	res := ""
+	for _, r := range runes {
+		if lipgloss.Width(res+string(r)+"...") > maxWidth {
+			break
+		}
+		res += string(r)
+	}
+	return res + "..."
 }
 
 func decksFromNotes(notes []core.Note) []core.Deck {

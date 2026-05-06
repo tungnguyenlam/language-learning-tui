@@ -30,4 +30,4 @@ Monitor long-term stability of parallel tests and consider adding more German gr
 
 - Last verified: `./scripts/verify.sh` - 100/100 E2E tests pass, all Go tests pass.
 - Environment: Darwin, Go 1.x, Python 3.12.
-- Stability: High. Hitboxes are now dynamically calculated and verified across different layouts.
+- Stability: Very High. Logic bugs (MCQ, Modal trap, UTF-8 truncation) resolved.

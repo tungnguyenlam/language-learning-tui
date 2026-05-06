@@ -23,7 +23,21 @@ func (m *Model) renderAI(x, y int) string {
 		templateName = m.aiTemplateSets[m.aiTemplateIndex]
 	}
 
-	fmt.Fprintf(&b, "AI Drafts%s\n\nDeck: %s\nTemplate: %s (use [ / ])\nTopic: %s\n\nEnter generate | a approve | d discard | esc clear\n", spinner, m.deckLabel(), templateName, m.aiInput)
+	searchBorderColor := "62"
+	searchLabel := "Topic"
+	if m.searchingAI {
+		searchBorderColor = "81"
+	}
+	searchStyle := lipgloss.NewStyle().
+		Border(lipgloss.NormalBorder()).
+		BorderForeground(lipgloss.Color(searchBorderColor)).
+		Padding(0, 1).
+		Width(maxInt(30, width-20))
+
+	b.WriteString("AI Drafts" + spinner + "\n\n")
+	b.WriteString(fmt.Sprintf("Deck: %s\nTemplate: %s (use [ / ])\n", m.deckLabel(), templateName))
+	b.WriteString(searchStyle.Render(fmt.Sprintf("%s: %s_", searchLabel, m.aiInput)) + "\n")
+	b.WriteString("\nPress / to edit topic | Enter generate | a approve | d discard | esc clear\n")
 
 	if len(m.drafts) == 0 {
 		if m.drafting {
