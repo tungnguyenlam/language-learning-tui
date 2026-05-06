@@ -52,10 +52,13 @@ func main() {
 	}
 	defer store.Close()
 
-	if err := store.UpsertDeck(context.Background(), content.StarterDeck()); err != nil {
-		logger.Printf("upsert starter deck: %v", err)
-		fmt.Fprintln(os.Stderr, err)
-		os.Exit(1)
+	decks, err := store.Decks(context.Background())
+	if err == nil && len(decks) == 0 {
+		if err := store.UpsertDeck(context.Background(), content.StarterDeck()); err != nil {
+			logger.Printf("upsert starter deck: %v", err)
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
 	}
 	if *smoke {
 		logger.Print("smoke check complete")

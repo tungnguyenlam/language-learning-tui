@@ -141,6 +141,7 @@ type Model struct {
 	statusSeq             int
 	confirmingDelete      bool
 	deleteAction          func() tea.Cmd
+	deleteIDs             []string
 }
 
 func NewModel(repo core.Repository, scheduler core.Scheduler) *Model {
@@ -297,6 +298,7 @@ type tagsUpdatedMsg struct {
 	cardIDs []string
 	tags    []string
 }
+type deckDeletedMsg struct{}
 
 func (m *Model) Init() tea.Cmd {
 	return tea.Sequence(m.loadDueCards, m.loadDecks, m.loadStatistics(), m.loadReviewsPerDay())
@@ -393,6 +395,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 		return m, m.setStatus(fmt.Sprintf("Updated tags for %d cards", len(msg.cardIDs)), 3*time.Second)
+	case deckDeletedMsg:
+		return m, tea.Batch(m.loadDecks, m.loadDueCards)
 	case timedClearStatusMsg:
 		if msg.seq == m.statusSeq {
 			m.status = "Ready"
@@ -918,7 +922,6 @@ func (m *Model) syncDecks(newDecks []core.Deck) {
 		for i, d := range m.decks {
 			if d.ID == m.deck.ID {
 				m.deckIndex = i
-				m.deckCursor = i
 				m.deck = d
 				found = true
 				break
@@ -929,7 +932,11 @@ func (m *Model) syncDecks(newDecks []core.Deck) {
 				m.deckIndex = maxInt(0, len(m.decks)-1)
 			}
 			m.deck = m.decks[m.deckIndex]
-			m.deckCursor = m.deckIndex
+		}
+		// Clamp deckCursor
+		filteredLen := len(m.filteredDecks())
+		if m.deckCursor >= filteredLen {
+			m.deckCursor = maxInt(0, filteredLen-1)
 		}
 	} else {
 		m.deck = core.Deck{}

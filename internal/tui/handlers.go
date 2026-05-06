@@ -303,21 +303,34 @@ func (m *Model) previousDeck() {
 
 func (m *Model) handleDeckDelete() tea.Cmd {
 	var ids []string
-	for id, selected := range m.deckSelected {
-		if selected {
-			ids = append(ids, id)
+	var names []string
+
+	// Get selected decks
+	for _, d := range m.decks {
+		if m.deckSelected[d.ID] && d.ID != "" {
+			ids = append(ids, d.ID)
+			names = append(names, d.Name)
 		}
 	}
+
+	// If none selected, use cursor
 	if len(ids) == 0 {
 		filtered := m.filteredDecks()
 		if len(filtered) > 0 {
-			ids = []string{filtered[m.deckCursor].ID}
+			deck := filtered[m.deckCursor]
+			if deck.ID != "" {
+				ids = []string{deck.ID}
+				names = []string{deck.Name}
+			}
 		}
 	}
+
 	if len(ids) == 0 {
-		return nil
+		m.status = "Cannot delete 'All Decks'"
+		return m.setStatus(m.status, 2*time.Second)
 	}
 
+	m.deleteIDs = ids
 	m.confirmingDelete = true
 	m.deleteAction = m.executeDeckDelete
 	m.status = fmt.Sprintf("Delete %d decks and ALL their cards? (y/n)", len(ids))
@@ -325,31 +338,21 @@ func (m *Model) handleDeckDelete() tea.Cmd {
 }
 
 func (m *Model) executeDeckDelete() tea.Cmd {
-	var ids []string
-	for id, selected := range m.deckSelected {
-		if selected {
-			ids = append(ids, id)
-		}
-	}
-	if len(ids) == 0 {
-		filtered := m.filteredDecks()
-		if len(filtered) > 0 {
-			ids = []string{filtered[m.deckCursor].ID}
-		}
-	}
+	ids := m.deleteIDs
 	if len(ids) == 0 {
 		return nil
 	}
 
 	m.status = fmt.Sprintf("Deleting %d decks...", len(ids))
 	m.deckSelected = make(map[string]bool)
+	m.deleteIDs = nil // Clear for next time
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		if err := m.repo.DeleteDecks(ctx, ids); err != nil {
 			return err
 		}
-		return m.loadDecks()
+		return deckDeletedMsg{}
 	}
 }
 

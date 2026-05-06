@@ -28,6 +28,13 @@ func Open(path string) (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	// Explicitly enable foreign keys for cascading deletes
+	if _, err := db.Exec(`PRAGMA foreign_keys = ON;`); err != nil {
+		_ = db.Close()
+		return nil, fmt.Errorf("enable foreign keys: %w", err)
+	}
+
 	store := &Store{db: db}
 	if err := store.Migrate(context.Background()); err != nil {
 		_ = db.Close()
