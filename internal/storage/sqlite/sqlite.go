@@ -19,6 +19,11 @@ type Store struct {
 }
 
 func Open(path string) (*Store, error) {
+	if !strings.Contains(path, "?") {
+		path += "?_pragma=foreign_keys(1)"
+	} else if !strings.Contains(path, "foreign_keys") {
+		path += "&_pragma=foreign_keys(1)"
+	}
 	db, err := sql.Open("sqlite", path)
 	if err != nil {
 		return nil, err
@@ -978,16 +983,14 @@ func (s *Store) currentStreak(ctx context.Context, now time.Time) (int, error) {
 }
 
 func (s *Store) ReviewsPerDay(ctx context.Context, days int) (map[string]int, error) {
-	now := time.Now().UTC()
+	now := time.Now()
 	startDate := now.AddDate(0, 0, -days)
-	start := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, time.UTC)
+	start := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, time.Local)
 
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT COALESCE(DATE(reviewed_at), '') as review_date, COUNT(*)
+		SELECT reviewed_at
 		FROM reviews
 		WHERE reviewed_at IS NOT NULL AND reviewed_at >= ?
-		GROUP BY COALESCE(DATE(reviewed_at), '')
-		ORDER BY review_date
 	`, start)
 	if err != nil {
 		return nil, err
@@ -996,12 +999,12 @@ func (s *Store) ReviewsPerDay(ctx context.Context, days int) (map[string]int, er
 
 	result := make(map[string]int)
 	for rows.Next() {
-		var dateStr string
-		var count int
-		if err := rows.Scan(&dateStr, &count); err != nil {
+		var t time.Time
+		if err := rows.Scan(&t); err != nil {
 			return nil, err
 		}
-		result[dateStr] = count
+		dateStr := t.In(time.Local).Format("2006-01-02")
+		result[dateStr]++
 	}
 	return result, rows.Err()
 }
@@ -1089,10 +1092,16 @@ func (s *Store) SetCardKind(ctx context.Context, cardID string, kind core.CardKi
 		return errors.New("card id is required")
 	}
 
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
 	// If converting to MCQ, ensure we have at least some choices
 	if kind == core.CardKindMCQ {
 		var choicesStr, answer string
-		err := s.db.QueryRowContext(ctx, `SELECT choices, answer FROM cards WHERE id = ?`, cardID).Scan(&choicesStr, &answer)
+		err := tx.QueryRowContext(ctx, `SELECT choices, answer FROM cards WHERE id = ?`, cardID).Scan(&choicesStr, &answer)
 		if err != nil {
 			return err
 		}
@@ -1101,15 +1110,18 @@ func (s *Store) SetCardKind(ctx context.Context, cardID string, kind core.CardKi
 			// Add the answer and a dummy choice if not enough
 			choices = []string{answer, "???"}
 			newChoicesStr := strings.Join(choices, "|||")
-			_, err = s.db.ExecContext(ctx, `UPDATE cards SET choices = ? WHERE id = ?`, newChoicesStr, cardID)
+			_, err = tx.ExecContext(ctx, `UPDATE cards SET choices = ? WHERE id = ?`, newChoicesStr, cardID)
 			if err != nil {
 				return err
 			}
 		}
 	}
 
-	_, err := s.db.ExecContext(ctx, `UPDATE cards SET kind = ? WHERE id = ?`, string(kind), cardID)
-	return err
+	_, err = tx.ExecContext(ctx, `UPDATE cards SET kind = ? WHERE id = ?`, string(kind), cardID)
+	if err != nil {
+		return err
+	}
+	return tx.Commit()
 }
 
 func (s *Store) SetCardTags(ctx context.Context, cardID string, tags []string) error {
@@ -1262,12 +1274,16 @@ func (s *Store) MergeDecks(ctx context.Context, sourceIDs []string, targetID str
 
 func (s *Store) CleanupTags(ctx context.Context, deckID string) error {
 	if deckID == "" {
-		// If no deck specified, we could clean up all decks, but for now let's just return
 		return nil
 	}
 
-	// 1. Get all tags from cards in this deck
-	rows, err := s.db.QueryContext(ctx, `SELECT tags FROM cards WHERE deck_id = ?`, deckID)
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	rows, err := tx.QueryContext(ctx, `SELECT tags FROM cards WHERE deck_id = ?`, deckID)
 	if err != nil {
 		return err
 	}
@@ -1285,14 +1301,20 @@ func (s *Store) CleanupTags(ctx context.Context, deckID string) error {
 			}
 		}
 	}
+	if err := rows.Close(); err != nil {
+		return err
+	}
 
 	uniqueTags := make([]string, 0, len(tagMap))
 	for tag := range tagMap {
 		uniqueTags = append(uniqueTags, tag)
 	}
 
-	// 2. Update the deck table
 	tagsStr := strings.Join(uniqueTags, " ")
-	_, err = s.db.ExecContext(ctx, `UPDATE decks SET tags = ? WHERE id = ?`, tagsStr, deckID)
-	return err
+	_, err = tx.ExecContext(ctx, `UPDATE decks SET tags = ? WHERE id = ?`, tagsStr, deckID)
+	if err != nil {
+		return err
+	}
+
+	return tx.Commit()
 }

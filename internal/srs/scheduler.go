@@ -101,7 +101,11 @@ func fsrsCardFromState(state core.ReviewState, now time.Time) fsrs.Card {
 }
 
 func stateFromFSRS(cardID string, card fsrs.Card, now time.Time) core.ReviewState {
-	interval := time.Duration(card.ScheduledDays) * 24 * time.Hour
+	days := card.ScheduledDays
+	if days > 36500 { // clamp to 100 years to prevent time.Duration overflow
+		days = 36500
+	}
+	interval := time.Duration(days) * 24 * time.Hour
 	if card.Due.After(now) && interval == 0 {
 		interval = card.Due.Sub(now)
 	}

@@ -485,15 +485,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		return m.updateKey(msg)
 	case tea.MouseMsg:
+		if m.confirmingDelete {
+			return m, nil
+		}
 		mouse := msg.Mouse()
 		m.mouseX = mouse.X
 		m.mouseY = mouse.Y
 
 		switch msg.(type) {
 		case tea.MouseClickMsg, *tea.MouseClickMsg:
-			if m.confirmingDelete {
-				return m, nil
-			}
 			if mouse.Button == tea.MouseLeft {
 				if hit, ok := m.hitboxAt(mouse.X, mouse.Y); ok {
 					if strings.Contains(hit.ID, "-scroll-") {

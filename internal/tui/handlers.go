@@ -186,7 +186,9 @@ func (m *Model) executeBulkBrowserDelete() tea.Cmd {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		for _, id := range selectedIDs {
-			_ = m.repo.DeleteCard(ctx, id)
+			if err := m.repo.DeleteCard(ctx, id); err != nil {
+				return err
+			}
 		}
 		m.browserSelected = make(map[string]bool)
 		return m.loadBrowserCards()()

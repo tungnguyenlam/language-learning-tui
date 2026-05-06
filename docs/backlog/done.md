@@ -1,5 +1,18 @@
 # Done Backlog
 
+## 2026-05-06: Bug Hunting & Stability Polish
+- **TUI Bug Fixes**:
+  - Clamped `browserCursor` in `browserCardsMsg` to prevent panics when card list is updated.
+  - Properly handled errors returned from repository in bulk browser operations (bookmark, suspend, delete).
+  - Fixed leaky modal state by discarding all mouse events when `confirmingDelete` is true.
+  - Cleaned up dangling duplicate code block at the end of `model.go`.
+- **Data Integrity & SRS Fixes**:
+  - Enforced SQLite `PRAGMA foreign_keys=ON` in DSN to ensure correct connection pool behavior.
+  - Wrapped `SetCardKind` and `CleanupTags` in transactions for atomicity.
+  - Resolved timezone inconsistency in `ReviewsPerDay` by using Go's `time.Local` instead of SQLite `DATE()`.
+  - Added clamping to `ScheduledDays` in FSRS state conversions to prevent `time.Duration` integer overflows.
+  - Added `idx_reviews_reviewed_at` index in database migrations to improve statistics query performance.
+
 ## 2026-05-06: Robustness & Data Integrity (STABILIZED)
 - **Bug Fix**: Fixed `UndoLastReview` to correctly recalculate `lapse_streak` and `leech` flags by inspecting remaining history.
 - **Bug Fix**: Refactored `ImportAnkiTSV` to robustly handle quoted multiline fields and avoid false-positive comment detection.

@@ -19,9 +19,12 @@ TUI Refactor Completion & Final Verification (STABILIZED)
 - [x] **Added revert-on-cancel for template editing**: Esc during template editing now restores the original value instead of keeping changes.
 - [x] **Stored original values**: Added `originalTemplateValue` field to preserve pre-edit state.
 
-## Next Action
+### Bug Hunting & Stability Polish
+- [x] **TUI Bug Fixes**: Resolved cursor panics, leaky modals, and ignored errors.
+- [x] **Data Integrity**: Added transactions, fixed timezone inconsistencies, and enabled foreign keys in connection pool.
+- [x] **Performance**: Indexed `reviewed_at` and clamped integer overflow in SRS scheduler.
 
-Monitor long-term stability of parallel tests and consider adding more German grammar content.
+## Next Action
 
 - [ ] Add more complex grammar MCQ templates (e.g. passive voice, subjunctive)
 - [ ] Implement deck-level statistics export
@@ -30,4 +33,4 @@ Monitor long-term stability of parallel tests and consider adding more German gr
 
 - Last verified: `./scripts/verify.sh` - 102/102 E2E tests pass, all Go tests pass.
 - Environment: Darwin, Go 1.x, Python 3.12.
-- Stability: Exceptional. Core data integrity issues (Undo flags, multiline TSV) resolved.
+- Stability: Exceptional. Core data integrity issues (Undo flags, multiline TSV) resolved. Multi-agent code review uncovered and fixed long-standing backend edge cases.

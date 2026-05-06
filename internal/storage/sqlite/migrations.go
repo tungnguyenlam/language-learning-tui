@@ -121,4 +121,8 @@ var migrations = []migration{
 			ALTER TABLE cards ADD COLUMN tags TEXT NOT NULL DEFAULT '';
 		`,
 	},
+	{
+		ID:  18,
+		SQL: `CREATE INDEX IF NOT EXISTS idx_reviews_reviewed_at ON reviews(reviewed_at)`,
+	},
 }
