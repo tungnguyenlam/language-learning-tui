@@ -547,6 +547,67 @@ func TestLeechResetOnGoodGrade(t *testing.T) {
 	}
 }
 
+func TestUndoLastReviewRestoresLeechFlag(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	deck := content.StarterDeck()
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+	card := deck.Notes[0].Cards[0]
+	now := time.Date(2026, 4, 29, 10, 0, 0, 0, time.UTC)
+
+	// 1. Make it a leech (3 Agains)
+	for i := 0; i < 3; i++ {
+		if err := store.RecordReview(ctx, core.ReviewResult{
+			CardID:   card.ID,
+			Grade:    core.GradeAgain,
+			Reviewed: now.Add(time.Duration(i) * time.Minute),
+			Next:     core.ReviewState{CardID: card.ID, Due: now, Interval: 0, Reviews: i + 1, Ease: 2.5},
+		}); err != nil {
+			t.Fatalf("record again %d: %v", i+1, err)
+		}
+	}
+
+	stats, err := store.Statistics(ctx)
+	if err != nil {
+		t.Fatalf("statistics: %v", err)
+	}
+	if stats.LeechCards != 1 {
+		t.Fatalf("expected 1 leech, got %d", stats.LeechCards)
+	}
+
+	// 2. Clear leech with a Good grade
+	if err := store.RecordReview(ctx, core.ReviewResult{
+		CardID:   card.ID,
+		Grade:    core.GradeGood,
+		Reviewed: now.Add(4 * time.Minute),
+		Next:     core.ReviewState{CardID: card.ID, Due: now.Add(24 * time.Hour), Interval: 24 * time.Hour, Reviews: 4, Ease: 2.5},
+	}); err != nil {
+		t.Fatalf("record good: %v", err)
+	}
+
+	stats, err = store.Statistics(ctx)
+	if stats.LeechCards != 0 {
+		t.Fatalf("expected 0 leeches after Good grade, got %d", stats.LeechCards)
+	}
+
+	// 3. Undo the Good grade - should be a leech again!
+	if err := store.UndoLastReview(ctx, card.ID); err != nil {
+		t.Fatalf("undo review: %v", err)
+	}
+
+	stats, err = store.Statistics(ctx)
+	if stats.LeechCards != 1 {
+		t.Errorf("expected card to be leech again after undoing the Good grade, but got %d leeches", stats.LeechCards)
+	}
+}
+
 func TestDueCardsBookmarkedReturnsOnlyBookmarked(t *testing.T) {
 	ctx := context.Background()
 	store, err := OpenMemory()

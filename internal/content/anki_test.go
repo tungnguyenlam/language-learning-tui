@@ -20,6 +20,21 @@ func TestImportAnkiTSV(t *testing.T) {
 	}
 }
 
+func TestImportAnkiTSVWithNewlines(t *testing.T) {
+	// Quoted field with a newline followed by something that looks like a comment
+	input := "#separator:tab\nid-1\t\"Front\n#not-a-comment\"\tBack\t\t\t\t\n"
+	notes, err := ImportAnkiTSV(strings.NewReader(input), ImportOptions{})
+	if err != nil {
+		t.Fatalf("import failed: %v", err)
+	}
+	if len(notes) != 1 {
+		t.Fatalf("notes = %d, want 1", len(notes))
+	}
+	if notes[0].Front != "Front\n#not-a-comment" {
+		t.Fatalf("front = %q, want \"Front\\n#not-a-comment\"", notes[0].Front)
+	}
+}
+
 func TestExportAnkiTSVRoundTrip(t *testing.T) {
 	deck := StarterDeck()
 	out, err := ExportAnkiTSVString(deck.Notes[:1])

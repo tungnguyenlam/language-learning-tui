@@ -499,6 +499,47 @@ func (s *Store) UndoLastReview(ctx context.Context, cardID string) error {
 	`, state.CardID, state.Due.UTC(), intervalSec, state.Stability, state.Difficulty, state.Ease, state.Reviews, state.Lapses); err != nil {
 		return err
 	}
+
+	// Recalculate card flags (leech status)
+	rows, err := tx.QueryContext(ctx, `
+		SELECT grade
+		FROM reviews
+		WHERE card_id = ?
+		ORDER BY reviewed_at DESC, id DESC
+		LIMIT 10
+	`, cardID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	lapseStreak := 0
+	for rows.Next() {
+		var grade string
+		if err := rows.Scan(&grade); err != nil {
+			return err
+		}
+		if grade == string(core.GradeAgain) {
+			lapseStreak++
+		} else {
+			break
+		}
+	}
+
+	leech := 0
+	if lapseStreak >= 3 {
+		leech = 1
+	}
+
+	_, err = tx.ExecContext(ctx, `
+		UPDATE card_flags
+		SET lapse_streak = ?, leech = ?, updated_at = ?
+		WHERE card_id = ?
+	`, lapseStreak, leech, time.Now().UTC(), cardID)
+	if err != nil {
+		return err
+	}
+
 	return tx.Commit()
 }
 

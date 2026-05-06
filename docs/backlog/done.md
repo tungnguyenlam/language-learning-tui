@@ -1,12 +1,12 @@
 # Done Backlog
 
-## 2026-05-06: AI Enhancements & Deck Statistics (STABILIZED)
-- **Feature**: Multi-topic AI drafting. Users can now enter multiple topics separated by commas or newlines to generate a batch of drafts.
-- **Feature**: Deck-level statistics. The Statistics view now displays metrics for the currently selected deck, providing granular progress tracking.
-- **UX Improvement**: Added 'v' shortcut in Decks view to instantly view statistics for the highlighted deck.
-- **Content Expansion**: Added 5 new German grammar tips covering imperative, reflexive verbs, separable verbs, and comparisons.
-- **Refactoring**: Unified streak calculation logic and removed duplication in SQLite storage layer.
-- **Test Coverage**: Added 2 new E2E tests for multi-topic drafting and deck stats shortcut, bringing total verified tests to 102.
+## 2026-05-06: Robustness & Data Integrity (STABILIZED)
+- **Bug Fix**: Fixed `UndoLastReview` to correctly recalculate `lapse_streak` and `leech` flags by inspecting remaining history.
+- **Bug Fix**: Refactored `ImportAnkiTSV` to robustly handle quoted multiline fields and avoid false-positive comment detection.
+- **Improved Testing**: Added regression tests for review undo flag restoration and multiline TSV imports.
+- **Security**: Enabled `LazyQuotes` in CSV reader to handle malformed but common Anki export patterns safely.
+- **Code Quality**: Cleaned up metadata extraction in importer to use `bufio.Scanner` instead of manual splitting.
+- **E2E Stability**: Verified all 102 E2E tests pass with zero regressions.
 
 ## 2026-05-05: TUI Stabilisation & UX Polish
 - **E2E Performance**: Built binary once in `verify.sh`, reducing test suite time and resource contention.

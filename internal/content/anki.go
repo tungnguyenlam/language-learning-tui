@@ -1,6 +1,7 @@
 package content
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/csv"
 	"errors"
@@ -18,33 +19,44 @@ type ImportOptions struct {
 }
 
 func ImportAnkiTSV(r io.Reader, opts ImportOptions) ([]core.Note, error) {
-	raw, err := io.ReadAll(r)
-	if err != nil {
-		return nil, err
+	deck := opts.DefaultDeck
+
+	// Read headers and metadata first
+	scanner := bufio.NewScanner(r)
+	var data strings.Builder
+	firstDataRowFound := false
+	for scanner.Scan() {
+		line := scanner.Text()
+		trimmed := strings.TrimSpace(line)
+		if strings.HasPrefix(trimmed, "#deck:") {
+			deck = strings.TrimSpace(strings.TrimPrefix(trimmed, "#deck:"))
+			continue
+		}
+		if strings.HasPrefix(trimmed, "#") || trimmed == "" {
+			continue
+		}
+		// Found first non-metadata line
+		data.WriteString(line + "\n")
+		firstDataRowFound = true
+		break
 	}
 
-	deck := opts.DefaultDeck
-	lines := strings.Split(string(raw), "\n")
-	data := make([]string, 0, len(lines))
-	for _, line := range lines {
-		line = strings.TrimRight(line, "\r")
-		if strings.HasPrefix(line, "#deck:") {
-			deck = strings.TrimSpace(strings.TrimPrefix(line, "#deck:"))
-			continue
+	if firstDataRowFound {
+		// Append the rest of the reader to our data builder
+		for scanner.Scan() {
+			data.WriteString(scanner.Text() + "\n")
 		}
-		if strings.HasPrefix(line, "#") || strings.TrimSpace(line) == "" {
-			continue
-		}
-		data = append(data, line)
 	}
+
 	if deck == "" {
 		deck = "Imported"
 	}
 
-	reader := csv.NewReader(strings.NewReader(strings.Join(data, "\n")))
+	reader := csv.NewReader(strings.NewReader(data.String()))
 	reader.Comma = '\t'
 	reader.FieldsPerRecord = -1
 	reader.TrimLeadingSpace = false
+	reader.LazyQuotes = true // Helps with some Anki exports
 
 	records, err := reader.ReadAll()
 	if err != nil {
