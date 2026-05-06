@@ -81,7 +81,7 @@ func ImportAnkiTSV(r io.Reader, opts ImportOptions) ([]core.Note, error) {
 			noteType := strings.TrimSpace(record[6])
 			if strings.HasPrefix(noteType, "MCQ:") {
 				choicesStr := strings.TrimPrefix(noteType, "MCQ:")
-				note.Choices = strings.Split(choicesStr, ",")
+				note.Choices = strings.Split(choicesStr, "|||")
 				for i := range note.Choices {
 					note.Choices[i] = strings.TrimSpace(note.Choices[i])
 				}
@@ -115,7 +115,7 @@ func ExportAnkiTSV(w io.Writer, notes []core.Note) error {
 		}
 		noteType := "Basic"
 		if len(note.Choices) > 0 {
-			noteType = "MCQ:" + strings.Join(note.Choices, ",")
+			noteType = "MCQ:" + strings.Join(note.Choices, "|||")
 		} else if note.Type == "Reverse" {
 			noteType = "Reverse"
 		}

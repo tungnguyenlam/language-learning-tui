@@ -4,46 +4,30 @@ Last updated: 2026-05-05
 
 ## Current Milestone
 
-TUI Refactor Completion & Final Verification
+TUI Refactor Completion & Final Verification (STABILIZED)
 
 ## Completed Work
 
+### E2E Test Optimization & Stabilisation
+- [x] **Binary pre-build**: Modified `scripts/verify.sh` to build binary once, reducing resource contention.
+- [x] **Parallel Test Fixes**: Updated all 28 E2E tests to use `DEUTSCH_TUI_BIN`.
+- [x] **Hitbox Alignment**: Aligned hitboxes with Lip Gloss metrics in all views using `contentLayoutForStyle`.
+- [x] **Deletion Confirmation**: Added modal confirmation dialogs for card and deck deletions.
+- [x] **Transactional Storage**: Wrapped bulk storage updates in transactions for performance and atomicity.
+
 ### Template Editing Cancel Behavior Fix
 - [x] **Added revert-on-cancel for template editing**: Esc during template editing now restores the original value instead of keeping changes.
-- [x] **Separated Enter/Esc handling**: Enter keeps changes, Esc reverts (matching UI description).
 - [x] **Stored original values**: Added `originalTemplateValue` field to preserve pre-edit state.
-- [x] **Updated E2E tests**: Fixed test expectations in `test_robustness.py` for cancel behavior.
-- [x] **Verified**: All 93 E2E tests passing, all Go unit tests passing.
-
-### Run 2 TUI Refactor Recovery
-- [x] Restored stable top-level rendering contracts, status footer text, tab/nav click targets
-- [x] Fixed Settings/AI view surfaces, reveal animation state, scrollbar hitbox alignment
-- [x] Verified `./scripts/verify.sh` passes with 83 E2E tests
-
-### Decks View Bulk Operations (Pass 21)
-- [x] **Implemented Multi-Select**: Added `x` key selection in Decks view.
-- [x] **Bulk Deletion**: Added `Backspace` support for deleting selected decks.
-- [x] **Deck Merging**: Added `M` key to merge selected decks into current.
-- [x] **Repository Methods**: Implemented `DeleteDecks` and `MergeDecks` in SQLite.
-- [x] **Verified Suite**: 91 tests passing.
-
-### Export Filtering (Pass 21)
-- [x] **Implemented Export Filtering**: Added deck/tag filters to Import/Export view.
-- [x] **UI & Key Fixes**: Resolved key prioritization and hitbox alignment.
-- [x] **Active Deck Sync**: Default export deck matches current view.
-- [x] **Unused Tags Cleanup**: Implemented 'C' key in Browser to remove tags not used by any cards.
-- [x] **AI Prompt Templates**: Refined templates to support multiple exercise types.
-
-### Startup Compatibility Fix
-- [x] **Legacy AI Template Config Migration**: `make run` accepts flat `ai_templates` config shape.
-- [x] **Verified Startup**: `make run` launches TUI successfully.
-- [x] **Verified Tests**: `./scripts/verify.sh` passes with 93 E2E tests.
 
 ## Next Action
 
-Optimize E2E tests by building the binary once and address unconfirmed deletions.
+Monitor long-term stability of parallel tests and consider adding more German grammar content.
 
-- [ ] Build binary once in `scripts/verify.sh` and use in E2E tests
-- [ ] Add confirmation dialogs for card/deck deletions
-- [ ] Align Browser scrollbar hitboxes with Lip Gloss metrics
-- [ ] Investigate and fix intermittent parallel test failures (if they persist)
+- [ ] Add more complex grammar MCQ templates (e.g. passive voice, subjunctive)
+- [ ] Implement deck-level statistics export
+
+## Verification State
+
+- Last verified: `./scripts/verify.sh` - 100/100 E2E tests pass, all Go tests pass.
+- Environment: Darwin, Go 1.x, Python 3.12.
+- Stability: High. Hitboxes are now dynamically calculated and verified across different layouts.

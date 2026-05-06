@@ -39,7 +39,7 @@ func TestExportAnkiTSVRoundTrip(t *testing.T) {
 }
 
 func TestImportExportMCQ(t *testing.T) {
-	input := "#separator:tab\n#deck:Grammar\nid-1\tIch gebe ___ das Buch.\tdem Mann\tDativ\tgrammar\tGrammar\tMCQ:den Mann,der Mann,dem Mann\n"
+	input := "#separator:tab\n#deck:Grammar\nid-1\tIch gebe ___ das Buch.\tdem Mann\tDativ\tgrammar\tGrammar\tMCQ:den Mann|||der Mann|||dem Mann\n"
 	notes, err := ImportAnkiTSV(strings.NewReader(input), ImportOptions{})
 	if err != nil {
 		t.Fatalf("import failed: %v", err)
@@ -70,7 +70,7 @@ func TestImportExportMCQ(t *testing.T) {
 	if err != nil {
 		t.Fatalf("export failed: %v", err)
 	}
-	if !strings.Contains(out, "MCQ:den Mann,der Mann,dem Mann") {
+	if !strings.Contains(out, "MCQ:den Mann|||der Mann|||dem Mann") {
 		t.Fatalf("exported TSV missing MCQ choices: %q", out)
 	}
 }

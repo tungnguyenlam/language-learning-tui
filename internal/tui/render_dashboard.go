@@ -34,7 +34,6 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		Render(statsStyle.Render("Review Queue") + "\n" +
 			fmt.Sprintf("  Due cards:   %d\n", len(m.dueCards)) +
 			fmt.Sprintf("  Bookmarked:  %d (%d due)", m.stats.BookmarkedCards, m.stats.BookmarkedDue))
-	m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-review", View: ViewDashboard, X: layout.X, Y: layout.Y + 4, Width: 26, Height: 5})
 
 	collectionStats := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
@@ -44,7 +43,6 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 			fmt.Sprintf("  Decks:       %d (%d active)\n", m.stats.TotalDecks, m.stats.ActiveDecks) +
 			fmt.Sprintf("  Leech:       %d\n", m.stats.LeechCards) +
 			fmt.Sprintf("  Suspended:   %d", m.stats.SuspendedCards))
-	m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-collection", View: ViewDashboard, X: layout.X + 28, Y: layout.Y + 4, Width: 26, Height: 5})
 
 	goalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Bold(true)
 	progressBox := lipgloss.NewStyle().
@@ -54,7 +52,6 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		Render(goalStyle.Render("Today's Progress") + "\n" +
 			fmt.Sprintf("  Reviews:     %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal) +
 			fmt.Sprintf("  Streak:      %d days%s", m.stats.CurrentStreak, streakIndicator))
-	m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-progress", View: ViewDashboard, X: layout.X, Y: layout.Y + 9, Width: 26, Height: 5})
 
 	digestStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("213")).Bold(true)
 	message := "All caught up!"
@@ -72,13 +69,19 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		Render(digestStyle.Render("Daily Digest") + "\n" +
 			fmt.Sprintf("  %s\n", message) +
 			fmt.Sprintf("  M:%d Y:%d N:%d", m.stats.MatureCards, m.stats.YoungCards, m.stats.NewCards))
-	m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-digest", View: ViewDashboard, X: layout.X + 28, Y: layout.Y + 9, Width: 26, Height: 5})
 
 	var db strings.Builder
 	db.WriteString(titleStyle.Render("DASHBOARD") + "\n")
 	db.WriteString(headerBox + "\n")
 
+	queueY := strings.Count(db.String(), "\n")
+	m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-review", View: ViewDashboard, X: layout.X, Y: layout.Y + queueY, Width: lipgloss.Width(reviewQueue), Height: lipgloss.Height(reviewQueue)})
+	m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-collection", View: ViewDashboard, X: layout.X + lipgloss.Width(reviewQueue) + 1, Y: layout.Y + queueY, Width: lipgloss.Width(collectionStats), Height: lipgloss.Height(collectionStats)})
 	db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, reviewQueue, " ", collectionStats) + "\n")
+
+	progressY := strings.Count(db.String(), "\n")
+	m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-progress", View: ViewDashboard, X: layout.X, Y: layout.Y + progressY, Width: lipgloss.Width(progressBox), Height: lipgloss.Height(progressBox)})
+	m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-digest", View: ViewDashboard, X: layout.X + lipgloss.Width(progressBox) + 1, Y: layout.Y + progressY, Width: lipgloss.Width(dailyDigestBox), Height: lipgloss.Height(dailyDigestBox)})
 	db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, progressBox, " ", dailyDigestBox) + "\n")
 
 	// Only show grammar tip if there is enough vertical space

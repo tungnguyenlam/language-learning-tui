@@ -71,7 +71,8 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 			accuracyColor = "197" // red
 		}
 		content.WriteString(fmt.Sprintf("  Correct:     %d\n", m.sessionCorrect))
-		content.WriteString(fmt.Sprintf("  Accuracy:    %s%.1f%%%s\n\n", lipgloss.Color(accuracyColor), accuracy, lipgloss.Color("248")))
+		accStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(accuracyColor))
+		content.WriteString(fmt.Sprintf("  Accuracy:    %s\n\n", accStyle.Render(fmt.Sprintf("%.1f%%", accuracy))))
 	} else {
 		content.WriteString("  (no reviews yet)\n\n")
 	}

@@ -47,14 +47,14 @@ func (m *Model) activateHitbox(id string) tea.Cmd {
 		return m.gradeCard(core.GradeEasy)
 	case strings.HasPrefix(id, "draft-approve-"):
 		idx, err := strconv.Atoi(strings.TrimPrefix(id, "draft-approve-"))
-		if err == nil {
+		if err == nil && idx >= 0 && idx < len(m.drafts) {
 			m.draftCursor = idx
 			return m.approveDraft()
 		}
 		return nil
 	case strings.HasPrefix(id, "draft-discard-"):
 		idx, err := strconv.Atoi(strings.TrimPrefix(id, "draft-discard-"))
-		if err == nil {
+		if err == nil && idx >= 0 && idx < len(m.drafts) {
 			m.draftCursor = idx
 			return m.discardDraft()
 		}
@@ -111,20 +111,6 @@ func (m *Model) activateHitbox(id string) tea.Cmd {
 		return m.exportTSV()
 	case id == "export-apkg":
 		return m.exportAPKG()
-	case strings.HasPrefix(id, "draft-approve-"):
-		idx, err := strconv.Atoi(strings.TrimPrefix(id, "draft-approve-"))
-		if err == nil && idx >= 0 && idx < len(m.drafts) {
-			m.draftCursor = idx
-			return m.approveDraft()
-		}
-		return nil
-	case strings.HasPrefix(id, "draft-discard-"):
-		idx, err := strconv.Atoi(strings.TrimPrefix(id, "draft-discard-"))
-		if err == nil && idx >= 0 && idx < len(m.drafts) {
-			m.draftCursor = idx
-			return m.discardDraft()
-		}
-		return nil
 	case strings.HasPrefix(id, "stats-scroll-"):
 		line, err := strconv.Atoi(strings.TrimPrefix(id, "stats-scroll-"))
 		if err == nil {
