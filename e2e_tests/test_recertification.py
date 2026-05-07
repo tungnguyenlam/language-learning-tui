@@ -66,15 +66,15 @@ def test_settings_provider_toggle_persists_after_restart():
         agent = start_agent(tmpdir)
         try:
             agent.act("7")
-            agent.wait_for_text("AI Provider: disabled")
+            agent.wait_for_text("AI Provider:    disabled")
             agent.act("<Enter>")
-            agent.wait_for_text("AI Provider: offline")
+            agent.wait_for_text("AI Provider:    offline")
         finally:
             agent.close()
 
         restarted = start_agent(tmpdir)
         try:
             restarted.act("7")
-            restarted.wait_for_text("AI Provider: offline")
+            restarted.wait_for_text("AI Provider:    offline")
         finally:
             restarted.close()

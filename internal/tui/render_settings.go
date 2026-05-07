@@ -23,20 +23,20 @@ func (m *Model) renderSettings(x, y int) string {
 
 	aiProviderName := m.aiProviderName
 	activeSet := "none"
-	if len(m.aiTemplateSets) > 0 {
-		activeSet = m.aiTemplateSets[m.aiTemplateIndex]
+	if set := m.currentAITemplateSet(); set != "" {
+		activeSet = set
 	}
 
 	sectionStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Bold(true).MarginTop(1)
 	b.WriteString(sectionStyle.Render("AI CONFIGURATION") + "\n")
-	b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Render(fmt.Sprintf("  Template Set: %s", activeSet)) + "\n")
+	b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Render(fmt.Sprintf("  Template Set: %s", activeSet)) + "\n\n")
 
 	setMap := m.aiTemplates[activeSet]
 	aiOptions := []string{
-		fmt.Sprintf("AI Provider: %s", aiProviderName),
+		fmt.Sprintf("AI Provider:    %s", aiProviderName),
 		fmt.Sprintf("Front Template: %s", setMap["front"]),
-		fmt.Sprintf("Back Template: %s", setMap["back"]),
-		fmt.Sprintf("Example Template: %s", setMap["example"]),
+		fmt.Sprintf("Back Template:  %s", setMap["back"]),
+		fmt.Sprintf("Example Tmpl:   %s", setMap["example"]),
 	}
 	var rowY int
 	var prefix string
@@ -64,7 +64,7 @@ func (m *Model) renderSettings(x, y int) string {
 		})
 	}
 
-	b.WriteString(sectionStyle.Render("STUDY PREFERENCES") + "\n")
+	b.WriteString("\n" + sectionStyle.Render("STUDY PREFERENCES") + "\n")
 
 	goalIdx := 4
 	prefix = "  "
@@ -73,7 +73,7 @@ func (m *Model) renderSettings(x, y int) string {
 		prefix = "> "
 		itemStyle = itemStyle.Bold(true).Foreground(lipgloss.Color("212"))
 	}
-	goalLabel := fmt.Sprintf("%sDaily Goal: %d ", prefix, m.stats.DailyGoal)
+	goalLabel := fmt.Sprintf("%sDaily Goal: %d cards ", prefix, m.stats.DailyGoal)
 	rowY = layout.Y + strings.Count(b.String(), "\n")
 	b.WriteString(itemStyle.Render(goalLabel))
 
@@ -131,7 +131,7 @@ func (m *Model) renderSettings(x, y int) string {
 	if m.editingTemplate {
 		b.WriteString("\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("EDITING") + " - Enter to save, Esc to cancel.")
 	} else {
-		b.WriteString("\n" + mutedStyle.Render("Use j/k to move, +/- to adjust goal, Enter to toggle/edit."))
+		b.WriteString("\n" + mutedStyle.Render("Use j/k to move, +/- goal, Enter edit/toggle, [/] templates."))
 	}
 	return b.String()
 }

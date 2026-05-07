@@ -1,5 +1,47 @@
 # Done Backlog
 
+## 2026-05-08: End-to-End TUI Correctness Batch A
+- **Bug Fixes**:
+  - Clamped Review cursor access across rendering, grading, audio playback, bookmark, suspend, history, and MCQ paths to prevent stale-cursor panics after queue changes.
+  - Clamped AI template-set access in AI, Settings, and template-provider switching to prevent panics when configuration indices drift.
+  - Added empty import/export path guards for TSV and APKG actions, returning clear status messages instead of attempting invalid file operations.
+- **UI/UX Polish**:
+  - Added a bordered empty-state panel for Review with concrete next actions.
+  - Added Import/Export path warnings, a stronger AI topic placeholder, an AI prompt-quality hint, and clearer Settings daily-goal/help text.
+- **Verification**:
+  - `go test ./internal/tui ./internal/content` passes.
+
+## 2026-05-08: End-to-End TUI Correctness Batch B
+- **Content Addition**:
+  - Added `b1-apartment-housing.tsv` with 39 B1 housing, rental, viewing, and move-in cards.
+  - Registered the housing deck in `EmbeddedDeckPaths` so deck discovery helpers expose it.
+- **E2E Coverage**:
+  - Added 8 tui-tester tests for Dashboard progress/digest, Review reveal/grading persistence, Import filters/actions, empty import path status, AI guidance, Settings help, Deck navigation, and all core view tabs.
+- **UI/UX Polish**:
+  - Added stable AI suggested-topic text and shortened Settings help text to avoid wide-layout wrapping.
+- **Verification**:
+  - `go test ./internal/content ./internal/tui` passes.
+  - `DEUTSCH_TUI_BIN=/tmp/deutsch-tui-e2e pytest e2e_tests/test_end_to_end_core_views.py -q` passes (8/8).
+
+## 2026-05-08: Full-Suite Regression Fixes
+- **Content Registry Fix**:
+  - Normalized embedded TSV note/card `DeckID` values to the registry deck ID before card generation, fixing foreign-key failures when registry decks are written to SQLite.
+- **Startup Compatibility**:
+  - Preserved the app's starter-deck default seed so existing E2E flows keep the expected 52-card queue while expanded decks remain available through the content registry.
+- **E2E Maintenance**:
+  - Updated the agent workflow test to use the current AI navigation key and starter-deck runtime default.
+- **Verification**:
+  - `go test ./...` passes.
+  - Targeted E2E `test_agent_workflow.py test_end_to_end_core_views.py` passes (10/10).
+
+## 2026-05-08: End-to-End TUI Milestone Verified
+- **Scope Completed**:
+  - App launch, Dashboard, Review, Import, AI, Settings, Decks, Browser, Cram, persistence, and core navigation are covered by the full suite.
+  - Completed more than 8 distinct improvements across bug fixes, UI/UX, AI UX, content, tests, and developer verification hygiene.
+- **Final Verification**:
+  - `./scripts/verify.sh` passes cleanly.
+  - Result: all Go tests pass, smoke passes, and 116/116 E2E tests pass with no warning output.
+
 ## 2026-05-07: Per-Deck Study Limits
 - **Storage & Core**:
   - Extended `Deck` model with `NewCardsPerDay` and `ReviewLimitPerDay`.

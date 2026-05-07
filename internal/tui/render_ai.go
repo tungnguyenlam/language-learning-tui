@@ -19,8 +19,8 @@ func (m *Model) renderAI(x, y int) string {
 		spinner = " " + frames[m.spinnerFrame%len(frames)]
 	}
 	templateName := "None"
-	if len(m.aiTemplateSets) > 0 {
-		templateName = m.aiTemplateSets[m.aiTemplateIndex]
+	if set := m.currentAITemplateSet(); set != "" {
+		templateName = set
 	}
 
 	searchBorderColor := "62"
@@ -36,8 +36,15 @@ func (m *Model) renderAI(x, y int) string {
 
 	b.WriteString("AI Drafts" + spinner + "\n\n")
 	b.WriteString(fmt.Sprintf("Deck: %s\nTemplate: %s (use [ / ])\n", m.deckLabel(), templateName))
-	b.WriteString(searchStyle.Render(fmt.Sprintf("%s: %s_", searchLabel, m.aiInput)) + "\n")
+	displayText := m.aiInput + "_"
+	if m.aiInput == "" && !m.searchingAI {
+		placeholderStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+		displayText = placeholderStyle.Render("(e.g., business email, doctor visit, apartment viewing)") + "_"
+	}
+	b.WriteString(searchStyle.Render(fmt.Sprintf("%s: %s", searchLabel, displayText)) + "\n")
 	b.WriteString("\nPress / to edit topic | Enter generate | a approve | d discard | esc clear\n")
+	b.WriteString(mutedStyle.Render("Tip: include level and use case, e.g. B1 workplace small talk.") + "\n")
+	b.WriteString(mutedStyle.Render("Suggested topics: business email, doctor visit, apartment viewing.") + "\n")
 
 	if len(m.drafts) == 0 {
 		if m.drafting {

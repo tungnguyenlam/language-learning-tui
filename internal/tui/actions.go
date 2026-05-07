@@ -23,7 +23,7 @@ func (m *Model) gradeCard(grade core.ReviewGrade) tea.Cmd {
 	}
 
 	m.status = fmt.Sprintf("Grade: %s", strings.ToUpper(string(grade[:1]))+string(grade[1:]))
-	card := m.dueCards[m.cursor]
+	card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
@@ -147,7 +147,11 @@ func (m *Model) setDeckLimits(deckID string, newLimit, reviewLimit int) tea.Cmd 
 }
 
 func (m *Model) importTSV() tea.Cmd {
-	path := m.importPath
+	path := strings.TrimSpace(m.importPath)
+	if path == "" {
+		m.status = "Import path is empty"
+		return nil
+	}
 	m.status = "Importing TSV..."
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -184,7 +188,11 @@ func (m *Model) importTSV() tea.Cmd {
 }
 
 func (m *Model) exportTSV() tea.Cmd {
-	path := m.exportPath
+	path := strings.TrimSpace(m.exportPath)
+	if path == "" {
+		m.status = "Export path is empty"
+		return nil
+	}
 	deckID := m.exportDeckID
 	tag := m.exportTag
 	m.status = "Exporting TSV..."
@@ -227,7 +235,11 @@ func (m *Model) exportTSV() tea.Cmd {
 }
 
 func (m *Model) importAPKG() tea.Cmd {
-	path := m.importPath
+	path := strings.TrimSpace(m.importPath)
+	if path == "" {
+		m.status = "Import path is empty"
+		return nil
+	}
 	m.status = "Importing APKG..."
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -262,7 +274,11 @@ func (m *Model) importAPKG() tea.Cmd {
 }
 
 func (m *Model) exportAPKG() tea.Cmd {
-	path := m.exportPath
+	path := strings.TrimSpace(m.exportPath)
+	if path == "" {
+		m.status = "Export path is empty"
+		return nil
+	}
 	deckID := m.exportDeckID
 	tag := m.exportTag
 	m.status = "Exporting APKG..."
@@ -384,7 +400,7 @@ func (m *Model) toggleBookmark() tea.Cmd {
 	if len(m.dueCards) == 0 {
 		return nil
 	}
-	card := m.dueCards[m.cursor]
+	card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
 	next := !card.Bookmarked
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
@@ -408,7 +424,7 @@ func (m *Model) suspendCard() tea.Cmd {
 	if len(m.dueCards) == 0 {
 		return nil
 	}
-	card := m.dueCards[m.cursor]
+	card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
@@ -441,7 +457,7 @@ func (m *Model) toggleReviewHistory() tea.Cmd {
 	if len(m.dueCards) == 0 {
 		return nil
 	}
-	cardID := m.dueCards[m.cursor].ID
+	cardID := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)].ID
 	if m.showReviewHistory && m.reviewHistoryCard == cardID {
 		m.showReviewHistory = false
 		m.reviewHistory = nil
@@ -460,7 +476,7 @@ func (m *Model) selectMCQChoice(key string) {
 	idx, _ := strconv.Atoi(key)
 	m.mcqChoice = idx - 1
 	m.mcqAnswered = true
-	card := m.dueCards[m.cursor]
+	card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
 	if m.mcqChoice >= 0 && m.mcqChoice < len(card.Choices) {
 		m.mcqCorrect = card.Answer == card.Choices[m.mcqChoice]
 	} else {
@@ -526,9 +542,7 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		case "offline":
 			m.aiProviderName = "template"
 			activeSet := ""
-			if len(m.aiTemplateSets) > 0 {
-				activeSet = m.aiTemplateSets[m.aiTemplateIndex]
-			}
+			activeSet = m.currentAITemplateSet()
 			m.aiProvider = ai.TemplateProvider{
 				Templates: m.aiTemplates,
 				ActiveSet: activeSet,
@@ -548,9 +562,7 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 	case 1, 2, 3:
 		m.editingTemplate = true
 		activeSet := ""
-		if len(m.aiTemplateSets) > 0 {
-			activeSet = m.aiTemplateSets[m.aiTemplateIndex]
-		}
+		activeSet = m.currentAITemplateSet()
 		key := ""
 		switch m.settingsCursor {
 		case 1:

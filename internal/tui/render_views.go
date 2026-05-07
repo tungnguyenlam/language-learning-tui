@@ -236,6 +236,14 @@ func (m *Model) renderImport(x, y int) string {
 		Height: 1,
 	})
 
+	warningStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("208"))
+	if strings.TrimSpace(m.importPath) == "" {
+		b.WriteString(warningStyle.Render("Import file is empty; set a path before importing.") + "\n")
+	}
+	if strings.TrimSpace(m.exportPath) == "" {
+		b.WriteString(warningStyle.Render("Export file is empty; set a path before exporting.") + "\n")
+	}
+
 	b.WriteString("Actions:\n")
 	actions := []struct {
 		id    string

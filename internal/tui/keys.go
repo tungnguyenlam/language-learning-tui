@@ -133,7 +133,7 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		}
 	case "p":
 		if m.activeView == ViewReview && len(m.dueCards) > 0 {
-			return m, m.playAudio(m.dueCards[m.cursor].Audio)
+			return m, m.playAudio(m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)].Audio)
 		}
 		if m.activeView == ViewCram && m.cramActive && len(m.cramCards) > 0 {
 			return m, m.playAudio(m.cramCards[m.cramCursor].Audio)
@@ -222,7 +222,7 @@ func (m *Model) updateActiveViewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	key := msg.String()
 	if len(m.dueCards) > 0 {
-		card := m.dueCards[m.cursor]
+		card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
 		if card.Kind == core.CardKindMCQ && !m.mcqAnswered {
 			switch key {
 			case "1", "2", "3", "4":
@@ -239,7 +239,7 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		if len(m.dueCards) == 0 {
 			return nil, false
 		}
-		card := m.dueCards[m.cursor]
+		card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
 		if m.revealState == RevealRevealed {
 			m.revealState = RevealIdle
 			m.revealProgress = 0
@@ -514,7 +514,12 @@ func (m *Model) updateImportKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 
 func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	if m.editingTemplate {
-		activeSet := m.aiTemplateSets[m.aiTemplateIndex]
+		activeSet := m.currentAITemplateSet()
+		if activeSet == "" {
+			m.editingTemplate = false
+			m.originalTemplateValue = ""
+			return nil, true
+		}
 		switch msg.String() {
 		case "enter", "\r", "\n":
 			m.editingTemplate = false

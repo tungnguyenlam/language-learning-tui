@@ -1,0 +1,42 @@
+#separator:tab
+#html:false
+#deck:B1 Apartment & Housing
+front	back	extra	tags	notetype
+die Wohnung	apartment	die Wohnung, die Wohnungen	housing b1	B1 Housing	Basic
+das Mietshaus	apartment building	das Mietshaus, die Mietshäuser	housing b1	B1 Housing	Basic
+die Miete	rent	die Miete, die Mieten	housing b1	B1 Housing	Reverse
+die Nebenkosten	additional utility costs	Plural noun	housing b1	B1 Housing	Basic
+die Kaution	security deposit	die Kaution, die Kautionen	housing b1	B1 Housing	Reverse
+der Mietvertrag	rental contract	der Mietvertrag, die Mietverträge	housing b1	B1 Housing	Basic
+die Besichtigung	viewing/inspection	die Besichtigung, die Besichtigungen	housing b1	B1 Housing	Reverse
+der Vermieter	landlord	der Vermieter, die Vermieter	housing b1	B1 Housing	Basic
+die Vermieterin	landlady	die Vermieterin, die Vermieterinnen	housing b1	B1 Housing	Basic
+der Mieter	tenant	der Mieter, die Mieter	housing b1	B1 Housing	Reverse
+die Mitbewohnerin	flatmate	die Mitbewohnerin, die Mitbewohnerinnen	housing b1	B1 Housing	Basic
+die Wohngemeinschaft	shared flat	Also: die WG	housing b1	B1 Housing	Reverse
+das Zimmer	room	das Zimmer, die Zimmer	housing b1	B1 Housing	Basic
+das Schlafzimmer	bedroom	das Schlafzimmer, die Schlafzimmer	housing b1	B1 Housing	Reverse
+das Wohnzimmer	living room	das Wohnzimmer, die Wohnzimmer	housing b1	B1 Housing	Basic
+die Küche	kitchen	die Küche, die Küchen	housing b1	B1 Housing	Reverse
+das Bad	bathroom	das Bad, die Bäder	housing b1	B1 Housing	Basic
+der Balkon	balcony	der Balkon, die Balkone	housing b1	B1 Housing	Reverse
+der Aufzug	elevator	der Aufzug, die Aufzüge	housing b1	B1 Housing	Basic
+die Heizung	heating	die Heizung, die Heizungen	housing b1	B1 Housing	Reverse
+einziehen	to move in	ist eingezogen	housing b1	B1 Housing	Basic
+ausziehen	to move out	ist ausgezogen	housing b1	B1 Housing	Reverse
+umziehen	to move house	ist umgezogen	housing b1	B1 Housing	Basic
+kündigen	to terminate/cancel	hat gekündigt	housing b1	B1 Housing	Reverse
+renovieren	to renovate	hat renoviert	housing b1	B1 Housing	Basic
+möbliert	furnished	Adjective	housing b1	B1 Housing	Reverse
+unmöbliert	unfurnished	Adjective	housing b1	B1 Housing	Basic
+hell	bright	Adjective	housing b1	B1 Housing	Reverse
+ruhig	quiet	Adjective	housing b1	B1 Housing	Basic
+zentral gelegen	centrally located	Phrase	housing b1	B1 Housing	Reverse
+ab sofort verfügbar	available immediately	Phrase	housing b1	B1 Housing	Basic
+Haustiere erlaubt	pets allowed	Phrase	housing b1	B1 Housing	Reverse
+Ich interessiere mich für die Wohnung.	I am interested in the apartment.	Viewing phrase	housing b1 phrase	B1 Housing	Basic
+Wann kann ich die Wohnung besichtigen?	When can I view the apartment?	Viewing phrase	housing b1 phrase	B1 Housing	Basic
+Sind die Nebenkosten in der Miete enthalten?	Are utilities included in the rent?	Question	housing b1 phrase	B1 Housing	Reverse
+Die Kaution beträgt zwei Monatsmieten.	The deposit is two months' rent.	Rental phrase	housing b1 phrase	B1 Housing	Basic
+Der Mietvertrag läuft ab dem ersten Juni.	The rental contract starts on June first.	Rental phrase	housing b1 phrase	B1 Housing	Reverse
+Ich ziehe nächste Woche in eine WG.	I am moving into a shared flat next week.	Move-in phrase	housing b1 phrase	B1 Housing	Basic

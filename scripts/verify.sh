@@ -2,6 +2,7 @@
 set -eu
 
 export GOCACHE="${GOCACHE:-/tmp/deutsch-tui-gocache}"
+export PIP_DISABLE_PIP_VERSION_CHECK="${PIP_DISABLE_PIP_VERSION_CHECK:-1}"
 
 unformatted="$(gofmt -l cmd internal)"
 if [ -n "$unformatted" ]; then

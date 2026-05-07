@@ -119,12 +119,16 @@ func (s *EmbeddedSource) LoadDecks() ([]core.Deck, error) {
 			continue
 		}
 
-		for i := range notes {
-			notes[i].Cards = CardsForNote(notes[i])
-		}
-
 		deckName := strings.TrimSuffix(entry.Name(), ".tsv")
 		deckID := ToDeckID(deckName)
+
+		for i := range notes {
+			notes[i].DeckID = deckID
+			notes[i].Cards = CardsForNote(notes[i])
+			for j := range notes[i].Cards {
+				notes[i].Cards[j].DeckID = deckID
+			}
+		}
 
 		if deck, ok := deckMap[deckID]; ok {
 			deck.Notes = append(deck.Notes, notes...)

@@ -56,6 +56,13 @@ func clampInt(v, low, high int) int {
 	return v
 }
 
+func (m *Model) currentAITemplateSet() string {
+	if len(m.aiTemplateSets) == 0 {
+		return ""
+	}
+	return m.aiTemplateSets[clampInt(m.aiTemplateIndex, 0, len(m.aiTemplateSets)-1)]
+}
+
 func friendlyError(err error) string {
 	if err == nil {
 		return ""

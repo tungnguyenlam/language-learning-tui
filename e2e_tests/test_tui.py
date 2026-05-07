@@ -165,16 +165,16 @@ def test_settings_and_template_drafting():
             agent.act('7')
             agent.wait_until_stable()
             agent.assert_text("Settings")
-            agent.assert_text("AI Provider: disabled")
+            agent.assert_text("AI Provider:    disabled")
 
             # Switch to offline, then template provider
             agent.act('<Enter>')
             agent.wait_until_stable()
-            agent.assert_text("AI Provider: offline")
+            agent.assert_text("AI Provider:    offline")
             
             agent.act('<Enter>')
             agent.wait_until_stable()
-            agent.assert_text("AI Provider: template")
+            agent.assert_text("AI Provider:    template")
             agent.assert_text("Switched to template AI provider")
 
             # Edit Front Template
@@ -212,11 +212,11 @@ def test_settings_persistence():
             # Switch to offline, then template provider
             agent.act('<Enter>')
             agent.wait_until_stable()
-            agent.assert_text("AI Provider: offline")
+            agent.assert_text("AI Provider:    offline")
 
             agent.act('<Enter>')
             agent.wait_until_stable()
-            agent.assert_text("AI Provider: template")
+            agent.assert_text("AI Provider:    template")
         finally:
             agent.close()
 
@@ -225,7 +225,7 @@ def test_settings_persistence():
         try:
             restarted.act('7')
             restarted.wait_until_stable()
-            restarted.assert_text("AI Provider: template")
+            restarted.assert_text("AI Provider:    template")
         finally:
             restarted.close()
 def test_all_core_views_render_with_keyboard_navigation():
@@ -310,7 +310,7 @@ def test_mouse_tabs_open_import_ai_and_settings_views():
             # Settings tab
             agent.click(59, 3)
             agent.wait_for_text("Settings")
-            agent.assert_text("AI Provider: disabled")
+            agent.assert_text("AI Provider:    disabled")
         finally:
             agent.close()
 
@@ -422,7 +422,7 @@ def test_settings_navigation_with_up_down_arrows():
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
             agent.act('7')
-            agent.wait_for_text("AI Provider: disabled")
+            agent.wait_for_text("AI Provider:    disabled")
             
             agent.act('<Down>')
             agent.wait_until_stable()
@@ -437,7 +437,7 @@ def test_settings_navigation_with_up_down_arrows():
             agent.wait_until_stable()
             
             agent.act('<Enter>')
-            agent.wait_for_text("AI Provider: offline")
+            agent.wait_for_text("AI Provider:    offline")
         finally:
             agent.close()
 

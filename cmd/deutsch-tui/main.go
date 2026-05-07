@@ -54,14 +54,7 @@ func main() {
 
 	decks, err := store.Decks(context.Background())
 	if err == nil && len(decks) == 0 {
-		availableDecks, err := content.AllDecks()
-		if err == nil && len(availableDecks) > 0 {
-			for _, deck := range availableDecks {
-				if err := store.UpsertDeck(context.Background(), deck); err != nil {
-					logger.Printf("upsert deck %s: %v", deck.ID, err)
-				}
-			}
-		} else if err := store.UpsertDeck(context.Background(), content.StarterDeck()); err != nil {
+		if err := store.UpsertDeck(context.Background(), content.StarterDeck()); err != nil {
 			logger.Printf("upsert starter deck: %v", err)
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)

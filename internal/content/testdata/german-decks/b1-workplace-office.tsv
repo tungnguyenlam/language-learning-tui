@@ -1,0 +1,24 @@
+ID	DeckID	Front	Back	Extra	Tags
+b1-work-buero	b1-workplace-office	das Büro	office	Plural: die Büros	b1,noun,work
+b1-work-schreibtisch	b1-workplace-office	der Schreibtisch	desk	Plural: die Schreibtische	b1,noun,work
+b1-work-besprechung	b1-workplace-office	die Besprechung	meeting	Plural: die Besprechungen	b1,noun,work
+b1-work-kollege	b1-workplace-office	der Kollege	colleague (male)	Plural: die Kollegen	b1,noun,work
+b1-work-kollegin	b1-workplace-office	die Kollegin	colleague (female)	Plural: die Kolleginnen	b1,noun,work
+b1-work-chef	b1-workplace-office	der Chef	boss (male)	Plural: die Chefs	b1,noun,work
+b1-work-chefin	b1-workplace-office	die Chefin	boss (female)	Plural: die Chefinnen	b1,noun,work
+b1-work-mitarbeiter	b1-workplace-office	der Mitarbeiter	employee (male)	Plural: die Mitarbeiter	b1,noun,work
+b1-work-kuendigen	b1-workplace-office	kündigen	to resign / to fire	Ich kündige meinen Job = I resign. Wir kündigen ihm = We fire him.	b1,verb,work
+b1-work-bewerbung	b1-workplace-office	die Bewerbung	job application	Plural: die Bewerbungen	b1,noun,work
+b1-work-vorstellungsgespraech	b1-workplace-office	das Vorstellungsgespräch	job interview	Plural: die Vorstellungsgespräche	b1,noun,work
+b1-work-lebenslauf	b1-workplace-office	der Lebenslauf	resume / CV	Plural: die Lebensläufe	b1,noun,work
+b1-work-feierabend	b1-workplace-office	der Feierabend	end of the working day	Schönen Feierabend! (Have a nice evening after work!)	b1,noun,work
+b1-work-teilzeit	b1-workplace-office	in Teilzeit arbeiten	to work part-time		b1,verb,work
+b1-work-vollzeit	b1-workplace-office	in Vollzeit arbeiten	to work full-time		b1,verb,work
+b1-work-urlaub	b1-workplace-office	der Urlaub	vacation / holiday	Ich nehme mir Urlaub.	b1,noun,work
+b1-work-krankmelden	b1-workplace-office	sich krankmelden	to call in sick	Ich muss mich heute krankmelden.	b1,verb,work
+b1-work-termin	b1-workplace-office	der Termin	appointment	Ich habe einen Termin um 14 Uhr.	b1,noun,work
+b1-work-absagen	b1-workplace-office	einen Termin absagen	to cancel an appointment		b1,verb,work
+b1-work-verschieben	b1-workplace-office	einen Termin verschieben	to postpone an appointment		b1,verb,work
+b1-work-gehalt	b1-workplace-office	das Gehalt	salary	Plural: die Gehälter	b1,noun,work
+b1-work-steuern	b1-workplace-office	die Steuern (Pl.)	taxes		b1,noun,work
+b1-work-feierabend-machen	b1-workplace-office	Feierabend machen	to finish work for the day	Wir machen jetzt Feierabend.	b1,phrase,work

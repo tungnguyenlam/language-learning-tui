@@ -1,66 +1,44 @@
 # Active Backlog
 
-Last updated: 2026-05-07
+Last updated: 2026-05-08
 
 ## Current Milestone
 
-Advanced SRS Features & User Preferences
+End-to-end TUI correctness and autonomy batch
 
 ## Completed Work
 
-### Per-Deck Study Limits (DONE)
-- [x] Extended Deck model and storage schema with new columns.
-- [x] Added SQLite migration #19.
-- [x] Implemented interactive limit editing in Decks view.
-- [x] Verified compatibility with existing E2E tests.
-
-### UI Polish & UX Enhancements (DONE)
-- [x] Implemented visual progress bars for daily goals on Dashboard and Statistics views.
-- [x] Added "Next Card" preview to Dashboard.
-- [x] Polished Review view with dedicated card-like borders and better spacing.
-- [x] Enhanced AI Drafts view with a dedicated Preview box and better alignment.
-- [x] Verified all 105 tests pass after UI updates.
+### UI Polish & Developer Experience (DONE)
+- [x] Refined UI spacing and layout in Settings: aligned keys, updated formatting.
+- [x] Enhanced AI Drafts view with placeholder strings for better context.
+- [x] Improved Makefile for easier local developer testing (`make fmt`, `make build`, etc.).
+- [x] Created and successfully ran new E2E test `e2e_tests/test_settings_ui.py` for Settings UI layout.
 
 ### Content Library Expansion (IN PROGRESS)
 - [x] Expand Grammar Essentials deck from 14 to 60+ cards
 - [x] Expand German Idioms deck from 10 to 40+ cards
+- [x] Add new Workplace & Office German deck (`b1-workplace-office.tsv`)
 - [x] Add new Shopping & Services deck
 - [x] Add new Health & Body deck
 - [x] Add new Emotions & Feelings deck
 - [x] Add new Transport & Directions deck
 
-### Bug Hunting & Stability (DONE)
-- [x] Fixed MCQ key collisions with global navigation.
-- [x] Prevented starter deck re-insertion/overwrites in `main.go`.
-- [x] Enabled SQLite foreign key constraints for cascading deletes.
-- [x] Stabilized deck list cursor during background reloads.
-- [x] Implemented stable deletion IDs to prevent race conditions.
-- [x] Verified all 105 tests pass successfully.
-
-### E2E Test Optimization & Stabilisation (DONE)
-- [x] **Binary pre-build**: Modified `scripts/verify.sh` to build binary once, reducing resource contention.
-- [x] **Parallel Test Fixes**: Updated all 28 E2E tests to use `DEUTSCH_TUI_BIN`.
-- [x] **Hitbox Alignment**: Aligned hitboxes with Lip Gloss metrics in all views using `contentLayoutForStyle`.
-- [x] **Deletion Confirmation**: Added modal confirmation dialogs for card and deck deletions.
-- [x] **Transactional Storage**: Wrapped bulk storage updates in transactions for performance and atomicity.
-
-### Template Editing Cancel Behavior Fix
-- [x] **Added revert-on-cancel for template editing**: Esc during template editing now restores the original value instead of keeping changes.
-- [x] **Stored original values**: Added `originalTemplateValue` field to preserve pre-edit state.
-
 ### Bug Hunting & Stability Polish
+- [x] Fixed E2E test truncation flakiness by configuring `lines=40` for specific tests (`test_audio_autoplay.py`, `test_ui_sanity.py`).
 - [x] **TUI Bug Fixes**: Resolved cursor panics, leaky modals, and ignored errors.
 - [x] **Data Integrity**: Added transactions, fixed timezone inconsistencies, and enabled foreign keys in connection pool.
 - [x] **Performance**: Indexed `reviewed_at` and clamped integer overflow in SRS scheduler.
-- [x] **Multi-Agent Deep Bug Hunt**: Uncovered and fixed out-of-bounds panics, unhandled `rows.Err()` iterations, resource leaks (`rows.Close()`), and incorrect layout height/width propagation.
 
 ## Next Action
 
-- [x] Scalable content system with Registry pattern
+- [ ] Phase 1: run `cmd/deutsch-tui` through smoke and tui-tester to capture current launch/render state.
+- [ ] Phase 2: list top launch, navigation, persistence, and E2E coverage blockers.
+- [x] Phase 3 batch A: implemented Review cursor safety, AI/Settings template index safety, empty import/export guards, and cross-view UI hints.
+- [x] Phase 3 batch B: added 8 tui-tester E2E tests covering Dashboard, Review persistence, Decks, Import, AI, Settings, and view navigation; added B1 Apartment & Housing content.
+- [x] Phase 4: `./scripts/verify.sh` passes with Go tests, smoke, and 116 E2E tests.
 
 ## Verification State
 
-- Last verified: `./scripts/verify.sh` - 105/105 E2E tests pass, all Go tests pass.
+- Last verified: `./scripts/verify.sh` passes with no warnings; 116 E2E tests pass. `go run ./cmd/deutsch-tui --help` succeeds.
 - Environment: Darwin, Go 1.x, Python 3.12.
-- Content: 1366+ cards across 14 decks with explanations
 - Architecture: Scalable content Registry with pluggable sources

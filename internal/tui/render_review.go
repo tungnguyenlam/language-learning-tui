@@ -11,12 +11,22 @@ import (
 
 func (m *Model) renderReview(x, y int) string {
 	if len(m.dueCards) == 0 {
+		title := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).Render("Review")
+		message := "No cards due."
 		if m.bookmarkFilter {
-			return "Review (Bookmarked)\n\nNo bookmarked cards due."
+			title = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).Render("Review (Bookmarked)")
+			message = "No bookmarked cards due."
 		}
-		return "Review\n\nNo cards due."
+		emptyBox := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("81")).
+			Padding(1, 2).
+			Width(46).
+			Render(message + "\n\nUse [ and ] to switch decks or B to toggle the bookmark filter.")
+		return title + "\n\n" + emptyBox
 	}
-	card := m.dueCards[m.cursor]
+	cursor := clampInt(m.cursor, 0, len(m.dueCards)-1)
+	card := m.dueCards[cursor]
 	bookmark := "Bookmark: off"
 	if card.Bookmarked {
 		bookmark = "Bookmark: on"
@@ -65,7 +75,7 @@ func (m *Model) renderReview(x, y int) string {
 	geW := lipgloss.Width(gradeEasy)
 
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
-	header := fmt.Sprintf("%s%s %d/%d", titleStyle.Render("Review"), filterBanner, m.cursor+1, len(m.dueCards))
+	header := fmt.Sprintf("%s%s %d/%d", titleStyle.Render("Review"), filterBanner, cursor+1, len(m.dueCards))
 
 	mature := ""
 	if card.Mature {

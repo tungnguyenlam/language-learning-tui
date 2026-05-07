@@ -611,7 +611,10 @@ func (m *Model) updateActiveAITemplate() {
 	if len(m.aiTemplateSets) == 0 {
 		return
 	}
-	setName := m.aiTemplateSets[m.aiTemplateIndex]
+	setName := m.currentAITemplateSet()
+	if setName == "" {
+		return
+	}
 	if tp, ok := m.aiProvider.(ai.TemplateProvider); ok {
 		tp.ActiveSet = setName
 		m.aiProvider = tp
