@@ -4,9 +4,16 @@ Last updated: 2026-05-07
 
 ## Current Milestone
 
-Content Library Expansion & Improvement
+Advanced SRS Features & User Preferences
 
 ## Completed Work
+
+### UI Polish & UX Enhancements (DONE)
+- [x] Implemented visual progress bars for daily goals on Dashboard and Statistics views.
+- [x] Added "Next Card" preview to Dashboard.
+- [x] Polished Review view with dedicated card-like borders and better spacing.
+- [x] Enhanced AI Drafts view with a dedicated Preview box and better alignment.
+- [x] Verified all 105 tests pass after UI updates.
 
 ### Content Library Expansion (IN PROGRESS)
 - [x] Expand Grammar Essentials deck from 14 to 60+ cards

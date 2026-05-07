@@ -80,7 +80,7 @@ func (m *Model) renderAI(x, y int) string {
 			style = style.Bold(true).Foreground(lipgloss.Color("212"))
 		}
 		draft := m.drafts[i]
-		item := fmt.Sprintf("%s%s -> %s", prefix, draft.Note.Front, draft.Note.Back)
+		item := fmt.Sprintf("%s%s -> %s", prefix, draft.Note.Front, truncateLine(draft.Note.Back, 40))
 
 		rowY := layout.Y + strings.Count(b.String(), "\n")
 		b.WriteString(style.Render(item))
@@ -94,7 +94,8 @@ func (m *Model) renderAI(x, y int) string {
 			btnStyle = btnStyle.Foreground(lipgloss.Color("81"))
 		}
 
-		approveX := layout.X + lipgloss.Width(item)
+		itemWidth := lipgloss.Width(item)
+		approveX := layout.X + itemWidth
 		discardX := approveX + lipgloss.Width(approveBtn)
 
 		b.WriteString(btnStyle.Render(approveBtn))
@@ -124,17 +125,28 @@ func (m *Model) renderAI(x, y int) string {
 	if len(m.drafts) > 0 && m.draftCursor < len(m.drafts) {
 		selected := m.drafts[m.draftCursor]
 		previewTitleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205"))
-		b.WriteString("\n" + previewTitleStyle.Render("Preview:") + "\n")
-		b.WriteString(fmt.Sprintf("  Extra:    %s\n", selected.Note.Extra))
+
+		previewContent := previewTitleStyle.Render("Preview:") + "\n"
+		previewContent += fmt.Sprintf("  Front:    %s\n", selected.Note.Front)
+		previewContent += fmt.Sprintf("  Back:     %s\n", selected.Note.Back)
+		previewContent += fmt.Sprintf("  Extra:    %s\n", selected.Note.Extra)
 		if len(selected.Note.Tags) > 0 {
-			b.WriteString(fmt.Sprintf("  Tags:     %s\n", strings.Join(selected.Note.Tags, ", ")))
+			previewContent += fmt.Sprintf("  Tags:     %s\n", strings.Join(selected.Note.Tags, ", "))
 		}
 		if len(selected.Note.Examples) > 0 {
-			b.WriteString("  Examples:\n")
+			previewContent += "  Examples:\n"
 			for _, ex := range selected.Note.Examples {
-				b.WriteString(fmt.Sprintf("    - %s\n", ex))
+				previewContent += fmt.Sprintf("    - %s\n", ex)
 			}
 		}
+
+		previewBox := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("240")).
+			Padding(0, 1).
+			Width(maxInt(40, width-10)).
+			Render(previewContent)
+		b.WriteString("\n" + previewBox + "\n")
 	}
 
 	if len(m.drafts) > maxVisible {

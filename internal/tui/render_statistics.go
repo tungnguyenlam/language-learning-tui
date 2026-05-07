@@ -33,24 +33,19 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 	content.WriteString(fmt.Sprintf("Total Reviews: %d\n", m.stats.TotalReviews))
 	content.WriteString(fmt.Sprintf("Reviews Today: %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal))
 	// Colored progress bar for daily goal
-	progressWidth := 30
-	progress := 0
+	percentage := 0.0
 	if m.stats.DailyGoal > 0 {
-		progress = (m.stats.ReviewsToday * progressWidth) / m.stats.DailyGoal
-		if progress > progressWidth {
-			progress = progressWidth
-		}
+		percentage = float64(m.stats.ReviewsToday) / float64(m.stats.DailyGoal)
 	}
 	// Color: green if complete, yellow if halfway, red otherwise
 	barColor := "196" // red
-	if progress >= progressWidth {
+	if percentage >= 1.0 {
 		barColor = "46" // green
-	} else if progress >= progressWidth/2 {
+	} else if percentage >= 0.5 {
 		barColor = "226" // yellow
 	}
-	barStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(barColor))
-	bar := strings.Repeat("█", progress) + strings.Repeat("░", progressWidth-progress)
-	content.WriteString(fmt.Sprintf("  %s %d%%\n", barStyle.Render(bar), (m.stats.ReviewsToday*100)/maxInt(m.stats.DailyGoal, 1)))
+	bar := progressBar(30, percentage, barColor, "238")
+	content.WriteString(fmt.Sprintf("  %s %.0f%%\n", bar, percentage*100))
 	// Streak with fire emoji if > 0
 	streakIndicator := ""
 	if m.stats.CurrentStreak > 0 {

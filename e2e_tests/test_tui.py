@@ -347,9 +347,9 @@ def test_mouse_tab_navigation_and_grade_button():
             agent.act('<Enter>')
             agent.wait_for_text("Grade: a Again")
 
-            # In the medium review panel, the Good grade hitbox is now on terminal row 13-14 depending on content.
+            # In the medium review panel, the Good grade hitbox is now on terminal row 14 depending on content.
             # With current starter deck layout, it's at row 14. Column 45 hits 'Good'.
-            agent.click(45, 13) # Try 13 first as 1-based coord for Bubble Tea row 12
+            agent.click(45, 14) 
             agent.wait_for_text("51 cards due")
             agent.assert_text("Review 1/51")
         finally:

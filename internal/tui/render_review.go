@@ -79,6 +79,14 @@ func (m *Model) renderReview(x, y int) string {
 		promptDisplay = strings.Replace(promptDisplay, "]", lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("]"), 1)
 	}
 
+	width, _ := m.activePanelSize()
+	cardWidth := maxInt(30, width-6)
+	cardStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("62")).
+		Padding(0, 2).
+		Width(cardWidth)
+
 	var answer string
 	answerYOffset := 0
 
@@ -88,39 +96,47 @@ func (m *Model) renderReview(x, y int) string {
 		extraDisplay = "\n" + extraStyle.Render("💡 "+card.Extra)
 	}
 
+	headerSection := fmt.Sprintf("%s\n%s | %s\n%s%s%s", header, bookmark, keys, leech, suspended, audioIndicator)
+	headerLines := strings.Count(headerSection, "\n") + 1
+
+	cardX := x + cardStyle.GetMarginLeft() + cardStyle.GetBorderLeftSize() + cardStyle.GetPaddingLeft()
+	cardY := y + headerLines + 1 + cardStyle.GetMarginTop() + cardStyle.GetBorderTopSize() + cardStyle.GetPaddingTop()
+
 	if card.Kind == core.CardKindMCQ && len(card.Choices) > 0 {
 		if m.revealState == RevealRevealed {
 			mcqChoices := renderMCQChoices(card.Choices, m.mcqChoice)
 			if m.mcqAnswered {
 				feedback := "Incorrect"
+				feedbackStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Bold(true)
 				if m.mcqCorrect {
 					feedback = "Correct"
+					feedbackStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Bold(true)
 				}
-				answer = fmt.Sprintf("%s: %s%s\n\n%s\n\nGrade: a %s | h %s | g %s | e %s", feedback, card.Answer, extraDisplay, mcqChoices, gradeAgain, gradeHard, gradeGood, gradeEasy)
-				answerYOffset = strings.Count(fmt.Sprintf("%s\n%s | %s\n%s%s%s\n\n%s%s\n\n%s: %s\n\n%s\n\nGrade: ", header, bookmark, keys, leech, suspended, audioIndicator, promptDisplay, mature, feedback, card.Answer, mcqChoices), "\n")
+				answer = fmt.Sprintf("%s: %s%s\n\n%s\n\nGrade: a %s | h %s | g %s | e %s", feedbackStyle.Render(feedback), card.Answer, extraDisplay, mcqChoices, gradeAgain, gradeHard, gradeGood, gradeEasy)
+				answerYOffset = cardY + strings.Count(fmt.Sprintf("%s%s\n\n%s: %s\n\n%s\n\nGrade: ", promptDisplay, mature, feedback, card.Answer, mcqChoices), "\n")
 
 				labelAgain := "Grade: a "
 				labelHard := fmt.Sprintf("Grade: a %s | h ", gradeAgainText)
 				labelGood := fmt.Sprintf("Grade: a %s | h %s | g ", gradeAgainText, gradeHardText)
 				labelEasy := fmt.Sprintf("Grade: a %s | h %s | g %s | e ", gradeAgainText, gradeHardText, gradeGoodText)
 
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: x + lipgloss.Width(labelAgain), Y: y + answerYOffset, Width: gaW, Height: 1})
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: x + lipgloss.Width(labelHard), Y: y + answerYOffset, Width: ghW, Height: 1})
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: x + lipgloss.Width(labelGood), Y: y + answerYOffset, Width: ggW, Height: 1})
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + lipgloss.Width(labelEasy), Y: y + answerYOffset, Width: geW, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: cardX + lipgloss.Width(labelAgain), Y: answerYOffset, Width: gaW, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: cardX + lipgloss.Width(labelHard), Y: answerYOffset, Width: ghW, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: cardX + lipgloss.Width(labelGood), Y: answerYOffset, Width: ggW, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: cardX + lipgloss.Width(labelEasy), Y: answerYOffset, Width: geW, Height: 1})
 			} else {
 				answer = fmt.Sprintf("1-4 select answer%s\n\n%s\n\nGrade: a %s | h %s | g %s | e %s", extraDisplay, mcqChoices, gradeAgain, gradeHard, gradeGood, gradeEasy)
-				answerYOffset = strings.Count(fmt.Sprintf("%s\n%s | %s\n%s%s%s\n\n%s%s\n\n1-4 select answer\n\n%s\n\nGrade: ", header, bookmark, keys, leech, suspended, audioIndicator, promptDisplay, mature, mcqChoices), "\n")
+				answerYOffset = cardY + strings.Count(fmt.Sprintf("%s%s\n\n1-4 select answer\n\n%s\n\nGrade: ", promptDisplay, mature, mcqChoices), "\n")
 
 				labelAgain := "Grade: a "
 				labelHard := fmt.Sprintf("Grade: a %s | h ", gradeAgainText)
 				labelGood := fmt.Sprintf("Grade: a %s | h %s | g ", gradeAgainText, gradeHardText)
 				labelEasy := fmt.Sprintf("Grade: a %s | h %s | g %s | e ", gradeAgainText, gradeHardText, gradeGoodText)
 
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: x + lipgloss.Width(labelAgain), Y: y + answerYOffset, Width: gaW, Height: 1})
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: x + lipgloss.Width(labelHard), Y: y + answerYOffset, Width: ghW, Height: 1})
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: x + lipgloss.Width(labelGood), Y: y + answerYOffset, Width: ggW, Height: 1})
-				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + lipgloss.Width(labelEasy), Y: y + answerYOffset, Width: geW, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: cardX + lipgloss.Width(labelAgain), Y: answerYOffset, Width: gaW, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: cardX + lipgloss.Width(labelHard), Y: answerYOffset, Width: ghW, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: cardX + lipgloss.Width(labelGood), Y: answerYOffset, Width: ggW, Height: 1})
+				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: cardX + lipgloss.Width(labelEasy), Y: answerYOffset, Width: geW, Height: 1})
 			}
 		} else if m.revealState == RevealRevealing {
 			answer = fmt.Sprintf("1-4 select answer\n\n%s", renderMCQChoices(card.Choices, m.mcqChoice))
@@ -129,17 +145,17 @@ func (m *Model) renderReview(x, y int) string {
 		}
 	} else if m.revealState == RevealRevealed {
 		answer = fmt.Sprintf("%s%s\n\nGrade: a %s | h %s | g %s | e %s", card.Answer, extraDisplay, gradeAgain, gradeHard, gradeGood, gradeEasy)
-		answerYOffset = strings.Count(fmt.Sprintf("%s\n%s | %s\n%s%s%s\n\n%s%s\n\n%s\n\nGrade: ", header, bookmark, keys, leech, suspended, audioIndicator, promptDisplay, mature, card.Answer), "\n")
+		answerYOffset = cardY + strings.Count(fmt.Sprintf("%s%s\n\n%s\n\nGrade: ", promptDisplay, mature, card.Answer), "\n")
 
 		labelAgain := "Grade: a "
 		labelHard := fmt.Sprintf("Grade: a %s | h ", gradeAgainText)
 		labelGood := fmt.Sprintf("Grade: a %s | h %s | g ", gradeAgainText, gradeHardText)
 		labelEasy := fmt.Sprintf("Grade: a %s | h %s | g %s | e ", gradeAgainText, gradeHardText, gradeGoodText)
 
-		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: x + lipgloss.Width(labelAgain), Y: y + answerYOffset, Width: gaW, Height: 1})
-		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: x + lipgloss.Width(labelHard), Y: y + answerYOffset, Width: ghW, Height: 1})
-		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: x + lipgloss.Width(labelGood), Y: y + answerYOffset, Width: ggW, Height: 1})
-		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + lipgloss.Width(labelEasy), Y: y + answerYOffset, Width: geW, Height: 1})
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: cardX + lipgloss.Width(labelAgain), Y: answerYOffset, Width: gaW, Height: 1})
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: cardX + lipgloss.Width(labelHard), Y: answerYOffset, Width: ghW, Height: 1})
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: cardX + lipgloss.Width(labelGood), Y: answerYOffset, Width: ggW, Height: 1})
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: cardX + lipgloss.Width(labelEasy), Y: answerYOffset, Width: geW, Height: 1})
 	} else if m.revealState == RevealRevealing {
 		// Show gradual reveal animation with blocks
 		progress := int(m.revealProgress)
@@ -163,7 +179,7 @@ func (m *Model) renderReview(x, y int) string {
 		answer = "Press space or enter to reveal."
 	}
 
-	view := fmt.Sprintf("%s\n%s | %s\n%s%s%s\n\n%s%s\n\n%s", header, bookmark, keys, leech, suspended, audioIndicator, promptDisplay, mature, answer)
+	view := fmt.Sprintf("%s\n\n%s", headerSection, cardStyle.Render(promptDisplay+mature+"\n\n"+answer))
 	if m.showReviewHistory && m.reviewHistoryCard == card.ID {
 		view += "\n\n" + m.renderReviewHistory(card.Prompt)
 	}

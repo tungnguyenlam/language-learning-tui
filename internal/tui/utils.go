@@ -122,6 +122,25 @@ func decksFromNotes(notes []core.Note) []core.Deck {
 	return decks
 }
 
+func progressBar(width int, percentage float64, filledColor, emptyColor string) string {
+	if width <= 0 {
+		return ""
+	}
+	filledWidth := int(float64(width) * percentage)
+	if filledWidth > width {
+		filledWidth = width
+	}
+	if filledWidth < 0 {
+		filledWidth = 0
+	}
+	emptyWidth := width - filledWidth
+
+	filled := lipgloss.NewStyle().Foreground(lipgloss.Color(filledColor)).Render(strings.Repeat("█", filledWidth))
+	empty := lipgloss.NewStyle().Foreground(lipgloss.Color(emptyColor)).Render(strings.Repeat("░", emptyWidth))
+
+	return filled + empty
+}
+
 var (
 	headerStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("229"))
 	mutedStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("244"))

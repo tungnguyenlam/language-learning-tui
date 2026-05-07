@@ -1,5 +1,22 @@
 # Done Backlog
 
+## 2026-05-07: UI Polish & UX Enhancements
+- **Dashboard Enhancements**:
+  - Implemented a visual progress bar for daily study goals.
+  - Added a "Next Card" preview to give users a glimpse of what's coming up.
+- **Review View Polish**:
+  - Introduced a dedicated "Card" border around flashcard content for better focus.
+  - Improved layout separation between deck headers and card content.
+  - Refined MCQ feedback with color-coded Correct/Incorrect labels.
+- **AI View Improvements**:
+  - Added a dedicated, boxed Preview area for AI-generated drafts.
+  - Improved draft list alignment and truncation for better readability.
+- **Statistics View**:
+  - Unified progress bar rendering using a new shared helper function.
+- **Test Stability**:
+  - Updated E2E tests to match the new UI coordinates and formatting.
+  - Verified all 105 tests pass successfully.
+
 ## 2026-05-07: Multi-Agent Bug Hunting & Stability
 - **Storage Layer Fixes**:
   - Fixed resource leak by adding `defer rows.Close()` in `notesForDeck`.
