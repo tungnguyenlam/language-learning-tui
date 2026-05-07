@@ -1,31 +1,31 @@
 # German Content Expansion Summary
 
 ## Overview
-The deutsch-tui application has been significantly enhanced with comprehensive German language learning content, expanding from a basic A1 starter deck to a full A1-B2 level learning system with 600+ vocabulary items and 500+ additional importable cards.
+The deutsch-tui application has been significantly enhanced with comprehensive German language learning content, expanding from a basic A1 starter deck to a full A1-B2 level learning system with **1366+ vocabulary items** across **14 themed decks**.
 
-## New Content Added
+## Current Content Library (1366+ cards)
 
-### 1. GermanExpandedDeck (600+ cards)
-Comprehensive German vocabulary programmatically generated across CEFR levels:
-- **A1 Level (200+ cards)**: Greetings, essential verbs, nouns, adjectives
-- **A2 Level (150+ cards)**: Travel, daily life, separable verbs
-- **B1 Level (180+ cards)**: Business, professional, abstract concepts
-- **B2 Level (100+ cards)**: Academic, cultural, advanced vocabulary
+### Core Decks
+- `a1-essential.tsv`: Core greetings (27 cards)
+- `a1-food-drink.tsv`: Food & restaurant vocabulary (76 cards)
+- `a1-health-body.tsv`: Body parts, health, medical terms (97 cards)
+- `a1-travel.tsv`: Travel & tourism vocabulary (50 cards)
+- `a2-daily-life.tsv`: Routines & daily activities (52 cards)
+- `a2-grammar-essentials.tsv`: Grammar MCQ (60 cards) - cases, tenses, conjunctions
+- `a2-shopping-services.tsv`: Shopping, banking, services (69 cards)
+- `a2-transport-directions.tsv`: Vehicles, travel, directions (146 cards)
+- `b1-business-professional.tsv`: Business terms (93 cards)
+- `b1-emotions-feelings.tsv`: Emotional vocabulary (110 cards)
+- `b1-idioms.tsv`: German idioms & proverbs (43 cards)
+- `b1-false-friends.tsv`: German-English false friends (~150 cards)
+- `b1-phrasal-verbs.tsv`: Separable/unseparable verbs (~120 cards)
+- `b2-advanced.tsv`: Advanced academic vocabulary (221 cards)
 
-### 2. Verb Conjugations (251 entries)
-Complete conjugation tables for:
-- All irregular verbs (sein, haben, werden)
-- Modal verbs (können, müssen, wollen, sollen, dürfen, mögen)
-- Common verbs (machen, sagen, gehen, kommen, sehen, nehmen, geben)
-
-### 3. Importable TSV Decks (500+ cards)
-Six ready-to-import Anki-compatible decks:
-- `a1-essential.tsv`: Core greetings (30+ cards)
-- `a1-food-drink.tsv`: Food & restaurant vocabulary (80+ cards)
-- `a2-travel.tsv`: Transportation & travel (50+ cards)
-- `a2-daily-life.tsv`: Routines & daily activities (50+ cards)
-- `b1-business-professional.tsv`: Business terms (97+ cards)
-- `b2-advanced.tsv`: Advanced academic vocabulary (225+ cards)
+### CEFR Distribution
+- **A1**: ~300 cards (essential, food, health, travel)
+- **A2**: ~400 cards (daily life, grammar, shopping, transport)
+- **B1**: ~500 cards (business, emotions, idioms, false friends, phrasal verbs)
+- **B2**: ~220 cards (academic, cultural, advanced)
 
 ## Features
 

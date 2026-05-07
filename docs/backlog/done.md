@@ -1,5 +1,18 @@
 # Done Backlog
 
+## 2026-05-07: Content Library Expansion
+- **Grammar Essentials**: Expanded from 14 to 60 cards (cases, tenses, conjunctions, modal verbs)
+- **German Idioms**: Expanded from 10 to 43 cards (common sayings and proverbs)
+- **New Decks Added**:
+  - A1 Health & Body (97 cards): body parts, health vocabulary, common ailments
+  - A2 Shopping & Services (69 cards): retail, banking, postal services
+  - A2 Transport & Directions (146 cards): vehicles, directions, travel
+  - B1 Emotions & Feelings (110 cards): emotional vocabulary, expressions
+  - B1 False Friends (~150 cards): German words that look like English but mean different things
+  - B1 Phrasal Verbs (~120 cards): trennbare and untrennbare verbs with examples
+- **Total Content**: Expanded from ~600 to 1366 cards across 14 decks (CEFR A1-B2)
+- **Verification**: All 105 E2E tests pass, Go tests pass
+
 ## 2026-05-06: Critical Stability & Integrity Fixes
 - **Deck Management Robustness**:
   - Implemented stable `deleteIDs` in the TUI model to prevent race conditions and ID shifting during deletion confirmation.
