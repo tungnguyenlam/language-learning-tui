@@ -197,12 +197,16 @@ func GermanExpandedDeck() core.Deck {
 	}
 
 	for i, f := range foodItems {
+		prefix := f.german
+		if len(prefix) > 3 {
+			prefix = prefix[:3]
+		}
 		note := core.Note{
 			ID:       fmt.Sprintf("a1-food-%d-%s", i, f.german),
 			DeckID:   "german-expanded",
 			Front:    fmt.Sprintf("der/die/das %s", f.german),
 			Back:     f.english,
-			Extra:    fmt.Sprintf("Gender: %s | Plural: %s", f.german[:3], f.plural), // Simplified
+			Extra:    fmt.Sprintf("Gender: %s | Plural: %s", prefix, f.plural),
 			Tags:     []string{"a1", "noun", "food", "drink"},
 			Examples: []string{},
 		}
