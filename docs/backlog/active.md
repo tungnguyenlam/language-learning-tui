@@ -1,12 +1,20 @@
 # Active Backlog
 
-Last updated: 2026-05-05
+Last updated: 2026-05-07
 
 ## Current Milestone
 
-Advanced Analytics & Reporting Features (STABILIZED)
+Content Library Expansion & Improvement
 
 ## Completed Work
+
+### Content Library Expansion (IN PROGRESS)
+- [x] Expand Grammar Essentials deck from 14 to 60+ cards
+- [x] Expand German Idioms deck from 10 to 40+ cards
+- [x] Add new Shopping & Services deck
+- [x] Add new Health & Body deck
+- [x] Add new Emotions & Feelings deck
+- [x] Add new Transport & Directions deck
 
 ### Bug Hunting & Stability (DONE)
 - [x] Fixed MCQ key collisions with global navigation.
@@ -34,11 +42,12 @@ Advanced Analytics & Reporting Features (STABILIZED)
 
 ## Next Action
 
-- [x] Add more complex grammar MCQ templates (e.g. passive voice, subjunctive)
-- [x] Implement deck-level statistics export
+- [x] Add False Friends deck (~150 cards)
+- [x] Add Phrasal Verbs deck (~120 cards)
+- [ ] Commit all content changes
 
 ## Verification State
 
-- Last verified: `./scripts/verify.sh` - 102/102 E2E tests pass, all Go tests pass.
+- Last verified: `./scripts/verify.sh` - 105/105 E2E tests pass, all Go tests pass.
 - Environment: Darwin, Go 1.x, Python 3.12.
-- Stability: Exceptional. Core data integrity issues (Undo flags, multiline TSV) resolved. Multi-agent code review uncovered and fixed long-standing backend edge cases.
+- Content: Expanded from ~600 to ~1300 cards across 14 decks (A1-B2)

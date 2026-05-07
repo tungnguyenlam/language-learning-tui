@@ -1,0 +1,113 @@
+#separator:tab
+#html:false
+#deck:B1 Emotions & Feelings
+front	back	extra	tags	notetype
+glücklich	happy	Adjektiv	emotions b1	B1 Emotions	Basic
+traurig	sad	Adjektiv	emotions b1	B1 Emotions	Reverse
+wütend	angry	Adjektiv	emotions b1	B1 Emotions	Basic
+ängstlich	afraid/anxious	Adjektiv	emotions b1	B1 Emotions	Reverse
+müde	tired	Adjektiv	emotions b1	B1 Emotions	Basic
+hungrig	hungry	Adjektiv	emotions b1	B1 Emotions	Reverse
+durstig	thirsty	Adjektiv	emotions b1	B1 Emotions	Basic
+satt	full (after eating)	Adjektiv	emotions b1	B1 Emotions	Reverse
+nervous	nervous	Adjektiv	emotions b1	B1 Emotions	Basic
+aufgeregt	excited	Adjektiv	emotions b1	B1 Emotions	Reverse
+entspannt	relaxed	Adjektiv	emotions b1	B1 Emotions	Basic
+gestresst	stressed	Adjektiv	emotions b1	B1 Emotions	Reverse
+frustriert	frustrated	Adjektiv	emotions b1	B1 Emotions	Basic
+enttäuscht	disappointed	Adjektiv	emotions b1	B1 Emotions	Reverse
+erstaunt	surprised	Adjektiv	emotions b1	B1 Emotions	Basic
+neugierig	curious	Adjektiv	emotions b1	B1 Emotions	Reverse
+optimistisch	optimistic	Adjektiv	emotions b1	B1 Emotions	Basic
+pessimistisch	pessimistic	Adjektiv	emotions b1	B1 Emotions	Reverse
+selbstbewusst	confident (self-assured)	Adjektiv	emotions b1	B1 Emotions	Reverse
+unsicher	insecure	Adjektiv	emotions b1	B1 Emotions	Basic
+schüchtern	shy	Adjektiv	emotions b1	B1 Emotions	Reverse
+eifersüchtig	jealous	Adjektiv	emotions b1	B1 Emotions	Basic
+stolz	proud	Adjektiv	emotions b1	B1 Emotions	Reverse
+beschämt	embarrassed	Adjektiv	emotions b1	B1 Emotions	Basic
+schuldig	guilty	Adjektiv	emotions b1	B1 Emotions	Reverse
+einsam	lonely	Adjektiv	emotions b1	B1 Emotions	Basic
+verliebt	in love	Adjektiv	emotions b1	B1 Emotions	Reverse
+vermissen	to miss	vermissen	emotions b1	B1 Emotions	Basic
+sehnen	sich nach	to long for	sehnen, sehnte, hat gesehnt	emotions b1	B1 Emotions	Reverse
+Gefühl	feeling	Gefühl, Gefühle	emotions b1	B1 Emotions	Basic
+Emotion	emotion	Emotion, Emotionen	emotions b1	B1 Emotions	Reverse
+Stimmung	mood	Stimmung, Stimmungen	emotions b1	B1 Emotions	Basic
+die Freude	joy	Freude (no plural)	emotions b1	B1 Emotions	Reverse
+das Glück	happiness/luck	Glück (no plural)	emotions b1	B1 Emotions	Basic
+die Trauer	sadness	Trauer (no plural)	emotions b1	B1 Emotions	Reverse
+die Wut	anger	Wut (no plural)	emotions b1	B1 Emotions	Basic
+die Angst	fear	Angst, Ängste	emotions b1	B1 Emotions	Reverse
+der Ärger	annoyance	Ärger (no plural)	emotions b1	B1 Emotions	Basic
+die Hoffnung	hope	Hoffnung, Hoffnungen	emotions b1	B1 Emotions	Reverse
+die Verzweiflung	despair	Verzweiflung (no plural)	emotions b1	B1 Emotions	Reverse
+der Schmerz	pain/heartache	Schmerz, Schmerzen	emotions b1	B1 Emotions	Basic
+das Leiden	suffering	Leiden (no plural)	emotions b1	B1 Emotions	Reverse
+der Kummer	sorrow	Kummer (no plural)	emotions b1	B1 Emotions	Basic
+die Sorge	worry	Sorge, Sorgen	emotions b1	B1 Emotions	Reverse
+die Ruhe	calm	Ruhe (no plural)	emotions b1	B1 Emotions	Basic
+die Zufriedenheit	satisfaction	Zufriedenheit (no plural)	emotions b1	B1 Emotions	Reverse
+die Unsicherheit	insecurity	Unsicherheit (no plural)	emotions b1	B1 Emotions	Basic
+der Mut	courage	Mut (no plural)	emotions b1	B1 Emotions	Basic
+die Tapferkeit	bravery	Tapferkeit (no plural)	emotions b1	B1 Emotions	Reverse
+die Erleichterung	relief	Erleichterung (no plural)	emotions b1	B1 Emotions	Basic
+die Enttäuschung	disappointment	Enttäuschung, Enttäuschungen	emotions b1	B1 Emotions	Reverse
+die Begeisterung	enthusiasm	Begeisterung (no plural)	emotions b1	B1 Emotions	Basic
+die Langweile	boredom	Langweile (no plural)	emotions b1	B1 Emotions	Reverse
+der Ekel	disgust	Ekel (no plural)	emotions b1	B1 Emotions	Basic
+der Hass	hatred	Hass (no plural)	emotions b1	B1 Emotions	Reverse
+die Liebe	love	Liebe (no plural)	emotions b1	B1 Emotions	Basic
+die Zuneigung	affection	Zuneigung (no plural)	emotions b1	B1 Emotions	Reverse
+der Respekt	respect	Respekt (no plural)	emotions b1	B1 Emotions	Basic
+die Dankbarkeit	gratitude	Dankbarkeit (no plural)	emotions b1	B1 Emotions	Reverse
+die Reue	regret	Reue (no plural)	emotions b1	B1 Emotions	Reverse
+das Gewissen	conscience	Gewissen (no plural)	emotions b1	B1 Emotions	Basic
+fühlen	to feel	gefühlt	emotions b1	B1 Emotions	Reverse
+empfinden	to feel/perceive	empfunden	emotions b1	B1 Emotions	Basic
+spüren	to sense/feel	gespürt	emotions b1	B1 Emotions	Reverse
+ausdrücken	to express	ausgedrückt	emotions b1	B1 Emotions	Reverse
+zeigen	to show	gezeigt	emotions b1	B1 Emotions	Basic
+verbergen	to hide	verborgen	emotions b1	B1 Emotions	Reverse
+unterdrücken	to suppress	unterdrückt	emotions b1	B1 Emotions	Reverse
+Ich fühle mich...	I feel...	Phrase	emotions b1	B1 Emotions	Basic
+Mir geht es gut.	I am doing well.	Phrase	emotions b1	B1 Emotions	Reverse
+Mir geht es schlecht.	I am not doing well.	Phrase	emotions b1	B1 Emotions	Basic
+Ich bin glücklich.	I am happy.	Phrase	emotions b1	B1 Emotions	Reverse
+Ich bin traurig.	I am sad.	Phrase	emotions b1	B1 Emotions	Basic
+Ich bin wütend.	I am angry.	Phrase	emotions b1	B1 Emotions	Reverse
+Ich habe Angst.	I am afraid.	Phrase	emotions b1	B1 Emotions	Basic
+Ich bin müde.	I am tired.	Phrase	emotions b1	B1 Emotions	Reverse
+Ich bin nervös.	I am nervous.	Phrase	emotions b1	B1 Emotions	Basic
+Ich bin aufgeregt.	I am excited.	Phrase	emotions b1	B1 Emotions	Reverse
+Ich bin entspannt.	I am relaxed.	Phrase	emotions b1	B1 Emotions	Basic
+Ich bin gestresst.	I am stressed.	Phrase	emotions b1	B1 Emotions	Reverse
+Das macht mich traurig.	That makes me sad.	Phrase	emotions b1	B1 Emotions	Basic
+Das freut mich.	That makes me happy.	Phrase	emotions b1	B1 Emotions	Reverse
+Das ärgert mich.	That annoys me.	Phrase	emotions b1	B1 Emotions	Basic
+Das nervt mich.	That gets on my nerves.	Phrase	emotions b1	B1 Emotions	Reverse
+Das überrascht mich.	That surprises me.	Phrase	emotions b1	B1 Emotions	Basic
+Das interessiert mich.	That interests me.	Phrase	emotions b1	B1 Emotions	Reverse
+Das stimmt mich optimistisch.	That makes me optimistic.	Phrase	emotions b1	B1 Emotions	Basic
+Das stimmt mich pessimistisch.	That makes me pessimistic.	Phrase	emotions b1	B1 Emotions	Reverse
+Mein Herz schlägt schneller.	My heart beats faster.	Phrase	emotions b1	B1 Emotions	Reverse
+Mir stockt der Atem.	My breath catches.	Phrase	emotions b1	B1 Emotions	Basic
+Ich bin sprachlos.	I am speechless.	Phrase	emotions b1	B1 Emotions	Reverse
+Ich bin überwältigt.	I am overwhelmed.	Phrase	emotions b1	B1 Emotions	Basic
+Ich bin gerührt.	I am touched (emotionally).	Phrase	emotions b1	B1 Emotions	Reverse
+Es liegt mir auf der Herzen.	It lies on my heart / weighs on me.	Phrase	emotions b1	B1 Emotions	Basic
+Ich bin wie ausgewechselt.	I am like a different person.	Phrase	emotions b1	B1 Emotions	Reverse
+Mir ist leicht ums Herz.	My heart is light.	Phrase	emotions b1	B1 Emotions	Basic
+Es zieht mir das Herz zusammen.	It tugs at my heart strings.	Phrase	emotions b1	B1 Emotions	Reverse
+Der Mut sinkt.	Courage sinks / loses heart.	Phrase	emotions b1	B1 Emotions	Basic
+Das Herz schwer sein.	To have a heavy heart.	Phrase	emotions b1	B1 Emotions	Reverse
+froh	glad/happy	Adjektiv	emotions b1	B1 Emotions	Basic
+heiter	cheerful	Adjektiv	emotions b1	B1 Emotions	Reverse
+bekümmert	worried	Adjektiv	emotions b1	B1 Emotions	Basic
+reizbar	irritable	Adjektiv	emotions b1	B1 Emotions	Basic
+launisch	moody	Adjektiv	emotions b1	B1 Emotions	Reverse
+weinerlich	tearful	Adjektiv	emotions b1	B1 Emotions	Basic
+zornig	furious	Adjektiv	emotions b1	B1 Emotions	Basic
+erbosung	infuriated	Adjektiv	emotions b1	B1 Emotions	Reverse
+verbittert	bitter	Adjektiv	emotions b1	B1 Emotions	Basic
+hoffnungsvoll	hopeful	Adjektiv	emotions b1	B1 Emotions	Reverse

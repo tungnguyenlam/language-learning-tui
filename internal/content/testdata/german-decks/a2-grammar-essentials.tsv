@@ -2,7 +2,7 @@
 #html:false
 #deck:German Grammar Essentials
 front	back	extra	tags	notetype
-Ich gebe ___ (the man) das Buch.	dem Mann	Dativ: geben takes indirect object in Dativ.	grammar,cases,dativ	MCQ:den Mann,der Mann,dem Mann,des Mannes
+Ich gebe ___ (the man) das Buch.	dem Mann	Dativ: geben takes indirect object in Dativ.	grammar,cases,dativ	MCQ:der Mann,den Hund,dem Mann,des Mannes
 Wir sehen ___ (the dog).	den Hund	Akkusativ: sehen takes direct object in Akkusativ.	grammar,cases,akkusativ	MCQ:der Hund,den Hund,dem Hund,des Hundes
 Das ist das Auto ___ (the father).	des Vaters	Genitiv: shows possession.	grammar,cases,genitiv	MCQ:der Vater,den Vater,dem Vater,des Vaters
 ___ (The child) spielt im Garten.	Das Kind	Nominativ: subject of the sentence.	grammar,cases,nominativ	MCQ:Der Kind,Die Kind,Das Kind,Den Kind
@@ -17,3 +17,47 @@ Wir {{c1::sehen}} den Hund.	see	sehen (to see) - Akkusativ verb.	grammar,verbs,a
 Das ist das Haus {{c1::meines Vaters::my father's}}.	my father's	Genitiv case.	grammar,cases,genitiv	Basic
 Ich helfe {{c1::der Frau::the woman}}.	the woman	helfen + Dativ.	grammar,verbs,dativ	Basic
 Wir gehen {{c1::ohne}} meinen Bruder.	without	ohne + Akkusativ.	grammar,prepositions,akkusativ	Basic
+Ich bin ___ (the teacher).	der Lehrer	Akkusativ after "bin".	grammar,cases,akkusativ	MCQ:der Lehrer,den Lehrer,ein Lehrer,einem Lehrer
+Er kauft ___ (a new car).	ein neues Auto	Akkusativ: direct object.	grammar,cases,akkusativ	MCQ:ein neues Auto,ein neuer Auto,dem neuen Auto,ein neues Auto
+Ich habe ___ (a dog).	einen Hund	Akkusativ after "haben".	grammar,cases,akkusativ	MCQ:einen Hund,ein Hund,der Hund,einem Hund
+Sie trägt ___ (a blue dress).	ein blaues Kleid	Akkusativ: tragen takes Akkusativ.	grammar,cases,akkusativ	MCQ:ein blaues Kleid,blaue Kleid,ein blauer Kleid,blaues Kleid
+Wir kennen ___ (her).	sie	Akkusativ pronoun.	grammar,pronouns,akkusativ	MCQ:sie,ihr,sie,ihr
+Ich sehe ___ (him).	ihn	Akkusativ pronoun.	grammar,pronouns,akkusativ	MCQ:er,ihn,ihm,sein
+Das ist ___ (my book).	mein Buch	Nominativ.	grammar,pronouns,nominativ	MCQ:mein Buch,meines Buch,meinen Buch,mein Buch
+Ich denke ___ (about you).	an dich	trennbar: denken + an.	grammar,verbs,separable	MCQ:an dich,über dich,mit dir,nach dir
+Sie arbeitet ___ (at home).	zu Hause	zu Hause (at home).	grammar,adverbs,location	MCQ:zu Hause,nach Hause,von Hause,bei Hause
+Er kommt ___ (from Berlin).	aus Berlin	aus + Dativ (origin).	grammar,prepositions,dativ	MCQ:aus Berlin,von Berlin,nach Berlin,in Berlin
+Ich gehe ___ (to the store).	ins Geschäft	ins = in + das (direction).	grammar,prepositions,akkusativ	MCQ:ins Geschäft,im Geschäft,zum Geschäft,bei dem Geschäft
+Das Geschenk ist ___ (for you).	für dich	für + Akkusativ.	grammar,prepositions,akkusativ	MCQ:für dich,an dich,zu dir,nach dir
+Ich warte ___ (on you).	auf dich	auf + Akkusativ.	grammar,prepositions,akkusativ	MCQ:auf dich,nach dir,vor dir,über dich
+Ich spreche ___ (about the problem).	über das Problem	über + Akkusativ.	grammar,prepositions,akkusativ	MCQ:über das Problem,von dem Problem,mit dem Problem,nach dem Problem
+Der Mann, ___ (who) kommt, ist mein Freund.	der	Relativpronomen Nominativ.	grammar,clauses,relative	MCQ:der,den,dem,des
+Die Frau, ___ (whom) ich sehe, ist Ärztin.	die	Relativpronomen Akkusativ.	grammar,clauses,relative	MCQ:die,der,den,dem
+Das Buch, ___ (which) ich lese, ist interessant.	das	Relativpronomen Nominativ.	grammar,clauses,relative	MCQ:das,der,den,dessen
+Der Junge, ___ (whose) father is a doctor.	dessen	Relativpronomen Genitiv.	grammar,clauses,relative	MCQ:dessen,der,dem,den
+Ich weiß, ___ (that) er kommt.	dass	Konjunktion: dass.	grammar,clauses,conjunction	MCQ:dass,weil,wenn,ob
+Er ist müde, ___ (because) er gearbeitet hat.	weil	Konjunktion: weil (position: verb at end).	grammar,clauses,conjunction	MCQ:weil,dass,wenn,ob
+___ (If) du kommst, sehen wir einen Film.	wenn	Konjunktion: wenn (conditional).	grammar,clauses,conjunction	MCQ:wenn,weil,dass,ob
+Ich bleibe zu Hause, ___ (because) es regnet.	weil	Weil requires verb at end.	grammar,clauses,conjunction	MCQ:weil,da,obwohl,wenn
+Obwohl ___ (it rains), ich gehe aus.	es regnet	Obwohl: verb at end ( concessive).	grammar,clauses,conjunction	MCQ:es regnet,es regnete,es hat geregnet,es wird regnen
+___ (Although) sie müde war, hat sie gearbeitet.	Obwohl	Obwohl introduces concessive clause.	grammar,clauses,conjunction	MCQ:Obwohl,Weil,Dass,Wenn
+Ich bin müde, ___ (but) ich muss arbeiten.	aber	Konjunktion: aber (koordinierend).	grammar,clauses,conjunction	MCQ:aber,und,oder,sondern
+Er ist nicht nur klug, ___ (but also) fleißig.	sondern	Konjunktion: nicht nur...sondern auch.	grammar,clauses,conjunction	MCQ:sondern,aber,und,oder
+Weder ___ (neither) er noch sie kommt.	er	Weder...noch.	grammar,clauses,conjunction	MCQ:er,sie,es,du
+Entweder ___ (either) du kommst oder ich gehe.	du	Entweder...oder.	grammar,clauses,conjunction	MCQ:du,er,ich,sie
+Ich bin ___ (happier) als du.	glücklicher	Komparativ: als comparison.	grammar,adjectives,comparison	MCQ:glücklicher,am glücklichsten,sehr glücklich,mehr glücklich
+Das ist ___ (the most beautiful) Bild.	das schönste	Superlativ: -ste/-ste.	grammar,adjectives,comparison	MCQ:das schönste,der schönste,am schönsten,sehr schön
+Er ist ___ (as tall) wie sein Bruder.	so groß	wie comparison with adj.	grammar,adjectives,comparison	MCQ:so groß,größer,am größten,mehr groß
+Die Aufgabe ist ___ (easier) zu lösen.	leichter	Komparativ formed with -er.	grammar,adjectives,comparison	MCQ:leichter,leicht,am leichtesten,mehr leicht
+Ich habe ___ (already) gegessen.	schon	Adverb: schon.	grammar,adverbs,time	MCQ:schon,noch,nicht,auch
+Er ist ___ (still) nicht da.	noch	Adverb: noch.	grammar,adverbs,time	MCQ:noch,schon,nicht,auch
+___ (Yesterday) ich habe gearbeitet.	Gestern	Past time adverb.	grammar,adverbs,time	MCQ:Gestern,Morgen,Heute,Mittwoch
+Morgen ___ (I will) nach Berlin fahren.	werde	Futur I: werden + infinitive.	grammar,tense,futur	MCQ:werde,habe,war,bin
+Ich ___ (would) gern reisen.	würde	Konjunktiv II: würde.	grammar,tense,subjunctive	MCQ:würde,wird,war,wäre
+Wenn ich ___ (were) reich, würde ich reisen.	wäre	Konjunktiv II: wäre.	grammar,tense,subjunctive	MCQ:wäre,bin,war,wird
+Ich hätte ___ (a dog), wenn ich zu Hause wäre.	einen Hund	Konjunktiv II: hätte.	grammar,tense,subjunctive	MCQ:einen Hund,ein Hund,der Hund,habe einen Hund
+Das Buch ___ (must be) gelesen werden.	muss	g müssen form.	grammar,tense,modal	MCQ:muss,darf,kann,möchte
+Er ___ (is allowed to) hereinskommen.	darf	Modal: dürf-en (permission).	grammar,tense,modal	MCQ:darf,muss,kann,will
+Ich ___ (need to) einkaufen gehen.	muss	Modal: müssen (necessity).	grammar,tense,modal	MCQ:muss,darf,kann,will
+Sie ___ (wants to) Kaffee trinken.	möchte	Modal: möchte (want).	grammar,tense,modal	MCQ:möchte,muss,kann,darf
+Ich ___ (can) Deutsch sprechen.	kann	Modal: können (ability).	grammar,tense,modal	MCQ:kann,muss,darf,will

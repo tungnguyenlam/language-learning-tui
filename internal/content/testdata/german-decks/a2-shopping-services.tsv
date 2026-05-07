@@ -1,0 +1,72 @@
+#separator:tab
+#html:false
+#deck:A2 Shopping & Services
+front	back	extra	tags	notetype
+der Einkauf	shopping/purchase	Singular noun	shopping a2	A2 Shopping	Basic
+der Supermarkt	supermarket	der Supermarkt, die Supermärkte	shopping a2	A2 Shopping	Basic
+der Laden	shop/store	der Laden, die Läden	shopping a2	A2 Shopping	Reverse
+das Kaufhaus	department store	das Kaufhaus, die Kaufhäuser	shopping a2	A2 Shopping	Basic
+der Markt	market	der Markt, die Märkte	shopping a2	A2 Shopping	Reverse
+der Preis	price	der Preis, die Preise	shopping a2	A2 Shopping	Basic
+die Ermäßigung	discount	die Ermäßigung, die Ermäßigungen	shopping a2	A2 Shopping	Reverse
+der Rabatt	discount/reduction	der Rabatt, die Rabatte	shopping a2	A2 Shopping	Basic
+die Kasse	cash register/checkout	die Kasse, die Kassen	shopping a2	A2 Shopping	Reverse
+die Quittung	receipt	die Quittung, die Quittungen	shopping a2	A2 Shopping	Basic
+das Geld	money	das Geld (no plural)	shopping a2	A2 Shopping	Reverse
+der Einkaufskorb	shopping basket	der Einkaufskorb, die Einkaufskörbe	shopping a2	A2 Shopping	Basic
+der Einkaufswagen	shopping cart	der Einkaufswagen, die Einkaufswagen	shopping a2	A2 Shopping	Reverse
+die Tüte	bag (carrier bag)	die Tüte, die Tüten	shopping a2	A2 Shopping	Basic
+bezahlen	to pay	bezahlt	shopping a2	A2 Shopping	Reverse
+kaufen	to buy	gekauft	shopping a2	A2 Shopping	Basic
+verkaufen	to sell	verkauft	shopping a2	A2 Shopping	Reverse
+der Kunde	customer	der Kunde, die Kunden	shopping a2	A2 Shopping	Reverse
+die Verkäuferin	saleswoman	die Verkäuferin, die Verkäuferinnen	shopping a2	A2 Shopping	Basic
+der Verkäufer	salesman	der Verkäufer, die Verkäufer	shopping a2	A2 Shopping	Reverse
+die Größe	size	die Größe, die Größen	shopping a2	A2 Shopping	Basic
+die Farbe	color	die Farbe, die Farben	shopping a2	A2 Shopping	Reverse
+rot	red	Farbe	shopping a2	A2 Shopping	Reverse
+blau	blue	Farbe	shopping a2	A2 Shopping	Basic
+grün	green	Farbe	shopping a2	A2 Shopping	Reverse
+schwarz	black	Farbe	shopping a2	A2 Shopping	Reverse
+weiß	white	Farbe	shopping a2	A2 Shopping	Reverse
+gelb	yellow	Farbe	shopping a2	A2 Shopping	Basic
+klein	small	Größe	shopping a2	A2 Shopping	Reverse
+groß	big/large	Größe	shopping a2	A2 Shopping	Basic
+mittelgroß	medium-sized	Größe	shopping a2	A2 Shopping	Reverse
+passen	to fit	gepasst	shopping a2	A2 Shopping	Reverse
+probieren	to try on	probiert	shopping a2	A2 Shopping	Basic
+anprobieren	to try on	anprobiert	shopping a2	A2 Shopping	Reverse
+die Umkleide	fitting room	die Umkleide, die Umkleiden	shopping a2	A2 Shopping	Reverse
+Ich suche	I am looking for	Phrase	shopping a2	A2 Shopping	Basic
+Ich möchte kaufen	I would like to buy	Phrase	shopping a2	A2 Shopping	Reverse
+Kann ich helfen?	Can I help you?	Service phrase	shopping a2	A2 Shopping	Basic
+Was kostet das?	How much does this cost?	Essential question	shopping a2	A2 Shopping	Reverse
+Haben Sie das in einer anderen Farbe?	Do you have this in another color?	Shopping question	shopping a2	A2 Shopping	Basic
+Gibt es das auch in größer/kleiner?	Is this available in a bigger/smaller size?	Shopping question	shopping a2	A2 Shopping	Reverse
+Das ist zu teuer.	That is too expensive.	Complaint	shopping a2	A2 Shopping	Basic
+Kann ich mit Karte zahlen?	Can I pay by card?	Payment question	shopping a2	A2 Shopping	Reverse
+die Bank	bank	die Bank, die Banken	services a2	A2 Shopping	Basic
+die Sparkasse	savings bank	die Sparkasse, die Sparkassen	services a2	A2 Shopping	Reverse
+das Geld	bank	das Geld, die Gelder	services a2	A2 Shopping	Reverse
+einzahlen	to deposit	eingezahlt	services a2	A2 Shopping	Reverse
+abheben	to withdraw	abgehoben	services a2	A2 Shopping	Basic
+überweisen	to transfer money	überwiesen	services a2	A2 Shopping	Reverse
+der Überweisung	transfer	der Überweisung, die Überweisungen	services a2	A2 Shopping	Reverse
+das Konto	account	das Konto, die Konten	services a2	A2 Shopping	Basic
+der Kontostand	account balance	der Kontostand, die Kontostände	services a2	A2 Shopping	Reverse
+die EC-Karte	debit card	die EC-Karte, die EC-Karten	services a2	A2 Shopping	Reverse
+die Kreditkarte	credit card	die Kreditkarte, die Kreditkarten	services a2	A2 Shopping	Reverse
+die Post	post office	die Post (no plural)	services a2	A2 Shopping	Basic
+das Paket	parcel/package	das Paket, die Pakete	services a2	A2 Shopping	Reverse
+der Brief	letter	der Brief, die Briefe	services a2	A2 Shopping	Reverse
+die Briefmarke	postage stamp	die Briefmarke, die Briefmarken	services a2	A2 Shopping	Reverse
+schicken	to send	geschickt	services a2	A2 Shopping	Reverse
+der Frisör	hairstylist	der Frisör, die Frisöre	services a2	A2 Shopping	Basic
+die Frisur	hairstyle	die Frisur, die Frisuren	services a2	A2 Shopping	Reverse
+schneiden	to cut	geschnitten	services a2	A2 Shopping	Reverse
+die Reinigung	dry cleaner	die Reinigung, die Reinigungen	services a2	A2 Shopping	Basic
+die Wäsche	laundry	die Wäsche (no plural)	services a2	A2 Shopping	Reverse
+reparieren	to repair	repa rt		shopping a2	A2 Shopping	Basic
+die Werkstatt	workshop/garage	die Werkstatt, die Werkstätten	services a2	A2 Shopping	Reverse
+der Schneider	tailor	der Schneider, die Schneider	services a2	A2 Shopping	Basic
+der Schuster	shoemaker	der Schuster, die Schuster	services a2	A2 Shopping	Reverse

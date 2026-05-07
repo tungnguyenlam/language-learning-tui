@@ -1,0 +1,149 @@
+#separator:tab
+#html:false
+#deck:A2 Transport & Directions
+front	back	extra	tags	notetype
+der Bus	bus	der Bus, die Busse	transport a2	A2 Transport	Basic
+die U-Bahn	underground/metro	die U-Bahn, die U-Bahnen	transport a2	A2 Transport	Reverse
+die Straßenbahn	tram/streetcar	die Straßenbahn, die Straßenbahnen	transport a2	A2 Transport	Basic
+der Zug train	der Zug, die Züge	transport a2	A2 Transport	Reverse
+der ICE	high-speed train	der ICE, die ICEs	transport a2	A2 Transport	Basic
+der S-Bahn	suburban train	der S-Bahn, die S-Bahnen	transport a2	A2 Transport	Reverse
+das Flugzeug	airplane	das Flugzeug, die Flugzeuge	transport a2	A2 Transport	Reverse
+das Schiff	ship/boat	das Schiff, die Schiffe	transport a2	A2 Transport	Reverse
+das Auto	car	das Auto, die Autos	transport a2	A2 Transport	Reverse
+das Fahrrad	bicycle	das Fahrrad, die Fahrräder	transport a2	A2 Transport	Reverse
+das Motorrad	motorcycle	das Motorrad, die Motorräder	transport a2	A2 Transport	Reverse
+das Taxi	taxi	das Taxi, die Taxis	transport a2	A2 Transport	Reverse
+der Lastwagen	truck	der Lastwagen, die Lastwagen	transport a2	A2 Transport	Reverse
+der Laster	truck (colloquial)	der Laster, die Laster	transport a2	A2 Transport	Reverse
+der Roller	scooter	der Roller, die Roller	transport a2	A2 Transport	Basic
+das Moped	moped	das Moped, die Mopeds	transport a2	A2 Transport	Reverse
+der Bahnhof	railway station	der Bahnhof, die Bahnhöfe	transport a2	A2 Transport	Basic
+der Flughafen	airport	der Flughafen, die Flughäfen	transport a2	A2 Transport	Reverse
+der Hafen	port/harbor	der Hafen, die Häfen	transport a2	A2 Transport	Basic
+die Haltestelle	stop (bus/tram)	die Haltestelle, die Haltestellen	transport a2	A2 Transport	Reverse
+die Station	station	die Station, die Stationen	transport a2	A2 Transport	Basic
+der Fahrer	driver	der Fahrer, die Fahrer	transport a2	A2 Transport	Reverse
+der Fahrgast	passenger	der Fahrgast, die Fahrgäste	transport a2	A2 Transport	Basic
+der Fahrplan	timetable	der Fahrplan, die Fahrpläne	transport a2	A2 Transport	Reverse
+die Abfahrt	departure	die Abfahrt, die Abfahrten	transport a2	A2 Transport	Reverse
+die Ankunft	arrival	die Ankunft, die Ankünfte	transport a2	A2 Transport	Basic
+die Verspätung	delay	die Verspätung, die Verspätungen	transport a2	A2 Transport	Reverse
+der Anschluss	connection (transport)	der Anschluss, die Anschlüsse	transport a2	A2 Transport	Reverse
+umsteigen	to change (transport)	umgestiegen	transport a2	A2 Transport	Basic
+einsteigen	to board (get in)	eingestiegen	transport a2	A2 Transport	Reverse
+aussteigen	to get off/out	ausgestiegen	transport a2	A2 Transport	Basic
+fahren	to drive/go (by vehicle)	gefahren	transport a2	A2 Transport	Basic
+fliegen	to fly	geflogen	transport a2	A2 Transport	Reverse
+schwimmen	to swim	geschwommen	transport a2	A2 Transport	Basic
+fahren	to ride (bike)	gefahren	transport a2	A2 Transport	Reverse
+der Fahrschein	ticket (transport)	der Fahrschein, die Fahrscheine	transport a2	A2 Transport	Basic
+die Fahrkarte	ticket	die Fahrkarte, die Fahrkarten	transport a2	A2 Transport	Reverse
+der Fahrschein	boarding pass	der Fahrschein, die Fahrscheine	transport a2	A2 Transport	Reverse
+das Ticket	ticket	das Ticket, die Tickets	transport a2	A2 Transport	Reverse
+der Ausweis	ID card	der Ausweis, die Ausweise	transport a2	A2 Transport	Basic
+die Fahrschule	driving school	die Fahrschule, die Fahrschulen	transport a2	A2 Transport	Reverse
+der Führerschein	driving license	der Führerschein, die Führerscheine	transport a2	A2 Transport	Reverse
+der Parkplatz	parking lot	der Parkplatz, die Parkplätze	transport a2	A2 Transport	Basic
+die Garage	garage	die Garage, die Garagen	transport a2	A2 Transport	Reverse
+die Tankstelle	gas station	die Tankstelle, die Tankstellen	transport a2	A2 Transport	Basic
+das Benzin	gasoline/petrol	das Benzin (no plural)	transport a2	A2 Transport	Reverse
+der Diesel	diesel	der Diesel (no plural)	transport a2	A2 Transport	Basic
+der Motor	engine/motor	der Motor, die Motoren	transport a2	A2 Transport	Reverse
+der Reifen	 tire	der Reifen, die Reifen	transport a2	A2 Transport	Reverse
+das Licht	light	das Licht, die Lichter	transport a2	A2 Transport	Basic
+die Bremse	brake	die Bremse, die Bremsen	transport a2	A2 Transport	Reverse
+der Spiegel	mirror	der Spiegel, die Spiegel	transport a2	A2 Transport	Basic
+der Sitz	seat	der Sitz, die Sitze	transport a2	A2 Transport	Reverse
+der Gurt	seat belt	der Gurt, die Gurte	transport a2	A2 Transport	Basic
+der Airbag	airbag	der Airbag, die Airbags	transport a2	A2 Transport	Reverse
+geradeaus	straight ahead	Richtung	directions a2	A2 Directions	Basic
+links	left	Richtung	directions a2	A2 Directions	Reverse
+rechts	right	Richtung	directions a2	A2 Directions	Basic
+zurück	back	Richtung	directions a2	A2 Directions	Basic
+vorwärts	forward	Richtung	directions a2	A2 Directions	Basic
+nach oben	upward	Richtung	directions a2	A2 Directions	Reverse
+nach unten	downward	Richtung	directions a2	A2 Directions	Basic
+neben	beside/next to	Präposition	directions a2	A2 Directions	Basic
+zwischen	between	Präposition	directions a2	A2 Directions	Reverse
+vor	in front of	Präposition	directions a2	A2 Directions	Basic
+hinter	behind	Präposition	directions a2	A2 Directions	Basic
+über	over/above	Präposition	directions a2	A2 Directions	Basic
+unter	under/below	Präposition	directions a2	A2 Directions	Reverse
+an	by/at (location)	Präposition	directions a2	A2 Directions	Basic
+auf	on/atop	Präposition	directions a2	A2 Directions	Reverse
+in	in/inside	Präposition	directions a2	A2 Directions	Basic
+aus	out of	Präposition	directions a2	A2 Directions	Reverse
+zu	to/toward	Präposition	directions a2	A2 Directions	Basic
+bei	at/near	Präposition	directions a2	A2 Directions	Reverse
+der Weg	way/road	der Weg, die Wege	directions a2	A2 Directions	Basic
+die Straße	street/road	die Straße, die Straßen	directions a2	A2 Directions	Reverse
+die Autobahn	highway	die Autobahn, die Autobahnen	transport a2	A2 Transport	Basic
+die Landstraße	country road	die Landstraße, die Landstraßen	transport a2	A2 Transport	Reverse
+die Stadtstraße	city street	die Stadtstraße, die Stadtstraßen	transport a2	A2 Transport	Basic
+die Kreuzung	intersection/crossroads	die Kreuzung, die Kreuzungen	transport a2	A2 Transport	Reverse
+der Kreisverkehr	roundabout	der Kreisverkehr, die Kreisverkehre	transport a2	A2 Transport	Basic
+Ampel	traffic light	die Ampel, die Ampeln	transport a2	A2 Transport	Reverse
+die Ampel	traffic light	die Ampel, die Ampeln	transport a2	A2 Transport	Basic
+das Schild	sign	das Schild, die Schilder	transport a2	A2 Transport	Basic
+der Zebrastreifen	crosswalk/zebra crossing	der Zebrastreifen, die Zebrastreifen	transport a2	A2 Transport	Reverse
+der Gehweg	sidewalk	der Gehweg, die Gehwege	transport a2	A2 Transport	Basic
+der Radweg	bike lane	der Radweg, die Radwege	transport a2	A2 Transport	Reverse
+der Park	park	der Park, die Parks	transport a2	A2 Transport	Basic
+die Brücke	bridge	die Brücke, die Brücken	transport a2	A2 Transport	Basic
+der Tunnel	tunnel	der Tunnel, die Tunnel	transport a2	A2 Transport	Reverse
+der Berg	mountain	der Berg, die Berge	transport a2	A2 Transport	Basic
+das Tal	valley	das Tal, die Täler	transport a2	A2 Transport	Reverse
+der Fluss	river	der Fluss, die Flüsse	transport a2	A2 Transport	Basic
+der See	lake	der See, die Seen	transport a2	A2 Transport	Reverse
+der Norden	north	die Richtung	directions a2	A2 Directions	Basic
+der Süden	south	die Richtung	directions a2	A2 Directions	Reverse
+der Osten	east	die Richtung	directions a2	A2 Directions	Basic
+der Westen	west	die Richtung	directions a2	A2 Directions	Reverse
+nördlich	northern/adjective	die Richtung	directions a2	A2 Directions	Basic
+südlich	southern	die Richtung	directions a2	A2 Directions	Reverse
+östlich	eastern	die Richtung	directions a2	A2 Directions	Reverse
+westlich	western	die Richtung	directions a2	A2 Directions	Reverse
+Wie komme ich...?	How do I get to...?	Frage	directions a2	A2 Directions	Basic
+Wo ist...?	Where is...?	Frage	directions a2	A2 Directions	Reverse
+Ist das weit?	Is it far?	Frage	directions a2	A2 Directions	Basic
+Wie weit ist es?	How far is it?	Frage	directions a2	A2 Directions	Basic
+Wie lange dauert es?	How long does it take?	Frage	directions a2	A2 Directions	Basic
+Kann ich zu Fuß gehen?	Can I walk there?	Frage	directions a2	A2 Directions	Reverse
+Gibt es einen Bus dahin?	Is there a bus there?	Frage	transport a2	A2 Transport	Basic
+Wo ist der nächste Bahnhof?	Where is the next station?	Frage	transport a2	A2 Transport	Reverse
+Ich habe mich verfahren.	I took a wrong turn.	Phrase	transport a2	A2 Transport	Basic
+Ich bin vom Weg abgekommen.	I went off course.	Phrase	transport a2	A2 Transport	Reverse
+Können Sie mir den Weg zeigen?	Can you show me the way?	Phrase	directions a2	A2 Directions	Basic
+Bitte links/rechts abbiegen.	Please turn left/right.	Phrase	transport a2	A2 Transport	Reverse
+Geradeaus bleiben.	Keep going straight.	Phrase	transport a2	A2 Transport	Basic
+Die erste Straße links.	The first street on the left.	Phrase	directions a2	A2 Directions	Reverse
+Das zweite Gebäude rechts.	The second building on the right.	Phrase	directions a2	A2 Directions	Basic
+Es liegt neben dem Bahnhof.	It is next to the station.	Phrase	directions a2	A2 Directions	Basic
+Es liegt gegenüber vom Park.	It is across from the park.	Phrase	directions a2	A2 Directions	Reverse
+Es liegt hinter der Schule.	It is behind the school.	Phrase	directions a2	A2 Directions	Basic
+Es liegt vis-à-vis vom Restaurant.	It is across from the restaurant (vis-à-vis).	Phrase	directions a2	A2 Directions	Reverse
+der Navigationsgerät	GPS/navigation device	der Navigationsgerät, die Navigationsgeräte	transport a2	A2 Transport	Basic
+die Karte	map	die Karte, die Karten	transport a2	A2 Transport	Reverse
+der Stadtplan	city map	der Stadtplan, die Stadtpläne	transport a2	A2 Transport	Basic
+der Reiseführer	travel guide	der Reiseführer, die Reiseführer	transport a2	A2 Transport	Reverse
+die Reise	trip/journey	die Reise, die Reisen	transport a2	A2 Transport	Basic
+reisen	to travel	gereist	transport a2	A2 Transport	Basic
+der Koffer	suitcase	der Koffer, die Koffer	transport a2	A2 Transport	Reverse
+die Tasche	bag	die Tasche, die Taschen	transport a2	A2 Transport	Basic
+der Rucksack	backpack	der Rucksack, die Rucksäcke	transport a2	A2 Transport	Reverse
+das Gepäck	luggage	das Gepäck (no plural)	transport a2	A2 Transport	Basic
+aufgeben	to check in (luggage)	aufgegeben	transport a2	A2 Transport	Reverse
+der Check-in	check-in	der Check-in, die Check-ins	transport a2	A2 Transport	Basic
+der Boardingpass	boarding pass	der Boardingpass, die Boardingpässe	transport a2	A2 Transport	Reverse
+das Gate	gate	das Gate, die Gates	transport a2	A2 Transport	Basic
+der Terminal	terminal	der Terminal, die Terminals	transport a2	A2 Transport	Reverse
+das Terminal	terminal (building)	das Terminal, die Terminals	transport a2	A2 Transport	Basic
+der Abflug	departure (flight)	der Abflug, die Abflüge	transport a2	A2 Transport	Basic
+die Landung	landing	die Landung, die Landungen	transport a2	A2 Transport	Reverse
+starten	to take off	gestartet	transport a2	A2 Transport	Basic
+landen	to land	gelandet	transport a2	A2 Transport	Reverse
+die Sicherheitskontrolle	security check	die Sicherheitskontrolle, die Sicherheitskontrollen	transport a2	A2 Transport	Reverse
+die Passkontrolle	passport control	die Passkontrolle, die Passkontrollen	transport a2	A2 Transport	Basic
+der Zoll	customs	der Zoll (no plural)	transport a2	A2 Transport	Basic
+die Grenze	border	die Grenze, die Grenzen	transport a2	A2 Transport	Reverse

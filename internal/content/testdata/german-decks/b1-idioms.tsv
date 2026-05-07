@@ -1,13 +1,46 @@
 #separator:tab
 #html:false
 #deck:B1 German Idioms
-idiom-1	Tomaten auf den Augen haben	to be oblivious / not see what is right in front of you		idiom b1	B1 German Idioms	Reverse
-idiom-2	Da steppt der Bär	it is going to be a great party / lots of action		idiom b1	B1 German Idioms	Basic
-idiom-3	Ich verstehe nur Bahnhof	It is all Greek to me / I do not understand anything		idiom b1	B1 German Idioms	Reverse
-idiom-4	Den Löffel abgeben	to kick the bucket / to die		idiom b1	B1 German Idioms	Basic
-idiom-5	Auf Wolke sieben schweben	to be on cloud nine		idiom b1	B1 German Idioms	Reverse
-idiom-6	Jemandem die Daumen drücken	to keep one's fingers crossed for someone		idiom b1	B1 German Idioms	Basic
-idiom-7	Einen Kater haben	to have a hangover		idiom b1	B1 German Idioms	Reverse
-idiom-8	Das ist nicht mein Bier	That is not my business / none of my concern		idiom b1	B1 German Idioms	Basic
-idiom-9	Um den heißen Brei herumreden	to beat around the bush		idiom b1	B1 German Idioms	Reverse
-idiom-10	Zwei Fliegen mit einer Klappe schlagen	to kill two birds with one stone		idiom b1	B1 German Idioms	Reverse
+front	back	extra	tags	notetype
+Tomaten auf den Augen haben	to be oblivious / not see what is right in front of you	Literal: tomatoes on your eyes	idiom b1	B1 German Idioms	Reverse
+Da steppt der Bär	it is going to be a great party / lots of action	Literal: the bear dances	idiom b1	B1 German Idioms	Basic
+Ich verstehe nur Bahnhof	It is all Greek to me / I do not understand anything	Literal: I only understand train station	idiom b1	B1 German Idioms	Reverse
+Den Löffel abgeben	to kick the bucket / to die	Literal: to put down the spoon	idiom b1	B1 German Idioms	Basic
+Auf Wolke sieben schweben	to be on cloud nine	Literal: to float on cloud seven	idiom b1	B1 German Idioms	Reverse
+Jemandem die Daumen drücken	to keep one's fingers crossed for someone	Literal: press thumbs for someone	idiom b1	B1 German Idioms	Basic
+Einen Kater haben	to have a hangover	Literal: to have a tomcat	idiom b1	B1 German Idioms	Reverse
+Das ist nicht mein Bier	That is not my business / none of my concern	Literal: that's not my beer	idiom b1	B1 German Idioms	Basic
+Um den heißen Brei herumreden	to beat around the bush	Literal: talk around the hot porridge	idiom b1	B1 German Idioms	Reverse
+Zwei Fliegen mit einer Klappe schlagen	to kill two birds with one stone	Literal: hit two flies with one swatter	idiom b1	B1 German Idioms	Reverse
+Das ist mir egal	I don't care	Literal: that's equal to me	phrase b1	B1 German Idioms	Basic
+Ich habe keine Ahnung	I have no idea	Literal: I have no idea	phrase b1	B1 German Idioms	Reverse
+Das kostet ein Schweinegeld	That costs an arm and a leg	Literal: pig money	idiom b1	B1 German Idioms	Basic
+Ins Gras beißen	to bite the grass / to die	Literal: to bite into the grass	idiom b1	B1 German Idioms	Reverse
+Den Nagel auf den Kopf treffen	to hit the nail on the head	Literal: hit the nail on the head	idiom b1	B1 German Idioms	Basic
+Das ist Gold wert	That is worth its weight in gold	Literal: worth gold	idiom b1	B1 German Idioms	Reverse
+Jemandem die Suppe versalzen	to ruin someone's plans	Literal: oversalt someone's soup	idiom b1	B1 German Idioms	Basic
+Die Katze aus dem Sack lassen	to let the cat out of the bag	Literal: let the cat out of the sack	idiom b1	B1 German Idioms	Reverse
+Etwas durch die Lappen gehen	to let something slip away	Literal: through the cloths/lap	idiom b1	B1 German Idioms	Basic
+Auf den ersten Blick	At first sight	Literal: at the first look	phrase b1	B1 German Idioms	Reverse
+In der Kürze liegt die Würze	Brevity is the soul of wit	Literal: in brevity lies the spice	idiom b1	B1 German Idioms	Basic
+Was du heute kannst besorgen, das verschiebe nicht auf morgen	Never put off till tomorrow what you can do today	Literal: what you can do today, don't postpone till tomorrow	idiom b1	B1 German Idioms	Reverse
+Übung macht den Meister	Practice makes perfect	Literal: practice makes the master	idiom b1	B1 German Idioms	Basic
+Jeder hat sein Päckchen zu tragen	Everyone has their own burdens	Literal: everyone has their little package to carry	idiom b1	B1 German Idioms	Reverse
+Der Apfel fällt nicht weit vom Stamm	The apple doesn't fall far from the tree	Literal: the apple doesn't fall far from the tree	idiom b1	B1 German Idioms	Basic
+Nach dem Essen soll man ruh'n	After eating, one should rest	German saying about digestion	idiom b1	B1 German Idioms	Reverse
+Morgen, morgen, nur nicht heute	saying about procrastination	Literal: tomorrow, tomorrow, just not today	idiom b1	B1 German Idioms	Basic
+Wer rastet, der rostet	Use it or lose it / stillness leads to decay	Literal: who rests, rusts	idiom b1	B1 German Idioms	Reverse
+Alle Wege führen nach Rom	All roads lead to Rome	Literal: all ways lead to Rome	idiom b1	B1 German Idioms	Basic
+Ende gut, alles gut	All's well that ends well	Literal: end good, everything good	idiom b1	B1 German Idioms	Reverse
+Was Hänschen nicht lernt, lernt Hans nimmer所学非所教	Literal: what Hans doesn't learn, Hans never learns	idiom b1	B1 German Idioms	Reverse
+Eile mit Weile	Haste makes waste / slow and steady	Literal: haste with leisure	idiom b1	B1 German Idioms	Basic
+Stille Wasser sind tief	Still waters run deep	Literal: still waters are deep	idiom b1	B1 German Idioms	Reverse
+Lügen haben kurze Beine	Lies have short legs	Literal: lies have short legs	idiom b1	B1 German Idioms	Basic
+Reden ist Silber, Schweigen ist gold	Speech is silver, silence is golden	Literal: talking is silver, silence is gold	idiom b1	B1 German Idioms	Reverse
+Ein Bild sagt mehr als tausend Worte	A picture is worth a thousand words	Literal: one picture says more than a thousand words	idiom b1	B1 German Idioms	Basic
+Nicht alles, was glänzt, ist Gold	All that glitters is not gold	Literal: not everything that shines is gold	idiom b1	B1 German Idioms	Reverse
+Der Weg ist das Ziel	The journey is the destination	Literal: the way is the goal	idiom b1	B1 German Idioms	Basic
+Jetzt or nie	Now or never	Literal: now or never	phrase b1	B1 German Idioms	Reverse
+Zeit ist Geld	Time is money	Literal: time is money	idiom b1	B1 German Idioms	Basic
+Klein aber fein	Small but beautiful / quality over quantity	Literal: small but fine	idiom b1	B1 German Idioms	Reverse
+Aus den Augen, aus dem Sinn	Out of sight, out of mind	Literal: out of eyes, out of mind	idiom b1	B1 German Idioms	Basic

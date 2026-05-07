@@ -1,0 +1,100 @@
+#separator:tab
+#html:false
+#deck:A1 Health & Body
+front	back	extra	tags	notetype
+der Kopf	head	der Kopf, die Köpfe	body a1	A1 Health	Basic
+das Gesicht	face	das Gesicht, die Gesichter	body a1	A1 Health	Reverse
+das Auge	eye	das Auge, die Augen	body a1	A1 Health	Basic
+das Ohr	ear	das Ohr, die Ohren	body a1	A1 Health	Reverse
+die Nase	nose	die Nase, die Nasen	body a1	A1 Health	Basic
+der Mund	mouth	der Mund, die Münder	body a1	A1 Health	Reverse
+der Zahn	tooth	der Zahn, die Zähne	body a1	A1 Health	Basic
+die Zunge	tongue	die Zunge, die Zungen	body a1	A1 Health	Reverse
+der Arm	arm	der Arm, die Arme	body a1	A1 Health	Reverse
+das Bein	leg	das Bein, die Beine	body a1	A1 Health	Basic
+die Hand	hand	die Hand, die Hände	body a1	A1 Health	Reverse
+der Fuß	foot	der Fuß, die Füße	body a1	A1 Health	Reverse
+der Finger	finger	der Finger, die Finger	body a1	A1 Health	Reverse
+die Zehe	toe	die Zehe, die Zehen	body a1	A1 Health	Reverse
+das Haar	hair	das Haar, die Haare	body a1	A1 Health	Reverse
+die Haut	skin	die Haut (no plural)	body a1	A1 Health	Reverse
+das Herz	heart	das Herz, die Herzen	body a1	A1 Health	Basic
+der Magen	stomach	der Magen, die Mägen	body a1	A1 Health	Reverse
+der Rücken	back	der Rücken, die Rücken	body a1	A1 Health	Basic
+das Knie	knee	das Knie, die Knie	body a1	A1 Health	Reverse
+der Ellbogen	elbow	der Ellbogen, die Ellbogen	body a1	A1 Health	Basic
+die Schulter	shoulder	die Schulter, die Schultern	body a1	A1 Health	Reverse
+der Hals	neck/throat	der Hals, die Hälse	body a1	A1 Health	Basic
+der Bauch	belly/stomach	der Bauch, die Bäuche	body a1	A1 Health	Reverse
+gesund	healthy	Adjektiv	health a1	A1 Health	Basic
+krank	ill/sick	Adjektiv	health a1	A1 Health	Reverse
+der Arzt	doctor (m)	der Arzt, die Ärzte	health a1	A1 Health	Basic
+die Ärztin	doctor (f)	die Ärztin, die Ärztinnen	health a1	A1 Health	Reverse
+das Krankenhaus	hospital	das Krankenhaus, die Krankenhäuser	health a1	A1 Health	Reverse
+die Praxis	doctor's office	die Praxis, die Praxen	health a1	A1 Health	Reverse
+die Apotheke	pharmacy	die Apotheke, die Apotheken	health a1	A1 Health	Reverse
+das Medikament	medicine/medication	das Medikament, die Medikamente	health a1	A1 Health	Basic
+die Tablette	tablet/pill	die Tablette, die Tabletten	health a1	A1 Health	Reverse
+die Spritze	injection	die Spritze, die Spritzen	health a1	A1 Health	Basic
+der Schmerz	pain	der Schmerz, die Schmerzen	health a1	A1 Health	Reverse
+wehtun	to hurt	wehtun	health a1	A1 Health	Basic
+Ich habe Kopfschmerzen.	I have a headache.	Phrase	health a1	A1 Health	Reverse
+Ich habe Bauchschmerzen.	I have a stomachache.	Phrase	health a1	A1 Health	Basic
+Ich habe Halsschmerzen.	I have a sore throat.	Phrase	health a1	A1 Health	Reverse
+Ich bin krank.	I am sick.	Phrase	health a1	A1 Health	Basic
+Ich fühle mich besser.	I feel better.	Phrase	health a1	A1 Health	Reverse
+Ich fühle mich schlecht.	I feel bad.	Phrase	health a1	A1 Health	Basic
+die Erkältung	cold (illness)	die Erkältung, die Erkältungen	health a1	A1 Health	Reverse
+der Husten	cough	der Husten (no plural)	health a1	A1 Health	Basic
+das Fieber	fever	das Fieber (no plural)	health a1	A1 Health	Reverse
+der Schnupfen	runny nose	der Schnupfen, die Schnupfen	health a1	A1 Health	Basic
+die Grippe	flu	die Grippe (no plural)	health a1	A1 Health	Reverse
+die Allergie	allergy	die Allergie, die Allergien	health a1	A1 Health	Basic
+der Asthma	asthma	der Asthma (no plural)	health a1	A1 Health	Reverse
+der Diabetes	diabetes	der Diabetes (no plural)	health a1	A1 Health	Basic
+der Blutdruck	blood pressure	der Blutdruck (no plural)	health a1	A1 Health	Reverse
+das Blut	blood	das Blut (no plural)	health a1	A1 Health	Basic
+die Untersuchung	examination	die Untersuchung, die Untersuchungen	health a1	A1 Health	Basic
+die Impfung	vaccination	die Impfung, die Impfungen	health a1	A1 Health	Reverse
+der Termin	appointment	der Termin, die Termine	health a1	A1 Health	Basic
+die Versicherung	insurance	die Versicherung, die Versicherungen	health a1	A1 Health	Reverse
+der Patient	patient	der Patient, die Patienten	health a1	A1 Health	Reverse
+die Krankenschwester	nurse	die Krankenschwester, die Krankenschwestern	health a1	A1 Health	Basic
+der Krankenpfleger	nurse (m)	der Krankenpfleger, die Krankenpfleger	health a1	A1 Health	Reverse
+das Krankenbett	hospital bed	das Krankenbett, die Krankenbetten	health a1	A1 Health	Basic
+die Operation	operation	die Operation, die Operationen	health a1	A1 Health	Reverse
+der Verband	bandage	d er Verband, die Verbände	health a1	A1 Health	Basic
+der Gips	plaster cast	der Gips, die Gipse	health a1	A1 Health	Reverse
+die Krücke	crutch	die Krücke, die Krücken	health a1	A1 Health	Reverse
+der Rollstuhl	wheelchair	der Rollstuhl, die Rollstühle	health a1	A1 Health	Basic
+die Augenbrille	glasses	die Augenbrille, die Augenbrillen	health a1	A1 Health	Reverse
+die Kontaktlinsen	contact lenses	plural only	health a1	A1 Health	Basic
+das Thermometer	thermometer	das Thermometer, die Thermometer	health a1	A1 Health	Reverse
+das Pflaster	plaster/adhesive bandage	das Pflaster, die Pflaster	health a1	A1 Health	Basic
+die Salbe	ointment	die Salbe, die Salben	health a1	A1 Health	Reverse
+der Saft	syrup (medicine)	der Saft, die Säfte	health a1	A1 Health	Basic
+der Tropfen	drop(s)	der Tropfen, die Tropfen	health a1	A1 Health	Reverse
+die Tube	tube (of ointment)	die Tube, die Tuben	health a1	A1 Health	Basic
+der Hustensaft	cough syrup	der Hustensaft, die Hustensäfte	health a1	A1 Health	Basic
+das Nasenspray	nasal spray	das Nasenspray, die Nasensprays	health a1	A1 Health	Reverse
+sporttreiben	to do sports	sportgetrieben	health a1	A1 Health	Basic
+schwimmen	to swim	geschwommen	health a1	A1 Health	Reverse
+joggen	to jog	gejoggt	health a1	A1 Health	Basic
+radfahren	to ride a bike	radgefahren	health a1	A1 Health	Reverse
+wandern	to hike	gewandert	health a1	A1 Health	Basic
+trainieren	to train	getrainiert	health a1	A1 Health	Basic
+die Übung	exercise	die Übung, die Übungen	health a1	A1 Health	Basic
+das Fitnessstudio	gym	das Fitnessstudio, die Fitnessstudios	health a1	A1 Health	Reverse
+die Sporthalle	sports hall	die Sporthalle, die Sporthallen	health a1	A1 Health	Basic
+der Sportplatz	sports field	der Sportplatz, die Sportplätze	health a1	A1 Health	Reverse
+der Swimmingpool	swimming pool	der Swimmingpool, die Swimmingpools	health a1	A1 Health	Basic
+gesund essen	to eat healthily	Phrase	health a1	A1 Health	Reverse
+viel Wasser trinken	to drink a lot of water	Phrase	health a1	A1 Health	Basic
+genug schlafen	to get enough sleep	Phrase	health a1	A1 Health	Reverse
+entspannen	to relax	entspannt	health a1	A1 Health	Reverse
+sich ausruhen	to rest	sich ausgeruht	health a1	A1 Health	Reverse
+der Spaziergang	walk	der Spaziergang, die Spaziergänge	health a1	A1 Health	Basic
+spazieren gehen	to go for a walk	spazieren gegangen	health a1	A1 Health	Reverse
+die Massage	massage	die Massage, die Massagen	health a1	A1 Health	Basic
+die Sauna	sauna	die Sauna, die Saunen	health a1	A1 Health	Reverse
+das Wellness	wellness	das Wellness (no plural)	health a1	A1 Health	Basic
