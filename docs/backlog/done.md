@@ -1,5 +1,18 @@
 # Done Backlog
 
+## 2026-05-06: Critical Stability & Integrity Fixes
+- **Deck Management Robustness**:
+  - Implemented stable `deleteIDs` in the TUI model to prevent race conditions and ID shifting during deletion confirmation.
+  - Added protection to the virtual 'All Decks' item, preventing accidental deletion attempts.
+  - Stabilized `deckCursor` in `syncDecks` to prevent the selection from snapping back to the active deck during background reloads.
+  - Hardened `main.go` to only insert the starter deck if the database is truly empty, preventing overwrites of user-modified starter decks.
+- **Data Integrity & Keybindings**:
+  - Explicitly enabled `PRAGMA foreign_keys = ON` immediately after opening the SQLite database to guarantee cascading deletes.
+  - Fixed MCQ key collisions in the Review view by surgically trapping 1-4 keys only when a card is present, restoring global navigation for other views.
+- **Enhanced Testing**:
+  - Added new robust E2E tests for MCQ navigation and UI sanity.
+  - Verified the entire project suite (105 tests) with 100% pass rate.
+
 ## 2026-05-06: Bug Hunting & Stability Polish
 - **TUI Bug Fixes**:
   - Clamped `browserCursor` in `browserCardsMsg` to prevent panics when card list is updated.

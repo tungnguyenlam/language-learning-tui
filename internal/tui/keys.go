@@ -282,6 +282,8 @@ func (m *Model) updateStatisticsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	case "down", "j":
 		m.scrollStats(1)
 		return nil, true
+	case "x":
+		return m.exportStatsCSV(), true
 	}
 	return nil, false
 }

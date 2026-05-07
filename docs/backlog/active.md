@@ -4,11 +4,19 @@ Last updated: 2026-05-05
 
 ## Current Milestone
 
-TUI Refactor Completion & Final Verification (STABILIZED)
+Advanced Analytics & Reporting Features (STABILIZED)
 
 ## Completed Work
 
-### E2E Test Optimization & Stabilisation
+### Bug Hunting & Stability (DONE)
+- [x] Fixed MCQ key collisions with global navigation.
+- [x] Prevented starter deck re-insertion/overwrites in `main.go`.
+- [x] Enabled SQLite foreign key constraints for cascading deletes.
+- [x] Stabilized deck list cursor during background reloads.
+- [x] Implemented stable deletion IDs to prevent race conditions.
+- [x] Verified all 105 tests pass successfully.
+
+### E2E Test Optimization & Stabilisation (DONE)
 - [x] **Binary pre-build**: Modified `scripts/verify.sh` to build binary once, reducing resource contention.
 - [x] **Parallel Test Fixes**: Updated all 28 E2E tests to use `DEUTSCH_TUI_BIN`.
 - [x] **Hitbox Alignment**: Aligned hitboxes with Lip Gloss metrics in all views using `contentLayoutForStyle`.
@@ -26,8 +34,8 @@ TUI Refactor Completion & Final Verification (STABILIZED)
 
 ## Next Action
 
-- [ ] Add more complex grammar MCQ templates (e.g. passive voice, subjunctive)
-- [ ] Implement deck-level statistics export
+- [x] Add more complex grammar MCQ templates (e.g. passive voice, subjunctive)
+- [x] Implement deck-level statistics export
 
 ## Verification State
 

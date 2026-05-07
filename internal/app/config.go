@@ -49,6 +49,16 @@ func DefaultConfig() Config {
 				"back":    "Conjugate {{.Topic}}",
 				"example": "Ich {{c1::lerne}} Deutsch.",
 			},
+			"passive_voice": {
+				"front":   "Das Haus {{c1::...}} gebaut.",
+				"back":    "Passive voice with 'werden'.",
+				"example": "Das Haus {{c1::wird}} gebaut. MCQ:wird,wurde,worden,werden",
+			},
+			"subjunctive": {
+				"front":   "Wenn ich Zeit {{c1::...}}, ...",
+				"back":    "Konjunktiv II (hätte/wäre/würde).",
+				"example": "Wenn ich Zeit {{c1::hätte}}, würde ich kommen. MCQ:hätte,wäre,würde,habe",
+			},
 		},
 	}
 }

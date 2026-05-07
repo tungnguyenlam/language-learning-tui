@@ -2,8 +2,10 @@ package tui
 
 import (
 	"context"
+	"encoding/csv"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"time"
@@ -602,5 +604,55 @@ func (m *Model) removeDraft(noteID string) {
 	}
 	if m.draftCursor >= len(m.drafts) {
 		m.draftCursor = maxInt(0, len(m.drafts)-1)
+	}
+}
+
+func (m *Model) exportStatsCSV() tea.Cmd {
+	m.status = "Exporting deck statistics..."
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+
+		decks, err := m.repo.Decks(ctx)
+		if err != nil {
+			return err
+		}
+
+		path := filepath.Join(filepath.Dir(m.exportPath), "deck_statistics.csv")
+		file, err := os.Create(path)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+
+		writer := csv.NewWriter(file)
+		defer writer.Flush()
+
+		headers := []string{"DeckID", "DeckName", "TotalCards", "NewCards", "YoungCards", "MatureCards", "TotalReviews", "SuccessRate"}
+		if err := writer.Write(headers); err != nil {
+			return err
+		}
+
+		for _, deck := range decks {
+			stats, err := m.repo.DeckStatistics(ctx, deck.ID)
+			if err != nil {
+				return err
+			}
+			row := []string{
+				deck.ID,
+				deck.Name,
+				fmt.Sprintf("%d", stats.TotalCards),
+				fmt.Sprintf("%d", stats.NewCards),
+				fmt.Sprintf("%d", stats.YoungCards),
+				fmt.Sprintf("%d", stats.MatureCards),
+				fmt.Sprintf("%d", stats.TotalReviews),
+				fmt.Sprintf("%.2f", stats.SuccessRate),
+			}
+			if err := writer.Write(row); err != nil {
+				return err
+			}
+		}
+
+		return statusMsg{text: fmt.Sprintf("Exported deck stats to %s", path)}
 	}
 }
