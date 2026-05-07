@@ -286,7 +286,7 @@ func (m *Model) exportAPKG() tea.Cmd {
 }
 
 func (m *Model) approveDraft() tea.Cmd {
-	if len(m.drafts) == 0 {
+	if len(m.drafts) == 0 || m.draftCursor >= len(m.drafts) {
 		return nil
 	}
 	draft := m.drafts[m.draftCursor]
@@ -435,6 +435,9 @@ func (m *Model) toggleReviewHistory() tea.Cmd {
 }
 
 func (m *Model) selectMCQChoice(key string) {
+	if len(m.dueCards) == 0 || m.cursor >= len(m.dueCards) {
+		return
+	}
 	idx, _ := strconv.Atoi(key)
 	m.mcqChoice = idx - 1
 	m.mcqAnswered = true

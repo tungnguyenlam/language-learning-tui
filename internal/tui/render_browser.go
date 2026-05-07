@@ -29,7 +29,7 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		Border(lipgloss.NormalBorder()).
 		BorderForeground(lipgloss.Color(searchBorderColor)).
 		Padding(0, 1).
-		Width(maxInt(30, m.width-60))
+		Width(maxInt(30, layout.Width-60))
 
 	if m.taggingCards {
 		searchStyle = searchStyle.BorderForeground(lipgloss.Color("212"))

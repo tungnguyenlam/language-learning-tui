@@ -51,8 +51,8 @@ func (m *Model) renderAI(x, y int) string {
 	start := 0
 	end := len(m.drafts)
 	maxVisible := 10
-	if m.height > 20 {
-		maxVisible = m.height - 15
+	if layout.Height > 20 {
+		maxVisible = layout.Height - 15
 	}
 	if maxVisible < 5 {
 		maxVisible = 5

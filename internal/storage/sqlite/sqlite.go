@@ -29,12 +29,6 @@ func Open(path string) (*Store, error) {
 		return nil, err
 	}
 
-	// Explicitly enable foreign keys for cascading deletes
-	if _, err := db.Exec(`PRAGMA foreign_keys = ON;`); err != nil {
-		_ = db.Close()
-		return nil, fmt.Errorf("enable foreign keys: %w", err)
-	}
-
 	store := &Store{db: db}
 	if err := store.Migrate(context.Background()); err != nil {
 		_ = db.Close()
@@ -943,6 +937,9 @@ func (s *Store) calculateStreak(rows *sql.Rows, now time.Time) (int, error) {
 			dt, _ := time.ParseInLocation("2006-01-02", d, time.Local)
 			dates = append(dates, dt)
 		}
+	}
+	if err := rows.Err(); err != nil {
+		return 0, err
 	}
 
 	if len(dates) == 0 {

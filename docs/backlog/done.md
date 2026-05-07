@@ -1,5 +1,21 @@
 # Done Backlog
 
+## 2026-05-07: Multi-Agent Bug Hunting & Stability
+- **Storage Layer Fixes**:
+  - Fixed resource leak by adding `defer rows.Close()` in `notesForDeck`.
+  - Removed redundant global `PRAGMA foreign_keys = ON` execution calls (now strictly relying on connection DSN).
+  - Patched iteration error hiding by adding `rows.Err()` checks across `calculateStreak`, `UndoLastReview`, and `CleanupTags`.
+- **TUI Panic Fixes**:
+  - Implemented bounds checking for `dueCards` in `selectMCQChoice` to prevent panics on empty queues.
+  - Implemented bounds checking for `draftCursor` in `approveDraft` to prevent panics during fast AI draft approvals.
+  - Fixed slice bounds panic in `renderCramAt` when applying filters that empty the cram queue.
+- **TUI State & UI Logic Fixes**:
+  - Fixed "leaky modal" by successfully clearing `m.confirmingDelete` state in `updateView` to prevent overlaps when switching views.
+  - Fixed dynamic width/height recalculation using explicit layout dimensions in browser, AI, and deck views instead of root terminal bounds.
+  - Resolved `N+1` database query inefficiency in `bulkBrowserToggleKind`.
+  - Added robust error handling and returning for all bulk repository operations (`SetCardBookmark`, `SetCardSuspended`, `SetCardKind`).
+- **Verification**: All 105 E2E tests and Go tests pass successfully without regressions.
+
 ## 2026-05-07: Content Library Expansion
 - **Grammar Essentials**: Expanded from 14 to 60 cards (cases, tenses, conjunctions, modal verbs)
 - **German Idioms**: Expanded from 10 to 43 cards (common sayings and proverbs)

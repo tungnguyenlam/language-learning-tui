@@ -14,7 +14,7 @@ func (m *Model) renderCram() string {
 }
 
 func (m *Model) renderCramAt(layout viewportLayout) string {
-	if m.cramActive {
+	if m.cramActive && len(m.cramCards) > 0 && m.cramCursor < len(m.cramCards) {
 		var b strings.Builder
 		card := m.cramCards[m.cramCursor]
 		audioIndicator := ""

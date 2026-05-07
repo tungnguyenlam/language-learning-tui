@@ -35,6 +35,7 @@ func (m *Model) previousViewCmd() tea.Cmd {
 func (m *Model) updateView(view View) tea.Cmd {
 	m.activeView = view
 	m.isDragging = false
+	m.confirmingDelete = false
 	m.clearReviewHistory()
 	m.hitboxes = nil // Clear hitboxes for new view
 	m.importCursor = 0
@@ -117,7 +118,9 @@ func (m *Model) bulkBrowserSuspend(suspended bool) tea.Cmd {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		for _, id := range selectedIDs {
-			_ = m.repo.SetCardSuspended(ctx, id, suspended)
+			if err := m.repo.SetCardSuspended(ctx, id, suspended); err != nil {
+				return err
+			}
 		}
 		return m.loadBrowserCards()()
 	}

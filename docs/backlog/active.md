@@ -39,6 +39,7 @@ Content Library Expansion & Improvement
 - [x] **TUI Bug Fixes**: Resolved cursor panics, leaky modals, and ignored errors.
 - [x] **Data Integrity**: Added transactions, fixed timezone inconsistencies, and enabled foreign keys in connection pool.
 - [x] **Performance**: Indexed `reviewed_at` and clamped integer overflow in SRS scheduler.
+- [x] **Multi-Agent Deep Bug Hunt**: Uncovered and fixed out-of-bounds panics, unhandled `rows.Err()` iterations, resource leaks (`rows.Close()`), and incorrect layout height/width propagation.
 
 ## Next Action
 

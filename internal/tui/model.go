@@ -819,7 +819,7 @@ func (m *Model) renderActiveViewPlainAt(layout viewportLayout) string {
 	case ViewDashboard:
 		content = m.renderDashboard(layout)
 	case ViewDecks:
-		content = m.renderDecks(layout.X, layout.Y)
+		content = m.renderDecks(layout)
 	case ViewReview:
 		content = m.renderReview(layout.X, layout.Y)
 	case ViewStatistics:

@@ -464,7 +464,8 @@ func TestDecksViewNavigationAndSelection(t *testing.T) {
 	if model.deckCursor != 0 {
 		t.Fatalf("deckCursor = %d, want 0", model.deckCursor)
 	}
-	view := model.renderDecks(0, 0)
+	layout := viewportLayout{Width: 80, Height: 24, X: 0, Y: 0}
+	view := model.renderDecks(layout)
 	if !strings.Contains(view, "today 3") || !strings.Contains(view, "75% success") {
 		t.Fatalf("deck view missing progress metrics: %s", view)
 	}
@@ -485,7 +486,7 @@ func TestDecksViewNavigationAndSelection(t *testing.T) {
 	}
 
 	// Check rendering contains stats
-	view = model.renderDecks(0, 0)
+	view = model.renderDecks(layout)
 	if !strings.Contains(view, "Deck Two") || !strings.Contains(view, "due") || !strings.Contains(view, "total") {
 		t.Fatalf("decks view rendering missing stats: %s", view)
 	}
