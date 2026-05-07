@@ -44,10 +44,10 @@ Content Library Expansion & Improvement
 
 - [x] Add False Friends deck (~150 cards)
 - [x] Add Phrasal Verbs deck (~120 cards)
-- [ ] Commit all content changes
+- [x] Add Extra/explanation field display in Review view
 
 ## Verification State
 
 - Last verified: `./scripts/verify.sh` - 105/105 E2E tests pass, all Go tests pass.
 - Environment: Darwin, Go 1.x, Python 3.12.
-- Content: Expanded from ~600 to ~1300 cards across 14 decks (A1-B2)
+- Content: 1366 cards across 14 decks (A1-B2) with explanations
