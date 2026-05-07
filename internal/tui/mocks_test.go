@@ -149,6 +149,16 @@ func (m *mockRepo) SetDailyGoal(ctx context.Context, goal int) error {
 	m.dailyGoal = goal
 	return nil
 }
+func (m *mockRepo) SetDeckLimits(ctx context.Context, deckID string, newLimit, reviewLimit int) error {
+	for i := range m.decks {
+		if m.decks[i].ID == deckID {
+			m.decks[i].NewCardsPerDay = newLimit
+			m.decks[i].ReviewLimitPerDay = reviewLimit
+			return nil
+		}
+	}
+	return nil
+}
 func (m *mockRepo) Statistics(ctx context.Context) (core.Statistics, error) {
 	goal := m.dailyGoal
 	if goal == 0 {

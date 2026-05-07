@@ -142,6 +142,8 @@ type Model struct {
 	confirmingDelete      bool
 	deleteAction          func() tea.Cmd
 	deleteIDs             []string
+	editingDeckLimits     bool
+	limitCursor           int // 0: new limit, 1: review limit
 }
 
 func NewModel(repo core.Repository, scheduler core.Scheduler) *Model {

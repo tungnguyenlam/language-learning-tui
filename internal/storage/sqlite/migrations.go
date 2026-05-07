@@ -125,4 +125,11 @@ var migrations = []migration{
 		ID:  18,
 		SQL: `CREATE INDEX IF NOT EXISTS idx_reviews_reviewed_at ON reviews(reviewed_at)`,
 	},
+	{
+		ID: 19,
+		SQL: `
+			ALTER TABLE decks ADD COLUMN new_cards_per_day INTEGER NOT NULL DEFAULT 20;
+			ALTER TABLE decks ADD COLUMN review_limit_per_day INTEGER NOT NULL DEFAULT 200;
+		`,
+	},
 }

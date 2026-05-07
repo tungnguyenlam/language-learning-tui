@@ -27,16 +27,18 @@ const (
 )
 
 type Deck struct {
-	ID           string
-	Name         string
-	Description  string
-	Tags         []string
-	Notes        []Note
-	TotalCards   int
-	NewCards     int
-	DueCards     int
-	ReviewsToday int
-	SuccessRate  float64
+	ID                string
+	Name              string
+	Description       string
+	Tags              []string
+	Notes             []Note
+	TotalCards        int
+	NewCards          int
+	DueCards          int
+	ReviewsToday      int
+	SuccessRate       float64
+	NewCardsPerDay    int
+	ReviewLimitPerDay int
 }
 
 type Note struct {
@@ -130,6 +132,7 @@ type Repository interface {
 	SetCardBookmark(ctx context.Context, cardID string, bookmarked bool) error
 	SetCardSuspended(ctx context.Context, cardID string, suspended bool) error
 	SetDailyGoal(ctx context.Context, goal int) error
+	SetDeckLimits(ctx context.Context, deckID string, newLimit, reviewLimit int) error
 	Statistics(ctx context.Context) (Statistics, error)
 	DeckStatistics(ctx context.Context, deckID string) (Statistics, error)
 	Cards(ctx context.Context, deckID string, search string) ([]Card, error)

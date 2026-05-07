@@ -128,10 +128,15 @@ func (s *Store) UpsertDeck(ctx context.Context, deck core.Deck) error {
 
 	tags := strings.Join(deck.Tags, " ")
 	_, err = tx.ExecContext(ctx, `
-		INSERT INTO decks (id, name, description, tags)
-		VALUES (?, ?, ?, ?)
-		ON CONFLICT(id) DO UPDATE SET name = excluded.name, description = excluded.description, tags = excluded.tags
-	`, deck.ID, deck.Name, deck.Description, tags)
+		INSERT INTO decks (id, name, description, tags, new_cards_per_day, review_limit_per_day)
+		VALUES (?, ?, ?, ?, ?, ?)
+		ON CONFLICT(id) DO UPDATE SET 
+			name = excluded.name, 
+			description = excluded.description, 
+			tags = excluded.tags,
+			new_cards_per_day = excluded.new_cards_per_day,
+			review_limit_per_day = excluded.review_limit_per_day
+	`, deck.ID, deck.Name, deck.Description, tags, deck.NewCardsPerDay, deck.ReviewLimitPerDay)
 	if err != nil {
 		return err
 	}
@@ -149,7 +154,7 @@ func (s *Store) UpsertDeck(ctx context.Context, deck core.Deck) error {
 func (s *Store) GetDeck(ctx context.Context, id string) (core.Deck, error) {
 	var deck core.Deck
 	var tags string
-	err := s.db.QueryRowContext(ctx, `SELECT id, name, description, tags FROM decks WHERE id = ?`, id).Scan(&deck.ID, &deck.Name, &deck.Description, &tags)
+	err := s.db.QueryRowContext(ctx, `SELECT id, name, description, tags, new_cards_per_day, review_limit_per_day FROM decks WHERE id = ?`, id).Scan(&deck.ID, &deck.Name, &deck.Description, &tags, &deck.NewCardsPerDay, &deck.ReviewLimitPerDay)
 	if errors.Is(err, sql.ErrNoRows) {
 		return core.Deck{}, fmt.Errorf("deck not found: %s", id)
 	}
@@ -172,7 +177,7 @@ func (s *Store) Decks(ctx context.Context) ([]core.Deck, error) {
 	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
 	tomorrowStart := todayStart.AddDate(0, 0, 1)
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT d.id, d.name, d.description, d.tags,
+		SELECT d.id, d.name, d.description, d.tags, d.new_cards_per_day, d.review_limit_per_day,
 		       COUNT(c.id) as total_cards,
 		       SUM(CASE WHEN rs.due_at IS NULL AND COALESCE(cf.suspended, 0) = 0 THEN 1 ELSE 0 END) as new_cards,
 		       SUM(CASE WHEN (rs.due_at IS NULL OR rs.due_at <= ?) AND COALESCE(cf.suspended, 0) = 0 THEN 1 ELSE 0 END) as due_cards,
@@ -211,7 +216,7 @@ func (s *Store) Decks(ctx context.Context) ([]core.Deck, error) {
 		var deck core.Deck
 		var tags string
 		var total, newCards, due, reviewsToday, reviewCount, successfulReviews sql.NullInt64
-		if err := rows.Scan(&deck.ID, &deck.Name, &deck.Description, &tags, &total, &newCards, &due, &reviewsToday, &reviewCount, &successfulReviews); err != nil {
+		if err := rows.Scan(&deck.ID, &deck.Name, &deck.Description, &tags, &deck.NewCardsPerDay, &deck.ReviewLimitPerDay, &total, &newCards, &due, &reviewsToday, &reviewCount, &successfulReviews); err != nil {
 			return nil, err
 		}
 		if tags != "" {
@@ -674,6 +679,24 @@ func (s *Store) SetDailyGoal(ctx context.Context, goal int) error {
 			value = excluded.value,
 			updated_at = excluded.updated_at
 	`, strconv.Itoa(goal), time.Now().UTC())
+	return err
+}
+
+func (s *Store) SetDeckLimits(ctx context.Context, deckID string, newLimit, reviewLimit int) error {
+	if deckID == "" {
+		return errors.New("deck id is required")
+	}
+	if newLimit < 0 {
+		newLimit = 0
+	}
+	if reviewLimit < 0 {
+		reviewLimit = 0
+	}
+	_, err := s.db.ExecContext(ctx, `
+		UPDATE decks
+		SET new_cards_per_day = ?, review_limit_per_day = ?
+		WHERE id = ?
+	`, newLimit, reviewLimit, deckID)
 	return err
 }
 

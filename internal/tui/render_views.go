@@ -43,7 +43,7 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 	end := len(filteredDecks)
 	maxVisible := 5
 	if layout.Height > 20 {
-		maxVisible = (layout.Height - 15) / 3 // Each deck takes about 3 lines
+		maxVisible = (layout.Height - 15) / 2
 	}
 	if maxVisible < 3 {
 		maxVisible = 3
@@ -82,8 +82,24 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 
 		label := fmt.Sprintf("%s%s%s (%s, today %d, %.0f%% success)",
 			prefix, selectMark, deck.Name, counts, deck.ReviewsToday, deck.SuccessRate*100)
-		b.WriteString(style.Render(label))
-		b.WriteString("\n")
+
+		b.WriteString(style.Render(label) + "\n")
+
+		// Show limits only when editing this deck
+		if i == m.deckCursor && m.editingDeckLimits {
+			newStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81"))
+			reviewStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81"))
+			if m.limitCursor == 0 {
+				newStyle = newStyle.Bold(true).Underline(true)
+			} else {
+				reviewStyle = reviewStyle.Bold(true).Underline(true)
+			}
+			limitsLabel := fmt.Sprintf("     Limits: New %s, Review %s (use +/-)",
+				newStyle.Render(fmt.Sprintf("%d", deck.NewCardsPerDay)),
+				reviewStyle.Render(fmt.Sprintf("%d", deck.ReviewLimitPerDay)))
+			b.WriteString(limitsLabel + "\n")
+		}
+
 		if deck.Description != "" {
 			b.WriteString(fmt.Sprintf("     %s\n", mutedStyle.Render(deck.Description)))
 		}

@@ -8,6 +8,12 @@ Advanced SRS Features & User Preferences
 
 ## Completed Work
 
+### Per-Deck Study Limits (DONE)
+- [x] Extended Deck model and storage schema with new columns.
+- [x] Added SQLite migration #19.
+- [x] Implemented interactive limit editing in Decks view.
+- [x] Verified compatibility with existing E2E tests.
+
 ### UI Polish & UX Enhancements (DONE)
 - [x] Implemented visual progress bars for daily goals on Dashboard and Statistics views.
 - [x] Added "Next Card" preview to Dashboard.

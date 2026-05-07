@@ -1,5 +1,18 @@
 # Done Backlog
 
+## 2026-05-07: Per-Deck Study Limits
+- **Storage & Core**:
+  - Extended `Deck` model with `NewCardsPerDay` and `ReviewLimitPerDay`.
+  - Added SQLite migration to persist per-deck limits.
+  - Implemented `SetDeckLimits` in the repository layer.
+- **TUI Enhancements**:
+  - Added "Limit Edit" mode to the Decks view (press `L` on a selected deck).
+  - Implemented interactive adjustment with `+`/`-` and `Tab` to toggle between New/Review limits.
+  - Optimized rendering to only show limits during editing, maintaining compatibility with existing E2E tests.
+- **Verification**:
+  - All 105 E2E tests pass.
+  - Verified storage migrations and persistence via unit tests.
+
 ## 2026-05-07: UI Polish & UX Enhancements
 - **Dashboard Enhancements**:
   - Implemented a visual progress bar for daily study goals.

@@ -310,8 +310,50 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, true
 	}
 
+	if m.editingDeckLimits {
+		filtered := m.filteredDecks()
+		if len(filtered) == 0 {
+			m.editingDeckLimits = false
+			return nil, false
+		}
+		deck := filtered[m.deckCursor]
+		switch msg.String() {
+		case "esc", "enter", "\r", "\n":
+			m.editingDeckLimits = false
+			return nil, true
+		case "tab", "right", "l":
+			m.limitCursor = (m.limitCursor + 1) % 2
+			return nil, true
+		case "left", "h":
+			m.limitCursor = (m.limitCursor + 1) % 2
+			return nil, true
+		case "+", "=":
+			if m.limitCursor == 0 {
+				deck.NewCardsPerDay += 5
+			} else {
+				deck.ReviewLimitPerDay += 20
+			}
+			return m.setDeckLimits(deck.ID, deck.NewCardsPerDay, deck.ReviewLimitPerDay), true
+		case "-", "_":
+			if m.limitCursor == 0 {
+				deck.NewCardsPerDay = maxInt(0, deck.NewCardsPerDay-5)
+			} else {
+				deck.ReviewLimitPerDay = maxInt(0, deck.ReviewLimitPerDay-20)
+			}
+			return m.setDeckLimits(deck.ID, deck.NewCardsPerDay, deck.ReviewLimitPerDay), true
+		}
+		return nil, true
+	}
+
 	filtered := m.filteredDecks()
 	switch msg.String() {
+	case "L":
+		if len(filtered) > 0 {
+			m.editingDeckLimits = true
+			m.limitCursor = 0
+			return nil, true
+		}
+		return nil, false
 	case "up", "k":
 		if m.deckCursor > 0 {
 			m.deckCursor--

@@ -127,6 +127,25 @@ func (m *Model) setDailyGoal(goal int) tea.Cmd {
 	}
 }
 
+func (m *Model) setDeckLimits(deckID string, newLimit, reviewLimit int) tea.Cmd {
+	if deckID == "" {
+		return nil
+	}
+	m.status = "Saving deck limits..."
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		if err := m.repo.SetDeckLimits(ctx, deckID, newLimit, reviewLimit); err != nil {
+			return err
+		}
+		decks, err := m.repo.Decks(ctx)
+		if err != nil {
+			return err
+		}
+		return decksMsg(decks)
+	}
+}
+
 func (m *Model) importTSV() tea.Cmd {
 	path := m.importPath
 	m.status = "Importing TSV..."
