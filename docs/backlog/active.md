@@ -42,12 +42,11 @@ Content Library Expansion & Improvement
 
 ## Next Action
 
-- [x] Add False Friends deck (~150 cards)
-- [x] Add Phrasal Verbs deck (~120 cards)
-- [x] Add Extra/explanation field display in Review view
+- [x] Scalable content system with Registry pattern
 
 ## Verification State
 
 - Last verified: `./scripts/verify.sh` - 105/105 E2E tests pass, all Go tests pass.
 - Environment: Darwin, Go 1.x, Python 3.12.
-- Content: 1366 cards across 14 decks (A1-B2) with explanations
+- Content: 1366+ cards across 14 decks with explanations
+- Architecture: Scalable content Registry with pluggable sources
