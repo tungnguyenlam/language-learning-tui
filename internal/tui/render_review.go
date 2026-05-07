@@ -81,6 +81,13 @@ func (m *Model) renderReview(x, y int) string {
 
 	var answer string
 	answerYOffset := 0
+
+	extraDisplay := ""
+	if card.Extra != "" {
+		extraStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("245")).Italic(true)
+		extraDisplay = "\n" + extraStyle.Render("💡 "+card.Extra)
+	}
+
 	if card.Kind == core.CardKindMCQ && len(card.Choices) > 0 {
 		if m.revealState == RevealRevealed {
 			mcqChoices := renderMCQChoices(card.Choices, m.mcqChoice)
@@ -89,7 +96,7 @@ func (m *Model) renderReview(x, y int) string {
 				if m.mcqCorrect {
 					feedback = "Correct"
 				}
-				answer = fmt.Sprintf("%s: %s\n\n%s\n\nGrade: a %s | h %s | g %s | e %s", feedback, card.Answer, mcqChoices, gradeAgain, gradeHard, gradeGood, gradeEasy)
+				answer = fmt.Sprintf("%s: %s%s\n\n%s\n\nGrade: a %s | h %s | g %s | e %s", feedback, card.Answer, extraDisplay, mcqChoices, gradeAgain, gradeHard, gradeGood, gradeEasy)
 				answerYOffset = strings.Count(fmt.Sprintf("%s\n%s | %s\n%s%s%s\n\n%s%s\n\n%s: %s\n\n%s\n\nGrade: ", header, bookmark, keys, leech, suspended, audioIndicator, promptDisplay, mature, feedback, card.Answer, mcqChoices), "\n")
 
 				labelAgain := "Grade: a "
@@ -102,7 +109,7 @@ func (m *Model) renderReview(x, y int) string {
 				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: x + lipgloss.Width(labelGood), Y: y + answerYOffset, Width: ggW, Height: 1})
 				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: x + lipgloss.Width(labelEasy), Y: y + answerYOffset, Width: geW, Height: 1})
 			} else {
-				answer = fmt.Sprintf("1-4 select answer\n\n%s\n\nGrade: a %s | h %s | g %s | e %s", mcqChoices, gradeAgain, gradeHard, gradeGood, gradeEasy)
+				answer = fmt.Sprintf("1-4 select answer%s\n\n%s\n\nGrade: a %s | h %s | g %s | e %s", extraDisplay, mcqChoices, gradeAgain, gradeHard, gradeGood, gradeEasy)
 				answerYOffset = strings.Count(fmt.Sprintf("%s\n%s | %s\n%s%s%s\n\n%s%s\n\n1-4 select answer\n\n%s\n\nGrade: ", header, bookmark, keys, leech, suspended, audioIndicator, promptDisplay, mature, mcqChoices), "\n")
 
 				labelAgain := "Grade: a "
@@ -121,7 +128,7 @@ func (m *Model) renderReview(x, y int) string {
 			answer = "Press space or enter to reveal choices."
 		}
 	} else if m.revealState == RevealRevealed {
-		answer = fmt.Sprintf("%s\n\nGrade: a %s | h %s | g %s | e %s", card.Answer, gradeAgain, gradeHard, gradeGood, gradeEasy)
+		answer = fmt.Sprintf("%s%s\n\nGrade: a %s | h %s | g %s | e %s", card.Answer, extraDisplay, gradeAgain, gradeHard, gradeGood, gradeEasy)
 		answerYOffset = strings.Count(fmt.Sprintf("%s\n%s | %s\n%s%s%s\n\n%s%s\n\n%s\n\nGrade: ", header, bookmark, keys, leech, suspended, audioIndicator, promptDisplay, mature, card.Answer), "\n")
 
 		labelAgain := "Grade: a "

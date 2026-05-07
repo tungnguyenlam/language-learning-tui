@@ -60,6 +60,7 @@ type Card struct {
 	Kind       CardKind
 	Prompt     string
 	Answer     string
+	Extra      string
 	Choices    []string
 	Audio      string
 	Tags       []string

@@ -168,7 +168,8 @@ func CardsForNote(note core.Note) []core.Card {
 				DeckID:  note.DeckID,
 				Kind:    core.CardKindCloze,
 				Prompt:  cloze.Prompt,
-				Answer:  cloze.Full,             // Full sentence for Cloze
+				Answer:  cloze.Full, // Full sentence for Cloze
+				Extra:   note.Extra,
 				Choices: []string{cloze.Answer}, // The actual missing part
 				Audio:   note.Audio,
 				Tags:    baseTags,
@@ -185,6 +186,7 @@ func CardsForNote(note core.Note) []core.Card {
 			Kind:   core.CardKindFlashcard,
 			Prompt: note.Front,
 			Answer: note.Back,
+			Extra:  note.Extra,
 			Audio:  note.Audio,
 			Tags:   baseTags,
 		},
@@ -198,6 +200,7 @@ func CardsForNote(note core.Note) []core.Card {
 			Kind:   core.CardKindFlashcard,
 			Prompt: note.Back,
 			Answer: note.Front,
+			Extra:  note.Extra,
 			Audio:  note.Audio,
 			Tags:   baseTags,
 		})
@@ -211,6 +214,7 @@ func CardsForNote(note core.Note) []core.Card {
 			Kind:    core.CardKindMCQ,
 			Prompt:  note.Front,
 			Answer:  note.Back,
+			Extra:   note.Extra,
 			Choices: note.Choices,
 			Audio:   note.Audio,
 			Tags:    baseTags,
@@ -242,6 +246,7 @@ func CardsForNote(note core.Note) []core.Card {
 			Kind:    core.CardKindMCQ,
 			Prompt:  prompt,
 			Answer:  answer,
+			Extra:   note.Extra,
 			Choices: choices,
 			Audio:   note.Audio,
 			Tags:    baseTags,
