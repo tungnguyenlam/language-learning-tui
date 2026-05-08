@@ -177,6 +177,10 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		}
 		b.WriteString(fmt.Sprintf("\nCram Stats: %d reviewed, %d correct (%.1f%%)\n", m.cramReviewed, m.cramCorrect, accuracy))
 	}
-	b.WriteString("\nUse j/k to navigate. Type 1-5 for filter. q to quit.\n")
+	b.WriteString(fmt.Sprintf("\nUse %s/%s to navigate. Type %s for filter. %s to quit.\n",
+		lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("j"),
+		lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("k"),
+		lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("1-5"),
+		lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("q")))
 	return b.String()
 }

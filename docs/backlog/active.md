@@ -4,9 +4,25 @@ Last updated: 2026-05-08
 
 ## Current Milestone
 
-End-to-end TUI correctness and autonomy batch
+Making the TUI meaningfully better with 6-8 distinct improvements
 
 ## Completed Work
+
+### UI Improvements
+- [x] Add visual feedback for keyboard shortcuts in all views
+- [x] Add new Travel & Tourism German deck
+- [x] Add new Technology & Internet German deck
+- [x] Improve the visual hierarchy in the Review view
+- [x] Enhance the Statistics view with better data visualization
+- [x] Add a loading indicator for AI draft generation
+
+### Bug Fixes
+- [x] Fix potential race condition in deck selection
+- [x] Improve error handling for file operations
+
+### Developer Experience
+- [x] Add more comprehensive logging
+- [x] Improve the help documentation
 
 ### UI Polish & Developer Experience (DONE)
 - [x] Refined UI spacing and layout in Settings: aligned keys, updated formatting.
@@ -31,8 +47,8 @@ End-to-end TUI correctness and autonomy batch
 
 ## Next Action
 
-- [ ] Phase 1: run `cmd/deutsch-tui` through smoke and tui-tester to capture current launch/render state.
-- [ ] Phase 2: list top launch, navigation, persistence, and E2E coverage blockers.
+- [x] Phase 1: run `cmd/deutsch-tui` through smoke and tui-tester to capture current launch/render state.
+- [x] Phase 2: list top launch, navigation, persistence, and E2E coverage blockers.
 - [x] Phase 3 batch A: implemented Review cursor safety, AI/Settings template index safety, empty import/export guards, and cross-view UI hints.
 - [x] Phase 3 batch B: added 8 tui-tester E2E tests covering Dashboard, Review persistence, Decks, Import, AI, Settings, and view navigation; added B1 Apartment & Housing content.
 - [x] Phase 4: `./scripts/verify.sh` passes with Go tests, smoke, and 116 E2E tests.

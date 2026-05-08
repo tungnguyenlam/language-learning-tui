@@ -1,0 +1,103 @@
+#separator:tab
+#html:false
+#deck:B1 Technology & Internet
+tech-computer	Der Computer	computer	Device for computing	b1 technology
+tech-laptop	Der Laptop	laptop	Portabe computer	b1 technology
+tech-tablet	Das Tablet	tablet	Touchscreen device	b1 technology
+tech-smartphone	Das Smartphone	smartphone	Intelligent phone	b1 technology
+tech-app	Die App	application	Mobile software	b1 technology
+tech-software	Die Software	software	Computer programs	b1 technology
+tech-hardware	Die Hardware	hardware	Physical components	b1 technology
+tech-prozessor	Der Prozessor	processor	CPU	b1 technology
+tech-speicher	Der Speicher	memory	Storage device	b1 technology
+tech-festplatte	Die Festplatte	hard drive	Data storage	b1 technology
+tech-ssd	Die SSD	solid state drive	Fast storage	b1 technology
+tech-ram	Der RAM	random access memory	Volatile memory	b1 technology
+tech-monitor	Der Monitor	monitor	Display screen	b1 technology
+tech-tastatur	Die Tastatur	keyboard	Input device	b1 technology
+tech-maus	Die Maus	mouse	Pointing device	b1 technology
+tech-webcam	Die Webcam	webcam	Camera	b1 technology
+tech-mikrofon	Das Mikrofon	microphone	Audio input	b1 technology
+tech-lautsprecher	Der Lautsprecher	speaker	Audio output	b1 technology
+tech-kopfhoerer	Die Kopfhörer	headphones	Audio device	b1 technology
+tech-bluetooth	Das Bluetooth	bluetooth	Wireless connection	b1 technology
+tech-wlan	Das WLAN	wireless network	Wi-Fi	b1 technology
+tech-internet	Das Internet	internet	Global network	b1 technology
+tech-netzwerk	Das Netzwerk	network	Connected computers	b1 technology
+tech-server	Der Server	server	Network computer	b1 technology
+tech-cloud	Die Cloud	cloud	Online storage	b1 technology
+tech-upload	Das Upload	upload	Send data	b1 technology
+tech-download	Das Download	download	Receive data	b1 technology
+tech-streaming	Das Streaming	streaming	Real-time media	b1 technology
+tech-daten	Die Daten	data	Information	b1 technology
+tech-datei	Die Datei	file	Document	b1 technology
+tech-ordner	Der Ordner	folder	Directory	b1 technology
+tech-link	Der Link	link	Web address	b1 technology
+tech-url	Die URL	uniform resource locator	Web address	b1 technology
+tech-webseite	Die Webseite	webpage	Internet page	b1 technology
+tech-website	Die Website	website	Web presence	b1 technology
+tech-blog	Das Blog	blog	Online journal	b1 technology
+tech-forum	Das Forum	forum	Discussion platform	b1 technology
+tech-chat	Der Chat	chat	Text conversation	b1 technology
+tech-videochat	Der Videochat	video chat	Visual conversation	b1 technology
+tech-email	Die E-Mail	email	Electronic mail	b1 technology
+tech-anhang	Der Anhang	attachment	File sent with email	b1 technology
+tech-betreff	Der Betreff	subject	Email topic	b1 technology
+tech-postfach	Das Postfach	inbox	Email folder	b1 technology
+tech-spam	Der Spam	spam	Unwanted email	b1 technology
+tech-passwort	Das Passwort	password	Security code	b1 technology
+tech-benutzername	Der Benutzername	username	User identifier	b1 technology
+tech-login	Der Login	login	Access entry	b1 technology
+tech-account	Der Account	account	User profile	b1 technology
+tech-profil	Das Profil	profile	User information	b1 technology
+tech-avatar	Der Avatar	avatar	User image	b1 technology
+tech-status	Der Status	status	Current condition	b1 technology
+tech-update	Das Update	update	Software refresh	b1 technology
+tech-downloaden	Downloaden	to download	Receive data	b1 technology
+tech-uploaden	Uploaden	to upload	Send data	b1 technology
+tech-chatten	Chatten	to chat	Text conversation	b1 technology
+tech-surfen	Surfen	to browse	Navigate internet	b1 technology
+tech-googeln	Googeln	to google	Search online	b1 technology
+tech-streamen	Streamen	to stream	Watch live media	b1 technology
+tech-posten	Posten	to post	Publish content	b1 technology
+tech-teilen	Teilen	to share	Distribute content	b1 technology
+tech-liken	 Liken	to like	Express approval	b1 technology
+tech-kommentieren	Kommentieren	to comment	Add opinion	b1 technology
+tech-followen	Followen	to follow	Subscribe to content	b1 technology
+tech-unfollowen	Unfollowen	to unfollow	Unsubscribe	b1 technology
+tech-blocken	Blocken	to block	Restrict access	b1 technology
+tech-melden	Melden	to report	Notify authorities	b1 technology
+tech-einstellungen	Die Einstellungen	settings	Configuration options	b1 technology
+tech-optionen	Die Optionen	options	Choice selections	b1 technology
+tech-funktion	Die Funktion	function	Device feature	b1 technology
+tech-feature	Das Feature	feature	Special function	b1 technology
+tech-apps	Die Apps	applications	Multiple software	b1 technology
+tech-digitale-welt	Die digitale Welt	digital world	Online environment	b1 technology
+tech-social-media	Die Social Media	social media	Social platforms	b1 technology
+tech-online	Das Online	online	Connected to internet	b1 technology
+tech-offline	Das Offline	offline	Not connected	b1 technology
+tech-virus	Der Virus	virus	Malicious software	b1 technology
+tech-malware	Die Malware	malicious software	Harmful programs	b1 technology
+tech-firewall	Die Firewall	firewall	Security barrier	b1 technology
+tech-antivirus	Das Antivirus	antivirus software	Virus protection	b1 technology
+tech-backup	Das Backup	backup	Data copy	b1 technology
+tech-sicherheit	Die Sicherheit	security	Protection	b1 technology
+tech-datenschutz	Der Datenschutz	data protection	Privacy rights	b1 technology
+tech-cookie	Das Cookie	cookie	Tracking file	b1 technology
+tech-browser	Der Browser	browser	Web navigator	b1 technology
+tech-cache	Der Cache	cache	Temporary storage	b1 technology
+tech-history	Die History	history	Browsing record	b1 technology
+tech-bookmark	Das Bookmark	bookmark	Saved link	b1 technology
+tech-homepage	Die Homepage	homepage	Main webpage	b1 technology
+tech-domain	Die Domain	domain	Website address	b1 technology
+tech-hosting	Das Hosting	hosting	Website storage	b1 technology
+tech-website-erstellen	Website erstellen	to create website	Build webpage	b1 technology
+tech-programmieren	Programmieren	to program	Write code	b1 technology
+tech-code	Der Code	code	Programming language	b1 technology
+tech-programm	Das Programm	program	Software application	b1 technology
+tech-developer	Der Developer	developer	Software creator	b1 technology
+tech-user	Der User	user	Software operator	b1 technology
+tech-interface	Das Interface	interface	User connection	b1 technology
+tech-design	Das Design	design	Visual appearance	b1 technology
+tech-layout	Das Layout	layout	Page arrangement	b1 technology
+tech-responsive	Das Responsive	responsive	Adaptive design	b1 technology

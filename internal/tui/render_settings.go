@@ -131,7 +131,9 @@ func (m *Model) renderSettings(x, y int) string {
 	if m.editingTemplate {
 		b.WriteString("\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("EDITING") + " - Enter to save, Esc to cancel.")
 	} else {
-		b.WriteString("\n" + mutedStyle.Render("Use j/k to move, +/- goal, Enter edit/toggle, [/] templates."))
+		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
+		b.WriteString(fmt.Sprintf("\nUse %s/%s to move, %s goal, Enter edit/toggle, %s/%s templates.",
+			keyStyle.Render("j"), keyStyle.Render("k"), keyStyle.Render("+/-"), keyStyle.Render("["), keyStyle.Render("]")))
 	}
 	return b.String()
 }

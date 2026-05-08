@@ -2,6 +2,8 @@ package tui
 
 import (
 	"fmt"
+	"io"
+	"log"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -11,6 +13,7 @@ import (
 	"time"
 
 	"deutsch-tui/internal/ai"
+	"deutsch-tui/internal/app"
 	"deutsch-tui/internal/core"
 
 	tea "charm.land/bubbletea/v2"
@@ -143,7 +146,8 @@ type Model struct {
 	deleteAction          func() tea.Cmd
 	deleteIDs             []string
 	editingDeckLimits     bool
-	limitCursor           int // 0: new limit, 1: review limit
+	limitCursor           int                // 0: new limit, 1: review limit
+	logger                *app.LeveledLogger // Add logger field
 }
 
 func NewModel(repo core.Repository, scheduler core.Scheduler) *Model {
@@ -165,6 +169,7 @@ type ModelOptions struct {
 	ImportPath     string
 	ExportPath     string
 	OnConfigChange func(string, map[string]map[string]string, bool)
+	Logger         *app.LeveledLogger // Add logger option
 }
 
 func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts ModelOptions) *Model {
@@ -218,6 +223,15 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 	if strings.TrimSpace(exportPath) == "" {
 		exportPath = "export.tsv"
 	}
+
+	// Create a default logger if none provided
+	logger := opts.Logger
+	if logger == nil {
+		// Create a minimal logger that discards output
+		nullLogger := log.New(io.Discard, "", 0)
+		logger = app.NewLeveledLogger(nullLogger, app.LogLevelInfo)
+	}
+
 	return &Model{
 		repo:            repo,
 		scheduler:       scheduler,
@@ -238,6 +252,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		onConfigChange:  opts.OnConfigChange,
 		browserSelected: make(map[string]bool),
 		deckSelected:    make(map[string]bool),
+		logger:          logger, // Set the logger
 	}
 }
 
@@ -307,6 +322,8 @@ func (m *Model) Init() tea.Cmd {
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	m.logger.Debug("Processing message: %T", msg)
+
 	switch msg := msg.(type) {
 	case spinnerTickMsg:
 		if m.drafting {
@@ -320,6 +337,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.revealProgress >= 100 {
 				m.revealProgress = 100
 				m.revealState = RevealRevealed
+				m.logger.Debug("Card fully revealed")
 			} else {
 				return m, m.tickReveal()
 			}
@@ -329,14 +347,18 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 		m.breakpoint = breakpointForWidth(msg.Width)
 		m.isDragging = false
+		m.logger.Debug("Window resized to %dx%d, breakpoint: %s", msg.Width, msg.Height, m.breakpoint)
 		return m, nil
 	case error:
 		m.drafting = false
 		m.status = friendlyError(msg)
+		m.logger.Error("Error occurred: %v", msg)
 	case decksMsg:
+		m.logger.Debug("Received %d decks", len(msg))
 		m.syncDecks([]core.Deck(msg))
 		m.applyDeckFilter()
 	case dueCardsMsg:
+		m.logger.Debug("Received %d due cards", len(msg))
 		m.allDue = []core.Card(msg)
 		m.applyDeckFilter()
 	case bookmarkedDueCardsMsg:
@@ -347,11 +369,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.status = fmt.Sprintf("%d bookmarked cards due", len(m.allDue))
 		}
+		m.logger.Debug("Received %d bookmarked due cards", len(msg))
 
 	case statsMsg:
 		m.stats = core.Statistics(msg)
+		m.logger.Debug("Received statistics update")
 	case reviewsPerDayMsg:
 		m.reviewsPerDay = map[string]int(msg)
+		m.logger.Debug("Received reviews per day data")
 	case reviewHistoryMsg:
 		if msg.cardID == m.reviewHistoryCard {
 			m.reviewHistory = msg.logs
@@ -361,9 +386,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			} else {
 				m.status = fmt.Sprintf("%d review history entries", len(msg.logs))
 			}
+			m.logger.Debug("Received %d review history entries for card %s", len(msg.logs), msg.cardID)
 		}
 	case reviewPredictionsMsg:
 		m.reviewPredictions = map[core.ReviewGrade]time.Duration(msg)
+		m.logger.Debug("Received review predictions")
 	case draftsMsg:
 		m.drafting = false
 		m.drafts = []ai.Draft(msg)
@@ -373,17 +400,21 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.status = fmt.Sprintf("%d drafts ready", len(m.drafts))
 		}
+		m.logger.Info("Generated %d AI drafts", len(msg))
 	case draftApprovedMsg:
 		m.removeDraft(msg.noteID)
 		m.allDue = msg.cards
 		m.applyDeckFilter()
 		m.status = "Draft approved"
+		m.logger.Info("Approved AI draft %s", msg.noteID)
 	case importDoneMsg:
 		m.syncDecks(msg.decks)
 		m.allDue = msg.cards
 		m.applyDeckFilter()
+		m.logger.Info("Import completed: %d notes from %s", msg.count, filepath.Base(msg.path))
 		return m, m.setStatus(fmt.Sprintf("Imported %d notes from %s", msg.count, filepath.Base(msg.path)), 3*time.Second)
 	case statusMsg:
+		m.logger.Debug("Setting status: %s", msg.text)
 		return m, m.setStatus(msg.text, 3*time.Second)
 	case tagsUpdatedMsg:
 		m.taggingCards = false
@@ -396,8 +427,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		}
+		m.logger.Info("Updated tags for %d cards", len(msg.cardIDs))
 		return m, m.setStatus(fmt.Sprintf("Updated tags for %d cards", len(msg.cardIDs)), 3*time.Second)
 	case deckDeletedMsg:
+		m.logger.Info("Deck deleted")
 		return m, tea.Batch(m.loadDecks, m.loadDueCards)
 	case timedClearStatusMsg:
 		if msg.seq == m.statusSeq {
@@ -416,6 +449,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.grade != core.GradeAgain {
 			m.sessionCorrect++
 		}
+		m.logger.Info("Recorded review for card %s with grade %s", msg.cardID, msg.grade)
 		return m, m.loadReviewsPerDay()
 	case bookmarkToggledMsg:
 		m.setCardBookmarkLocal(msg.cardID, msg.bookmarked)
@@ -424,16 +458,19 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.status = "Card bookmark removed"
 		}
+		m.logger.Debug("Toggled bookmark for card %s: %t", msg.cardID, msg.bookmarked)
 	case cardSuspendedMsg:
 		m.syncDecks(msg.decks)
 		m.stats = msg.stats
 		m.allDue = msg.cards
 		m.applyDeckFilter()
 		m.status = "Card suspended"
+		m.logger.Info("Suspended card %s", msg.cardID)
 		return m, m.loadReviewsPerDay()
 	case dailyGoalSetMsg:
 		m.stats = core.Statistics(msg)
 		m.status = fmt.Sprintf("Daily goal set to %d", m.stats.DailyGoal)
+		m.logger.Info("Daily goal set to %d", m.stats.DailyGoal)
 	case reviewUndoneMsg:
 		m.lastReviewedCardID = ""
 		if m.sessionReviewed > 0 {
@@ -447,6 +484,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.allDue = msg.cards
 		m.applyDeckFilter()
 		m.status = "Last review undone"
+		m.logger.Info("Undid last review for card %s", msg.cardID)
 		return m, m.loadReviewsPerDay()
 	case browserCardsMsg:
 		m.browserCards = []core.Card(msg)
@@ -455,6 +493,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.status = fmt.Sprintf("%d cards found", len(m.browserCards))
 		}
+		m.logger.Debug("Loaded %d browser cards", len(msg))
 	case cramCardsMsg:
 		allCards := []core.Card(msg)
 		m.cramCards = m.cramCards[:0]
@@ -488,7 +527,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.status = fmt.Sprintf("%d cards in cram mode", len(m.cramCards))
 		}
+		m.logger.Debug("Loaded %d cram cards with filter %s", len(m.cramCards), m.cramType)
 	case tea.KeyPressMsg:
+		m.logger.Debug("Key pressed: %s", msg.String())
 		return m.updateKey(msg)
 	case tea.MouseMsg:
 		if m.confirmingDelete {
@@ -502,6 +543,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.MouseClickMsg, *tea.MouseClickMsg:
 			if mouse.Button == tea.MouseLeft {
 				if hit, ok := m.hitboxAt(mouse.X, mouse.Y); ok {
+					m.logger.Debug("Mouse click at (%d, %d) on hitbox %s", mouse.X, mouse.Y, hit.ID)
 					if strings.Contains(hit.ID, "-scroll-") {
 						m.isDragging = true
 						m.dragView = hit.View
@@ -533,8 +575,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.handleMouseDrag(mouse.Y)
 			}
 		case tea.MouseReleaseMsg, *tea.MouseReleaseMsg:
-			m.isDragging = false
+			if m.isDragging {
+				m.logger.Debug("Mouse drag released")
+				m.isDragging = false
+			}
 		case tea.MouseWheelMsg, *tea.MouseWheelMsg:
+			m.logger.Debug("Mouse wheel event: button=%v", mouse.Button)
 			if mouse.Button == tea.MouseWheelUp {
 				switch m.activeView {
 				case ViewStatistics:
@@ -935,10 +981,12 @@ func (m *Model) syncDecks(newDecks []core.Deck) {
 			}
 			m.deck = m.decks[m.deckIndex]
 		}
-		// Clamp deckCursor
+		// Clamp deckCursor to prevent race conditions
 		filteredLen := len(m.filteredDecks())
-		if m.deckCursor >= filteredLen {
-			m.deckCursor = maxInt(0, filteredLen-1)
+		if filteredLen > 0 {
+			m.deckCursor = clampInt(m.deckCursor, 0, filteredLen-1)
+		} else {
+			m.deckCursor = 0
 		}
 	} else {
 		m.deck = core.Deck{}

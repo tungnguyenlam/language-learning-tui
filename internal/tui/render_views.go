@@ -120,9 +120,13 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 			}
 		}
 		if selectedCount > 0 {
-			b.WriteString(fmt.Sprintf("\n%d decks selected. Press Backspace to delete, M to merge into current.", selectedCount))
+			b.WriteString(fmt.Sprintf("\n%d decks selected. Press %s to delete, %s to merge into current.", selectedCount,
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("Backspace"),
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("M")))
 		} else {
-			b.WriteString("\nPress enter to select deck. Press / to search. v to view stats. x to multi-select. Esc to clear.")
+			keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
+			b.WriteString(fmt.Sprintf("\nPress %s to select deck. Press %s to search. %s to view stats. %s to multi-select. %s to clear.",
+				keyStyle.Render("enter"), keyStyle.Render("/"), keyStyle.Render("v"), keyStyle.Render("x"), keyStyle.Render("Esc")))
 		}
 	}
 
@@ -281,8 +285,12 @@ func (m *Model) renderImport(x, y int) string {
 	if m.editingImportPath || m.editingExportTag {
 		b.WriteString("\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("EDITING - Enter to save, Esc to cancel.") + "\n\n")
 	} else {
-		b.WriteString("\n\nCurrent Deck: " + m.deckLabel() + "\n")
-		b.WriteString("Use j/k to navigate, Enter/t to edit, [ / ] to change deck, or click buttons.\n")
+		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
+		b.WriteString(fmt.Sprintf("\n\nCurrent Deck: %s\nUse %s/%s to navigate, %s/%s to edit, %s / %s to change deck, or click buttons.\n",
+			m.deckLabel(),
+			keyStyle.Render("j"), keyStyle.Render("k"),
+			keyStyle.Render("Enter"), keyStyle.Render("t"),
+			keyStyle.Render("["), keyStyle.Render("]")))
 	}
 
 	return b.String()

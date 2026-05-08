@@ -174,7 +174,9 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 
 	footer := ""
 	if totalLines > maxVisible {
-		footer = fmt.Sprintf("\n%s", mutedStyle.Render(fmt.Sprintf("Use j/k or Mouse Wheel to scroll. Lines %d-%d of %d.", m.statsScroll+1, minInt(m.statsScroll+maxVisible, totalLines), totalLines)))
+		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
+		footer = fmt.Sprintf("\n%s", mutedStyle.Render(fmt.Sprintf("Use %s/%s or Mouse Wheel to scroll. Lines %d-%d of %d.",
+			keyStyle.Render("j"), keyStyle.Render("k"), m.statsScroll+1, minInt(m.statsScroll+maxVisible, totalLines), totalLines)))
 	}
 
 	return visibleContent.String() + footer

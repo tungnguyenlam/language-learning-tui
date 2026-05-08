@@ -15,8 +15,10 @@ func (m *Model) renderAI(x, y int) string {
 	var b strings.Builder
 	spinner := ""
 	if m.drafting {
-		frames := []string{"-", "\\", "|", "/"}
-		spinner = " " + frames[m.spinnerFrame%len(frames)]
+		// Enhanced spinner with more visual appeal
+		frames := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
+		spinnerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
+		spinner = " " + spinnerStyle.Render(frames[m.spinnerFrame%len(frames)])
 	}
 	templateName := "None"
 	if set := m.currentAITemplateSet(); set != "" {
@@ -34,7 +36,11 @@ func (m *Model) renderAI(x, y int) string {
 		Padding(0, 1).
 		Width(maxInt(30, width-20))
 
-	b.WriteString("AI Drafts" + spinner + "\n\n")
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
+	if m.drafting {
+		titleStyle = titleStyle.Foreground(lipgloss.Color("81"))
+	}
+	b.WriteString(titleStyle.Render("AI Drafts") + spinner + "\n\n")
 	b.WriteString(fmt.Sprintf("Deck: %s\nTemplate: %s (use [ / ])\n", m.deckLabel(), templateName))
 	displayText := m.aiInput + "_"
 	if m.aiInput == "" && !m.searchingAI {
@@ -42,13 +48,16 @@ func (m *Model) renderAI(x, y int) string {
 		displayText = placeholderStyle.Render("(e.g., business email, doctor visit, apartment viewing)") + "_"
 	}
 	b.WriteString(searchStyle.Render(fmt.Sprintf("%s: %s", searchLabel, displayText)) + "\n")
-	b.WriteString("\nPress / to edit topic | Enter generate | a approve | d discard | esc clear\n")
+	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
+	b.WriteString(fmt.Sprintf("\nPress %s to edit topic | %s generate | %s approve | %s discard | %s clear\n",
+		keyStyle.Render("/"), keyStyle.Render("Enter"), keyStyle.Render("a"), keyStyle.Render("d"), keyStyle.Render("esc")))
 	b.WriteString(mutedStyle.Render("Tip: include level and use case, e.g. B1 workplace small talk.") + "\n")
 	b.WriteString(mutedStyle.Render("Suggested topics: business email, doctor visit, apartment viewing.") + "\n")
 
 	if len(m.drafts) == 0 {
 		if m.drafting {
-			b.WriteString("\nDrafting in progress...")
+			draftingStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
+			b.WriteString("\n" + draftingStyle.Render("🤖 AI is crafting your flashcards...") + spinner)
 		} else {
 			b.WriteString("\nNo drafts yet.")
 		}

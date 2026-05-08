@@ -159,7 +159,7 @@ func (m *Model) importTSV() tea.Cmd {
 
 		file, err := os.Open(path)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to open file '%s': %w", filepath.Base(path), err)
 		}
 		defer file.Close()
 
@@ -167,21 +167,21 @@ func (m *Model) importTSV() tea.Cmd {
 			DefaultDeck: m.deckLabel(),
 		})
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to parse TSV file '%s': %w", filepath.Base(path), err)
 		}
 		decks := decksFromNotes(notes)
 		for _, deck := range decks {
 			if err := m.repo.UpsertDeck(ctx, deck); err != nil {
-				return err
+				return fmt.Errorf("failed to save deck '%s': %w", deck.Name, err)
 			}
 		}
 		loadedDecks, err := m.repo.Decks(ctx)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to load decks: %w", err)
 		}
 		cards, err := m.repo.DueCards(ctx, time.Now(), 500)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to load due cards: %w", err)
 		}
 		return importDoneMsg{decks: loadedDecks, cards: cards, count: len(notes), path: path}
 	}
@@ -203,7 +203,7 @@ func (m *Model) exportTSV() tea.Cmd {
 		var notes []core.Note
 		cards, err := m.repo.Cards(ctx, deckID, tag)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to load cards for export: %w", err)
 		}
 		seen := make(map[string]bool)
 		for _, c := range cards {
@@ -223,12 +223,12 @@ func (m *Model) exportTSV() tea.Cmd {
 
 		file, err := os.Create(path)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create export file '%s': %w", filepath.Base(path), err)
 		}
 		defer file.Close()
 
 		if err := content.ExportAnkiTSV(file, notes); err != nil {
-			return err
+			return fmt.Errorf("failed to write TSV data to '%s': %w", filepath.Base(path), err)
 		}
 		return statusMsg{text: fmt.Sprintf("Exported %d notes to %s", len(notes), path)}
 	}
@@ -247,27 +247,27 @@ func (m *Model) importAPKG() tea.Cmd {
 
 		file, err := os.Open(path)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to open APKG file '%s': %w", filepath.Base(path), err)
 		}
 		defer file.Close()
 
 		notes, err := content.ImportAnkiAPKG(file)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to parse APKG file '%s': %w", filepath.Base(path), err)
 		}
 		decks := decksFromNotes(notes)
 		for _, deck := range decks {
 			if err := m.repo.UpsertDeck(ctx, deck); err != nil {
-				return err
+				return fmt.Errorf("failed to save deck '%s': %w", deck.Name, err)
 			}
 		}
 		loadedDecks, err := m.repo.Decks(ctx)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to load decks: %w", err)
 		}
 		cards, err := m.repo.DueCards(ctx, time.Now(), 500)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to load due cards: %w", err)
 		}
 		return importDoneMsg{decks: loadedDecks, cards: cards, count: len(notes), path: path}
 	}
@@ -288,7 +288,7 @@ func (m *Model) exportAPKG() tea.Cmd {
 
 		cards, err := m.repo.Cards(ctx, deckID, tag)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to load cards for export: %w", err)
 		}
 		seen := make(map[string]bool)
 		notes := make([]core.Note, 0, len(cards))
@@ -309,12 +309,12 @@ func (m *Model) exportAPKG() tea.Cmd {
 
 		file, err := os.Create(path)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to create APKG file '%s': %w", filepath.Base(path), err)
 		}
 		defer file.Close()
 
 		if err := content.ExportAnkiAPKG(file, notes); err != nil {
-			return err
+			return fmt.Errorf("failed to write APKG data to '%s': %w", filepath.Base(path), err)
 		}
 		return statusMsg{text: fmt.Sprintf("Exported %d notes to %s", len(notes), path)}
 	}

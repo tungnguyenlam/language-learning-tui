@@ -1,0 +1,99 @@
+#separator:tab
+#html:false
+#deck:B1 Travel & Tourism
+travel-hotel	Das Hotel	hotel	Important accommodation term	b1 travel
+travel-hostel	Das Hostel	hostel	Budget accommodation	b1 travel
+travel-resort	Das Resort	resort	Luxury accommodation	b1 travel
+travel-pension	Die Pension	guest house	Small family-run accommodation	b1 travel
+travel-camping	Das Campen	camping	Outdoor accommodation	b1 travel
+travel-zimmer	Das Zimmer	room	Room in accommodation	b1 travel
+travel-suite	Die Suite	suite	Luxury room	b1 travel
+travel-rezeption	Die Rezeption	reception	Front desk	b1 travel
+travel-checkin	Der Check-in	check-in	Arrival registration	b1 travel
+travel-checkout	Der Check-out	check-out	Departure registration	b1 travel
+travel-rezeptionist	Der Rezeptionist	receptionist	Front desk staff	b1 travel
+travel-portier	Der Portier	porter	Bellhop	b1 travel
+travel-zimmerservice	Der Zimmerservice	room service	Room delivery service	b1 travel
+travel-fruehstueck	Das Frühstück	breakfast	Meal time	b1 travel
+travel-halbpension	Die Halbpension	half board	Breakfast and dinner	b1 travel
+travel-vollpension	Die Vollpension	full board	All meals included	b1 travel
+travel-all-inclusive	Das All-inclusive	all-inclusive	Meals and drinks included	b1 travel
+travel-restaurant	Das Restaurant	restaurant	Place to eat	b1 travel
+travel-cafe	Das Café	café	Coffee shop	b1 travel
+travel-bar	Die Bar	bar	Place for drinks	b1 travel
+travel-schnellimbiss	Der Schnellimbiss	fast food	Fast food restaurant	b1 travel
+travel-speisekarte	Die Speisekarte	menu	Food menu	b1 travel
+travel-getraenk	Das Getränk	drink	Beverage	b1 travel
+travel-wasser	Das Wasser	water	Drink	b1 travel
+travel-bier	Das Bier	beer	Alcoholic drink	b1 travel
+travel-wein	Der Wein	wine	Alcoholic drink	b1 travel
+travel-schnapps	Der Schnaps	liquor	Strong alcohol	b1 travel
+travel-kaffee	Der Kaffee	coffee	Hot drink	b1 travel
+travel-tasse	Die Tasse	cup	Container for drinks	b1 travel
+travel-bestellung	Die Bestellung	order	Food/drink request	b1 travel
+travel-bedienung	Die Bedienung	service/waiter	Service staff	b1 travel
+travel-trinkgeld	Das Trinkgeld	tip	Gratuity	b1 travel
+travel-rechnung	Die Rechnung	bill/check	Payment document	b1 travel
+travel-flughafen	Der Flughafen	airport	Transport hub	b1 travel
+travel-terminal	Das Terminal	terminal	Airport building	b1 travel
+travel-abflug	Der Abflug	departure	Flight departure	b1 travel
+travel-ankunft	Die Ankunft	arrival	Flight arrival	b1 travel
+travel-boarding	Das Boarding	boarding	Getting on plane	b1 travel
+travel-security	Die Sicherheitskontrolle	security check	Airport screening	b1 travel
+travel-paskontrolle	Die Passkontrolle	passport control	Passport check	b1 travel
+travel-zoll	Der Zoll	customs	Border inspection	b1 travel
+travel-visum	Das Visum	visa	Entry permit	b1 travel
+travel-reisepass	Der Reisepass	passport	Travel document	b1 travel
+travel-personalausweis	Der Personalausweis	ID card	National ID	b1 travel
+travel-gepaeck	Das Gepäck	luggage	Travel bags	b1 travel
+travel-koffer	Der Koffer	suitcase	Luggage item	b1 travel
+travel-rucksack	Der Rucksack	backpack	Carry bag	b1 travel
+travel-handgepaeck	Das Handgepäck	cabin luggage	Carry-on baggage	b1 travel
+travel-aufgabe	Die Aufgabe	check-in counter	Baggage drop-off	b1 travel
+travel-ansage	Die Ansage	announcement	Public information	b1 travel
+travel-verspaetung	Die Verspätung	delay	Late departure/arrival	b1 travel
+travel-stornierung	Die Stornierung	cancellation	Booking cancellation	b1 travel
+travel-erstattung	Die Erstattung	refund	Money returned	b1 travel
+travel-versicherung	Die Versicherung	insurance	Protection policy	b1 travel
+travel-reisebuero	Das Reisebüro	travel agency	Booking office	b1 travel
+travel-reiseleiter	Der Reiseleiter	tour guide	Trip leader	b1 travel
+travel-tourist	Der Tourist	tourist	Vacation traveler	b1 travel
+travel-sehenswuerdigkeit	Die Sehenswürdigkeit	attraction	Tourist site	b1 travel
+travel-denkmahl	Das Denkmal	monument	Historical landmark	b1 travel
+travel-museum	Das Museum	museum	Cultural institution	b1 travel
+travel-galerie	Die Galerie	gallery	Art exhibition	b1 travel
+travel-ausstellung	Die Ausstellung	exhibition	Public display	b1 travel
+travel-kunst	Die Kunst	art	Creative works	b1 travel
+travel-kultur	Die Kultur	culture	Social customs	b1 travel
+travel-festival	Das Festival	festival	Cultural event	b1 travel
+travel-konzert	Das Konzert	concert	Music performance	b1 travel
+travel-theater	Das Theater	theater	Stage performance	b1 travel
+travel-oper	Die Oper	opera	Classical performance	b1 travel
+travel-tour	Die Tour	tour	Guided trip	b1 travel
+travel-rundgang	Der Rundgang	tour	Walking trip	b1 travel
+travel-stadtfuehrer	Der Stadtführer	city guide	Urban tour guide	b1 travel
+travel-karte	Die Karte	map	Location guide	b1 travel
+travel-plan	Der Plan	plan	Route guide	b1 travel
+travel-reise	Die Reise	journey	Trip	b1 travel
+travel-urlaub	Der Urlaub	vacation	Time off	b1 travel
+travel-ferien	Die Ferien	holidays	Vacation period	b1 travel
+travel-ziel	Das Ziel	destination	End point	b1 travel
+travel-route	Die Route	route	Path taken	b1 travel
+travel-strecke	Die Strecke	distance	Route length	b1 travel
+travel-landschaft	Die Landschaft	scenery	Natural view	b1 travel
+travel-natur	Die Natur	nature	Natural environment	b1 travel
+travel-berg	Der Berg	mountain	Natural elevation	b1 travel
+travel-strand	Der Strand	beach	Sandy shore	b1 travel
+travel-meer	Das Meer	sea	Ocean water	b1 travel
+travel-seebad	Das Seebad	seaside resort	Beach destination	b1 travel
+travel-bergdorf	Das Bergdorf	mountain village	Mountain community	b1 travel
+travel-hauptstadt	Die Hauptstadt	capital city	Main city	b1 travel
+travel-provinz	Die Provinz	province	Regional area	b1 travel
+travel-region	Die Region	region	Geographic area	b1 travel
+travel-klima	Das Klima	climate	Weather patterns	b1 travel
+travel-temperatur	Die Temperatur	temperature	Heat measurement	b1 travel
+travel-wetter	Das Wetter	weather	Atmospheric conditions	b1 travel
+travel-regen	Der Regen	rain	Precipitation	b1 travel
+travel-sonne	Die Sonne	sun	Solar star	b1 travel
+travel-schnee	Der Schnee	snow	Frozen precipitation	b1 travel
+travel-wind	Der Wind	wind	Air movement	b1 travel

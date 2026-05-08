@@ -17,12 +17,18 @@ func (m *Model) renderReview(x, y int) string {
 			title = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).Render("Review (Bookmarked)")
 			message = "No bookmarked cards due."
 		}
+
+		// Enhanced empty state with keyboard guidance
+		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
+		shortcutGuide := fmt.Sprintf("Use %s and %s to switch decks or %s to toggle the bookmark filter.",
+			keyStyle.Render("["), keyStyle.Render("]"), keyStyle.Render("B"))
+
 		emptyBox := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("81")).
 			Padding(1, 2).
 			Width(46).
-			Render(message + "\n\nUse [ and ] to switch decks or B to toggle the bookmark filter.")
+			Render(message + "\n\n" + shortcutGuide)
 		return title + "\n\n" + emptyBox
 	}
 	cursor := clampInt(m.cursor, 0, len(m.dueCards)-1)
@@ -43,9 +49,14 @@ func (m *Model) renderReview(x, y int) string {
 	if m.bookmarkFilter {
 		filterBanner = " (Bookmarked)"
 	}
-	keys := "b toggle | x suspend | B filter | u undo | r history | p audio"
+
+	// Enhanced keyboard shortcut display with visual highlighting
+	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
+	keys := fmt.Sprintf("%s toggle | %s suspend | %s filter | %s undo | %s history | %s audio",
+		keyStyle.Render("b"), keyStyle.Render("x"), keyStyle.Render("B"), keyStyle.Render("u"), keyStyle.Render("r"), keyStyle.Render("p"))
 	if m.bookmarkFilter {
-		keys = "b toggle | x suspend | B all cards | u undo | r history | p audio"
+		keys = fmt.Sprintf("%s toggle | %s suspend | %s all cards | %s undo | %s history | %s audio",
+			keyStyle.Render("b"), keyStyle.Render("x"), keyStyle.Render("B"), keyStyle.Render("u"), keyStyle.Render("r"), keyStyle.Render("p"))
 	}
 	audioIndicator := ""
 	if card.Audio != "" {
@@ -89,17 +100,33 @@ func (m *Model) renderReview(x, y int) string {
 		promptDisplay = strings.Replace(promptDisplay, "]", lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("]"), 1)
 	}
 
+	// Enhanced prompt styling for better visibility
+	promptStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
+	promptDisplay = promptStyle.Render(promptDisplay)
+
 	width, _ := m.activePanelSize()
 	cardWidth := maxInt(30, width-6)
+
+	// Enhanced card styling with better visual hierarchy
 	cardStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("62")).
-		Padding(0, 2).
-		Width(cardWidth)
+		Padding(1, 2).
+		Width(cardWidth).
+		Align(lipgloss.Center)
+
+	// Special styling for revealed cards
+	if m.revealState == RevealRevealed {
+		cardStyle = cardStyle.
+			BorderForeground(lipgloss.Color("81")).
+			Bold(true)
+	}
 
 	var answer string
 	answerYOffset := 0
 
+	// Enhanced answer styling
+	answerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
 	extraDisplay := ""
 	if card.Extra != "" {
 		extraStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("245")).Italic(true)
@@ -122,26 +149,28 @@ func (m *Model) renderReview(x, y int) string {
 					feedback = "Correct"
 					feedbackStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Bold(true)
 				}
-				answer = fmt.Sprintf("%s: %s%s\n\n%s\n\nGrade: a %s | h %s | g %s | e %s", feedbackStyle.Render(feedback), card.Answer, extraDisplay, mcqChoices, gradeAgain, gradeHard, gradeGood, gradeEasy)
+				answer = fmt.Sprintf("%s: %s%s\n\n%s\n\nGrade: %s %s | %s %s | %s %s | %s %s", feedbackStyle.Render(feedback), answerStyle.Render(card.Answer), extraDisplay, mcqChoices,
+					keyStyle.Render("a"), gradeAgain, keyStyle.Render("h"), gradeHard, keyStyle.Render("g"), gradeGood, keyStyle.Render("e"), gradeEasy)
 				answerYOffset = cardY + strings.Count(fmt.Sprintf("%s%s\n\n%s: %s\n\n%s\n\nGrade: ", promptDisplay, mature, feedback, card.Answer, mcqChoices), "\n")
 
-				labelAgain := "Grade: a "
-				labelHard := fmt.Sprintf("Grade: a %s | h ", gradeAgainText)
-				labelGood := fmt.Sprintf("Grade: a %s | h %s | g ", gradeAgainText, gradeHardText)
-				labelEasy := fmt.Sprintf("Grade: a %s | h %s | g %s | e ", gradeAgainText, gradeHardText, gradeGoodText)
+				labelAgain := fmt.Sprintf("Grade: %s ", keyStyle.Render("a"))
+				labelHard := fmt.Sprintf("Grade: %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"))
+				labelGood := fmt.Sprintf("Grade: %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"), gradeHardText, keyStyle.Render("g"))
+				labelEasy := fmt.Sprintf("Grade: %s %s | %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"), gradeHardText, keyStyle.Render("g"), gradeGoodText, keyStyle.Render("e"))
 
 				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: cardX + lipgloss.Width(labelAgain), Y: answerYOffset, Width: gaW, Height: 1})
 				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: cardX + lipgloss.Width(labelHard), Y: answerYOffset, Width: ghW, Height: 1})
 				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: cardX + lipgloss.Width(labelGood), Y: answerYOffset, Width: ggW, Height: 1})
 				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: cardX + lipgloss.Width(labelEasy), Y: answerYOffset, Width: geW, Height: 1})
 			} else {
-				answer = fmt.Sprintf("1-4 select answer%s\n\n%s\n\nGrade: a %s | h %s | g %s | e %s", extraDisplay, mcqChoices, gradeAgain, gradeHard, gradeGood, gradeEasy)
+				answer = fmt.Sprintf("1-4 select answer%s\n\n%s\n\nGrade: %s %s | %s %s | %s %s | %s %s", extraDisplay, mcqChoices,
+					keyStyle.Render("a"), gradeAgain, keyStyle.Render("h"), gradeHard, keyStyle.Render("g"), gradeGood, keyStyle.Render("e"), gradeEasy)
 				answerYOffset = cardY + strings.Count(fmt.Sprintf("%s%s\n\n1-4 select answer\n\n%s\n\nGrade: ", promptDisplay, mature, mcqChoices), "\n")
 
-				labelAgain := "Grade: a "
-				labelHard := fmt.Sprintf("Grade: a %s | h ", gradeAgainText)
-				labelGood := fmt.Sprintf("Grade: a %s | h %s | g ", gradeAgainText, gradeHardText)
-				labelEasy := fmt.Sprintf("Grade: a %s | h %s | g %s | e ", gradeAgainText, gradeHardText, gradeGoodText)
+				labelAgain := fmt.Sprintf("Grade: %s ", keyStyle.Render("a"))
+				labelHard := fmt.Sprintf("Grade: %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"))
+				labelGood := fmt.Sprintf("Grade: %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"), gradeHardText, keyStyle.Render("g"))
+				labelEasy := fmt.Sprintf("Grade: %s %s | %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"), gradeHardText, keyStyle.Render("g"), gradeGoodText, keyStyle.Render("e"))
 
 				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: cardX + lipgloss.Width(labelAgain), Y: answerYOffset, Width: gaW, Height: 1})
 				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: cardX + lipgloss.Width(labelHard), Y: answerYOffset, Width: ghW, Height: 1})
@@ -154,13 +183,14 @@ func (m *Model) renderReview(x, y int) string {
 			answer = "Press space or enter to reveal choices."
 		}
 	} else if m.revealState == RevealRevealed {
-		answer = fmt.Sprintf("%s%s\n\nGrade: a %s | h %s | g %s | e %s", card.Answer, extraDisplay, gradeAgain, gradeHard, gradeGood, gradeEasy)
+		answer = fmt.Sprintf("%s%s\n\nGrade: %s %s | %s %s | %s %s | %s %s", answerStyle.Render(card.Answer), extraDisplay,
+			keyStyle.Render("a"), gradeAgain, keyStyle.Render("h"), gradeHard, keyStyle.Render("g"), gradeGood, keyStyle.Render("e"), gradeEasy)
 		answerYOffset = cardY + strings.Count(fmt.Sprintf("%s%s\n\n%s\n\nGrade: ", promptDisplay, mature, card.Answer), "\n")
 
-		labelAgain := "Grade: a "
-		labelHard := fmt.Sprintf("Grade: a %s | h ", gradeAgainText)
-		labelGood := fmt.Sprintf("Grade: a %s | h %s | g ", gradeAgainText, gradeHardText)
-		labelEasy := fmt.Sprintf("Grade: a %s | h %s | g %s | e ", gradeAgainText, gradeHardText, gradeGoodText)
+		labelAgain := fmt.Sprintf("Grade: %s ", keyStyle.Render("a"))
+		labelHard := fmt.Sprintf("Grade: %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"))
+		labelGood := fmt.Sprintf("Grade: %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"), gradeHardText, keyStyle.Render("g"))
+		labelEasy := fmt.Sprintf("Grade: %s %s | %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"), gradeHardText, keyStyle.Render("g"), gradeGoodText, keyStyle.Render("e"))
 
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: cardX + lipgloss.Width(labelAgain), Y: answerYOffset, Width: gaW, Height: 1})
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: cardX + lipgloss.Width(labelHard), Y: answerYOffset, Width: ghW, Height: 1})
@@ -198,11 +228,15 @@ func (m *Model) renderReview(x, y int) string {
 
 func renderMCQChoices(choices []string, selected int) string {
 	var b strings.Builder
+	choiceStyle := lipgloss.NewStyle().PaddingLeft(2)
+	selectedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 	for i, choice := range choices {
 		prefix := "  "
-		mark := " "
+		mark := "○ "
 		if i == selected {
-			mark = ">"
+			mark = selectedStyle.Render("● ")
+		} else {
+			mark = choiceStyle.Foreground(lipgloss.Color("240")).Render(mark)
 		}
 		b.WriteString(fmt.Sprintf("%s%d: %s%s\n", prefix, i+1, mark, choice))
 	}

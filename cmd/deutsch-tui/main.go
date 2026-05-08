@@ -42,11 +42,15 @@ func main() {
 		os.Exit(1)
 	}
 	defer logFile.Close()
-	logger.Printf("starting data_dir=%s theme=%s keymap=%s ai_provider=%s", dir, cfg.Theme, cfg.Keymap, cfg.AIProvider)
+
+	// Create leveled logger based on config
+	level := app.ParseLogLevel(cfg.LogLevel)
+	leveledLogger := app.NewLeveledLogger(logger, level)
+	leveledLogger.Info("starting data_dir=%s theme=%s keymap=%s ai_provider=%s log_level=%s", dir, cfg.Theme, cfg.Keymap, cfg.AIProvider, cfg.LogLevel)
 
 	store, err := sqlite.Open(filepath.Join(dir, "learning.db"))
 	if err != nil {
-		logger.Printf("open store: %v", err)
+		leveledLogger.Error("open store: %v", err)
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
@@ -55,13 +59,13 @@ func main() {
 	decks, err := store.Decks(context.Background())
 	if err == nil && len(decks) == 0 {
 		if err := store.UpsertDeck(context.Background(), content.StarterDeck()); err != nil {
-			logger.Printf("upsert starter deck: %v", err)
+			leveledLogger.Error("upsert starter deck: %v", err)
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
 	}
 	if *smoke {
-		logger.Print("smoke check complete")
+		leveledLogger.Info("smoke check complete")
 		fmt.Println("deutsch-tui smoke ok")
 		return
 	}
@@ -83,17 +87,18 @@ func main() {
 		AutoPlayAudio:  cfg.AutoPlayAudio,
 		ImportPath:     filepath.Join(dir, "import.tsv"),
 		ExportPath:     filepath.Join(dir, "export.tsv"),
+		Logger:         leveledLogger, // Pass the logger
 		OnConfigChange: func(name string, tmpls map[string]map[string]string, autoPlayAudio bool) {
 			cfg.AIProvider = name
 			cfg.AITemplates = tmpls
 			cfg.AutoPlayAudio = autoPlayAudio
 			if err := app.SaveConfig(dir, cfg); err != nil {
-				logger.Printf("save config: %v", err)
+				leveledLogger.Error("save config: %v", err)
 			}
 		},
 	}))
 	if _, err := program.Run(); err != nil {
-		logger.Printf("program run: %v", err)
+		leveledLogger.Error("program run: %v", err)
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}

@@ -107,7 +107,11 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		db.WriteString(tipBox + "\n")
 	}
 
-	db.WriteString(mutedStyle.Render("Use [ and ] to switch decks.\nUse Review (3) to start studying."))
+	db.WriteString(mutedStyle.Render(fmt.Sprintf("Use %s and %s to switch decks.\nUse %s (%s) to start studying.",
+		lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("["),
+		lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("]"),
+		lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("Review"),
+		lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("3"))))
 
 	return db.String()
 }
