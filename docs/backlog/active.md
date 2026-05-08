@@ -55,6 +55,9 @@ Making the TUI meaningfully better with 6-8 distinct improvements
 - [x] Batch C2: add a new B2 public-services/civic-life deck and expand grammar tips set for daily rotation variety.
 - [x] Batch C3: add 7 new E2E tui-tester tests covering provider persistence on restart, reveal-grade guard, bulk-action failures, and new content import visibility.
 - [x] Batch C4: run full `./scripts/verify.sh`, finalize backlog summaries, and commit.
+- [x] Batch D1 (UX Polish): fixed browser bulk keys prompt to accurately reflect b/B and x/X toggling, truncated long paths in Import view, added help hint to Dashboard, made AI drafts empty state clearer, grayed out negative goal adjustment in Settings when at zero, and styled Cram/Review shortcuts.
+- [x] Batch D2 (Bugfixes & Logic): fixed `browserCursor` out-of-bounds array access panic on bulk delete/conversion, added `ctrl+u` shortcut to safely and quickly clear input across all 5 text input modes (`searchingDecks`, `taggingCards`, `searchingBrowser`, `searchingAI`, `editingTemplate`).
+- [ ] Batch D3: finalize and verify all changes.
 
 ## Verification State
 

@@ -50,11 +50,12 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 				animationText += strings.Repeat("▌", remainingBlocks)
 			}
 			b.WriteString(fmt.Sprintf("Answer: %s\n\n", animationText))
-			b.WriteString("Press space or enter to finish reveal.\n")
+			b.WriteString("Press Space or Enter to finish reveal.\n")
 		} else {
-			b.WriteString("Press space or enter to reveal.\n")
+			b.WriteString("Press Space or Enter to reveal.\n")
 		}
-		b.WriteString("\np play audio | q to exit cram review.")
+		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
+		b.WriteString(fmt.Sprintf("\n%s play audio | %s to exit cram review.", keyStyle.Render("p"), keyStyle.Render("q")))
 		return b.String()
 	}
 

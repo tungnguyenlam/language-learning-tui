@@ -180,7 +180,7 @@ func (m *Model) renderReview(x, y int) string {
 		} else if m.revealState == RevealRevealing {
 			answer = fmt.Sprintf("1-4 select answer\n\n%s", renderMCQChoices(card.Choices, m.mcqChoice))
 		} else {
-			answer = "Press space or enter to reveal choices."
+			answer = "Press Space or Enter to reveal choices."
 		}
 	} else if m.revealState == RevealRevealed {
 		answer = fmt.Sprintf("%s%s\n\nGrade: %s %s | %s %s | %s %s | %s %s", answerStyle.Render(card.Answer), extraDisplay,

@@ -563,6 +563,10 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 				m.aiTemplates[activeSet][templateKey] = trimLastRune(val)
 			}
 			return nil, true
+		case "ctrl+u":
+			templateKey := m.templateKeyAtCursor()
+			m.aiTemplates[activeSet][templateKey] = ""
+			return nil, true
 		}
 		if ch, ok := singlePrintableInput(msg.String()); ok {
 			templateKey := m.templateKeyAtCursor()

@@ -79,5 +79,31 @@ def test_ai_drafting_status():
         finally:
             agent.close()
 
+def test_long_import_path_truncation():
+    """Test that a very long import path is truncated in the UI."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir)
+        try:
+            # Go to Import view
+            agent.act("5")
+            agent.wait_for_text("Import / Export")
+            
+            # Start editing import path
+            agent.act("<Enter>")
+            
+            # Type a very long path
+            long_path = "very_long_path_" * 10
+            for char in long_path:
+                agent.act(char)
+            
+            # Stop editing
+            agent.act("<Enter>")
+            agent.wait_until_stable()
+            
+            screen = agent.observe()
+            assert "..." in screen, "Long path should be truncated with ..."
+        finally:
+            agent.close()
+
 if __name__ == "__main__":
     pytest.main(["-v", __file__])

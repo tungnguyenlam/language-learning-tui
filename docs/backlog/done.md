@@ -130,11 +130,18 @@
 - [x] Add new Emotions & Feelings deck
 - [x] Add new Transport & Directions deck
 
-### Bug Hunting & Stability Polish
-- [x] Fixed E2E test truncation flakiness by configuring `lines=40` for specific tests (`test_audio_autoplay.py`, `test_ui_sanity.py`).
-- [x] **TUI Bug Fixes**: Resolved cursor panics, leaky modals, and ignored errors.
-- [x] **Data Integrity**: Added transactions, fixed timezone inconsistencies, and enabled foreign keys in connection pool.
-- [x] **Performance**: Indexed `reviewed_at` and clamped integer overflow in SRS scheduler.
+### UI Polish & Developer Experience (DONE)
+- [x] Batch D1: Fixed browser bulk keys prompt to accurately reflect `b`/`B` and `x`/`X` lowercase/uppercase toggling.
+- [x] Batch D1: Truncated long paths in Import view to prevent layout breakage.
+- [x] Batch D1: Added "Press ? for help." hint to Dashboard.
+- [x] Batch D1: Made AI drafts empty state clearer with typing instructions.
+- [x] Batch D1: Grayed out negative goal adjustment in Settings when already at zero.
+- [x] Batch D1: Styled Cram and Review keyboard shortcuts consistently.
+
+### Bug Hunting & Stability Polish (DONE)
+- [x] Batch D2: Fixed `browserCursor` out-of-bounds array access panic in `model.go` when the underlying browser cards list changes size (e.g. after bulk delete or search).
+- [x] Batch D2: Implemented `ctrl+u` functionality across all internal text input modes (`searchingDecks`, `taggingCards`, `searchingBrowser`, `searchingAI`, `editingTemplate`) to quickly clear text and prevent incomplete states.
+- [x] Fixed test alignment issues from string updates (`e2e_tests/test_cram_mode.py`).
 
 ## Earlier Work
 

@@ -63,7 +63,7 @@ func (m *Model) renderAI(x, y int) string {
 			draftingStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 			b.WriteString("\n" + draftingStyle.Render("🤖 AI is crafting your flashcards...") + spinner)
 		} else {
-			b.WriteString("\nNo drafts yet.")
+			b.WriteString("\nNo drafts yet. Type a topic and press Enter to generate.")
 		}
 		return b.String()
 	}

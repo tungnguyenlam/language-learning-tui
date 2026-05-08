@@ -145,8 +145,17 @@ func (m *Model) renderImport(x, y int) string {
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).MarginBottom(1)
 	b.WriteString(titleStyle.Render("Import / Export") + "\n\n")
 
-	importPathLabel := "Import file: " + m.importPath
-	exportPathLabel := "Export file: " + m.exportPath
+	importPathDisplay := m.importPath
+	exportPathDisplay := m.exportPath
+	if len(importPathDisplay) > maxInt(20, width-25) {
+		importPathDisplay = "..." + importPathDisplay[len(importPathDisplay)-maxInt(20, width-25):]
+	}
+	if len(exportPathDisplay) > maxInt(20, width-25) {
+		exportPathDisplay = "..." + exportPathDisplay[len(exportPathDisplay)-maxInt(20, width-25):]
+	}
+
+	importPathLabel := "Import file: " + importPathDisplay
+	exportPathLabel := "Export file: " + exportPathDisplay
 
 	btnActiveStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212"))
 	editStyle := lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("62"))

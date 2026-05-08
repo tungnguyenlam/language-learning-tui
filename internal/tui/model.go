@@ -503,6 +503,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.loadReviewsPerDay()
 	case browserCardsMsg:
 		m.browserCards = []core.Card(msg)
+		if m.browserCursor >= len(m.browserCards) {
+			m.browserCursor = maxInt(0, len(m.browserCards)-1)
+		}
 		if len(m.browserCards) == 0 {
 			m.status = "No cards found"
 		} else {

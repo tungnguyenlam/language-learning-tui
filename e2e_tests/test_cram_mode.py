@@ -33,8 +33,7 @@ def test_cram_review_flow():
             # Start Cram Review
             agent.act("<Enter>")
             agent.wait_for_text("Cram Review")
-            agent.wait_for_text("Press space or enter to reveal.")
-            
+            agent.wait_for_text("Press Space or Enter to reveal.")            
             # Reveal
             agent.act("<Space>")
             agent.wait_for_text("Answer:")

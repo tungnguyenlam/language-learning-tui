@@ -78,9 +78,16 @@ func (m *Model) renderSettings(x, y int) string {
 	b.WriteString(itemStyle.Render(goalLabel))
 
 	btnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
+	disabledBtnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Bold(true)
 	minusBtn := "[-] "
 	plusBtn := "[+] "
-	b.WriteString(btnStyle.Render(minusBtn))
+
+	if m.stats.DailyGoal == 0 {
+		b.WriteString(disabledBtnStyle.Render(minusBtn))
+	} else {
+		b.WriteString(btnStyle.Render(minusBtn))
+	}
+
 	b.WriteString(btnStyle.Render(plusBtn))
 	b.WriteString("\n")
 
