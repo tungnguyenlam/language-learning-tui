@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"deutsch-tui/internal/core"
 
@@ -224,4 +225,26 @@ func stripANSI(s string) string {
 		b.WriteByte(s[i])
 	}
 	return b.String()
+}
+
+func trimLastRune(s string) string {
+	if s == "" {
+		return s
+	}
+	_, size := utf8.DecodeLastRuneInString(s)
+	if size <= 0 {
+		return ""
+	}
+	return s[:len(s)-size]
+}
+
+func singlePrintableInput(s string) (string, bool) {
+	if s == "" {
+		return "", false
+	}
+	r, size := utf8.DecodeRuneInString(s)
+	if size <= 0 || size != len(s) || r < ' ' {
+		return "", false
+	}
+	return string(r), true
 }

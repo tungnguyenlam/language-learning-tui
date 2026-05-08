@@ -1,0 +1,44 @@
+#separator:tab
+#html:false
+#deck:B2 Healthcare Systems
+front	back	extra	tags	notetype
+das Gesundheitssystem	healthcare system	das Gesundheitssystem, die Gesundheitssysteme	b2 healthcare systems	B2 Healthcare	Basic
+die Krankenversicherung	health insurance	die Krankenversicherung, die Krankenversicherungen	b2 healthcare systems	B2 Healthcare	Basic
+die gesetzliche Krankenversicherung	statutory health insurance	Abk.: GKV	b2 healthcare systems	B2 Healthcare	Basic
+die private Krankenversicherung	private health insurance	Abk.: PKV	b2 healthcare systems	B2 Healthcare	Basic
+die Versichertenkarte	insurance card	die Versichertenkarte, die Versichertenkarten	b2 healthcare systems	B2 Healthcare	Reverse
+der Hausarzt	general practitioner	der Hausarzt, die Hausärzte	b2 healthcare systems	B2 Healthcare	Basic
+die Fachärztin	specialist doctor (female)	die Fachärztin, die Fachärztinnen	b2 healthcare systems	B2 Healthcare	Basic
+die Überweisung	referral	die Überweisung, die Überweisungen	b2 healthcare systems	B2 Healthcare	Reverse
+einen Termin vereinbaren	to schedule an appointment	hat einen Termin vereinbart	b2 healthcare systems	B2 Healthcare	Basic
+die Wartezeit	waiting time	die Wartezeit, die Wartezeiten	b2 healthcare systems	B2 Healthcare	Basic
+die Notaufnahme	emergency department	die Notaufnahme, die Notaufnahmen	b2 healthcare systems	B2 Healthcare	Basic
+die stationäre Behandlung	inpatient treatment	Contrasts with ambulante Behandlung	b2 healthcare systems	B2 Healthcare	Reverse
+die ambulante Behandlung	outpatient treatment	Contrasts with stationäre Behandlung	b2 healthcare systems	B2 Healthcare	Basic
+die Vorsorgeuntersuchung	preventive check-up	die Vorsorgeuntersuchung, die Vorsorgeuntersuchungen	b2 healthcare systems	B2 Healthcare	Basic
+die Früherkennung	early detection	die Früherkennung, die Früherkennungen	b2 healthcare systems	B2 Healthcare	Reverse
+die Krankschreibung	sick note	die Krankschreibung, die Krankschreibungen	b2 healthcare systems	B2 Healthcare	Basic
+arbeitsunfähig	written off sick	Adjective	b2 healthcare systems	B2 Healthcare	Reverse
+das Rezept	prescription	das Rezept, die Rezepte	b2 healthcare systems	B2 Healthcare	Basic
+verschreibungspflichtig	prescription-only	Adjective	b2 healthcare systems	B2 Healthcare	Basic
+die Apotheke	pharmacy	die Apotheke, die Apotheken	b2 healthcare systems	B2 Healthcare	Reverse
+das Generikum	generic medication	das Generikum, die Generika	b2 healthcare systems	B2 Healthcare	Basic
+die Nebenwirkung	side effect	die Nebenwirkung, die Nebenwirkungen	b2 healthcare systems	B2 Healthcare	Basic
+die Dosierung	dosage	die Dosierung, die Dosierungen	b2 healthcare systems	B2 Healthcare	Reverse
+eine zweite Meinung einholen	to seek a second opinion	hat eine zweite Meinung eingeholt	b2 healthcare systems	B2 Healthcare	Basic
+der Behandlungsplan	treatment plan	der Behandlungsplan, die Behandlungspläne	b2 healthcare systems	B2 Healthcare	Basic
+die Rehabilitationsmaßnahme	rehabilitation measure	die Rehabilitationsmaßnahme, die Rehabilitationsmaßnahmen	b2 healthcare systems	B2 Healthcare	Reverse
+die Pflegeversicherung	long-term care insurance	die Pflegeversicherung, die Pflegeversicherungen	b2 healthcare systems	B2 Healthcare	Basic
+der Pflegegrad	care level	der Pflegegrad, die Pflegegrade	b2 healthcare systems	B2 Healthcare	Basic
+die Belastungsgrenze	co-payment limit	die Belastungsgrenze, die Belastungsgrenzen	b2 healthcare systems	B2 Healthcare	Reverse
+die Zuzahlung	co-payment	die Zuzahlung, die Zuzahlungen	b2 healthcare systems	B2 Healthcare	Basic
+einen Antrag stellen	to submit an application	hat einen Antrag gestellt	b2 healthcare systems	B2 Healthcare	Basic
+abgelehnt werden	to be rejected	ist abgelehnt worden	b2 healthcare systems	B2 Healthcare	Reverse
+bewilligt werden	to be approved	ist bewilligt worden	b2 healthcare systems	B2 Healthcare	Basic
+die Patientenakte	medical record	die Patientenakte, die Patientenakten	b2 healthcare systems	B2 Healthcare	Basic
+der Datenschutz	data protection	der Datenschutz	b2 healthcare systems	B2 Healthcare	Reverse
+eine Schweigepflichtentbindung unterschreiben	to sign a confidentiality waiver	hat eine Schweigepflichtentbindung unterschrieben	b2 healthcare systems	B2 Healthcare	Basic
+die Telemedizin	telemedicine	die Telemedizin	b2 healthcare systems	B2 Healthcare	Basic
+die Videosprechstunde	video consultation	die Videosprechstunde, die Videosprechstunden	b2 healthcare systems	B2 Healthcare	Reverse
+die Versorgungslücke	care gap	die Versorgungslücke, die Versorgungslücken	b2 healthcare systems	B2 Healthcare	Basic
+der Fachkräftemangel	skilled worker shortage	der Fachkräftemangel	b2 healthcare systems	B2 Healthcare	Basic

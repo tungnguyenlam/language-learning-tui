@@ -1,6 +1,6 @@
 # Active Backlog
 
-Last updated: 2026-05-08
+Last updated: 2026-05-08 (batch B)
 
 ## Current Milestone
 
@@ -47,14 +47,16 @@ Making the TUI meaningfully better with 6-8 distinct improvements
 
 ## Next Action
 
-- [x] Phase 1: run `cmd/deutsch-tui` through smoke and tui-tester to capture current launch/render state.
-- [x] Phase 2: list top launch, navigation, persistence, and E2E coverage blockers.
-- [x] Phase 3 batch A: implemented Review cursor safety, AI/Settings template index safety, empty import/export guards, and cross-view UI hints.
-- [x] Phase 3 batch B: added 8 tui-tester E2E tests covering Dashboard, Review persistence, Decks, Import, AI, Settings, and view navigation; added B1 Apartment & Housing content.
-- [x] Phase 4: `./scripts/verify.sh` passes with Go tests, smoke, and 116 E2E tests.
+- [x] Batch B1: fixed Deck limits left-arrow behavior (now edits limit cursor instead of switching views) and preserved right-arrow global view cycling.
+- [x] Batch B1: added AI disabled guard in drafting flow + explicit AI disabled guidance in AI view.
+- [x] Batch B1: fixed cram reveal rendering at 100% progress to avoid negative repeat edge cases.
+- [x] Batch B1: improved text input safety with rune-aware backspace for deck filter, import/export paths, export tag, browser search, tag input, AI input, and settings templates.
+- [x] Batch B2: added new B2 healthcare systems deck (`b2-healthcare-systems.tsv`) and expanded grammar tips coverage.
+- [x] Batch B3: added 8 new E2E tests in `e2e_tests/test_batch_safety_and_content.py` covering AI disabled behavior, Unicode backspace flows, deck-limit navigation behavior, arrow-view navigation, and healthcare deck import visibility.
+- [x] Phase 4: run full `./scripts/verify.sh`, update done backlog summary, and commit.
 
 ## Verification State
 
-- Last verified: `./scripts/verify.sh` passes with no warnings; 116 E2E tests pass. `go run ./cmd/deutsch-tui --help` succeeds.
+- Last verified: `./scripts/verify.sh` passes with no warnings; Go suites pass; E2E now at 124 passing tests (including 8 new batch tests).
 - Environment: Darwin, Go 1.x, Python 3.12.
 - Architecture: Scalable content Registry with pluggable sources

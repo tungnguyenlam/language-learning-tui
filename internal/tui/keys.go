@@ -69,10 +69,16 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	// 3. Global navigation
 	switch key {
 	case "tab", "right", "s":
+		if cmd, handled := m.updateActiveViewKey(msg); handled {
+			return m, cmd
+		}
 		if !m.textInputActive() {
 			return m, m.nextViewCmd()
 		}
 	case "shift+tab", "left", "w":
+		if cmd, handled := m.updateActiveViewKey(msg); handled {
+			return m, cmd
+		}
 		if !m.textInputActive() {
 			return m, m.previousViewCmd()
 		}
@@ -297,13 +303,13 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return nil, true
 		case "backspace":
 			if len(m.deckFilter) > 0 {
-				m.deckFilter = m.deckFilter[:len(m.deckFilter)-1]
+				m.deckFilter = trimLastRune(m.deckFilter)
 				m.deckCursor = 0
 			}
 			return nil, true
 		}
-		if len(msg.String()) == 1 && msg.String() >= " " {
-			m.deckFilter += msg.String()
+		if ch, ok := singlePrintableInput(msg.String()); ok {
+			m.deckFilter += ch
 			m.deckCursor = 0
 			return nil, true
 		}
@@ -325,7 +331,7 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.limitCursor = (m.limitCursor + 1) % 2
 			return nil, true
 		case "left", "h":
-			m.limitCursor = (m.limitCursor + 1) % 2
+			m.limitCursor = (m.limitCursor - 1 + 2) % 2
 			return nil, true
 		case "+", "=":
 			if m.limitCursor == 0 {
@@ -420,11 +426,11 @@ func (m *Model) updateImportKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		case "backspace":
 			if m.importCursor == 0 {
 				if len(m.importPath) > 0 {
-					m.importPath = m.importPath[:len(m.importPath)-1]
+					m.importPath = trimLastRune(m.importPath)
 				}
 			} else {
 				if len(m.exportPath) > 0 {
-					m.exportPath = m.exportPath[:len(m.exportPath)-1]
+					m.exportPath = trimLastRune(m.exportPath)
 				}
 			}
 			return nil, true
@@ -436,11 +442,11 @@ func (m *Model) updateImportKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			}
 			return nil, true
 		}
-		if len(msg.String()) == 1 {
+		if ch, ok := singlePrintableInput(msg.String()); ok {
 			if m.importCursor == 0 {
-				m.importPath += msg.String()
+				m.importPath += ch
 			} else {
-				m.exportPath += msg.String()
+				m.exportPath += ch
 			}
 			return nil, true
 		}
@@ -454,15 +460,15 @@ func (m *Model) updateImportKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return nil, true
 		case "backspace":
 			if len(m.exportTag) > 0 {
-				m.exportTag = m.exportTag[:len(m.exportTag)-1]
+				m.exportTag = trimLastRune(m.exportTag)
 			}
 			return nil, true
 		case "ctrl+u":
 			m.exportTag = ""
 			return nil, true
 		}
-		if len(msg.String()) == 1 {
-			m.exportTag += msg.String()
+		if ch, ok := singlePrintableInput(msg.String()); ok {
+			m.exportTag += ch
 			return nil, true
 		}
 		return nil, true
@@ -554,13 +560,13 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			templateKey := m.templateKeyAtCursor()
 			val := m.aiTemplates[activeSet][templateKey]
 			if len(val) > 0 {
-				m.aiTemplates[activeSet][templateKey] = val[:len(val)-1]
+				m.aiTemplates[activeSet][templateKey] = trimLastRune(val)
 			}
 			return nil, true
 		}
-		if len(msg.String()) == 1 {
+		if ch, ok := singlePrintableInput(msg.String()); ok {
 			templateKey := m.templateKeyAtCursor()
-			m.aiTemplates[activeSet][templateKey] += msg.String()
+			m.aiTemplates[activeSet][templateKey] += ch
 			return nil, true
 		}
 		return nil, true
@@ -604,12 +610,12 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return nil, true
 		case "backspace":
 			if len(m.tagInput) > 0 {
-				m.tagInput = m.tagInput[:len(m.tagInput)-1]
+				m.tagInput = trimLastRune(m.tagInput)
 			}
 			return nil, true
 		}
-		if len(msg.String()) == 1 {
-			m.tagInput += msg.String()
+		if ch, ok := singlePrintableInput(msg.String()); ok {
+			m.tagInput += ch
 			return nil, true
 		}
 		return nil, true
@@ -622,12 +628,12 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return m.loadBrowserCards(), true
 		case "backspace":
 			if len(m.browserSearch) > 0 {
-				m.browserSearch = m.browserSearch[:len(m.browserSearch)-1]
+				m.browserSearch = trimLastRune(m.browserSearch)
 			}
 			return m.loadBrowserCards(), true
 		}
-		if len(msg.String()) == 1 {
-			m.browserSearch += msg.String()
+		if ch, ok := singlePrintableInput(msg.String()); ok {
+			m.browserSearch += ch
 			return m.loadBrowserCards(), true
 		}
 		return nil, true
@@ -779,12 +785,12 @@ func (m *Model) updateAIKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return nil, true
 		case "backspace":
 			if len(m.aiInput) > 0 {
-				m.aiInput = m.aiInput[:len(m.aiInput)-1]
+				m.aiInput = trimLastRune(m.aiInput)
 			}
 			return nil, true
 		}
-		if len(msg.String()) == 1 && msg.String() >= " " {
-			m.aiInput += msg.String()
+		if ch, ok := singlePrintableInput(msg.String()); ok {
+			m.aiInput += ch
 			return nil, true
 		}
 		return nil, true

@@ -187,6 +187,15 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 			},
 		}
 	}
+	if len(templates) == 0 {
+		templates = map[string]map[string]string{
+			"vocabulary": {
+				"front":   "{{.Topic}}",
+				"back":    "German prompt for {{.Topic}}",
+				"example": "Practice sentence using {{.Topic}}.",
+			},
+		}
+	}
 
 	var sets []string
 	for k := range templates {
@@ -207,10 +216,16 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 	if provider == nil {
 		switch providerName {
 		case "template":
+			activeSet := ""
+			if len(sets) > 0 {
+				activeSet = sets[aiTemplateIndex]
+			}
 			provider = ai.TemplateProvider{
 				Templates: templates,
-				ActiveSet: sets[aiTemplateIndex],
+				ActiveSet: activeSet,
 			}
+		case "disabled":
+			provider = nil
 		default:
 			provider = ai.OfflineProvider{}
 		}

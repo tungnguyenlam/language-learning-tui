@@ -48,7 +48,7 @@ The Registry automatically:
 
 | Source | Priority | Description |
 |--------|----------|-------------|
-| EmbeddedSource | 10 | Loads TSV files from `testdata/german-deks/` |
+| EmbeddedSource | 10 | Loads TSV files from `testdata/german-decks/` |
 | GoSource | 20 | Loads Go-defined decks (StarterDeck) |
 
 Higher priority = loaded first. Duplicate deck IDs are deduplicated.

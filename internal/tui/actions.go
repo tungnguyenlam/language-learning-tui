@@ -363,6 +363,10 @@ func (m *Model) startDrafting() tea.Cmd {
 	if m.drafting {
 		return nil
 	}
+	if m.aiProvider == nil {
+		m.status = "AI provider is disabled. Enable it in Settings."
+		return nil
+	}
 	m.drafting = true
 	m.status = "AI is drafting flashcards..."
 	return func() tea.Msg {

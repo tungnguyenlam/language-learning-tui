@@ -1,5 +1,43 @@
 # Done Backlog
 
+## 2026-05-08: Stability + Content Batch B
+
+### Bug Fixes & Logic
+- Fixed Deck Limits editing navigation: `left` now moves between limit fields instead of accidentally switching global views.
+- Added AI-disabled protection in drafting flow to avoid nil-provider execution and return clear status guidance.
+- Fixed cram reveal rendering at full progress to avoid negative repeat edge-case output behavior.
+- Added fallback template-set initialization for template provider when options contain an empty template map.
+
+### UX / UI Improvements
+- Added explicit warning line in AI view when provider is disabled, with clear Settings recovery path.
+- Made text-editing backspace rune-aware across Deck search, Import paths, Export tag, Browser search, AI topic input, tag input, and template editing.
+
+### Content Improvements
+- Added new embedded deck: `b2-healthcare-systems.tsv` (B2 healthcare vocabulary and system phrases).
+- Expanded `grammar_tips.go` with additional advanced tips (Konjunktiv II politeness, passive voice, subordinate clauses, relative clauses, nominalization, and more).
+- Fixed content docs typo: `testdata/german-deks/` -> `testdata/german-decks/`.
+
+### Testing Improvements
+- Added new unit coverage for:
+  - Unicode-safe rune trimming
+  - single-rune printable input handling
+  - AI disabled drafting guard
+  - template-mode initialization with empty template map
+  - deck-limit left-arrow behavior
+  - cram reveal rendering at 100%
+  - disabled provider config preservation
+- Added 8 new tui-tester E2E tests in `e2e_tests/test_batch_safety_and_content.py` covering:
+  - AI disabled warning + generate guard
+  - Unicode backspace behavior in Import, Export tag, AI topic, Settings template editing
+  - Deck limit navigation correctness
+  - Right-arrow global navigation continuity
+  - Healthcare deck import visibility in Decks
+
+### Verification (Batch B)
+- `go test ./internal/tui ./internal/content ./internal/app` ✅
+- `pytest e2e_tests/test_batch_safety_and_content.py -q` ✅ (8 passed)
+- `./scripts/verify.sh` ✅ (124 E2E tests passed)
+
 ## 2026-05-08: Enhanced TUI Experience Batch
 
 ### UI Improvements

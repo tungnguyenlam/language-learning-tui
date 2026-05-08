@@ -100,3 +100,24 @@ func TestOpenLog(t *testing.T) {
 		t.Fatalf("log file was not created: %v", err)
 	}
 }
+
+func TestLoadOrCreateConfigDisabledProviderPreserved(t *testing.T) {
+	dir := t.TempDir()
+	if err := EnsureDataDir(dir); err != nil {
+		t.Fatalf("ensure data dir: %v", err)
+	}
+	raw := []byte(`{
+  "ai_provider": "disabled"
+}`)
+	if err := os.WriteFile(filepath.Join(dir, ConfigFileName), raw, 0o644); err != nil {
+		t.Fatalf("write config: %v", err)
+	}
+
+	cfg, err := LoadOrCreateConfig(dir)
+	if err != nil {
+		t.Fatalf("load config: %v", err)
+	}
+	if cfg.AIProvider != "disabled" {
+		t.Fatalf("AIProvider = %q, want disabled", cfg.AIProvider)
+	}
+}

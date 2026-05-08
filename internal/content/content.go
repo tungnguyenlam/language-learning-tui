@@ -81,6 +81,7 @@ func EmbeddedDeckPaths() []string {
 		filepath.Join("testdata/german-decks", "b1-workplace-office.tsv"),
 		filepath.Join("testdata/german-decks", "b1-travel-tourism.tsv"),
 		filepath.Join("testdata/german-decks", "b1-technology-internet.tsv"),
+		filepath.Join("testdata/german-decks", "b2-healthcare-systems.tsv"),
 		filepath.Join("testdata/german-decks", "b2-advanced.tsv"),
 	}
 }

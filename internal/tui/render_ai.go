@@ -51,6 +51,10 @@ func (m *Model) renderAI(x, y int) string {
 	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 	b.WriteString(fmt.Sprintf("\nPress %s to edit topic | %s generate | %s approve | %s discard | %s clear\n",
 		keyStyle.Render("/"), keyStyle.Render("Enter"), keyStyle.Render("a"), keyStyle.Render("d"), keyStyle.Render("esc")))
+	if m.aiProvider == nil {
+		warnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("208")).Bold(true)
+		b.WriteString(warnStyle.Render("AI provider is disabled. Enable Offline or Template in Settings to generate drafts.") + "\n")
+	}
 	b.WriteString(mutedStyle.Render("Tip: include level and use case, e.g. B1 workplace small talk.") + "\n")
 	b.WriteString(mutedStyle.Render("Suggested topics: business email, doctor visit, apartment viewing.") + "\n")
 

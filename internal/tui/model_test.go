@@ -557,6 +557,81 @@ func TestSettingsTemplateEditing(t *testing.T) {
 	}
 }
 
+func TestTrimLastRuneHandlesUnicode(t *testing.T) {
+	if got := trimLastRune("Käse"); got != "Käs" {
+		t.Fatalf("trimLastRune ascii+umlaut = %q, want %q", got, "Käs")
+	}
+	if got := trimLastRune("🙂a"); got != "🙂" {
+		t.Fatalf("trimLastRune emoji tail = %q, want %q", got, "🙂")
+	}
+	if got := trimLastRune("🙂"); got != "" {
+		t.Fatalf("trimLastRune single emoji = %q, want empty", got)
+	}
+}
+
+func TestSinglePrintableInputAcceptsSingleRune(t *testing.T) {
+	if ch, ok := singlePrintableInput("ä"); !ok || ch != "ä" {
+		t.Fatalf("singlePrintableInput(ä) = %q,%t; want ä,true", ch, ok)
+	}
+	if _, ok := singlePrintableInput("\t"); ok {
+		t.Fatal("singlePrintableInput(tab) should be rejected")
+	}
+	if _, ok := singlePrintableInput(""); ok {
+		t.Fatal("singlePrintableInput(empty) should be rejected")
+	}
+}
+
+func TestAIGenerateWhenProviderDisabledSetsStatus(t *testing.T) {
+	model := NewModelWithOptions(&mockRepo{}, &mockScheduler{}, ModelOptions{
+		AIProviderName: "disabled",
+		AIProvider:     nil,
+	})
+	model.activeView = ViewAI
+	model.aiInput = "der Kaffee"
+
+	cmd := model.startDrafting()
+	if cmd != nil {
+		t.Fatal("startDrafting should return nil when AI provider is disabled")
+	}
+	if model.drafting {
+		t.Fatal("drafting should remain false when provider is disabled")
+	}
+	if !strings.Contains(model.status, "disabled") {
+		t.Fatalf("status = %q, want disabled guidance", model.status)
+	}
+}
+
+func TestNewModelWithOptionsTemplateProviderHandlesEmptyTemplates(t *testing.T) {
+	model := NewModelWithOptions(&mockRepo{}, &mockScheduler{}, ModelOptions{
+		AIProviderName: "template",
+		AITemplates:    map[string]map[string]string{},
+	})
+	if model.aiProvider == nil {
+		t.Fatal("aiProvider should be initialized for template mode")
+	}
+	if model.currentAITemplateSet() == "" {
+		t.Fatal("template sets should be initialized with defaults when empty map is provided")
+	}
+}
+
+func TestDeckLimitLeftMovesCursorBackward(t *testing.T) {
+	repo := &mockRepo{
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One", NewCardsPerDay: 10, ReviewLimitPerDay: 50}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.activeView = ViewDecks
+	model.editingDeckLimits = true
+	model.limitCursor = 1
+	model.deckCursor = 0
+
+	updated, _ := model.Update(tea.KeyPressMsg{Code: tea.KeyLeft})
+	model = updated.(*Model)
+	if model.limitCursor != 0 {
+		t.Fatalf("limitCursor after left = %d, want 0", model.limitCursor)
+	}
+}
+
 func TestAIDraftWithTemplateProvider(t *testing.T) {
 	repo := &mockRepo{decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}}}
 	model := NewModelWithOptions(repo, &mockScheduler{}, ModelOptions{
@@ -1400,6 +1475,21 @@ func TestCramReviewFlow(t *testing.T) {
 	}
 	if model.cramCursor != 0 {
 		t.Fatalf("expected cursor 0 (wrapped), got %d", model.cramCursor)
+	}
+}
+
+func TestCramRevealAtFullProgressRendersWithoutNegativeRepeat(t *testing.T) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	model.activeView = ViewCram
+	model.cramActive = true
+	model.cramCards = []core.Card{{ID: "c1", Prompt: "P1", Answer: "Antwort"}}
+	model.cramCursor = 0
+	model.revealState = RevealRevealing
+	model.revealProgress = 100
+
+	view := model.renderCramAt(viewportLayout{X: 0, Y: 0, Width: 80, Height: 24})
+	if !strings.Contains(view, "Answer: Antwort") {
+		t.Fatalf("expected full answer at 100%% progress, got: %s", view)
 	}
 }
 

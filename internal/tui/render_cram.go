@@ -45,7 +45,10 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 			}
 			revealedRunes := []rune(fullText)[:revealedChars]
 			remainingBlocks := numChars - revealedChars
-			animationText := string(revealedRunes) + strings.Repeat("▌", remainingBlocks-1)
+			animationText := string(revealedRunes)
+			if remainingBlocks > 0 {
+				animationText += strings.Repeat("▌", remainingBlocks)
+			}
 			b.WriteString(fmt.Sprintf("Answer: %s\n\n", animationText))
 			b.WriteString("Press space or enter to finish reveal.\n")
 		} else {
