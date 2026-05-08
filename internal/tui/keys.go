@@ -142,7 +142,7 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			return m, m.playAudio(m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)].Audio)
 		}
 		if m.activeView == ViewCram && m.cramActive && len(m.cramCards) > 0 {
-			return m, m.playAudio(m.cramCards[m.cramCursor].Audio)
+			return m, m.playAudio(m.cramCards[clampInt(m.cramCursor, 0, len(m.cramCards)-1)].Audio)
 		}
 	}
 
@@ -656,7 +656,7 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, true
 	case "m":
 		if len(m.browserCards) > 0 {
-			cardID := m.browserCards[m.browserCursor].ID
+			cardID := m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)].ID
 			m.browserSelected[cardID] = !m.browserSelected[cardID]
 		}
 		return nil, true
@@ -691,7 +691,7 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		if len(m.browserCards) > 0 {
 			if len(m.getSelectedCardIDs()) == 0 {
 				// Pre-fill from current card
-				m.tagInput = strings.Join(m.browserCards[m.browserCursor].Tags, " ")
+				m.tagInput = strings.Join(m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)].Tags, " ")
 			}
 		}
 		return nil, true
@@ -699,7 +699,7 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return m.cleanupBrowserTags(), true
 	case "enter", "\r", "\n":
 		if len(m.browserCards) > 0 {
-			cardID := m.browserCards[m.browserCursor].ID
+			cardID := m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)].ID
 			if m.showReviewHistory && m.reviewHistoryCard == cardID {
 				m.showReviewHistory = false
 				return nil, true
@@ -739,7 +739,7 @@ func (m *Model) updateCramKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 
 		case "p":
 			if len(m.cramCards) > 0 {
-				return m.playAudio(m.cramCards[m.cramCursor].Audio), true
+				return m.playAudio(m.cramCards[clampInt(m.cramCursor, 0, len(m.cramCards)-1)].Audio), true
 			}
 		case "a":
 			return m.gradeCramCard(core.GradeAgain), true

@@ -70,11 +70,11 @@ func (m *Model) toggleBrowserBookmark() tea.Cmd {
 	if len(m.browserCards) == 0 {
 		return nil
 	}
-	card := m.browserCards[m.browserCursor]
+	card := m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)]
 	next := !card.Bookmarked
 	m.status = "Saving bookmark..."
 	// Update local state immediately for responsiveness
-	m.browserCards[m.browserCursor].Bookmarked = next
+	m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)].Bookmarked = next
 	// Also update in allDue if present
 	for i := range m.allDue {
 		if m.allDue[i].ID == card.ID {
@@ -135,7 +135,7 @@ func (m *Model) handleTagInput() tea.Cmd {
 
 	if len(selectedIDs) == 0 {
 		if len(m.browserCards) > 0 {
-			selectedIDs = []string{m.browserCards[m.browserCursor].ID}
+			selectedIDs = []string{m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)].ID}
 		}
 	}
 
@@ -217,7 +217,7 @@ func (m *Model) toggleCardKind() tea.Cmd {
 	if len(m.browserCards) == 0 {
 		return nil
 	}
-	card := m.browserCards[m.browserCursor]
+	card := m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)]
 	next := core.CardKindFlashcard
 	if card.Kind == core.CardKindFlashcard {
 		next = core.CardKindMCQ
@@ -271,11 +271,11 @@ func (m *Model) toggleBrowserSuspension() tea.Cmd {
 	if len(m.browserCards) == 0 {
 		return nil
 	}
-	card := m.browserCards[m.browserCursor]
+	card := m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)]
 	next := !card.Suspended
 	m.status = "Updating suspension..."
 	// Update local state
-	m.browserCards[m.browserCursor].Suspended = next
+	m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)].Suspended = next
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()

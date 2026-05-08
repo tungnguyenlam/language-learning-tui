@@ -69,9 +69,9 @@ def test_export_tag_backspace_handles_umlaut():
             agent.wait_until_stable()
             agent.act("k")
             agent.act("ä")
-            agent.wait_for_text("Export Tag: kä_")
+            agent.wait_for_text("Export Filter: kä_")
             agent.act("<Backspace>")
-            agent.wait_for_text("Export Tag: k_")
+            agent.wait_for_text("Export Filter: k_")
         finally:
             agent.close()
 

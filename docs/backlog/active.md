@@ -57,7 +57,8 @@ Making the TUI meaningfully better with 6-8 distinct improvements
 - [x] Batch C4: run full `./scripts/verify.sh`, finalize backlog summaries, and commit.
 - [x] Batch D1 (UX Polish): fixed browser bulk keys prompt to accurately reflect b/B and x/X toggling, truncated long paths in Import view, added help hint to Dashboard, made AI drafts empty state clearer, grayed out negative goal adjustment in Settings when at zero, and styled Cram/Review shortcuts.
 - [x] Batch D2 (Bugfixes & Logic): fixed `browserCursor` out-of-bounds array access panic on bulk delete/conversion, added `ctrl+u` shortcut to safely and quickly clear input across all 5 text input modes (`searchingDecks`, `taggingCards`, `searchingBrowser`, `searchingAI`, `editingTemplate`).
-- [ ] Batch D3: finalize and verify all changes.
+- [x] Batch E1 (Stability & UX): hardened `browserCards` and `cramCards` array accesses with `clampInt` protection, fixed Daily Goal gray-out logic for its actual floor of 1, renamed "Export Tag" to "Export Filter" for clarity, added "Unknown Deck" fallback in Import view, and fixed duplicate "All Decks" creation bug on TSV import.
+- [ ] Batch E2: finalize and verify all changes.
 
 ## Verification State
 

@@ -82,7 +82,7 @@ func (m *Model) renderSettings(x, y int) string {
 	minusBtn := "[-] "
 	plusBtn := "[+] "
 
-	if m.stats.DailyGoal == 0 {
+	if m.stats.DailyGoal <= 1 {
 		b.WriteString(disabledBtnStyle.Render(minusBtn))
 	} else {
 		b.WriteString(btnStyle.Render(minusBtn))

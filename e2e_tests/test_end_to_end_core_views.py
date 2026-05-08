@@ -54,7 +54,7 @@ def test_import_view_renders_filters_and_actions():
             agent.act("5")
             agent.wait_for_text("Import / Export")
             agent.assert_text("Export Deck: All Decks")
-            agent.assert_text("Export Tag: (None)")
+            agent.assert_text("Export Filter: (None)")
             agent.assert_text("[i] Import TSV")
             agent.assert_text("[x] Export TSV")
         finally:

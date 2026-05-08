@@ -143,6 +143,14 @@
 - [x] Batch D2: Implemented `ctrl+u` functionality across all internal text input modes (`searchingDecks`, `taggingCards`, `searchingBrowser`, `searchingAI`, `editingTemplate`) to quickly clear text and prevent incomplete states.
 - [x] Fixed test alignment issues from string updates (`e2e_tests/test_cram_mode.py`).
 
+### Robustness & Immersive UX Polish (DONE)
+- [x] Batch E1: Fixed misleading "type to search" hint in Browser view to consistently show "/ to search".
+- [x] Batch E1: Renamed "Export Tag" to "Export Filter" in Import view and tests to accurately reflect its broad search capabilities.
+- [x] Batch E1: Fixed edge-case panic in `actions.go`, `handlers.go` and `keys.go` by using `clampInt` for all `browserCards` and `cramCards` index accesses.
+- [x] Batch E1: Fixed bug where importing notes while "All Decks" was selected would create a literal duplicate deck named "All Decks" (now correctly maps to "Imported").
+- [x] Batch E1: Added "Unknown Deck" visual fallback for cases where a previously selected export deck was deleted.
+- [x] Batch E1: Corrected Daily Goal button gray-out logic to trigger at its actual minimum value of 1.
+
 ## Earlier Work
 
 ### End-to-End TUI Correctness and Autonomy Batch A

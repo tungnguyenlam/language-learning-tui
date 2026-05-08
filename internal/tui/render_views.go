@@ -205,11 +205,16 @@ func (m *Model) renderImport(x, y int) string {
 	if m.exportDeckID == "" {
 		exportDeckLabel += "All Decks"
 	} else {
+		found := false
 		for _, d := range m.decks {
 			if d.ID == m.exportDeckID {
 				exportDeckLabel += d.Name
+				found = true
 				break
 			}
+		}
+		if !found {
+			exportDeckLabel += "Unknown Deck"
 		}
 	}
 	rowY = layout.Y + strings.Count(b.String(), "\n")
@@ -227,14 +232,14 @@ func (m *Model) renderImport(x, y int) string {
 		Height: 1,
 	})
 
-	// Export Tag Filter
-	exportTagLabel := "Export Tag: " + m.exportTag
+	// Export Filter
+	exportTagLabel := "Export Filter: " + m.exportTag
 	if m.exportTag == "" {
 		exportTagLabel += "(None)"
 	}
 	rowY = layout.Y + strings.Count(b.String(), "\n")
 	if m.editingExportTag {
-		b.WriteString("  Export Tag: " + editStyle.Render(m.exportTag+"_") + "\n\n")
+		b.WriteString("  Export Filter: " + editStyle.Render(m.exportTag+"_") + "\n\n")
 	} else if m.importCursor == 3 {
 		b.WriteString("> " + btnActiveStyle.Render(exportTagLabel) + " (Press t to edit)\n\n")
 	} else {

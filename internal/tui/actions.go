@@ -163,8 +163,13 @@ func (m *Model) importTSV() tea.Cmd {
 		}
 		defer file.Close()
 
+		defaultDeck := m.deckLabel()
+		if m.deck.ID == "" {
+			defaultDeck = "Imported"
+		}
+
 		notes, err := content.ImportAnkiTSV(file, content.ImportOptions{
-			DefaultDeck: m.deckLabel(),
+			DefaultDeck: defaultDeck,
 		})
 		if err != nil {
 			return fmt.Errorf("failed to parse TSV file '%s': %w", filepath.Base(path), err)
@@ -495,7 +500,7 @@ func (m *Model) deleteSelectedCard() tea.Cmd {
 	if len(m.browserCards) == 0 {
 		return nil
 	}
-	card := m.browserCards[m.browserCursor]
+	card := m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)]
 	m.confirmingDelete = true
 	m.deleteAction = m.executeDeleteSelectedCard
 	m.status = fmt.Sprintf("Delete card '%s'? (y/n)", card.Prompt)
@@ -506,7 +511,7 @@ func (m *Model) executeDeleteSelectedCard() tea.Cmd {
 	if len(m.browserCards) == 0 {
 		return nil
 	}
-	card := m.browserCards[m.browserCursor]
+	card := m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)]
 	m.status = "Deleting card..."
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
