@@ -7,7 +7,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"deutsch-tui/internal/ai"
 	"deutsch-tui/internal/app"
 	"deutsch-tui/internal/content"
 	"deutsch-tui/internal/srs"
@@ -71,17 +70,8 @@ func main() {
 	}
 
 	scheduler := srs.NewScheduler()
-	var provider ai.Provider
-	switch cfg.AIProvider {
-	case "template":
-		provider = ai.TemplateProvider{Templates: cfg.AITemplates}
-	case "offline":
-		provider = ai.OfflineProvider{}
-	default:
-		provider = ai.OfflineProvider{}
-	}
 	program := tea.NewProgram(tui.NewModelWithOptions(store, scheduler, tui.ModelOptions{
-		AIProvider:     provider,
+		AIProvider:     nil,
 		AIProviderName: cfg.AIProvider,
 		AITemplates:    cfg.AITemplates,
 		AutoPlayAudio:  cfg.AutoPlayAudio,

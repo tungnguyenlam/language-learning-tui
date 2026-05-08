@@ -1,0 +1,34 @@
+#separator:tab
+#html:false
+#deck:B2 Public Services & Civic Life
+front	back	extra	tags	notetype
+das Bürgeramt	citizen service office	das Bürgeramt, die Bürgerämter	b2 civic services	Basic
+die Meldebescheinigung	proof of registration	die Meldebescheinigung, die Meldebescheinigungen	b2 civic documents	Basic
+die Wohnsitzanmeldung	residence registration	die Wohnsitzanmeldung, die Wohnsitzanmeldungen	b2 civic registration	Reverse
+einen Termin online buchen	to book an appointment online	hat einen Termin online gebucht	b2 civic services	Basic
+die Geburtsurkunde	birth certificate	die Geburtsurkunde, die Geburtsurkunden	b2 civic documents	Basic
+die Heiratsurkunde	marriage certificate	die Heiratsurkunde, die Heiratsurkunden	b2 civic documents	Reverse
+das Führungszeugnis	certificate of good conduct	das Führungszeugnis, die Führungszeugnisse	b2 civic documents	Basic
+die Aufenthaltsgenehmigung	residence permit	die Aufenthaltsgenehmigung, die Aufenthaltsgenehmigungen	b2 civic migration	Basic
+die Arbeitserlaubnis	work permit	die Arbeitserlaubnis, die Arbeitserlaubnisse	b2 civic migration	Reverse
+die Verlängerung beantragen	to apply for an extension	hat die Verlängerung beantragt	b2 civic migration	Basic
+das Finanzamt	tax office	das Finanzamt, die Finanzämter	b2 civic taxes	Basic
+die Steueridentifikationsnummer	tax identification number	Abk.: Steuer-ID	b2 civic taxes	Basic
+die Steuererklärung	tax return	die Steuererklärung, die Steuererklärungen	b2 civic taxes	Reverse
+fristgerecht einreichen	to submit on time	hat fristgerecht eingereicht	b2 civic taxes	Basic
+der Bescheid	official notice	der Bescheid, die Bescheide	b2 civic administration	Basic
+Widerspruch einlegen	to file an objection	hat Widerspruch eingelegt	b2 civic administration	Reverse
+die Sozialversicherung	social insurance	die Sozialversicherung, die Sozialversicherungen	b2 civic welfare	Basic
+das Arbeitslosengeld	unemployment benefit	das Arbeitslosengeld	b2 civic welfare	Basic
+einen Anspruch haben auf	to be entitled to	hat Anspruch auf etwas	b2 civic welfare	Reverse
+die Rentenversicherung	pension insurance	die Rentenversicherung, die Rentenversicherungen	b2 civic welfare	Basic
+der Personalausweis	identity card	der Personalausweis, die Personalausweise	b2 civic identity	Basic
+der Reisepass	passport	der Reisepass, die Reisepässe	b2 civic identity	Reverse
+ein Dokument beglaubigen lassen	to have a document certified	hat ein Dokument beglaubigen lassen	b2 civic documents	Basic
+die Amtssprache	official language	die Amtssprache, die Amtssprachen	b2 civic language	Basic
+der Dolmetscherdienst	interpreting service	der Dolmetscherdienst, die Dolmetscherdienste	b2 civic language	Reverse
+die Sprechstunde	office hours	die Sprechstunde, die Sprechstunden	b2 civic services	Basic
+die Bearbeitungsdauer	processing time	die Bearbeitungsdauer, die Bearbeitungsdauern	b2 civic administration	Basic
+in Bearbeitung sein	to be in process	ist in Bearbeitung	b2 civic administration	Reverse
+das Ordnungsamt	public order office	das Ordnungsamt, die Ordnungsämter	b2 civic administration	Basic
+die Anmeldung eines Gewerbes	business registration	die Gewerbeanmeldung	b2 civic business	Basic

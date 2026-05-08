@@ -1,6 +1,6 @@
 # Active Backlog
 
-Last updated: 2026-05-08 (batch B)
+Last updated: 2026-05-08 (batch C1)
 
 ## Current Milestone
 
@@ -47,13 +47,14 @@ Making the TUI meaningfully better with 6-8 distinct improvements
 
 ## Next Action
 
-- [x] Batch B1: fixed Deck limits left-arrow behavior (now edits limit cursor instead of switching views) and preserved right-arrow global view cycling.
-- [x] Batch B1: added AI disabled guard in drafting flow + explicit AI disabled guidance in AI view.
-- [x] Batch B1: fixed cram reveal rendering at 100% progress to avoid negative repeat edge cases.
-- [x] Batch B1: improved text input safety with rune-aware backspace for deck filter, import/export paths, export tag, browser search, tag input, AI input, and settings templates.
-- [x] Batch B2: added new B2 healthcare systems deck (`b2-healthcare-systems.tsv`) and expanded grammar tips coverage.
-- [x] Batch B3: added 8 new E2E tests in `e2e_tests/test_batch_safety_and_content.py` covering AI disabled behavior, Unicode backspace flows, deck-limit navigation behavior, arrow-view navigation, and healthcare deck import visibility.
-- [x] Phase 4: run full `./scripts/verify.sh`, update done backlog summary, and commit.
+- [x] Batch C1: fixed startup AI provider wiring so disabled/template config now initializes provider correctly in TUI model options.
+- [x] Batch C1: hardened TUI repo command flows by propagating errors in draft approval, bulk bookmark toggle, bulk kind toggle, cleanup tags, and approve-all draft reload path.
+- [x] Batch C1: blocked grading while reveal animation is in progress (grade now requires fully revealed state).
+- [x] Batch C1: expanded help overlay with AI/deck-limits/browser bulk shortcuts and clarified deck-limit inline hints.
+- [x] Batch C1: added unit tests for new error-propagation paths and reveal-state grade guard.
+- [x] Batch C2: add a new B2 public-services/civic-life deck and expand grammar tips set for daily rotation variety.
+- [x] Batch C3: add 7 new E2E tui-tester tests covering provider persistence on restart, reveal-grade guard, bulk-action failures, and new content import visibility.
+- [x] Batch C4: run full `./scripts/verify.sh`, finalize backlog summaries, and commit.
 
 ## Verification State
 

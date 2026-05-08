@@ -17,6 +17,10 @@ def test_ai_multi_topic_generation():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
+            agent.act("7")
+            agent.wait_for_text("Settings")
+            agent.act("<Enter>")
+            agent.wait_for_text("offline")
             agent.act("6") # AI view
             agent.wait_for_text("AI Drafts")
             

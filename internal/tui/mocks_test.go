@@ -16,6 +16,10 @@ type mockRepo struct {
 	suspended    map[string]bool
 	reviews      []core.ReviewResult
 	dailyGoal    int
+	errOnCardID  map[string]error
+	errDueCards  error
+	errDecks     error
+	errCards     error
 }
 
 func (m *mockRepo) UpsertDeck(ctx context.Context, deck core.Deck) error {
@@ -45,6 +49,9 @@ func (m *mockRepo) GetDeck(ctx context.Context, id string) (core.Deck, error) {
 	return core.Deck{ID: id, Name: "Mock Deck"}, nil
 }
 func (m *mockRepo) Decks(ctx context.Context) ([]core.Deck, error) {
+	if m.errDecks != nil {
+		return nil, m.errDecks
+	}
 	if len(m.decks) > 0 {
 		return m.decks, nil
 	}
@@ -98,6 +105,9 @@ func (m *mockRepo) UndoLastReview(ctx context.Context, cardID string) error {
 	return nil
 }
 func (m *mockRepo) DueCards(ctx context.Context, now time.Time, limit int) ([]core.Card, error) {
+	if m.errDueCards != nil {
+		return nil, m.errDueCards
+	}
 	var cards []core.Card
 	for _, card := range m.dueCards {
 		if !card.Suspended {
@@ -107,6 +117,9 @@ func (m *mockRepo) DueCards(ctx context.Context, now time.Time, limit int) ([]co
 	return cards, nil
 }
 func (m *mockRepo) DueCardsBookmarked(ctx context.Context, now time.Time, limit int) ([]core.Card, error) {
+	if m.errDueCards != nil {
+		return nil, m.errDueCards
+	}
 	var bookmarked []core.Card
 	for _, card := range m.dueCards {
 		if card.Bookmarked && !card.Suspended {
@@ -119,6 +132,11 @@ func (m *mockRepo) GetReviewState(ctx context.Context, cardID string) (core.Revi
 	return core.ReviewState{CardID: cardID}, nil
 }
 func (m *mockRepo) SetCardBookmark(ctx context.Context, cardID string, bookmarked bool) error {
+	if m.errOnCardID != nil {
+		if err, ok := m.errOnCardID[cardID]; ok {
+			return err
+		}
+	}
 	if m.bookmarks == nil {
 		m.bookmarks = make(map[string]bool)
 	}
@@ -131,6 +149,11 @@ func (m *mockRepo) SetCardBookmark(ctx context.Context, cardID string, bookmarke
 	return nil
 }
 func (m *mockRepo) SetCardSuspended(ctx context.Context, cardID string, suspended bool) error {
+	if m.errOnCardID != nil {
+		if err, ok := m.errOnCardID[cardID]; ok {
+			return err
+		}
+	}
 	if m.suspended == nil {
 		m.suspended = make(map[string]bool)
 	}
@@ -191,6 +214,9 @@ func (m *mockRepo) DeckStatistics(ctx context.Context, deckID string) (core.Stat
 	return stats, nil
 }
 func (m *mockRepo) Cards(ctx context.Context, deckID string, search string) ([]core.Card, error) {
+	if m.errCards != nil {
+		return nil, m.errCards
+	}
 	var cards []core.Card
 	for _, card := range m.dueCards {
 		if deckID != "" && card.DeckID != deckID {
@@ -228,6 +254,11 @@ func (m *mockRepo) DeleteCard(ctx context.Context, cardID string) error {
 }
 
 func (m *mockRepo) SetCardKind(ctx context.Context, cardID string, kind core.CardKind) error {
+	if m.errOnCardID != nil {
+		if err, ok := m.errOnCardID[cardID]; ok {
+			return err
+		}
+	}
 	for i := range m.dueCards {
 		if m.dueCards[i].ID == cardID {
 			m.dueCards[i].Kind = kind

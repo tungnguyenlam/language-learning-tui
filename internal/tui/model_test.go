@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -165,7 +166,14 @@ func TestReviewFlow(t *testing.T) {
 		t.Fatal("should be revealing after space")
 	}
 
-	// Grade (in test we don't run the async command, we just check it exists)
+	// Grade should be blocked while reveal animation is in progress.
+	if cmd := model.gradeCard(core.GradeGood); cmd != nil {
+		t.Fatal("gradeCard should return nil while reveal is still animating")
+	}
+
+	// Grade after reveal.
+	model.revealState = RevealRevealed
+	model.revealProgress = 100
 	cmd := model.gradeCard(core.GradeGood)
 	if cmd == nil {
 		t.Fatal("gradeCard should return a command")
@@ -1552,6 +1560,124 @@ func TestReviewArrowNavigation(t *testing.T) {
 	model.Update(tea.KeyPressMsg{Code: tea.KeyUp})
 	if model.cursor != 0 {
 		t.Fatalf("cursor after up at start = %d, want 0", model.cursor)
+	}
+}
+
+func TestApproveDraftPropagatesDueCardsError(t *testing.T) {
+	repo := &mockRepo{
+		decks:       []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+		errDueCards: errors.New("due cards boom"),
+	}
+	model := NewModelWithAI(repo, &mockScheduler{}, ai.OfflineProvider{})
+	model.Update(decksMsg(repo.decks))
+	model.activeView = ViewAI
+	model.Update(draftsMsg([]ai.Draft{
+		{
+			Note: core.Note{
+				ID:     "n1",
+				DeckID: "deck-1",
+				Front:  "der Tee",
+				Back:   "tea",
+				Cards: []core.Card{{
+					ID:     "c1",
+					NoteID: "n1",
+					DeckID: "deck-1",
+					Kind:   core.CardKindFlashcard,
+					Prompt: "der Tee",
+					Answer: "tea",
+				}},
+			},
+		},
+	}))
+
+	cmd := model.approveDraft()
+	if cmd == nil {
+		t.Fatal("approveDraft should return command")
+	}
+	msg := cmd()
+	if err, ok := msg.(error); !ok || !strings.Contains(err.Error(), "due cards boom") {
+		t.Fatalf("msg = %T (%v), want due cards error", msg, msg)
+	}
+}
+
+func TestApproveAllDraftsPropagatesDeckReloadError(t *testing.T) {
+	repo := &mockRepo{
+		decks:    []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+		errDecks: errors.New("decks boom"),
+	}
+	model := NewModelWithAI(repo, &mockScheduler{}, ai.OfflineProvider{})
+	model.Update(decksMsg([]core.Deck{{ID: "deck-1", Name: "Deck One"}}))
+	model.activeView = ViewAI
+	model.Update(draftsMsg([]ai.Draft{
+		{
+			Note: core.Note{
+				ID:     "n1",
+				DeckID: "deck-1",
+				Front:  "der Tee",
+				Back:   "tea",
+				Cards: []core.Card{{
+					ID:     "c1",
+					NoteID: "n1",
+					DeckID: "deck-1",
+					Kind:   core.CardKindFlashcard,
+					Prompt: "der Tee",
+					Answer: "tea",
+				}},
+			},
+		},
+	}))
+
+	cmd := model.approveAllDrafts()
+	if cmd == nil {
+		t.Fatal("approveAllDrafts should return command")
+	}
+	msg := cmd()
+	if err, ok := msg.(error); !ok || !strings.Contains(err.Error(), "decks boom") {
+		t.Fatalf("msg = %T (%v), want decks error", msg, msg)
+	}
+}
+
+func TestBulkBrowserBookmarkPropagatesError(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Prompt: "Apple", Answer: "Apfel"},
+		},
+		errOnCardID: map[string]error{"c1": errors.New("bookmark boom")},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewBrowser
+	model.browserCards = []core.Card{{ID: "c1", DeckID: "deck-1", Prompt: "Apple", Answer: "Apfel"}}
+	model.browserSelected["c1"] = true
+
+	cmd := model.bulkBrowserBookmark(true)
+	if cmd == nil {
+		t.Fatal("bulkBrowserBookmark should return command")
+	}
+	msg := cmd()
+	if err, ok := msg.(error); !ok || !strings.Contains(err.Error(), "bookmark boom") {
+		t.Fatalf("msg = %T (%v), want bookmark error", msg, msg)
+	}
+}
+
+func TestBulkBrowserToggleKindPropagatesError(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Kind: core.CardKindFlashcard, Prompt: "Apple", Answer: "Apfel"},
+		},
+		errOnCardID: map[string]error{"c1": errors.New("kind boom")},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewBrowser
+	model.browserCards = []core.Card{{ID: "c1", DeckID: "deck-1", Kind: core.CardKindFlashcard, Prompt: "Apple", Answer: "Apfel"}}
+	model.browserSelected["c1"] = true
+
+	cmd := model.bulkBrowserToggleKind()
+	if cmd == nil {
+		t.Fatal("bulkBrowserToggleKind should return command")
+	}
+	msg := cmd()
+	if err, ok := msg.(error); !ok || !strings.Contains(err.Error(), "kind boom") {
+		t.Fatalf("msg = %T (%v), want kind error", msg, msg)
 	}
 }
 

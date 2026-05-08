@@ -1,5 +1,40 @@
 # Done Backlog
 
+## 2026-05-08: Reliability + UX Batch C1
+
+### Bug Fixes & Logic
+- Fixed startup AI provider wiring in `cmd/deutsch-tui/main.go` so model-level provider selection remains consistent with config (`disabled`, `offline`, `template`).
+- Tightened review grading guard to require fully revealed cards (`RevealRevealed`) and block accidental early grading during reveal animation.
+
+### Error Handling Hardening
+- Removed silent error swallowing in browser/drafts flows by propagating repository errors from:
+  - `bulkBrowserBookmark`
+  - `bulkBrowserToggleKind`
+  - `cleanupBrowserTags`
+  - `approveDraft`
+  - `approveAllDrafts`
+- Kept user-visible error surfacing through existing `friendlyError` status path.
+
+### UX / Help Polish
+- Expanded the Help overlay with current shortcut coverage for:
+  - deck limits editing controls
+  - AI drafting controls
+  - browser bulk actions
+  - settings template cycling
+- Clarified Deck limits inline hint (`h/l switch, +/- adjust`).
+
+### Testing Improvements
+- Added targeted unit tests for:
+  - grade guard while reveal animation is active
+  - draft approval due-cards error propagation
+  - approve-all decks reload error propagation
+  - bulk bookmark error propagation
+  - bulk kind-toggle error propagation
+
+### Verification (Batch C1)
+- `go test ./internal/tui ./cmd/deutsch-tui` ✅
+- `go test ./internal/tui ./internal/app ./internal/ai ./internal/content` ✅
+
 ## 2026-05-08: Stability + Content Batch B
 
 ### Bug Fixes & Logic
@@ -15,7 +50,18 @@
 ### Content Improvements
 - Added new embedded deck: `b2-healthcare-systems.tsv` (B2 healthcare vocabulary and system phrases).
 - Expanded `grammar_tips.go` with additional advanced tips (Konjunktiv II politeness, passive voice, subordinate clauses, relative clauses, nominalization, and more).
-- Fixed content docs typo: `testdata/german-deks/` -> `testdata/german-decks/`.
+- Fixed content docs typo: `testdata/german-decks/` -> `testdata/german-decks/`.
+
+### Content Library Expansion & Variety (DONE)
+- [x] Batch C2: Added a new B2 public-services/civic-life deck (`b2-public-services-civic-life.tsv`) to the embedded source registry.
+- [x] Batch C2: Expanded grammar tips set with 10 new advanced tips for better daily rotation variety.
+
+### E2E Testing Expansion (DONE)
+- [x] Batch C3: Added 7 new E2E tests (`test_batch_c3.py`) covering provider persistence, reveal-grade guard, browser bulk kind/bookmark toggles, new content import visibility (Civic deck), help overlay shortcuts, and AI draft disabled guard.
+- [x] Fixed 6 existing AI tests that failed due to the new default 'disabled' AI provider state by injecting a setup step to enable the 'offline' provider.
+
+### Verification & Finalization (DONE)
+- [x] Batch C4: Successfully ran `./scripts/verify.sh` with zero errors. All 131 E2E tests, Go tests, and linters passed.
 
 ### Testing Improvements
 - Added new unit coverage for:

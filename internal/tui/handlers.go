@@ -102,7 +102,9 @@ func (m *Model) bulkBrowserBookmark(bookmarked bool) tea.Cmd {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 		for _, id := range selectedIDs {
-			_ = m.repo.SetCardBookmark(ctx, id, bookmarked)
+			if err := m.repo.SetCardBookmark(ctx, id, bookmarked); err != nil {
+				return err
+			}
 		}
 		return m.loadBrowserCards()()
 	}
@@ -163,7 +165,10 @@ func (m *Model) cleanupBrowserTags() tea.Cmd {
 			return err
 		}
 		// Reload decks to see updated tags in UI if we ever switch back to Decks view
-		decks, _ := m.repo.Decks(ctx)
+		decks, err := m.repo.Decks(ctx)
+		if err != nil {
+			return err
+		}
 		return decksMsg(decks)
 	}
 }
@@ -237,22 +242,26 @@ func (m *Model) bulkBrowserToggleKind() tea.Cmd {
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
+		allCards, err := m.repo.Cards(ctx, "", "")
+		if err != nil {
+			return err
+		}
+		cardByID := make(map[string]core.Card, len(allCards))
+		for _, card := range allCards {
+			cardByID[card.ID] = card
+		}
 		for _, id := range selectedIDs {
-			// For bulk, we'll just toggle to Flashcard if it was MCQ, or MCQ if it was Flashcard
-			// but to keep it safe and predictable, let's just convert all to the opposite of the first selected
-			var card core.Card
-			cards, _ := m.repo.Cards(ctx, "", "")
-			for _, c := range cards {
-				if c.ID == id {
-					card = c
-					break
-				}
+			card, ok := cardByID[id]
+			if !ok {
+				continue
 			}
 			next := core.CardKindFlashcard
 			if card.Kind == core.CardKindFlashcard {
 				next = core.CardKindMCQ
 			}
-			_ = m.repo.SetCardKind(ctx, id, next)
+			if err := m.repo.SetCardKind(ctx, id, next); err != nil {
+				return err
+			}
 		}
 		return m.loadBrowserCards()()
 	}

@@ -18,7 +18,7 @@ import (
 )
 
 func (m *Model) gradeCard(grade core.ReviewGrade) tea.Cmd {
-	if m.activeView != ViewReview || len(m.dueCards) == 0 || m.revealState == RevealIdle {
+	if m.activeView != ViewReview || len(m.dueCards) == 0 || m.revealState != RevealRevealed {
 		return nil
 	}
 
@@ -337,7 +337,10 @@ func (m *Model) approveDraft() tea.Cmd {
 			}
 		}
 
-		cards, _ := m.repo.DueCards(ctx, time.Now(), 500)
+		cards, err := m.repo.DueCards(ctx, time.Now(), 500)
+		if err != nil {
+			return err
+		}
 		return draftApprovedMsg{noteID: draft.Note.ID, cards: cards}
 	}
 }
@@ -627,8 +630,14 @@ func (m *Model) approveAllDrafts() tea.Cmd {
 		}
 		m.drafts = nil
 		m.draftCursor = 0
-		cards, _ := m.repo.DueCards(ctx, time.Now(), 500)
-		decks, _ = m.repo.Decks(ctx)
+		cards, err := m.repo.DueCards(ctx, time.Now(), 500)
+		if err != nil {
+			return err
+		}
+		decks, err = m.repo.Decks(ctx)
+		if err != nil {
+			return err
+		}
 		return importDoneMsg{decks: decks, cards: cards, count: len(notes), path: "AI Drafts"}
 	}
 }

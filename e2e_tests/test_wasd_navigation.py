@@ -80,6 +80,10 @@ def test_wasd_navigation_preserves_existing_functions():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
+            agent.act("7")
+            agent.wait_for_text("Settings")
+            agent.act("<Enter>")
+            agent.wait_for_text("offline")
             # Go to Review view
             agent.act('3')
             agent.wait_until_stable()

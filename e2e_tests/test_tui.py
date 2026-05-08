@@ -69,6 +69,10 @@ def test_ai_draft_approval_persists_across_restart():
         agent = start_agent(tmpdir)
 
         try:
+            agent.act("7")
+            agent.wait_for_text("Settings")
+            agent.act("<Enter>")
+            agent.wait_for_text("offline")
             agent.act('6')
             agent.wait_until_stable()
             agent.assert_text("AI")
