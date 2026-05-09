@@ -18,70 +18,166 @@ func (m *Model) renderStatistics(x, y int) string {
 
 func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 	var content strings.Builder
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
 	title := "Statistics: " + m.deckLabel()
-	content.WriteString(lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).Render(title) + "\n\n")
+	content.WriteString(titleStyle.Render(title) + "\n\n")
 
-	content.WriteString(fmt.Sprintf("Total Cards:   %d\n", m.stats.TotalCards))
-	content.WriteString(fmt.Sprintf("Total Decks:   %d (%d active)\n", m.stats.TotalDecks, m.stats.ActiveDecks))
-	content.WriteString(fmt.Sprintf("  New:         %d\n", m.stats.NewCards))
-	content.WriteString(fmt.Sprintf("  Young:       %d\n", m.stats.YoungCards))
-	content.WriteString(fmt.Sprintf("  Mature:      %d\n\n", m.stats.MatureCards))
-	content.WriteString(fmt.Sprintf("  Bookmarked:  %d (%d due)\n", m.stats.BookmarkedCards, m.stats.BookmarkedDue))
-	content.WriteString(fmt.Sprintf("  Leech:       %d\n", m.stats.LeechCards))
-	content.WriteString(fmt.Sprintf("  Suspended:   %d\n\n", m.stats.SuspendedCards))
+	labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("246"))
+	valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("255")).Bold(true)
 
-	content.WriteString(fmt.Sprintf("Total Reviews: %d\n", m.stats.TotalReviews))
-	content.WriteString(fmt.Sprintf("Reviews Today: %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal))
-	// Colored progress bar for daily goal
+	// --- Column 1: Collection & Review Stats ---
+	col1 := strings.Builder{}
+	col1.WriteString(titleStyle.Copy().Underline(true).Render("Collection") + "\n")
+	col1.WriteString(fmt.Sprintf("%s %d\n", labelStyle.Render("Total Cards:"), m.stats.TotalCards))
+	col1.WriteString(fmt.Sprintf("%s %d (%d active)\n", labelStyle.Render("Total Decks:"), m.stats.TotalDecks, m.stats.ActiveDecks))
+	col1.WriteString(fmt.Sprintf("  %s %s\n", labelStyle.Render("New:"), valueStyle.Render(fmt.Sprintf("%d", m.stats.NewCards))))
+	col1.WriteString(fmt.Sprintf("  %s %s\n", labelStyle.Render("Young:"), valueStyle.Render(fmt.Sprintf("%d", m.stats.YoungCards))))
+	col1.WriteString(fmt.Sprintf("  %s %s\n", labelStyle.Render("Mature:"), valueStyle.Render(fmt.Sprintf("%d", m.stats.MatureCards))))
+	col1.WriteString(fmt.Sprintf("  %s %d (%d due)\n", labelStyle.Render("Bookmarked:"), m.stats.BookmarkedCards, m.stats.BookmarkedDue))
+	col1.WriteString(fmt.Sprintf("  %s %d\n", labelStyle.Render("Leech:"), m.stats.LeechCards))
+	col1.WriteString(fmt.Sprintf("  %s %d\n", labelStyle.Render("Suspended:"), m.stats.SuspendedCards))
+
+	// --- Column 2: Today & Performance ---
+	col2 := strings.Builder{}
+	col2.WriteString(titleStyle.Copy().Underline(true).Render("Today's Performance") + "\n")
+	col2.WriteString(fmt.Sprintf("%s %d\n", labelStyle.Render("Total Reviews:"), m.stats.TotalReviews))
+	col2.WriteString(fmt.Sprintf("%s %d/%d\n", labelStyle.Render("Reviews Today:"), m.stats.ReviewsToday, m.stats.DailyGoal))
+
 	percentage := 0.0
 	if m.stats.DailyGoal > 0 {
 		percentage = float64(m.stats.ReviewsToday) / float64(m.stats.DailyGoal)
 	}
-	// Color: green if complete, yellow if halfway, red otherwise
-	barColor := "196" // red
+	barColor := "196"
 	if percentage >= 1.0 {
-		barColor = "46" // green
+		barColor = "46"
 	} else if percentage >= 0.5 {
-		barColor = "226" // yellow
+		barColor = "226"
 	}
-	bar := progressBar(30, percentage, barColor, "238")
-	content.WriteString(fmt.Sprintf("  %s %.0f%%\n", bar, percentage*100))
-	// Streak with fire emoji if > 0
+	bar := progressBar(25, percentage, barColor, "238")
+	col2.WriteString(fmt.Sprintf("  %s %s\n", bar, valueStyle.Render(fmt.Sprintf("%.0f%%", percentage*100))))
+
 	streakIndicator := ""
 	if m.stats.CurrentStreak > 0 {
 		streakIndicator = " 🔥"
 	}
-	content.WriteString(fmt.Sprintf("Current Streak: %d days%s\n", m.stats.CurrentStreak, streakIndicator))
-	content.WriteString(fmt.Sprintf("Success Rate:  %.1f%%\n\n", m.stats.SuccessRate*100))
+	col2.WriteString(fmt.Sprintf("%s %s%s\n", labelStyle.Render("Current Streak:"), valueStyle.Render(fmt.Sprintf("%d days", m.stats.CurrentStreak)), streakIndicator))
 
-	content.WriteString("Session Stats:\n")
-	content.WriteString(fmt.Sprintf("  Reviewed:    %d\n", m.sessionReviewed))
+	successColor := "196"
+	if m.stats.SuccessRate >= 0.85 {
+		successColor = "46"
+	} else if m.stats.SuccessRate >= 0.70 {
+		successColor = "226"
+	}
+	successStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(successColor)).Bold(true)
+	col2.WriteString(fmt.Sprintf("%s %s\n\n", labelStyle.Render("Success Rate:"), successStyle.Render(fmt.Sprintf("%.1f%%", m.stats.SuccessRate*100))))
+
+	// Combine columns
+	col1Str := col1.String()
+	col2Str := col2.String()
+	maxWidth := layout.Width
+	colWidth := (maxWidth - 4) / 2
+
+	joinedCols := lipgloss.JoinHorizontal(lipgloss.Top,
+		lipgloss.NewStyle().Width(colWidth).Render(col1Str),
+		lipgloss.NewStyle().PaddingLeft(4).Render(col2Str),
+	)
+	content.WriteString(joinedCols + "\n")
+
+	// --- Session Stats ---
+	content.WriteString(titleStyle.Copy().Underline(true).Render("Session Stats:") + "\n")
 	if m.sessionReviewed > 0 {
 		accuracy := float64(m.sessionCorrect) / float64(m.sessionReviewed) * 100
 		var accuracyColor string
 		if accuracy >= 80 {
-			accuracyColor = "46" // green
+			accuracyColor = "46"
 		} else if accuracy >= 60 {
-			accuracyColor = "226" // yellow
+			accuracyColor = "226"
 		} else {
-			accuracyColor = "197" // red
+			accuracyColor = "197"
 		}
-		content.WriteString(fmt.Sprintf("  Correct:     %d\n", m.sessionCorrect))
-		accStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(accuracyColor))
-		content.WriteString(fmt.Sprintf("  Accuracy:    %s\n\n", accStyle.Render(fmt.Sprintf("%.1f%%", accuracy))))
+		accStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(accuracyColor)).Bold(true)
+
+		content.WriteString(fmt.Sprintf("  %s %d | %s %d | %s %s\n\n",
+			labelStyle.Render("Reviewed:"), m.sessionReviewed,
+			labelStyle.Render("Correct:"), m.sessionCorrect,
+			labelStyle.Render("Accuracy:"), accStyle.Render(fmt.Sprintf("%.1f%%", accuracy))))
 	} else {
-		content.WriteString("  (no reviews yet)\n\n")
+		content.WriteString("  (no reviews yet this session)\n\n")
 	}
 
-	content.WriteString("Reviews by Grade:\n")
+	// --- Grades Chart ---
+	content.WriteString(titleStyle.Copy().Underline(true).Render("Reviews by Grade") + "\n")
 	grades := []core.ReviewGrade{core.GradeAgain, core.GradeHard, core.GradeGood, core.GradeEasy}
+	gradeColors := map[core.ReviewGrade]string{
+		core.GradeAgain: "196",
+		core.GradeHard:  "208",
+		core.GradeGood:  "46",
+		core.GradeEasy:  "81",
+	}
+
+	maxGradeCount := 0
+	for _, g := range grades {
+		if m.stats.Grades[g] > maxGradeCount {
+			maxGradeCount = m.stats.Grades[g]
+		}
+	}
+
 	for _, g := range grades {
 		count := m.stats.Grades[g]
-		content.WriteString(fmt.Sprintf("  %s: %d\n", g, count))
+		gradeLabel := fmt.Sprintf("%-5s", g)
+		gPercentage := 0.0
+		if maxGradeCount > 0 {
+			gPercentage = float64(count) / float64(maxGradeCount)
+		}
+		gBar := progressBar(20, gPercentage, gradeColors[g], "238")
+		content.WriteString(fmt.Sprintf("  %s %s %d\n", labelStyle.Render(gradeLabel), gBar, count))
+	}
+
+	// --- 7-Day Activity Chart ---
+	content.WriteString("\n" + titleStyle.Copy().Underline(true).Render("Recent Activity (Last 7 Days)") + "\n")
+	now := time.Now().Local()
+	maxReviews := 0
+	last7Days := make([]struct {
+		date  string
+		count int
+	}, 7)
+
+	for i := 0; i < 7; i++ {
+		date := now.AddDate(0, 0, -6+i).Format("2006-01-02")
+		count := m.reviewsPerDay[date]
+		last7Days[i] = struct {
+			date  string
+			count int
+		}{date, count}
+		if count > maxReviews {
+			maxReviews = count
+		}
+	}
+
+	for i := 0; i < 7; i++ {
+		d := last7Days[i]
+		dateObj, _ := time.Parse("2006-01-02", d.date)
+		dayName := dateObj.Format("Mon")
+
+		percentage := 0.0
+		if maxReviews > 0 {
+			percentage = float64(d.count) / float64(maxReviews)
+		}
+
+		barColor := "240"
+		if d.count > 0 {
+			barColor = "34"
+			if d.count >= m.stats.DailyGoal && m.stats.DailyGoal > 0 {
+				barColor = "46"
+			}
+		}
+
+		bar := progressBar(20, percentage, barColor, "238")
+		content.WriteString(fmt.Sprintf("  %s %s %d\n", labelStyle.Render(dayName), bar, d.count))
 	}
 
 	// Review Heatmap (last 3 months)
-	content.WriteString("\nReview Heatmap (last 3 months):\n")
+	content.WriteString("\n" + titleStyle.Copy().Underline(true).Render("Review Heatmap (last 3 months)") + "\n")
 	if len(m.reviewsPerDay) == 0 {
 		content.WriteString("  (no review data yet)\n")
 	} else {

@@ -123,6 +123,39 @@ func progressBar(width int, percentage float64, filledColor, emptyColor string) 
 	return filled + empty
 }
 
+func sparkline(data []int, width int) string {
+	if width <= 0 {
+		return ""
+	}
+	if len(data) == 0 {
+		return strings.Repeat(" ", width)
+	}
+	if len(data) > width {
+		data = data[len(data)-width:]
+	} else if len(data) < width {
+		padded := make([]int, width)
+		copy(padded[width-len(data):], data)
+		data = padded
+	}
+	maxVal := 1
+	for _, v := range data {
+		if v > maxVal {
+			maxVal = v
+		}
+	}
+	blocks := []string{" ", "▂", "▃", "▄", "▅", "▆", "▇", "█"}
+	var res strings.Builder
+	for _, v := range data {
+		if v == 0 {
+			res.WriteString(" ")
+			continue
+		}
+		idx := (v * (len(blocks) - 1)) / maxVal
+		res.WriteString(blocks[idx])
+	}
+	return res.String()
+}
+
 var (
 	headerStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("229"))
 	mutedStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("244"))

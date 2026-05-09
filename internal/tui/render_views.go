@@ -90,8 +90,22 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		label := fmt.Sprintf("%s%s%s  %s  %s | today %d, %.0f%% success",
 			prefix, selectMark, deck.Name, miniBar, counts, deck.ReviewsToday, deck.SuccessRate*100)
 
+		studyBtn := " [Study]"
+		cramBtn := " [Cram]"
+		btnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+		if i == m.deckCursor {
+			btnStyle = btnStyle.Foreground(lipgloss.Color("81"))
+		}
+
 		rowY := layout.Y + strings.Count(b.String(), "\n")
-		b.WriteString(style.Render(label) + "\n")
+		b.WriteString(style.Render(label))
+
+		studyX := layout.X + lipgloss.Width(label)
+		cramX := studyX + lipgloss.Width(studyBtn)
+
+		b.WriteString(btnStyle.Render(studyBtn))
+		b.WriteString(btnStyle.Render(cramBtn))
+		b.WriteString("\n")
 
 		m.hitboxes = append(m.hitboxes, Hitbox{
 			ID:     fmt.Sprintf("deck-select-%d", i),
@@ -99,6 +113,22 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 			X:      layout.X,
 			Y:      rowY,
 			Width:  lipgloss.Width(label),
+			Height: 1,
+		})
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     fmt.Sprintf("deck-study-%d", i),
+			View:   ViewDecks,
+			X:      studyX,
+			Y:      rowY,
+			Width:  lipgloss.Width(studyBtn),
+			Height: 1,
+		})
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     fmt.Sprintf("deck-cram-%d", i),
+			View:   ViewDecks,
+			X:      cramX,
+			Y:      rowY,
+			Width:  lipgloss.Width(cramBtn),
 			Height: 1,
 		})
 

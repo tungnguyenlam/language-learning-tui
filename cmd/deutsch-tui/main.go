@@ -70,8 +70,9 @@ func main() {
 		return
 	}
 
-	scheduler := srs.NewScheduler()
+	scheduler := srs.NewScheduler(leveledLogger)
 	program := tea.NewProgram(tui.NewModelWithOptions(store, scheduler, tui.ModelOptions{
+		Theme:               cfg.Theme,
 		AIProvider:          nil,
 		AIProviderName:      cfg.AIProvider,
 		AITemplates:         cfg.AITemplates,
@@ -80,7 +81,8 @@ func main() {
 		ImportPath:          filepath.Join(dir, "import.tsv"),
 		ExportPath:          filepath.Join(dir, "export.tsv"),
 		Logger:              leveledLogger, // Pass the logger
-		OnConfigChange: func(name string, tmpls map[string]map[string]string, autoPlayAudio bool, strictNormalization bool) {
+		OnConfigChange: func(theme string, name string, tmpls map[string]map[string]string, autoPlayAudio bool, strictNormalization bool) {
+			pCfg.Theme = theme
 			pCfg.AIProvider = name
 			pCfg.AITemplates = tmpls
 			pCfg.AutoPlayAudio = autoPlayAudio

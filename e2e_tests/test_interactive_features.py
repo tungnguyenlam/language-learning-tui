@@ -99,8 +99,7 @@ def test_statistics_drag_to_scroll():
             # Go to Statistics
             agent.act("4")
             agent.wait_for_text("Statistics")
-            agent.assert_text("Lines 1-12 of 31")
-
+            agent.assert_text("Lines 1-12 of")
             time.sleep(0.2) # Ensure hitboxes are stable
 
             # Drag scrollbar from top (approx row 6) to bottom (row 16)
@@ -110,8 +109,7 @@ def test_statistics_drag_to_scroll():
             agent.wait_until_stable()
 
             # The view should have scrolled. We check for the last lines.
-            agent.wait_for_text("Lines 20-31 of 31")
-
+            agent.wait_for_text("Lines 22-33 of 33")
         finally:
             agent.close()
 

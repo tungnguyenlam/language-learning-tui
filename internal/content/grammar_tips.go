@@ -170,6 +170,42 @@ var grammarTips = []GrammarTip{
 		Title: "N-Deklination Exceptions",
 		Tip:   "Exceptions include 'das Herz' (des Herzens) and some Latin words ending in -or/-ent (der Student, des Studenten).",
 	},
+	{
+		Title: "Konjunktiv II for Unreal Conditions",
+		Tip:   "Formed with 'würde' + infinitive or special forms like 'wäre', 'hätte', 'käme'. 'Wenn ich Zeit hätte, käme ich.'",
+	},
+	{
+		Title: "Futur II for Assumptions",
+		Tip:   "Expresses an assumption about a past action: 'Er wird wohl angekommen sein.' (He has probably arrived.)",
+	},
+	{
+		Title: "Participle I as Adjective",
+		Tip:   "Present participle (-end) describes an ongoing action: 'das schreiende Kind' (the crying child).",
+	},
+	{
+		Title: "Extended Adjective Phrases",
+		Tip:   "German can pack complex info before a noun: 'die seit Jahren in Berlin wohnende Frau'.",
+	},
+	{
+		Title: "Alternative Passive with 'lassen'",
+		Tip:   "Use 'sich lassen' + infinitive as a passive alternative: 'Das Problem lässt sich lösen.' (The problem can be solved.)",
+	},
+	{
+		Title: "Nominalized Adjectives",
+		Tip:   "Adjectives used as nouns follow adjective declension: 'der Alte, ein Alter, die Alten'.",
+	},
+	{
+		Title: "Double Connectors",
+		Tip:   "Use 'sowohl... als auch' (both... and), 'weder... noch' (neither... nor), 'entweder... oder' (either... or).",
+	},
+	{
+		Title: "Modal Verbs with Subjective Meaning",
+		Tip:   "Modals can express probability: 'Er muss zu Hause sein' (He must be at home/is likely at home).",
+	},
+	{
+		Title: "Genitive Prepositions (Advanced)",
+		Tip:   "Use 'unweit', 'jenseits', 'infolge', 'kraft' for formal C1/C2 level writing.",
+	},
 }
 
 func GetDailyGrammarTip() GrammarTip {

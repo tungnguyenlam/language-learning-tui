@@ -37,10 +37,9 @@ def test_review_bookmark_persists_after_restart():
 
             restarted.act("4")
             restarted.wait_for_text("Statistics")
-            restarted.assert_text("Bookmarked:  1")
+            restarted.assert_text("Bookmarked: 1")
         finally:
             restarted.close()
-
 
 def test_undo_last_review_restores_due_card_after_restart():
     with tempfile.TemporaryDirectory() as tmpdir:

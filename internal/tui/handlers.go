@@ -66,6 +66,11 @@ func (m *Model) updateView(view View) tea.Cmd {
 		m.cramCorrect = 0
 		return m.loadCramCards()
 	}
+
+	if view == ViewDashboard || view == ViewReview {
+		m.applyDeckFilter()
+	}
+
 	return nil
 }
 
@@ -529,12 +534,18 @@ func (m *Model) applyDeckFilter() {
 	m.clearReviewHistory()
 	m.revealState = RevealIdle
 	m.revealProgress = 0
-	if m.activeView == ViewReview || m.activeView == ViewDashboard {
-		if len(m.dueCards) == 0 {
-			m.status = "All caught up!"
+	if m.activeView == ViewReview {
+		if !m.showHelp {
+			if len(m.dueCards) == 0 {
+				m.status = "All caught up!"
+			} else {
+				m.status = fmt.Sprintf("%d cards due", len(m.dueCards))
+			}
 		} else {
-			m.status = fmt.Sprintf("%d cards due", len(m.dueCards))
+			m.status = "Help overlay shown. Press ? to close."
 		}
+	} else if m.activeView == ViewDashboard && m.showHelp {
+		m.status = "Help overlay shown. Press ? to close."
 	}
 }
 

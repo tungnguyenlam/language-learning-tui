@@ -11,7 +11,7 @@ func TestReviewSchedulesFutureDueDate(t *testing.T) {
 	now := time.Date(2026, 4, 29, 10, 0, 0, 0, time.UTC)
 	state := core.NewReviewState("card-1", now)
 
-	next, err := NewScheduler().Review(state, core.GradeGood, now)
+	next, err := NewScheduler(nil).Review(state, core.GradeGood, now)
 	if err != nil {
 		t.Fatalf("review failed: %v", err)
 	}

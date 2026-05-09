@@ -58,11 +58,11 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case "?":
 		if !m.textInputActive() {
 			m.showHelp = !m.showHelp
+			msg := "Help overlay closed."
 			if m.showHelp {
-				m.status = "Help overlay shown. Press ? to close."
-			} else {
-				m.status = "Help overlay closed."
+				msg = "Help overlay shown. Press ? to close."
 			}
+			m.status = msg
 			return m, nil
 		}
 	}
@@ -252,7 +252,11 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 				m.typingChecked = true
 				if len(m.dueCards) > 0 {
 					card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
-					m.typingCorrect = m.normalizeAnswer(m.typedAnswer) == m.normalizeAnswer(card.Answer)
+					targetAnswer := card.Answer
+					if card.Kind == core.CardKindCloze && len(card.Choices) > 0 {
+						targetAnswer = card.Choices[0]
+					}
+					m.typingCorrect = m.normalizeAnswer(m.typedAnswer) == m.normalizeAnswer(targetAnswer)
 					m.revealState = RevealRevealed
 					m.revealProgress = 100
 					return m.loadReviewPredictions(card.ID), true
@@ -664,7 +668,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 				}
 			}
 			if m.onConfigChange != nil {
-				m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
+				m.onConfigChange(m.theme, m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
 			}
 			return nil, true
 		case "esc":
@@ -680,7 +684,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 				}
 			}
 			if m.onConfigChange != nil {
-				m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
+				m.onConfigChange(m.theme, m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
 			}
 			return nil, true
 		case "backspace":
@@ -714,6 +718,8 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.settingsCursor++
 		}
 		return nil, true
+	case "c":
+		return m.cycleTheme(), true
 	case "enter":
 		return m.handleSettingsEnter(), true
 	case "+":

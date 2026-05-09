@@ -10,6 +10,9 @@ func StandardDecks() []core.Deck {
 	decks := []core.Deck{
 		StarterDeck(),
 		GermanExpandedDeck(),
+		PrepositionsDeck(),
+		B1NatureDeck(),
+		AdvancedEmotionsDeck(),
 	}
 
 	// Load all embedded TSV decks

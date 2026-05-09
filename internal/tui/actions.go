@@ -603,7 +603,7 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		}
 		m.status = fmt.Sprintf("Switched to %s AI provider", m.aiProviderName)
 		if m.onConfigChange != nil {
-			m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
+			m.onConfigChange(m.theme, m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
 		}
 
 	case 1, 2, 3:
@@ -628,7 +628,7 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		}
 		m.status = fmt.Sprintf("Auto-play audio %s", status)
 		if m.onConfigChange != nil {
-			m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
+			m.onConfigChange(m.theme, m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
 		}
 	case 6:
 		m.strictNormalization = !m.strictNormalization
@@ -638,8 +638,25 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		}
 		m.status = fmt.Sprintf("Strict normalization %s", status)
 		if m.onConfigChange != nil {
-			m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
+			m.onConfigChange(m.theme, m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
 		}
+	}
+	return nil
+}
+
+func (m *Model) cycleTheme() tea.Cmd {
+	themes := []string{"system", "nordic", "sunset"}
+	currentIndex := 0
+	for i, t := range themes {
+		if m.theme == t {
+			currentIndex = i
+			break
+		}
+	}
+	m.theme = themes[(currentIndex+1)%len(themes)]
+	m.status = fmt.Sprintf("Switched to %s theme", m.theme)
+	if m.onConfigChange != nil {
+		m.onConfigChange(m.theme, m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
 	}
 	return nil
 }

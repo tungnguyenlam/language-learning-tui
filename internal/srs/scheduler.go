@@ -4,17 +4,22 @@ import (
 	"errors"
 	"time"
 
+	"deutsch-tui/internal/app"
 	"deutsch-tui/internal/core"
 
 	fsrs "github.com/open-spaced-repetition/go-fsrs/v3"
 )
 
 type Scheduler struct {
-	fsrs *fsrs.FSRS
+	fsrs   *fsrs.FSRS
+	logger *app.LeveledLogger
 }
 
-func NewScheduler() Scheduler {
-	return Scheduler{fsrs: fsrs.NewFSRS(fsrs.DefaultParam())}
+func NewScheduler(logger *app.LeveledLogger) Scheduler {
+	return Scheduler{
+		fsrs:   fsrs.NewFSRS(fsrs.DefaultParam()),
+		logger: logger,
+	}
 }
 
 func (s Scheduler) Review(state core.ReviewState, grade core.ReviewGrade, now time.Time) (core.ReviewState, error) {
@@ -27,8 +32,15 @@ func (s Scheduler) Review(state core.ReviewState, grade core.ReviewGrade, now ti
 		return core.ReviewState{}, errors.New("unsupported review grade")
 	}
 
-	info := s.fsrs.Next(fsrsCardFromState(state, now), now, rating)
+	card := fsrsCardFromState(state, now)
+	info := s.fsrs.Next(card, now, rating)
 	next := stateFromFSRS(state.CardID, info.Card, now)
+
+	if s.logger != nil {
+		s.logger.Debug("Review card=%s grade=%s interval=%v -> %v stability=%v -> %v difficulty=%v -> %v",
+			state.CardID, grade, state.Interval, next.Interval, state.Stability, next.Stability, state.Difficulty, next.Difficulty)
+	}
+
 	return next, nil
 }
 

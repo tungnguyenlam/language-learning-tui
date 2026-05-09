@@ -87,6 +87,26 @@ func (m *Model) activateHitbox(id string) tea.Cmd {
 			}
 		}
 		return nil
+	case strings.HasPrefix(id, "deck-study-"):
+		idx, err := strconv.Atoi(strings.TrimPrefix(id, "deck-study-"))
+		if err == nil {
+			filtered := m.filteredDecks()
+			if idx >= 0 && idx < len(filtered) {
+				m.selectDeckByID(filtered[idx].ID)
+				return m.updateView(ViewReview)
+			}
+		}
+		return nil
+	case strings.HasPrefix(id, "deck-cram-"):
+		idx, err := strconv.Atoi(strings.TrimPrefix(id, "deck-cram-"))
+		if err == nil {
+			filtered := m.filteredDecks()
+			if idx >= 0 && idx < len(filtered) {
+				m.selectDeckByID(filtered[idx].ID)
+				return m.updateView(ViewCram)
+			}
+		}
+		return nil
 	case strings.HasPrefix(id, "cram-filter-"):
 		idx, err := strconv.Atoi(strings.TrimPrefix(id, "cram-filter-"))
 		if err == nil {

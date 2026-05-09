@@ -16,8 +16,20 @@ func (m *Model) renderBrowser() string {
 
 func (m *Model) renderBrowserAt(layout viewportLayout) string {
 	var b strings.Builder
+	numSelected := 0
+	for _, s := range m.browserSelected {
+		if s {
+			numSelected++
+		}
+	}
+
+	titleText := "Card Browser"
+	if numSelected > 0 {
+		titleText = fmt.Sprintf("Card Browser (%d selected)", numSelected)
+	}
+
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).MarginBottom(1)
-	b.WriteString(titleStyle.Render("Card Browser") + "\n")
+	b.WriteString(titleStyle.Render(titleText) + "\n")
 
 	searchBorderColor := "62"
 	searchLabel := "Search"
@@ -138,13 +150,6 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		b.WriteString("\n")
 		b.WriteString(m.renderReviewHistory(m.browserCards[m.browserCursor].Prompt))
 		b.WriteString("\n")
-	}
-
-	numSelected := 0
-	for _, s := range m.browserSelected {
-		if s {
-			numSelected++
-		}
 	}
 
 	if numSelected > 0 {

@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"deutsch-tui/internal/content"
 
@@ -65,6 +66,23 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 			fmt.Sprintf("  Reviews:     %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal) +
 			"  " + bar + "\n" +
 			fmt.Sprintf("  Streak:      %d days%s", m.stats.CurrentStreak, streakIndicator))
+
+	// Recent Activity Sparkline
+	recentData := make([]int, 14)
+	now := time.Now()
+	for i := 0; i < 14; i++ {
+		date := now.AddDate(0, 0, -(13 - i)).Format("2006-01-02")
+		recentData[i] = m.reviewsPerDay[date]
+	}
+	spark := sparkline(recentData, maxInt(10, layout.Width/2-10))
+	activityBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("39")).
+		Padding(0, 1).
+		Width(maxInt(25, (layout.Width-2)/2)).
+		Render(lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Bold(true).Render("Recent Activity") + "\n" +
+			"  " + spark + "\n" +
+			"  Last 14 days review trend")
 
 	digestStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("213")).Bold(true)
 	message := "All caught up!"
@@ -141,19 +159,33 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 	m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-digest", View: ViewDashboard, X: layout.X + lipgloss.Width(progressBox) + 1, Y: layout.Y + progressY, Width: lipgloss.Width(dailyDigestBox), Height: lipgloss.Height(dailyDigestBox)})
 	db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, progressBox, " ", dailyDigestBox) + "\n")
 
-	if layout.Height > 24 {
+	activityY := strings.Count(db.String(), "\n")
+	m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-activity", View: ViewDashboard, X: layout.X, Y: layout.Y + activityY, Width: layout.Width - 4, Height: lipgloss.Height(activityBox)})
+	activityBox = lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("39")).
+		Padding(0, 1).
+		Width(layout.Width - 4).
+		Render(lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Bold(true).Render("Recent Activity") + "\n" +
+			"  " + spark + "  (Last 14 days review trend)")
+	db.WriteString(activityBox + "\n")
+
+	usedHeight := strings.Count(db.String(), "\n") + 2
+	remainingHeight := layout.Height - usedHeight
+
+	if remainingHeight > 6 {
 		db.WriteString(quickActionsBox + "\n")
+		remainingHeight -= 6
 	}
 
-	// Only show grammar tip if there is enough vertical space
-	if layout.Height > 28 {
+	if remainingHeight > 3 { // Tip box needs about 4 lines, let's be safe with 3
 		tip := content.GetDailyGrammarTip()
 		tipStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Bold(true)
 		tipBox := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("39")).
 			Padding(0, 1).
-			Width(layout.Width - 4). // Use layout width
+			Width(layout.Width - 4).
 			Render(tipStyle.Render("Grammar Tip: "+tip.Title) + "\n" +
 				fmt.Sprintf("  %s", tip.Tip))
 		db.WriteString(tipBox + "\n")

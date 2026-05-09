@@ -28,7 +28,6 @@ def test_decks_view_stats_shortcut():
             
             # Should be in Statistics view for that deck
             agent.wait_for_text("Statistics: German A1 Survival", timeout=10.0)
-            agent.assert_text("Total Cards:   52") # Starter deck has 52 cards (including MCQs)
-            
+            agent.assert_text("Total Cards: 52") # Starter deck has 52 cards (including MCQs)            
         finally:
             agent.close()

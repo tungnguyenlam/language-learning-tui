@@ -103,7 +103,8 @@ type Model struct {
 	importCursor          int    // 0: import path, 1: export path, 2: export deck, 3: export tag, 4: export filter
 	editingImportPath     bool
 	editingExportTag      bool
-	onConfigChange        func(string, map[string]map[string]string, bool, bool)
+	theme                 string
+	onConfigChange        func(string, string, map[string]map[string]string, bool, bool)
 	bookmarkFilter        bool
 	originalTemplateValue string
 	mcqChoice             int
@@ -176,6 +177,7 @@ func NewModelWithAI(repo core.Repository, scheduler core.Scheduler, provider ai.
 }
 
 type ModelOptions struct {
+	Theme               string
 	AIProvider          ai.Provider
 	AIProviderName      string
 	AITemplates         map[string]map[string]string
@@ -183,7 +185,7 @@ type ModelOptions struct {
 	StrictNormalization bool
 	ImportPath          string
 	ExportPath          string
-	OnConfigChange      func(string, map[string]map[string]string, bool, bool)
+	OnConfigChange      func(string, string, map[string]map[string]string, bool, bool)
 	Logger              *app.LeveledLogger // Add logger option
 }
 
@@ -286,6 +288,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 	return &Model{
 		repo:                repo,
 		scheduler:           scheduler,
+		theme:               opts.Theme,
 		aiProvider:          provider,
 		aiProviderName:      providerName,
 		aiTemplates:         templates,
@@ -410,7 +413,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case decksMsg:
 		m.logger.Debug("Received %d decks", len(msg))
 		m.syncDecks([]core.Deck(msg))
-		m.applyDeckFilter()
 	case dueCardsMsg:
 		m.logger.Debug("Received %d due cards", len(msg))
 		m.allDue = []core.Card(msg)
@@ -505,6 +507,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.sessionCorrect++
 		}
 		m.logger.Info("Recorded review for card %s with grade %s", msg.cardID, msg.grade)
+
+		// Reset typing state for next card
+		m.typedAnswer = ""
+		m.typingChecked = false
+		m.typingCorrect = false
+
 		if len(m.dueCards) == 0 && m.sessionReviewed > 0 {
 			m.activeView = ViewSessionSummary
 		}
@@ -689,6 +697,8 @@ func (m *Model) View() tea.View {
 
 	helpHint := ""
 	switch m.activeView {
+	case ViewDashboard:
+		helpHint = "| [ / ] switch decks | 3 Review"
 	case ViewReview:
 		if len(m.dueCards) > 0 {
 			if m.revealState == RevealRevealed {

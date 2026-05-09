@@ -168,12 +168,15 @@ func (m *Model) renderSettings(x, y int) string {
 		Height: 1,
 	})
 
+	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
+	b.WriteString(fmt.Sprintf("\nColor Theme: %s (Press %s to cycle)\n", m.theme, keyStyle.Render("c")))
+
 	if m.editingTemplate {
 		b.WriteString("\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("EDITING") + " - Enter to save, Esc to cancel.")
 	} else {
-		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-		b.WriteString(fmt.Sprintf("\nUse %s/%s to move, %s goal, Enter edit/toggle, %s/%s templates.",
-			keyStyle.Render("j"), keyStyle.Render("k"), keyStyle.Render("+/-"), keyStyle.Render("["), keyStyle.Render("]")))
+		keyStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
+		b.WriteString(fmt.Sprintf("\nUse %s/%s to move, %s goal, %s theme, Enter edit/toggle, %s/%s templates.",
+			keyStyle.Render("j"), keyStyle.Render("k"), keyStyle.Render("+/-"), keyStyle.Render("c"), keyStyle.Render("["), keyStyle.Render("]")))
 	}
 	return b.String()
 }

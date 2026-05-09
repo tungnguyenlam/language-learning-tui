@@ -107,9 +107,10 @@ func (m *Model) renderReview(x, y int) string {
 
 	promptDisplay := card.Prompt
 	if card.Kind == core.CardKindCloze {
-		// Highlight the [...] or [hint] in cloze prompt
-		promptDisplay = strings.Replace(promptDisplay, "[", lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("["), 1)
-		promptDisplay = strings.Replace(promptDisplay, "]", lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("]"), 1)
+		// Highlight all [...] or [hint] in cloze prompt
+		bracketStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
+		promptDisplay = strings.ReplaceAll(promptDisplay, "[", bracketStyle.Render("["))
+		promptDisplay = strings.ReplaceAll(promptDisplay, "]", bracketStyle.Render("]"))
 	}
 
 	// Enhanced prompt styling for better visibility
@@ -170,8 +171,12 @@ func (m *Model) renderReview(x, y int) string {
 				inputDisplay = wrongStyle.Render("✗ " + m.typedAnswer)
 				typingBoxStyle = typingBoxStyle.BorderForeground(lipgloss.Color("196"))
 			}
+			targetAnswer := card.Answer
+			if card.Kind == core.CardKindCloze && len(card.Choices) > 0 {
+				targetAnswer = card.Choices[0]
+			}
 			typingContent := fmt.Sprintf("Your answer: %s\nCorrect: %s%s\n\nGrade: %s %s | %s %s | %s %s | %s %s",
-				inputDisplay, answerStyle.Render(card.Answer), extraDisplay,
+				inputDisplay, answerStyle.Render(targetAnswer), extraDisplay,
 				keyStyle.Render("a"), gradeAgain, keyStyle.Render("h"), gradeHard, keyStyle.Render("g"), gradeGood, keyStyle.Render("e"), gradeEasy)
 			answer = typingBoxStyle.Render(typingContent)
 			answerYOffset = cardY + strings.Count(fmt.Sprintf("%s%s\n\nYour answer:", promptDisplay, mature), "\n") + 2
