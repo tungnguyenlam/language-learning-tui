@@ -75,6 +75,7 @@ func main() {
 		AIProvider:          nil,
 		AIProviderName:      cfg.AIProvider,
 		AITemplates:         cfg.AITemplates,
+		AutoPlayAudio:       cfg.AutoPlayAudio,
 		StrictNormalization: cfg.StrictNormalization,
 		ImportPath:          filepath.Join(dir, "import.tsv"),
 		ExportPath:          filepath.Join(dir, "export.tsv"),

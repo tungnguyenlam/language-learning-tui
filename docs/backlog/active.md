@@ -27,11 +27,12 @@ Finalizing high-quality TUI experience with expanded content and robust UX.
 
 ### Core Features
 - [x] Settings: Strict Character Normalization (toggle ss vs ß)
+- [x] Fixed audio autoplay toggle persistence in Settings
 - [x] Verified with 8 new E2E tests
 
 ## Current State
 
-- Verified: All unit tests pass; 144/145 E2E tests pass.
+- Verified: All unit tests pass; 145/145 E2E tests pass.
 - Environment: Darwin, Go 1.x, Python 3.12.
 - Architecture: Modular monolith with dynamic content registry.
 
@@ -42,6 +43,7 @@ Finalizing high-quality TUI experience with expanded content and robust UX.
 - [x] Decks View: Integrated mini progress bars for each deck
 - [x] AI View: Added interactive, clickable suggested topics
 - [x] Statistics: Restored 'due' count for bookmarked cards
+- [x] Fixed audio autoplay toggle persistence in Settings
 
 ### Content & Learning
 - [x] Added B2-C1 "German News & Current Events" deck

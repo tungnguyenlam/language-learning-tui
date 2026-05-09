@@ -1212,7 +1212,7 @@ func (s *Store) Cards(ctx context.Context, deckID string, search string, tag str
 		args = append(args, deckID)
 	}
 	if search != "" {
-		query += ` AND (c.prompt LIKE ? OR c.answer LIKE ? OR c.tags LIKE ?)`
+		query += ` AND (LOWER(c.prompt) LIKE LOWER(?) OR LOWER(c.answer) LIKE LOWER(?) OR LOWER(c.tags) LIKE LOWER(?))`
 		searchPattern := "%" + search + "%"
 		args = append(args, searchPattern, searchPattern, searchPattern)
 	}

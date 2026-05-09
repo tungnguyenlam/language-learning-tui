@@ -15,12 +15,15 @@
 
 ### Core & Settings
 - Added **Strict Character Normalization** setting to toggle whether German special characters (ß, ä, ö, ü) must be typed exactly in exercises.
+- Fixed audio autoplay toggle persistence in Settings view.
 - Refactored `EmbeddedDeckPaths` to be **dynamic**, allowing new TSV decks to be discovered and loaded without code changes.
 
 ### Verification
 - Added 8 new **E2E Tests** in `e2e_tests/test_batch_h.py`.
+- Fixed browser search filter persistence in Card Browser view.
 - Verified all new features pass TUI-tester validation.
-- Current E2E state: 144/145 tests pass.
+- Current E2E state: 145/145 tests pass.
+- Successfully ran `./scripts/verify.sh` with all tests passing.
 
 ## 2026-05-09: Reliability, Content & UX (Batch G)
 
