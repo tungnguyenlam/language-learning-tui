@@ -362,6 +362,12 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 	case "b":
 		return m.toggleBookmark(), true
+	case "d":
+		if len(m.dueCards) > 0 {
+			card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
+			word := strings.Split(card.Prompt, "\n")[0] // Use first line in case of multiline
+			return m.openDictionary(word), true
+		}
 	case "B":
 		return m.toggleBookmarkFilter(), true
 	case "x":
@@ -594,7 +600,7 @@ func (m *Model) updateImportKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "down", "j":
-		if m.importCursor < 3 {
+		if m.importCursor < 4 {
 			m.importCursor++
 		}
 		return nil, true
@@ -602,10 +608,16 @@ func (m *Model) updateImportKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		if m.importCursor == 2 {
 			m.previousExportDeck()
 			return nil, true
+		} else if m.importCursor == 4 {
+			m.cycleExportFilter(false)
+			return nil, true
 		}
 	case "]":
 		if m.importCursor == 2 {
 			m.nextExportDeck()
+			return nil, true
+		} else if m.importCursor == 4 {
+			m.cycleExportFilter(true)
 			return nil, true
 		}
 	case "enter", "\r", "\n":
@@ -797,6 +809,12 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.browserSelected[cardID] = !m.browserSelected[cardID]
 		}
 		return nil, true
+	case "d":
+		if len(m.browserCards) > 0 {
+			card := m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)]
+			word := strings.Split(card.Prompt, "\n")[0]
+			return m.openDictionary(word), true
+		}
 	case "b":
 		if len(m.getSelectedCardIDs()) > 0 {
 			return m.bulkBrowserBookmark(true), true

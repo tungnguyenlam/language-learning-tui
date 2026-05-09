@@ -262,6 +262,23 @@ func (m *Model) renderImport(x, y int) string {
 		Height: 1,
 	})
 
+	// Export Status Filter
+	exportStatusLabel := "Export Status: " + m.exportFilter
+	rowY = layout.Y + strings.Count(b.String(), "\n")
+	if m.importCursor == 4 {
+		b.WriteString("> " + btnActiveStyle.Render(exportStatusLabel) + " (Use [ / ] to change)\n\n")
+	} else {
+		b.WriteString("  " + exportStatusLabel + "\n\n")
+	}
+	m.hitboxes = append(m.hitboxes, Hitbox{
+		ID:     "import-path-4",
+		View:   ViewImport,
+		X:      layout.X,
+		Y:      rowY,
+		Width:  lipgloss.Width(exportStatusLabel) + 2,
+		Height: 1,
+	})
+
 	warningStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("208"))
 	if strings.TrimSpace(m.importPath) == "" {
 		b.WriteString(warningStyle.Render("Import file is empty; set a path before importing.") + "\n")

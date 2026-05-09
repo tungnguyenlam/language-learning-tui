@@ -34,12 +34,31 @@ func (m *Model) renderSessionSummary(layout viewportLayout) string {
 	statsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("159")).Bold(true)
 	valStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("226"))
 
+	barWidth := 20
+	filled := int((accuracy / 100) * float64(barWidth))
+	if filled < 0 {
+		filled = 0
+	}
+	if filled > barWidth {
+		filled = barWidth
+	}
+	barColor := "214" // Orange-ish by default
+	if accuracy >= 80 {
+		barColor = "46" // Green for good accuracy
+	} else if accuracy < 50 && accuracy > 0 {
+		barColor = "196" // Red for low accuracy
+	}
+	bar := lipgloss.NewStyle().Foreground(lipgloss.Color(barColor)).Render(strings.Repeat("█", filled))
+	empty := lipgloss.NewStyle().Foreground(lipgloss.Color("236")).Render(strings.Repeat("░", barWidth-filled))
+	progressBar := bar + empty
+
 	summaryContent := fmt.Sprintf(
-		"%s %s\n%s %s\n%s %s\n%s %s",
+		"%s %s\n%s %s\n%s %s\n%s %s\n\n%s\n  %s",
 		statsStyle.Render("Cards Reviewed:"), valStyle.Render(fmt.Sprintf("%d", m.sessionReviewed)),
 		statsStyle.Render("Correct Answers:"), valStyle.Render(fmt.Sprintf("%d", m.sessionCorrect)),
-		statsStyle.Render("Accuracy Score:"), valStyle.Render(fmt.Sprintf("%.1f%%", accuracy)),
 		statsStyle.Render("Session Time:  "), valStyle.Render(duration.Round(time.Second).String()),
+		statsStyle.Render("Accuracy Score:"), valStyle.Render(fmt.Sprintf("%.1f%%", accuracy)),
+		statsStyle.Render("Performance:"), progressBar,
 	)
 
 	b.WriteString(mainBox.Render(summaryContent) + "\n\n")

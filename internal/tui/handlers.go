@@ -459,6 +459,23 @@ func (m *Model) previousExportDeck() {
 	}
 }
 
+func (m *Model) cycleExportFilter(forward bool) {
+	options := []string{"All", "Mature", "Learning"}
+	currentIndex := 0
+	for i, opt := range options {
+		if m.exportFilter == opt {
+			currentIndex = i
+			break
+		}
+	}
+	if forward {
+		currentIndex = (currentIndex + 1) % len(options)
+	} else {
+		currentIndex = (currentIndex - 1 + len(options)) % len(options)
+	}
+	m.exportFilter = options[currentIndex]
+}
+
 func (m *Model) nextDeck() {
 	if len(m.decks) == 0 {
 		return

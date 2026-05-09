@@ -13,8 +13,13 @@ func (m *Model) renderSettings(x, y int) string {
 	layout := contentLayoutForStyle(style, x, y)
 
 	var b strings.Builder
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).MarginBottom(1)
-	b.WriteString(titleStyle.Render("Settings") + "\n\n")
+	titleStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("205")).
+		Background(lipgloss.Color("236")).
+		Padding(0, 2).
+		MarginBottom(1)
+	b.WriteString(titleStyle.Render("⚙ SETTINGS") + "\n\n")
 
 	autoPlayStatus := "off"
 	if m.autoPlayAudio {
@@ -27,7 +32,12 @@ func (m *Model) renderSettings(x, y int) string {
 		activeSet = set
 	}
 
-	sectionStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Bold(true).MarginTop(1)
+	sectionStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("81")).
+		Bold(true).
+		Underline(true).
+		MarginTop(1).
+		MarginBottom(1)
 	b.WriteString(sectionStyle.Render("AI CONFIGURATION") + "\n")
 	b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Render(fmt.Sprintf("  Template Set: %s", activeSet)) + "\n\n")
 

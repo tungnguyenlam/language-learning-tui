@@ -1,18 +1,28 @@
 # Active Backlog
 
-Last updated: 2026-05-10 (Verification Complete)
+Last updated: 2026-05-10 (Milestone Complete)
 
 ## Current Milestone
 
-Finalizing high-quality TUI experience with expanded content and robust UX.
+Finalizing high-quality TUI experience with expanded content and robust UX. - **COMPLETED**
 
 ## Next Actions
 
-- [ ] Add more C1-C2 advanced content
-- [ ] Implement audio recording or external dictionary integration
-- [ ] Add deck export filtering (by date or success rate)
+- [ ] Future Milestone: Add spaced repetition algorithm configuration (e.g., FSRS tuning).
+- [ ] Future Milestone: Implement user-defined custom theming.
 
 ## Completed Work (Latest)
+
+### Batch 2 (2026-05-10)
+- [x] Add deck export filtering (by success rate or mature status)
+- [x] Add C2 Politics & History deck
+- [x] Create E2E test for dictionary lookup
+- [x] Improve Review Summary screen with visual progress indicators
+
+### Batch 1 (2026-05-10)
+- [x] Add more C1-C2 advanced content (Added C1 Business & Finance deck)
+- [x] Implement audio recording or external dictionary integration (Implemented Dictionary lookup via 'd' key)
+- [x] Settings UI layout polish
 
 ### Content & Learning
 - [x] Added B2-C1 "Art & Culture" deck (TSV)

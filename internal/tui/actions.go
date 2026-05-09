@@ -313,6 +313,7 @@ func (m *Model) exportAPKG() tea.Cmd {
 	}
 	deckID := m.exportDeckID
 	tag := m.exportTag
+	filter := m.exportFilter
 	m.status = "Exporting APKG..."
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -325,6 +326,12 @@ func (m *Model) exportAPKG() tea.Cmd {
 		seen := make(map[string]bool)
 		notes := make([]core.Note, 0, len(cards))
 		for _, c := range cards {
+			if filter == "Mature" && !c.Mature {
+				continue
+			}
+			if filter == "Learning" && c.Mature {
+				continue
+			}
 			if seen[c.NoteID] {
 				continue
 			}

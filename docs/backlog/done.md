@@ -1,5 +1,29 @@
 # Done Backlog
 
+## 2026-05-10: Batch 2 - Export Filtering & Review Polish
+
+### Content & Learning
+- Added C2 **Politics & History** deck (`c2-politics-history.tsv`), providing 30 high-level vocabulary items covering government, history, and civic concepts.
+
+### Features & Integrations
+- Implemented **Export Filtering** in the Import/Export view. Users can now choose to export "All", "Mature" only, or "Learning" only cards to Anki APKG or TSV, allowing targeted backup and deck sharing.
+
+### UI & UX
+- Polished the **Review Summary** screen by adding a dynamic visual progress/accuracy bar using colored blocks based on session accuracy.
+
+### Verification
+- Added a new E2E test `test_dictionary_lookup.py` to verify the dictionary lookup hotkey in Review mode does not crash the TUI and preserves state.
+- Passed full verification suite (`./scripts/verify.sh`) with 146 passing E2E tests.
+
+## 2026-05-10: Content & External Integrations (Batch 1)
+
+### Content & Learning
+- Added C1-C2 **Business & Finance** deck in TSV format (`c1-business-finance.tsv`), adding 30 advanced business vocabulary terms.
+
+### UI & UX
+- Implemented **Dictionary Integration** in Review and Browser views. Pressing `d` opens the front/prompt word in an external browser dictionary (dict.cc).
+- Polished the **Settings UI** layout, adding clear visual headers, borders, and better colors for section titles to improve readability.
+
 ## 2026-05-09: Content Expansion and UI Polish (Batch H)
 
 ### Content & Learning

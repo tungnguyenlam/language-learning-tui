@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net/url"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -98,7 +99,8 @@ type Model struct {
 	exportPath            string
 	exportDeckID          string
 	exportTag             string
-	importCursor          int // 0: import path, 1: export path, 2: export deck, 3: export tag
+	exportFilter          string // e.g. "All", "Mature", "Learning"
+	importCursor          int    // 0: import path, 1: export path, 2: export deck, 3: export tag, 4: export filter
 	editingImportPath     bool
 	editingExportTag      bool
 	onConfigChange        func(string, map[string]map[string]string, bool, bool)
@@ -299,6 +301,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		aiInput:             "der Kaffee",
 		importPath:          filepath.Clean(importPath),
 		exportPath:          filepath.Clean(exportPath),
+		exportFilter:        "All",
 		onConfigChange:      opts.OnConfigChange,
 		browserSelected:     make(map[string]bool),
 		deckSelected:        make(map[string]bool),
@@ -1105,6 +1108,28 @@ func (m *Model) playAudio(audioPath string) tea.Cmd {
 			cmd = exec.Command("afplay", audioPath)
 		} else {
 			cmd = exec.Command("play", audioPath)
+		}
+		if err := cmd.Run(); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func (m *Model) openDictionary(word string) tea.Cmd {
+	if word == "" {
+		return nil
+	}
+	return func() tea.Msg {
+		url := "https://www.dict.cc/?s=" + url.QueryEscape(word)
+		var cmd *exec.Cmd
+		switch runtime.GOOS {
+		case "darwin":
+			cmd = exec.Command("open", url)
+		case "windows":
+			cmd = exec.Command("cmd", "/c", "start", url)
+		default:
+			cmd = exec.Command("xdg-open", url)
 		}
 		if err := cmd.Run(); err != nil {
 			return err
