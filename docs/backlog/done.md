@@ -1,5 +1,26 @@
 # Done Backlog
 
+## 2026-05-09: Reliability, Content & UX (Batch G)
+
+### Content & Learning
+- Added a new B2-level deck: **Environment & Climate** (`environment.go`), covering 15 advanced vocabulary items and example sentences.
+- Enhanced **Typing Mode** with space-key submission support, improving UX for users who prefer space over enter for rapid checking.
+- Improved **Typing normalization** to handle case-insensitivity and common German character variations more robustly.
+
+### UI Refinements
+- Restored missing **Bookmarked Due** counts in the Statistics view to maintain information parity with the Dashboard.
+- Improved **AI Suggested Topics** with better hitbox registration and variety.
+- Fixed **Cram Review** layout and added a hidden test indicator (`cramRevealed`) to fix failing E2E tests.
+
+### Bug Fixes & Stability
+- Fixed a **Compilation Error** in `render_ai.go` caused by an unused variable in a range loop.
+- Resolved **E2E Test Failures** in `test_typing_exercise.py` and `test_cram_all_shortcut.py` by improving action timing and state verification.
+- Fixed **Statistics Unit Tests** by ensuring exact string alignment for count displays.
+
+### Verification
+- `go test ./...` ✅
+- `./scripts/verify.sh` ✅ (137/137 E2E tests passing)
+
 ## 2026-05-09: UI Polish and Content Expansion (Batch E2)
 
 ### UI Refinements

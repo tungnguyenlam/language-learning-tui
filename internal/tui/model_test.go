@@ -474,7 +474,7 @@ func TestDecksViewNavigationAndSelection(t *testing.T) {
 	}
 	layout := viewportLayout{Width: 80, Height: 24, X: 0, Y: 0}
 	view := model.renderDecks(layout)
-	if !strings.Contains(view, "today 3") || !strings.Contains(view, "75% success") {
+	if !strings.Contains(view, "5 due") || !strings.Contains(view, "10 total") {
 		t.Fatalf("deck view missing progress metrics: %s", view)
 	}
 

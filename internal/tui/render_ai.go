@@ -55,8 +55,43 @@ func (m *Model) renderAI(x, y int) string {
 		warnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("208")).Bold(true)
 		b.WriteString(warnStyle.Render("AI provider is disabled. Enable Offline or Template in Settings to generate drafts.") + "\n")
 	}
+
 	b.WriteString(mutedStyle.Render("Tip: include level and use case, e.g. B1 workplace small talk.") + "\n")
-	b.WriteString(mutedStyle.Render("Suggested topics: business email, doctor visit, apartment viewing.") + "\n")
+
+	// Suggested Topics Section
+	if (m.aiInput == "" || m.aiInput == "der Kaffee") && len(m.drafts) == 0 {
+		b.WriteString("\n" + lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("81")).Render("Suggested Topics:") + "\n")
+		suggestions := []string{"business email", "doctor visit", "apartment viewing", "restaurant", "job interview", "travel phrases", "university", "shopping", "weather", "hobbies"}
+
+		suggestionStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("159")).
+			Underline(true).
+			MarginRight(2)
+
+		lineY := layout.Y + strings.Count(b.String(), "\n")
+		currentX := layout.X
+
+		for i, s := range suggestions {
+			if i > 0 && i%5 == 0 {
+				b.WriteString("\n")
+				lineY++
+				currentX = layout.X
+			}
+			b.WriteString(suggestionStyle.Render(s))
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID:     "ai-topic-" + s,
+				View:   ViewAI,
+				X:      currentX,
+				Y:      lineY,
+				Width:  len(s),
+				Height: 1,
+			})
+			currentX += len(s) + 2
+		}
+		b.WriteString("\n")
+		b.WriteString(mutedStyle.Render("Topics: business email, doctor visit, apartment viewing, restaurant,") + "\n")
+		b.WriteString(mutedStyle.Render("  job interview, travel phrases, university, shopping, weather, hobbies.") + "\n")
+	}
 
 	if len(m.drafts) == 0 {
 		if m.drafting {

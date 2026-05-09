@@ -18,7 +18,7 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 	// Show filter if active or searching
 	if m.searchingDecks || m.deckFilter != "" {
 		if m.searchingDecks {
-			b.WriteString(fmt.Sprintf("Search: %s_\n\n", m.deckFilter))
+			b.WriteString(fmt.Sprintf("Search: %s_ (name or tag)\n\n", m.deckFilter))
 		} else {
 			b.WriteString(fmt.Sprintf("Filter: %s (Press / to edit)\n\n", m.deckFilter))
 		}
@@ -41,12 +41,12 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 
 	start := 0
 	end := len(filteredDecks)
-	maxVisible := 5
-	if layout.Height > 20 {
-		maxVisible = (layout.Height - 15) / 2
+	maxVisible := 10
+	if layout.Height > 25 {
+		maxVisible = (layout.Height - 10) / 2
 	}
-	if maxVisible < 3 {
-		maxVisible = 3
+	if maxVisible < 5 {
+		maxVisible = 5
 	}
 
 	if end > maxVisible {
@@ -80,8 +80,15 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 
 		counts := fmt.Sprintf("%d new, %d due, %d total", deck.NewCards, deck.DueCards, deck.TotalCards)
 
-		label := fmt.Sprintf("%s%s%s (%s, today %d, %.0f%% success)",
-			prefix, selectMark, deck.Name, counts, deck.ReviewsToday, deck.SuccessRate*100)
+		// Add a mini progress bar for deck completion
+		deckPercentage := 0.0
+		if deck.TotalCards > 0 {
+			deckPercentage = float64(deck.TotalCards-deck.DueCards) / float64(deck.TotalCards)
+		}
+		miniBar := progressBar(3, deckPercentage, "81", "238")
+
+		label := fmt.Sprintf("%s%s%s (%s %s, today %d, %.0f%% success)",
+			prefix, selectMark, deck.Name, miniBar, counts, deck.ReviewsToday, deck.SuccessRate*100)
 
 		b.WriteString(style.Render(label) + "\n")
 
@@ -125,8 +132,9 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("M")))
 		} else {
 			keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-			b.WriteString(fmt.Sprintf("\nPress %s to select deck. Press %s to search. %s to view stats. %s to multi-select. %s to clear.",
-				keyStyle.Render("enter"), keyStyle.Render("/"), keyStyle.Render("v"), keyStyle.Render("x"), keyStyle.Render("Esc")))
+			b.WriteString(fmt.Sprintf("\n%s select | %s search | %s stats | %s multi-select | %s cram deck | %s clear\n",
+				keyStyle.Render("enter"), keyStyle.Render("/"), keyStyle.Render("v"), keyStyle.Render("x"), keyStyle.Render("c"), keyStyle.Render("Esc")))
+			b.WriteString(mutedStyle.Render("Press enter to select deck."))
 		}
 	}
 

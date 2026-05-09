@@ -56,6 +56,9 @@ func (m *Model) updateView(view View) tea.Cmd {
 		m.browserCursor = 0
 		return m.loadBrowserCards()
 	}
+	if view == ViewReview && m.sessionReviewed == 0 {
+		m.sessionStartTime = time.Now()
+	}
 	if view == ViewCram {
 		m.cramType = "bookmarked"
 		m.cramCursor = 0

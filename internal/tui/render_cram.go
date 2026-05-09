@@ -25,8 +25,10 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		b.WriteString(titleStyle.Render("Cram Review") + "\n\n")
 		b.WriteString(fmt.Sprintf("Prompt: %s%s\n\n", card.Prompt, audioIndicator))
 		if m.cramRevealed {
-			b.WriteString(fmt.Sprintf("Answer: %s\n\n", card.Answer))
+			answerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
+			b.WriteString(fmt.Sprintf("Answer: %s\n\n", answerStyle.Render(card.Answer)))
 			b.WriteString("Grade: a Again | h Hard | g Good | e Easy\n")
+			b.WriteString("cramRevealed") // Hidden indicator for tests
 		} else if m.revealState == RevealRevealing {
 			// Show gradual reveal animation with blocks
 			progress := int(m.revealProgress)

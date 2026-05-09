@@ -1,8 +1,12 @@
 package tui
 
 import (
+	"context"
 	"strconv"
 	"strings"
+	"time"
+	"unicode"
+	"unicode/utf8"
 
 	"deutsch-tui/internal/ai"
 	"deutsch-tui/internal/core"
@@ -13,7 +17,16 @@ import (
 func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	key := msg.String()
 
-	// 0. Deletion confirmation trapping
+	// 0. High-priority learning mode trapping
+	if m.typingMode || (m.activeView == ViewCram && m.cramActive) {
+		if key != "tab" && key != "shift+tab" && key != "ctrl+c" && key != "q" {
+			if cmd, handled := m.updateActiveViewKey(msg); handled {
+				return m, cmd
+			}
+		}
+	}
+
+	// 0.1 Deletion confirmation trapping
 	if m.confirmingDelete {
 		switch key {
 		case "y", "Y", "enter":
@@ -216,6 +229,8 @@ func (m *Model) updateActiveViewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return m.updateSettingsKey(msg)
 	case ViewCram:
 		return m.updateCramKey(msg)
+	case ViewSessionSummary:
+		return m.updateSessionSummaryKey(msg)
 	case ViewDecks:
 		return m.updateDecksKey(msg)
 	case ViewStatistics:
@@ -227,6 +242,51 @@ func (m *Model) updateActiveViewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 
 func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	key := msg.String()
+
+	// Handle typing mode input
+	if m.typingMode {
+		switch key {
+		case "enter", "space", "\r", "\n", " ":
+			if !m.typingChecked {
+				m.typingChecked = true
+				if len(m.dueCards) > 0 {
+					card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
+					m.typingCorrect = normalizeAnswer(m.typedAnswer) == normalizeAnswer(card.Answer)
+					m.revealState = RevealRevealed
+					m.revealProgress = 100
+					return m.loadReviewPredictions(card.ID), true
+				}
+				m.revealState = RevealRevealed
+				m.revealProgress = 100
+				return nil, true
+			}
+		case "esc":
+			m.typingMode = false
+			m.typedAnswer = ""
+			m.typingChecked = false
+			m.status = "Typing mode off"
+			return nil, true
+		case "backspace":
+			if !m.typingChecked {
+				if len(m.typedAnswer) > 0 {
+					m.typedAnswer = trimLastRune(m.typedAnswer)
+				}
+				return nil, true
+			}
+		}
+		if !m.typingChecked && utf8.RuneCountInString(key) == 1 {
+			r, _ := utf8.DecodeRuneInString(key)
+			if unicode.IsPrint(r) {
+				m.typedAnswer += key
+				return nil, true
+			}
+		}
+		// If typingChecked, allow other keys (like grades) to fall through
+		if !m.typingChecked {
+			return nil, true
+		}
+	}
+
 	if len(m.dueCards) > 0 {
 		card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
 		if card.Kind == core.CardKindMCQ && !m.mcqAnswered {
@@ -243,39 +303,80 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	switch key {
 	case "enter", "space", "\r", "\n", " ":
 		if len(m.dueCards) == 0 {
-			return nil, false
+			m.status = "No cards due"
+			return nil, true
 		}
 		card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
-		if m.revealState == RevealRevealed {
-			m.revealState = RevealIdle
-			m.revealProgress = 0
-			m.reviewPredictions = nil
-		} else {
-			m.revealState = RevealRevealing
-			m.revealProgress = 0
+		switch m.revealState {
+		case RevealIdle:
+			return tea.Batch(m.startRevealAnimation(card.Audio), m.loadReviewPredictions(card.ID)), true
+		case RevealRevealing:
+			m.revealProgress += 15
+			if m.revealProgress >= 100 {
+				m.revealProgress = 100
+				m.revealState = RevealRevealed
+			}
+			return m.loadReviewPredictions(card.ID), true
+		case RevealRevealed:
+			if m.gradingInProgress {
+				// In this state, we wait for a/h/g/e or enter for 'Good'
+				return m.gradeCard(core.GradeGood), true
+			} else {
+				m.gradingInProgress = true
+				m.status = "Grading: a=again h=hard g=good e=easy"
+				return nil, true
+			}
 		}
-		m.mcqChoice = -1
-		m.mcqAnswered = false
-		return tea.Batch(m.startRevealAnimation(card.Audio), m.loadReviewPredictions(card.ID)), true
-
+	case "a":
+		if m.revealState == RevealRevealed {
+			return m.gradeCard(core.GradeAgain), true
+		}
+	case "h":
+		if m.revealState == RevealRevealed {
+			return m.gradeCard(core.GradeHard), true
+		}
+	case "g":
+		if m.revealState == RevealRevealed {
+			return m.gradeCard(core.GradeGood), true
+		}
+	case "e":
+		if m.revealState == RevealRevealed {
+			return m.gradeCard(core.GradeEasy), true
+		}
+	case "u":
+		return m.undoLastReview(), true
+	case "r":
+		return m.toggleReviewHistory(), true
+	case "p":
+		if len(m.dueCards) > 0 {
+			return m.playAudio(m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)].Audio), true
+		}
+	case "t":
+		if !m.typingMode && m.revealState == RevealIdle {
+			m.typingMode = true
+			m.typedAnswer = ""
+			m.typingChecked = false
+			m.status = "Type your answer, press Enter to check"
+			return nil, true
+		}
 	case "b":
 		return m.toggleBookmark(), true
 	case "B":
 		return m.toggleBookmarkFilter(), true
 	case "x":
 		return m.suspendCard(), true
-	case "u":
-		return m.undoLastReview(), true
-	case "r":
-		return m.toggleReviewHistory(), true
-	case "a":
-		return m.gradeCard(core.GradeAgain), true
-	case "h":
-		return m.gradeCard(core.GradeHard), true
-	case "g":
-		return m.gradeCard(core.GradeGood), true
-	case "e":
-		return m.gradeCard(core.GradeEasy), true
+	case "delete", "backspace":
+		if len(m.dueCards) > 0 {
+			card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
+			return func() tea.Msg {
+				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+				defer cancel()
+				if err := m.repo.DeleteCard(ctx, card.ID); err != nil {
+					return err
+				}
+				return m.loadDueCards()
+			}, true
+		}
 	}
 	return nil, false
 }
@@ -396,6 +497,17 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.selectDeckByID(filtered[m.deckCursor].ID)
 			m.activeView = ViewStatistics
 			return m.loadStatistics(), true
+		}
+		return nil, true
+	case "c":
+		if len(filtered) > 0 {
+			m.selectDeckByID(filtered[m.deckCursor].ID)
+			m.cramType = "all"
+			m.cramCursor = 0
+			m.cramReviewed = 0
+			m.cramCorrect = 0
+			m.activeView = ViewCram
+			return m.loadCramCards(), true
 		}
 		return nil, true
 	case "enter", "\r", "\n":
@@ -855,4 +967,11 @@ func (m *Model) updateAIKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 	}
 	return nil, false
+}
+
+func (m *Model) updateSessionSummaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
+	// Any key returns to dashboard and resets session stats
+	m.sessionReviewed = 0
+	m.sessionCorrect = 0
+	return m.updateView(ViewDashboard), true
 }

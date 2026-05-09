@@ -147,6 +147,13 @@ func (m *Model) filteredDecks() []core.Deck {
 	for _, d := range m.decks {
 		if strings.Contains(strings.ToLower(d.Name), filter) {
 			filtered = append(filtered, d)
+			continue
+		}
+		for _, tag := range d.Tags {
+			if strings.Contains(strings.ToLower(tag), filter) {
+				filtered = append(filtered, d)
+				break
+			}
 		}
 	}
 	return filtered

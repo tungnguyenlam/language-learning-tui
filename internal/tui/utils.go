@@ -248,3 +248,12 @@ func singlePrintableInput(s string) (string, bool) {
 	}
 	return string(r), true
 }
+
+func normalizeAnswer(s string) string {
+	s = strings.TrimSpace(strings.ToLower(s))
+	s = strings.ReplaceAll(s, "ß", "ss")
+	s = strings.ReplaceAll(s, "  ", " ")
+	// Strip common punctuation from end
+	s = strings.TrimRight(s, ".!?,;:")
+	return s
+}

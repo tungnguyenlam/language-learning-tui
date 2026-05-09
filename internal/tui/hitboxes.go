@@ -59,6 +59,12 @@ func (m *Model) activateHitbox(id string) tea.Cmd {
 			return m.discardDraft()
 		}
 		return nil
+	case strings.HasPrefix(id, "ai-topic-"):
+		topic := strings.TrimPrefix(id, "ai-topic-")
+		m.aiInput = topic
+		m.drafts = nil
+		m.draftCursor = 0
+		return m.startDrafting()
 	case strings.HasPrefix(id, "dash-"):
 		switch id {
 		case "dash-review":

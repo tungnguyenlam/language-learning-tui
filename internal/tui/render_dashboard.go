@@ -74,6 +74,19 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		message = fmt.Sprintf("%d cards waiting.", len(m.dueCards))
 	}
 
+	motivation := ""
+	if m.stats.CurrentStreak >= 30 {
+		motivation = "  Incredible dedication! 30+ day streak!"
+	} else if m.stats.CurrentStreak >= 14 {
+		motivation = "  Two weeks strong! Keep it up!"
+	} else if m.stats.CurrentStreak >= 7 {
+		motivation = "  One week streak! You're building a habit!"
+	} else if m.stats.CurrentStreak >= 3 {
+		motivation = "  Nice streak! Consistency is key!"
+	} else if m.sessionReviewed > 0 {
+		motivation = fmt.Sprintf("  Great session! %d cards reviewed today.", m.sessionReviewed)
+	}
+
 	dailyDigestBox := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("213")).
@@ -81,7 +94,8 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		Width(maxInt(25, (layout.Width-2)/2)).
 		Render(digestStyle.Render("Daily Digest") + "\n" +
 			fmt.Sprintf("  %s", message) + nextPreview + "\n" +
-			fmt.Sprintf("  M:%d Y:%d N:%d", m.stats.MatureCards, m.stats.YoungCards, m.stats.NewCards))
+			fmt.Sprintf("  M:%d Y:%d N:%d", m.stats.MatureCards, m.stats.YoungCards, m.stats.NewCards) +
+			motivation)
 
 	var db strings.Builder
 	db.WriteString(titleStyle.Render("DASHBOARD") + "\n")

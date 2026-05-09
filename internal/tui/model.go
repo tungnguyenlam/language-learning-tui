@@ -23,15 +23,16 @@ import (
 type View string
 
 const (
-	ViewDashboard  View = "dashboard"
-	ViewDecks      View = "decks"
-	ViewReview     View = "review"
-	ViewStatistics View = "statistics"
-	ViewImport     View = "import"
-	ViewAI         View = "ai"
-	ViewSettings   View = "settings"
-	ViewBrowser    View = "browser"
-	ViewCram       View = "cram"
+	ViewDashboard      View = "dashboard"
+	ViewDecks          View = "decks"
+	ViewReview         View = "review"
+	ViewStatistics     View = "statistics"
+	ViewImport         View = "import"
+	ViewAI             View = "ai"
+	ViewSettings       View = "settings"
+	ViewBrowser        View = "browser"
+	ViewCram           View = "cram"
+	ViewSessionSummary View = "session_summary"
 )
 
 type RevealState int
@@ -112,6 +113,7 @@ type Model struct {
 	browserSelected       map[string]bool
 	sessionReviewed       int
 	sessionCorrect        int
+	sessionStartTime      time.Time
 	showHelp              bool
 	cramCards             []core.Card
 	cramCursor            int
@@ -149,6 +151,10 @@ type Model struct {
 	limitCursor           int                // 0: new limit, 1: review limit
 	gradingInProgress     bool               // Prevent double-grading
 	logger                *app.LeveledLogger // Add logger field
+	typingMode            bool               // Typing exercise mode
+	typedAnswer           string             // Current typed answer
+	typingChecked         bool               // Whether typing answer has been checked
+	typingCorrect         bool               // Whether typed answer was correct
 }
 
 func NewModel(repo core.Repository, scheduler core.Scheduler) *Model {
@@ -186,6 +192,16 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 				"back":    "German prompt for {{.Topic}}",
 				"example": "Practice sentence using {{.Topic}}.",
 			},
+			"phrases": {
+				"front":   "Common German phrase for {{.Topic}}",
+				"back":    "English translation",
+				"example": "Context sentence using the phrase.",
+			},
+			"grammar": {
+				"front":   "Grammar rule for {{.Topic}}",
+				"back":    "Explanation with examples",
+				"example": "Example sentence demonstrating the rule.",
+			},
 		}
 	}
 	if len(templates) == 0 {
@@ -194,6 +210,16 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 				"front":   "{{.Topic}}",
 				"back":    "German prompt for {{.Topic}}",
 				"example": "Practice sentence using {{.Topic}}.",
+			},
+			"phrases": {
+				"front":   "Common German phrase for {{.Topic}}",
+				"back":    "English translation",
+				"example": "Context sentence using the phrase.",
+			},
+			"grammar": {
+				"front":   "Grammar rule for {{.Topic}}",
+				"back":    "Explanation with examples",
+				"example": "Example sentence demonstrating the rule.",
 			},
 		}
 	}
@@ -468,6 +494,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.sessionCorrect++
 		}
 		m.logger.Info("Recorded review for card %s with grade %s", msg.cardID, msg.grade)
+		if len(m.dueCards) == 0 && m.sessionReviewed > 0 {
+			m.activeView = ViewSessionSummary
+		}
 		return m, m.loadReviewsPerDay()
 	case bookmarkToggledMsg:
 		m.setCardBookmarkLocal(msg.cardID, msg.bookmarked)
@@ -753,7 +782,20 @@ func (m *Model) renderWide() string {
 
 	nav := m.renderNav(0, 2)
 	content := m.renderActiveView(20, 1)
-	detail := panelStyle.Width(24).Render("Deck\n" + m.deckLabel() + "\n\nCards due\n" + fmt.Sprint(len(m.dueCards)) + "\n\n[ ] switch deck")
+
+	// Create a more informative sidebar
+	var sb strings.Builder
+	sb.WriteString(lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212")).Render("Session Info") + "\n")
+	sb.WriteString(fmt.Sprintf("Reviews: %d\n", m.sessionReviewed))
+	if m.sessionReviewed > 0 {
+		accuracy := float64(m.sessionCorrect) / float64(m.sessionReviewed) * 100
+		sb.WriteString(fmt.Sprintf("Accuracy: %.0f%%\n", accuracy))
+	}
+	sb.WriteString("\n" + lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212")).Render("Today") + "\n")
+	sb.WriteString(fmt.Sprintf("Progress: %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal))
+	sb.WriteString(fmt.Sprintf("Streak: %d days\n", m.stats.CurrentStreak))
+
+	detail := panelStyle.Width(24).Render(sb.String())
 
 	navLines := strings.Split(nav, "\n")
 	contentLines := strings.Split(content, "\n")
@@ -903,6 +945,8 @@ func (m *Model) renderActiveViewPlainAt(layout viewportLayout) string {
 		content = m.renderBrowserAt(layout)
 	case ViewCram:
 		content = m.renderCramAt(layout)
+	case ViewSessionSummary:
+		content = m.renderSessionSummary(layout)
 	default:
 		content = "Unknown View"
 	}
@@ -1026,6 +1070,8 @@ type spinnerTickMsg struct{}
 type revealTickMsg struct{}
 
 func (m *Model) startRevealAnimation(audioPath string) tea.Cmd {
+	m.revealState = RevealRevealing
+	m.revealProgress = 0
 	cmds := []tea.Cmd{m.tickReveal()}
 	if audioPath != "" && m.autoPlayAudio {
 		m.statusSeq++

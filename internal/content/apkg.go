@@ -4,12 +4,14 @@ import (
 	"archive/zip"
 	"bytes"
 	"context"
+	"crypto/sha1"
 	"encoding/json"
 	"fmt"
 	"hash/fnv"
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -441,18 +443,18 @@ func insertNote(tx *sql.Tx, modelID, deckID int64, note core.Note) (int64, error
 		tags = "_"
 	}
 
-	// Calculate checksum (simplified)
-	csum := 0
-	for _, r := range fields {
-		csum += int(r)
-	}
-	csum = csum & 0xFFFFFFFF
+	// Calculate checksum: first 8 characters of SHA1 hash of the first field
+	h := sha1.New()
+	h.Write([]byte(note.Front))
+	sum := h.Sum(nil)
+	csumStr := fmt.Sprintf("%x", sum)[:8]
+	csum, _ := strconv.ParseUint(csumStr, 16, 64)
 
 	// Generate a numeric ID for the note (use hash of the string ID for simplicity)
 	var noteIDInt int64
-	h := fnv.New64a()
-	h.Write([]byte(note.ID))
-	noteIDInt = int64(h.Sum64())
+	fh := fnv.New64a()
+	fh.Write([]byte(note.ID))
+	noteIDInt = int64(fh.Sum64())
 
 	result, err := tx.Exec(`
 		INSERT INTO notes (
@@ -460,7 +462,7 @@ func insertNote(tx *sql.Tx, modelID, deckID int64, note core.Note) (int64, error
 		) VALUES (
 			?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 		)
-	`, noteIDInt, note.ID, modelID, now, usn, tags, fields, 0, csum, 0, "")
+	`, noteIDInt, note.ID, modelID, now, usn, tags, fields, 0, int64(csum), 0, "")
 	if err != nil {
 		return 0, err
 	}
@@ -477,29 +479,18 @@ func insertCardsForNote(tx *sql.Tx, noteID int64, note core.Note) error {
 	reps := int64(0)
 	lapses := int64(0)
 
-	// Generate integer IDs for cards (use hash of the string ID for simplicity)
-	var frontCardIDInt int64
-	h := fnv.New64a()
-	h.Write([]byte(note.ID + ":front"))
-	frontCardIDInt = int64(h.Sum64())
+	for i, card := range note.Cards {
+		var cardIDInt int64
+		h := fnv.New64a()
+		h.Write([]byte(card.ID))
+		cardIDInt = int64(h.Sum64())
 
-	// Create a basic flashcard (front->back)
-	if _, err := tx.Exec(`
-		INSERT INTO cards (
-			id, nid, did, ord, mod, usn, type, queue, due, ivl, factor, reps, lapses, left, odue, odid, flags, data
-		) VALUES (
-			?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
-		)
-	`, frontCardIDInt, noteID, 1, 0, now, usn, 0, 0, due, ivl, factor, reps, lapses, 0, 0, 0, 0, ""); err != nil {
-		return err
-	}
-
-	// If there's examples, create an MCQ card
-	if len(note.Examples) > 0 {
-		var mcqCardIDInt int64
-		h.Reset()
-		h.Write([]byte(note.ID + ":mcq"))
-		mcqCardIDInt = int64(h.Sum64())
+		// ord is the index of the template or cloze index
+		ord := i
+		if card.Kind == core.CardKindCloze {
+			// Extract cloze number if possible, else use i
+			// For now just use i
+		}
 
 		if _, err := tx.Exec(`
 			INSERT INTO cards (
@@ -507,7 +498,7 @@ func insertCardsForNote(tx *sql.Tx, noteID int64, note core.Note) error {
 			) VALUES (
 				?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?
 			)
-		`, mcqCardIDInt, noteID, 1, 1, now, usn, 1, 0, due, ivl, factor, reps, lapses, 0, 0, 0, 0, ""); err != nil {
+		`, cardIDInt, noteID, 1, ord, now, usn, 0, 0, due, ivl, factor, reps, lapses, 0, 0, 0, 0, ""); err != nil {
 			return err
 		}
 	}
@@ -521,26 +512,30 @@ func generateGUID() string {
 }
 
 func copyMediaFiles(mediaDir string, notes []core.Note) error {
-	// For now, we just note that media files would be copied here
-	// In a full implementation, we would:
-	// 1. Check each note for audio files
-	// 2. Copy those files to the media directory
-	// 3. Rename them to numeric IDs as Anki expects
-	// This is simplified for the MVP
+	for i, note := range notes {
+		if note.Audio != "" {
+			src := note.Audio
+			// If it's a path, try to copy it
+			if _, err := os.Stat(src); err == nil {
+				dest := filepath.Join(mediaDir, fmt.Sprintf("%d", i+1))
+				data, err := os.ReadFile(src)
+				if err != nil {
+					continue
+				}
+				os.WriteFile(dest, data, 0o644)
+			}
+		}
+	}
 	return nil
 }
 
 func createMediaJson(mediaDir string, notes []core.Note) error {
 	// Create a mapping from media file IDs to filenames
-	// For simplicity, we'll just create an empty mapping
-	// In a full implementation, we would enumerate actual media files
 	mediaMap := map[string]string{}
 
-	// Add entries for any audio files found in notes
 	for i, note := range notes {
 		if note.Audio != "" {
-			// In a real implementation, we would copy the file and use its new name
-			mediaMap[fmt.Sprintf("%d", i+1)] = note.Audio
+			mediaMap[fmt.Sprintf("%d", i+1)] = filepath.Base(note.Audio)
 		}
 	}
 

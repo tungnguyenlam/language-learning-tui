@@ -56,7 +56,7 @@ func ScienceTechDeck() core.Deck {
 
 	return core.Deck{
 		ID:          "science-tech",
-		Name:        "Science & Technology",
+		Name:        "German Science & Technology",
 		Description: "Advanced German vocabulary for science, computers, and space.",
 		Tags:        []string{"german", "b1", "b2", "tech", "science"},
 		Notes:       notes,

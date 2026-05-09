@@ -52,8 +52,8 @@ func (m *Model) renderReview(x, y int) string {
 
 	// Enhanced keyboard shortcut display with visual highlighting
 	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-	keys := fmt.Sprintf("%s toggle | %s suspend | %s filter | %s undo | %s history | %s audio",
-		keyStyle.Render("b"), keyStyle.Render("x"), keyStyle.Render("B"), keyStyle.Render("u"), keyStyle.Render("r"), keyStyle.Render("p"))
+	keys := fmt.Sprintf("%s toggle | %s suspend | %s filter | %s undo | %s history | %s audio | %s type",
+		keyStyle.Render("b"), keyStyle.Render("x"), keyStyle.Render("B"), keyStyle.Render("u"), keyStyle.Render("r"), keyStyle.Render("p"), keyStyle.Render("t"))
 	if m.bookmarkFilter {
 		keys = fmt.Sprintf("%s toggle | %s suspend | %s all cards | %s undo | %s history | %s audio",
 			keyStyle.Render("b"), keyStyle.Render("x"), keyStyle.Render("B"), keyStyle.Render("u"), keyStyle.Render("r"), keyStyle.Render("p"))
@@ -102,6 +102,9 @@ func (m *Model) renderReview(x, y int) string {
 		mature = " ✨"
 	}
 
+	headerSection := fmt.Sprintf("%s%s\n%s | %s\n%s%s%s", header, sessionProgress, bookmark, keys, leech, suspended, audioIndicator)
+	headerLines := strings.Count(headerSection, "\n") + 1
+
 	promptDisplay := card.Prompt
 	if card.Kind == core.CardKindCloze {
 		// Highlight the [...] or [hint] in cloze prompt
@@ -134,6 +137,10 @@ func (m *Model) renderReview(x, y int) string {
 	var answer string
 	answerYOffset := 0
 
+	// Calculate card position for hitboxes
+	cardX := x + cardStyle.GetMarginLeft() + cardStyle.GetBorderLeftSize() + cardStyle.GetPaddingLeft()
+	cardY := y + headerLines + 1 + cardStyle.GetMarginTop() + cardStyle.GetBorderTopSize() + cardStyle.GetPaddingTop()
+
 	// Enhanced answer styling
 	answerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
 	extraDisplay := ""
@@ -142,13 +149,47 @@ func (m *Model) renderReview(x, y int) string {
 		extraDisplay = "\n" + extraStyle.Render("💡 "+card.Extra)
 	}
 
-	headerSection := fmt.Sprintf("%s%s\n%s | %s\n%s%s%s", header, sessionProgress, bookmark, keys, leech, suspended, audioIndicator)
-	headerLines := strings.Count(headerSection, "\n") + 1
+	// Typing mode display
+	if m.typingMode && m.revealState != RevealRevealing {
+		typingBoxStyle := lipgloss.NewStyle().
+			Border(lipgloss.NormalBorder()).
+			BorderForeground(lipgloss.Color("81")).
+			Padding(0, 1).
+			Width(maxInt(30, width-6))
 
-	cardX := x + cardStyle.GetMarginLeft() + cardStyle.GetBorderLeftSize() + cardStyle.GetPaddingLeft()
-	cardY := y + headerLines + 1 + cardStyle.GetMarginTop() + cardStyle.GetBorderTopSize() + cardStyle.GetPaddingTop()
+		inputStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
+		inputDisplay := m.typedAnswer + "_"
 
-	if card.Kind == core.CardKindMCQ && len(card.Choices) > 0 {
+		if m.typingChecked {
+			if m.typingCorrect {
+				correctStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Bold(true)
+				inputDisplay = correctStyle.Render("✓ " + m.typedAnswer)
+				typingBoxStyle = typingBoxStyle.BorderForeground(lipgloss.Color("46"))
+			} else {
+				wrongStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Bold(true)
+				inputDisplay = wrongStyle.Render("✗ " + m.typedAnswer)
+				typingBoxStyle = typingBoxStyle.BorderForeground(lipgloss.Color("196"))
+			}
+			typingContent := fmt.Sprintf("Your answer: %s\nCorrect: %s%s\n\nGrade: %s %s | %s %s | %s %s | %s %s",
+				inputDisplay, answerStyle.Render(card.Answer), extraDisplay,
+				keyStyle.Render("a"), gradeAgain, keyStyle.Render("h"), gradeHard, keyStyle.Render("g"), gradeGood, keyStyle.Render("e"), gradeEasy)
+			answer = typingBoxStyle.Render(typingContent)
+			answerYOffset = cardY + strings.Count(fmt.Sprintf("%s%s\n\nYour answer:", promptDisplay, mature), "\n") + 2
+
+			labelAgain := fmt.Sprintf("Grade: %s ", keyStyle.Render("a"))
+			labelHard := fmt.Sprintf("Grade: %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"))
+			labelGood := fmt.Sprintf("Grade: %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"), gradeHardText, keyStyle.Render("g"))
+			labelEasy := fmt.Sprintf("Grade: %s %s | %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"), gradeHardText, keyStyle.Render("g"), gradeGoodText, keyStyle.Render("e"))
+
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: cardX + lipgloss.Width(labelAgain), Y: answerYOffset, Width: gaW, Height: 1})
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: cardX + lipgloss.Width(labelHard), Y: answerYOffset, Width: ghW, Height: 1})
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: cardX + lipgloss.Width(labelGood), Y: answerYOffset, Width: ggW, Height: 1})
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: cardX + lipgloss.Width(labelEasy), Y: answerYOffset, Width: geW, Height: 1})
+		} else {
+			typingContent := fmt.Sprintf("Type your answer:\n\n%s", inputStyle.Render(inputDisplay))
+			answer = typingBoxStyle.Render(typingContent)
+		}
+	} else if card.Kind == core.CardKindMCQ && len(card.Choices) > 0 {
 		if m.revealState == RevealRevealed {
 			mcqChoices := renderMCQChoices(card.Choices, m.mcqChoice)
 			if m.mcqAnswered {
