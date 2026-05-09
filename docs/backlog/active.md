@@ -1,6 +1,6 @@
 # Active Backlog
 
-Last updated: 2026-05-09 (batch H - complete)
+Last updated: 2026-05-10 (Verification Complete)
 
 ## Current Milestone
 
@@ -30,11 +30,19 @@ Finalizing high-quality TUI experience with expanded content and robust UX.
 - [x] Fixed audio autoplay toggle persistence in Settings
 - [x] Verified with 8 new E2E tests
 
+### Verification
+- [x] End-to-end verification: App launches without errors, all views render correctly
+- [x] Core user interactions (flashcard reveal, grading, navigation) respond as expected
+- [x] State is successfully persisted to SQLite
+- [x] End-to-end tests pass using the tui-tester utility (145/145 tests passing)
+- [x] Full verification suite (`./scripts/verify.sh`) executes successfully
+
 ## Current State
 
 - Verified: All unit tests pass; 145/145 E2E tests pass.
 - Environment: Darwin, Go 1.x, Python 3.12.
 - Architecture: Modular monolith with dynamic content registry.
+- Status: Application is working correctly end-to-end as verified by full test suite.
 
 ### UI Improvements
 - [x] Add visual feedback for keyboard navigation
@@ -55,9 +63,3 @@ Finalizing high-quality TUI experience with expanded content and robust UX.
 ### Core Features
 - [x] Enhanced Anki APKG export (Cloze support, media files, correct checksums)
 - [x] Added hidden test indicators for Cram and Review modes to improve E2E reliability
-
-## Current State
-
-- Verified: All unit tests pass; 137/137 E2E tests pass.
-- Environment: Darwin, Go 1.x, Python 3.12.
-- Architecture: Modular monolith with pluggable content registry and SQLite persistence.

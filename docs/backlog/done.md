@@ -229,3 +229,4 @@
 - **Final Verification**:
   - `./scripts/verify.sh` passes cleanly.
   - Result: all Go tests pass, smoke passes, and 116/116 E2E tests pass with no warning output.
+2026-05-10
