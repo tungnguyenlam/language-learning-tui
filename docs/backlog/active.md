@@ -51,12 +51,12 @@ Finalizing high-quality TUI experience with expanded content and robust UX. - **
 - [x] End-to-end verification: App launches without errors, all views render correctly
 - [x] Core user interactions (flashcard reveal, grading, navigation) respond as expected
 - [x] State is successfully persisted to SQLite
-- [x] End-to-end tests pass using the tui-tester utility (145/145 tests passing)
+- [x] End-to-end tests pass using the tui-tester utility (149/149 tests passing)
 - [x] Full verification suite (`./scripts/verify.sh`) executes successfully
 
 ## Current State
 
-- Verified: All unit tests pass; 145/145 E2E tests pass.
+- Verified: All unit tests pass; 149/149 E2E tests pass.
 - Environment: Darwin, Go 1.x, Python 3.12.
 - Architecture: Modular monolith with dynamic content registry.
 - Status: Application is working correctly end-to-end as verified by full test suite.

@@ -21,7 +21,7 @@ Last updated: 2026-05-03
 
 ## Verification Status
 
-- ✅ All 83 E2E tests passing (as of 2026-05-05, including new browser management tests)
+- ✅ All 149 E2E tests passing (as of 2026-05-10, including new browser management tests)
 - ✅ All Go test suites passing (as of 2026-05-05)
 - ✅ App launches without errors (smoke test passing)
 - ✅ All views render correctly (Dashboard, Review, Import, AI, Settings, Browser, Cram)
