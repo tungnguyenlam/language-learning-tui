@@ -744,6 +744,9 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 				m.tagInput = trimLastRune(m.tagInput)
 			}
 			return nil, true
+		case "ctrl+u":
+			m.tagInput = ""
+			return nil, true
 		}
 		if ch, ok := singlePrintableInput(msg.String()); ok {
 			m.tagInput += ch
@@ -872,6 +875,11 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		if len(m.getSelectedCardIDs()) > 0 {
 			m.browserSelected = make(map[string]bool)
 			return nil, true
+		}
+		if m.browserSearch != "" || m.browserTag != "" {
+			m.browserSearch = ""
+			m.browserTag = ""
+			return m.loadBrowserCards(), true
 		}
 	}
 	return nil, false

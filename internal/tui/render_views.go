@@ -85,12 +85,22 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		if deck.TotalCards > 0 {
 			deckPercentage = float64(deck.TotalCards-deck.DueCards) / float64(deck.TotalCards)
 		}
-		miniBar := progressBar(3, deckPercentage, "81", "238")
+		miniBar := progressBar(5, deckPercentage, "46", "238")
 
-		label := fmt.Sprintf("%s%s%s (%s %s, today %d, %.0f%% success)",
+		label := fmt.Sprintf("%s%s%s  %s  %s | today %d, %.0f%% success",
 			prefix, selectMark, deck.Name, miniBar, counts, deck.ReviewsToday, deck.SuccessRate*100)
 
+		rowY := layout.Y + strings.Count(b.String(), "\n")
 		b.WriteString(style.Render(label) + "\n")
+
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     fmt.Sprintf("deck-select-%d", i),
+			View:   ViewDecks,
+			X:      layout.X,
+			Y:      rowY,
+			Width:  lipgloss.Width(label),
+			Height: 1,
+		})
 
 		// Show limits only when editing this deck
 		if i == m.deckCursor && m.editingDeckLimits {

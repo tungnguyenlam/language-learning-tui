@@ -1,5 +1,20 @@
 # Done Backlog
 
+## 2026-05-10: Batch 3 - UI/UX Refinement and Bug Fixes
+
+### UI & UX
+- Implemented **Mouse Hitboxes** for the Decks view, allowing users to select decks directly by clicking on them.
+- Polished the **Dashboard Progress Bar**, making it turn **gold** when the daily review goal is met or exceeded.
+- Cleaned up the **Decks list layout** to properly align stats without padding issues.
+- Improved **Browser UX**: Pressing `Esc` now clears the active search query and tag filter when no cards are selected.
+- Added **`ctrl+u`** shortcut across internal text inputs (Browser Search, Browser Tagging, AI Topic drafting) to quickly clear the input line.
+
+### Verification
+- Added `test_deck_selection_bug.py` to assert keyboard-based deck selection works correctly.
+- Added `test_dashboard_deck_switch.py` to ensure `[` and `]` correctly cycle decks in the Dashboard.
+- Added `test_settings_panic.py` to verify that empty AI template sets don't crash the Settings view.
+- 149/149 E2E tests passing.
+
 ## 2026-05-10: Batch 2 - Export Filtering & Review Polish
 
 ### Content & Learning

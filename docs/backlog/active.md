@@ -13,6 +13,13 @@ Finalizing high-quality TUI experience with expanded content and robust UX. - **
 
 ## Completed Work (Latest)
 
+### Batch 3 (2026-05-10)
+- [x] Fix Deck Selection Bug (Mouse selection hitboxes added)
+- [x] Improve Decks list layout and formatting
+- [x] Dashboard UI Polish (Goal bar turns gold when goal met)
+- [x] Browser UX (Esc clears active search/tag)
+- [x] Text Input UX (`ctrl+u` added to Browser/AI text fields)
+
 ### Batch 2 (2026-05-10)
 - [x] Add deck export filtering (by success rate or mature status)
 - [x] Add C2 Politics & History deck

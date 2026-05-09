@@ -45,16 +45,20 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 			fmt.Sprintf("  Leech:       %d\n", m.stats.LeechCards) +
 			fmt.Sprintf("  Suspended:   %d", m.stats.SuspendedCards))
 
-	goalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Bold(true)
 	percentage := 0.0
+	barColor := "46" // Green by default
 	if m.stats.DailyGoal > 0 {
 		percentage = float64(m.stats.ReviewsToday) / float64(m.stats.DailyGoal)
+		if percentage >= 1.0 {
+			barColor = "220" // Gold when goal is met
+		}
 	}
-	bar := progressBar(maxInt(10, layout.Width/2-10), percentage, "46", "238")
+	goalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(barColor)).Bold(true)
+	bar := progressBar(maxInt(10, layout.Width/2-10), percentage, barColor, "238")
 
 	progressBox := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("46")).
+		BorderForeground(lipgloss.Color(barColor)).
 		Padding(0, 1).
 		Width(maxInt(25, (layout.Width-2)/2)).
 		Render(goalStyle.Render("Today's Progress") + "\n" +
