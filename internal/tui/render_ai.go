@@ -71,11 +71,11 @@ func (m *Model) renderAI(x, y int) string {
 	start := 0
 	end := len(m.drafts)
 	maxVisible := 10
-	if layout.Height > 20 {
-		maxVisible = layout.Height - 15
+	if layout.Height > 25 {
+		maxVisible = layout.Height - 18
 	}
-	if maxVisible < 5 {
-		maxVisible = 5
+	if maxVisible < 3 {
+		maxVisible = 3
 	}
 	if end > maxVisible {
 		start = m.draftCursor - maxVisible/2
@@ -92,6 +92,7 @@ func (m *Model) renderAI(x, y int) string {
 		}
 	}
 
+	var listBuilder strings.Builder
 	for i := start; i < end; i++ {
 		prefix := "  "
 		style := lipgloss.NewStyle()
@@ -102,8 +103,7 @@ func (m *Model) renderAI(x, y int) string {
 		draft := m.drafts[i]
 		item := fmt.Sprintf("%s%s -> %s", prefix, draft.Note.Front, truncateLine(draft.Note.Back, 40))
 
-		rowY := layout.Y + strings.Count(b.String(), "\n")
-		b.WriteString(style.Render(item))
+		listBuilder.WriteString(style.Render(item))
 
 		// Add interactive buttons
 		btnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
@@ -114,15 +114,37 @@ func (m *Model) renderAI(x, y int) string {
 			btnStyle = btnStyle.Foreground(lipgloss.Color("81"))
 		}
 
+		listBuilder.WriteString(btnStyle.Render(approveBtn))
+		listBuilder.WriteString(btnStyle.Render(discardBtn))
+		listBuilder.WriteString("\n")
+	}
+
+	listBoxStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("62")).
+		Padding(0, 1).
+		Width(maxInt(40, width-10))
+
+	listBox := listBoxStyle.Render(listBuilder.String())
+
+	// Re-calculate hitboxes for the list items
+	listY := layout.Y + strings.Count(b.String(), "\n") + listBoxStyle.GetBorderTopSize() + listBoxStyle.GetPaddingTop()
+	for i := start; i < end; i++ {
+		draft := m.drafts[i]
+		prefix := "  "
+		if i == m.draftCursor {
+			prefix = "> "
+		}
+		item := fmt.Sprintf("%s%s -> %s", prefix, draft.Note.Front, truncateLine(draft.Note.Back, 40))
 		itemWidth := lipgloss.Width(item)
-		approveX := layout.X + itemWidth
+
+		approveBtn := " [Approve]"
+		discardBtn := " [Discard]"
+
+		approveX := layout.X + listBoxStyle.GetBorderLeftSize() + listBoxStyle.GetPaddingLeft() + itemWidth
 		discardX := approveX + lipgloss.Width(approveBtn)
+		rowY := listY + (i - start)
 
-		b.WriteString(btnStyle.Render(approveBtn))
-		b.WriteString(btnStyle.Render(discardBtn))
-		b.WriteString("\n")
-
-		// Register hitboxes
 		m.hitboxes = append(m.hitboxes, Hitbox{
 			ID:     fmt.Sprintf("draft-approve-%d", i),
 			View:   ViewAI,
@@ -140,6 +162,8 @@ func (m *Model) renderAI(x, y int) string {
 			Height: 1,
 		})
 	}
+
+	b.WriteString("\n" + listBox + "\n")
 
 	// Show detailed preview for selected draft
 	if len(m.drafts) > 0 && m.draftCursor < len(m.drafts) {

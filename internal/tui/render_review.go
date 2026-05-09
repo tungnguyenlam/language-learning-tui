@@ -88,6 +88,15 @@ func (m *Model) renderReview(x, y int) string {
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
 	header := fmt.Sprintf("%s%s %d/%d", titleStyle.Render("Review"), filterBanner, cursor+1, len(m.dueCards))
 
+	// Session progress bar
+	sessionTotal := m.sessionReviewed + len(m.dueCards)
+	sessionPercentage := 0.0
+	if sessionTotal > 0 {
+		sessionPercentage = float64(m.sessionReviewed) / float64(sessionTotal)
+	}
+	sessionBar := progressBar(20, sessionPercentage, "46", "238")
+	sessionProgress := fmt.Sprintf(" | Session: %s %d%%", sessionBar, int(sessionPercentage*100))
+
 	mature := ""
 	if card.Mature {
 		mature = " ✨"
@@ -133,7 +142,7 @@ func (m *Model) renderReview(x, y int) string {
 		extraDisplay = "\n" + extraStyle.Render("💡 "+card.Extra)
 	}
 
-	headerSection := fmt.Sprintf("%s\n%s | %s\n%s%s%s", header, bookmark, keys, leech, suspended, audioIndicator)
+	headerSection := fmt.Sprintf("%s%s\n%s | %s\n%s%s%s", header, sessionProgress, bookmark, keys, leech, suspended, audioIndicator)
 	headerLines := strings.Count(headerSection, "\n") + 1
 
 	cardX := x + cardStyle.GetMarginLeft() + cardStyle.GetBorderLeftSize() + cardStyle.GetPaddingLeft()

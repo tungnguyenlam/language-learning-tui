@@ -30,6 +30,7 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("81")).
 		Padding(0, 1).
+		Width(maxInt(25, (layout.Width-2)/2)).
 		Render(statsStyle.Render("Review Queue") + "\n" +
 			fmt.Sprintf("  Due cards:   %d\n", len(m.dueCards)) +
 			fmt.Sprintf("  Bookmarked:  %d (%d due)", m.stats.BookmarkedCards, m.stats.BookmarkedDue))
@@ -38,6 +39,7 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("208")).
 		Padding(0, 1).
+		Width(maxInt(25, (layout.Width-2)/2)).
 		Render(statsStyle.Render("Collection") + "\n" +
 			fmt.Sprintf("  Decks:       %d (%d active)\n", m.stats.TotalDecks, m.stats.ActiveDecks) +
 			fmt.Sprintf("  Leech:       %d\n", m.stats.LeechCards) +
@@ -48,12 +50,13 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 	if m.stats.DailyGoal > 0 {
 		percentage = float64(m.stats.ReviewsToday) / float64(m.stats.DailyGoal)
 	}
-	bar := progressBar(24, percentage, "46", "238")
+	bar := progressBar(maxInt(10, layout.Width/2-10), percentage, "46", "238")
 
 	progressBox := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("46")).
 		Padding(0, 1).
+		Width(maxInt(25, (layout.Width-2)/2)).
 		Render(goalStyle.Render("Today's Progress") + "\n" +
 			fmt.Sprintf("  Reviews:     %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal) +
 			"  " + bar + "\n" +
@@ -65,7 +68,7 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 	if len(m.dueCards) > 0 {
 		message = fmt.Sprintf("%d due today.", len(m.dueCards))
 		nextCard := m.dueCards[0]
-		nextPreview = "\n  Next: " + truncateLine(nextCard.Prompt, 20)
+		nextPreview = "\n  Next: " + truncateLine(nextCard.Prompt, 15)
 	}
 	if m.stats.CurrentStreak == 0 && len(m.dueCards) > 0 {
 		message = fmt.Sprintf("%d cards waiting.", len(m.dueCards))
@@ -75,6 +78,7 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color("213")).
 		Padding(0, 1).
+		Width(maxInt(25, (layout.Width-2)/2)).
 		Render(digestStyle.Render("Daily Digest") + "\n" +
 			fmt.Sprintf("  %s", message) + nextPreview + "\n" +
 			fmt.Sprintf("  M:%d Y:%d N:%d", m.stats.MatureCards, m.stats.YoungCards, m.stats.NewCards))

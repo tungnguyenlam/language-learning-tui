@@ -49,14 +49,7 @@ func (s *GoSource) Priority() int {
 }
 
 func (s *GoSource) LoadDecks() ([]core.Deck, error) {
-	decks := []core.Deck{}
-
-	starter := StarterDeck()
-	if starter.ID != "" {
-		decks = append(decks, starter)
-	}
-
-	return decks, nil
+	return StandardDecks(), nil
 }
 
 //go:embed testdata/german-decks/*.tsv

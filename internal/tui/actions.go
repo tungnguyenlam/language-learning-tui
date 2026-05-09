@@ -18,10 +18,11 @@ import (
 )
 
 func (m *Model) gradeCard(grade core.ReviewGrade) tea.Cmd {
-	if m.activeView != ViewReview || len(m.dueCards) == 0 || m.revealState != RevealRevealed {
+	if m.activeView != ViewReview || len(m.dueCards) == 0 || m.revealState != RevealRevealed || m.gradingInProgress {
 		return nil
 	}
 
+	m.gradingInProgress = true
 	m.status = fmt.Sprintf("Grade: %s", strings.ToUpper(string(grade[:1]))+string(grade[1:]))
 	card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
 	return func() tea.Msg {
@@ -143,6 +144,20 @@ func (m *Model) setDeckLimits(deckID string, newLimit, reviewLimit int) tea.Cmd 
 			return err
 		}
 		return decksMsg(decks)
+	}
+}
+
+func (m *Model) seedStandardContent() tea.Cmd {
+	m.status = "Seeding standard content..."
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		for _, deck := range content.StandardDecks() {
+			if err := m.repo.UpsertDeck(ctx, deck); err != nil {
+				return err
+			}
+		}
+		return m.loadDecks()
 	}
 }
 

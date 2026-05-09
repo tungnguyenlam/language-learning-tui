@@ -510,6 +510,8 @@ func (m *Model) updateImportKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return m.importTSV(), true
 	case "I":
 		return m.importAPKG(), true
+	case "S":
+		return m.seedStandardContent(), true
 	case "x":
 		return m.exportTSV(), true
 	case "X":

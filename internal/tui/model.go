@@ -147,6 +147,7 @@ type Model struct {
 	deleteIDs             []string
 	editingDeckLimits     bool
 	limitCursor           int                // 0: new limit, 1: review limit
+	gradingInProgress     bool               // Prevent double-grading
 	logger                *app.LeveledLogger // Add logger field
 }
 
@@ -366,6 +367,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case error:
 		m.drafting = false
+		m.gradingInProgress = false
 		m.status = friendlyError(msg)
 		m.logger.Error("Error occurred: %v", msg)
 	case decksMsg:
@@ -454,6 +456,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case reviewRecordedMsg:
+		m.gradingInProgress = false
 		m.lastReviewedCardID = msg.cardID
 		m.lastReviewedGrade = msg.grade
 		m.syncDecks(msg.decks)

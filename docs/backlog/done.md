@@ -1,5 +1,28 @@
 # Done Backlog
 
+## 2026-05-09: UI Polish and Content Expansion (Batch E2)
+
+### UI Refinements
+- Added a **Session Progress Bar** to the Review view header, providing real-time feedback on review session completion.
+- Improved the **Dashboard layout** with better visual grouping, consistent box widths, and color-coded sections (Review Queue, Collection, Progress, Daily Digest).
+- Enhanced the **AI Drafts UI** by boxing the draft list and styling the preview box for better readability and structure.
+
+### Content & Features
+- Added two new high-quality German learning decks:
+  - **Science & Technology** (B1-B2): Vocabulary covering computers, internet, research, and space.
+  - **German Proverbs & Idioms**: Culturally rich idiomatic expressions with English equivalents.
+- Implemented **Manual Content Seeding** in the Import view (shortcut 'S'), allowing users to easily load all standard decks without cluttering the initial database state.
+- Expanded the **Go Content Source** registry to include all newly added standard decks.
+
+### Bug Fixes & Robustness
+- Implemented a **Double-Grading Guard** (`gradingInProgress`) to prevent race conditions when rapidly pressing grade keys during review sessions.
+- Added **Hitbox Recalculation** logic for the AI view to ensure mouse interactions remain accurate after layout changes.
+- Fixed **Unused Import** compilation errors in new content files.
+
+### Testing & Verification
+- Added a new E2E test `test_new_content_visibility.py` to verify the manual seeding flow and deck integration.
+- Successfully ran `./scripts/verify.sh` with **133 passing E2E tests**, ensuring zero regressions in core functionality.
+
 ## 2026-05-08: Reliability + UX Batch C1
 
 ### Bug Fixes & Logic

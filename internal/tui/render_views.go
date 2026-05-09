@@ -270,6 +270,7 @@ func (m *Model) renderImport(x, y int) string {
 	}{
 		{"import-tsv", "Import TSV", "i"},
 		{"import-apkg", "Import APKG", "I"},
+		{"seed-std", "Seed Standard", "S"},
 		{"export-tsv", "Export TSV", "x"},
 		{"export-apkg", "Export APKG", "X"},
 	}
