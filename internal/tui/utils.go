@@ -9,8 +9,6 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"deutsch-tui/internal/core"
-
 	"charm.land/lipgloss/v2"
 )
 
@@ -104,30 +102,6 @@ func truncateLine(s string, maxWidth int) string {
 		res += string(r)
 	}
 	return res + "..."
-}
-
-func decksFromNotes(notes []core.Note) []core.Deck {
-	byID := make(map[string]int)
-	decks := make([]core.Deck, 0, 1)
-	for _, note := range notes {
-		deckID := strings.TrimSpace(note.DeckID)
-		if deckID == "" {
-			deckID = "Imported"
-			note.DeckID = deckID
-		}
-		index, ok := byID[deckID]
-		if !ok {
-			index = len(decks)
-			byID[deckID] = index
-			decks = append(decks, core.Deck{
-				ID:          deckID,
-				Name:        deckID,
-				Description: "Imported from Anki TSV.",
-			})
-		}
-		decks[index].Notes = append(decks[index].Notes, note)
-	}
-	return decks
 }
 
 func progressBar(width int, percentage float64, filledColor, emptyColor string) string {
@@ -249,9 +223,14 @@ func singlePrintableInput(s string) (string, bool) {
 	return string(r), true
 }
 
-func normalizeAnswer(s string) string {
+func (m *Model) normalizeAnswer(s string) string {
 	s = strings.TrimSpace(strings.ToLower(s))
-	s = strings.ReplaceAll(s, "ß", "ss")
+	if !m.strictNormalization {
+		s = strings.ReplaceAll(s, "ß", "ss")
+		s = strings.ReplaceAll(s, "ä", "ae")
+		s = strings.ReplaceAll(s, "ö", "oe")
+		s = strings.ReplaceAll(s, "ü", "ue")
+	}
 	s = strings.ReplaceAll(s, "  ", " ")
 	// Strip common punctuation from end
 	s = strings.TrimRight(s, ".!?,;:")

@@ -245,7 +245,7 @@ func (m *Model) bulkBrowserToggleKind() tea.Cmd {
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		allCards, err := m.repo.Cards(ctx, "", "")
+		allCards, err := m.repo.Cards(ctx, "", "", "")
 		if err != nil {
 			return err
 		}
@@ -473,6 +473,7 @@ func (m *Model) selectDeckByID(id string) {
 			m.deckIndex = i
 			m.deck = d
 			m.deckCursor = i
+			m.browserDeckID = id // Sync browser filter
 			m.applyDeckFilter()
 			return
 		}
@@ -483,6 +484,7 @@ func (m *Model) selectDeck(index int) {
 	if len(m.decks) == 0 {
 		m.deck = core.Deck{}
 		m.deckCursor = 0
+		m.browserDeckID = "" // Sync browser filter
 		m.applyDeckFilter()
 		return
 	}
@@ -492,6 +494,7 @@ func (m *Model) selectDeck(index int) {
 	m.deckIndex = index
 	m.deck = m.decks[index]
 	m.deckCursor = index
+	m.browserDeckID = m.deck.ID // Sync browser filter
 	m.applyDeckFilter()
 }
 

@@ -86,6 +86,7 @@ type Model struct {
 	aiTemplateSets        []string
 	aiTemplateIndex       int
 	autoPlayAudio         bool
+	strictNormalization   bool
 	stats                 core.Statistics
 	settingsCursor        int
 	editingTemplate       bool
@@ -100,7 +101,7 @@ type Model struct {
 	importCursor          int // 0: import path, 1: export path, 2: export deck, 3: export tag
 	editingImportPath     bool
 	editingExportTag      bool
-	onConfigChange        func(string, map[string]map[string]string, bool)
+	onConfigChange        func(string, map[string]map[string]string, bool, bool)
 	bookmarkFilter        bool
 	originalTemplateValue string
 	mcqChoice             int
@@ -109,10 +110,14 @@ type Model struct {
 	browserCards          []core.Card
 	browserCursor         int
 	browserSearch         string
+	browserTag            string
 	browserDeckID         string
+	searchingTags         bool
 	browserSelected       map[string]bool
 	sessionReviewed       int
 	sessionCorrect        int
+	lastSessionReviewed   int
+	lastSessionCorrect    int
 	sessionStartTime      time.Time
 	showHelp              bool
 	cramCards             []core.Card
@@ -169,14 +174,15 @@ func NewModelWithAI(repo core.Repository, scheduler core.Scheduler, provider ai.
 }
 
 type ModelOptions struct {
-	AIProvider     ai.Provider
-	AIProviderName string
-	AITemplates    map[string]map[string]string
-	AutoPlayAudio  bool
-	ImportPath     string
-	ExportPath     string
-	OnConfigChange func(string, map[string]map[string]string, bool)
-	Logger         *app.LeveledLogger // Add logger option
+	AIProvider          ai.Provider
+	AIProviderName      string
+	AITemplates         map[string]map[string]string
+	AutoPlayAudio       bool
+	StrictNormalization bool
+	ImportPath          string
+	ExportPath          string
+	OnConfigChange      func(string, map[string]map[string]string, bool, bool)
+	Logger              *app.LeveledLogger // Add logger option
 }
 
 func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts ModelOptions) *Model {
@@ -239,6 +245,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 	}
 
 	autoPlayAudio := opts.AutoPlayAudio
+	strictNormalization := opts.StrictNormalization
 	provider := opts.AIProvider
 	if provider == nil {
 		switch providerName {
@@ -275,26 +282,27 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 	}
 
 	return &Model{
-		repo:            repo,
-		scheduler:       scheduler,
-		aiProvider:      provider,
-		aiProviderName:  providerName,
-		aiTemplates:     templates,
-		aiTemplateSets:  sets,
-		aiTemplateIndex: aiTemplateIndex,
-		autoPlayAudio:   autoPlayAudio,
-		width:           80,
-		height:          24,
-		activeView:      ViewDashboard,
-		breakpoint:      BreakpointMedium,
-		status:          "Ready",
-		aiInput:         "der Kaffee",
-		importPath:      filepath.Clean(importPath),
-		exportPath:      filepath.Clean(exportPath),
-		onConfigChange:  opts.OnConfigChange,
-		browserSelected: make(map[string]bool),
-		deckSelected:    make(map[string]bool),
-		logger:          logger, // Set the logger
+		repo:                repo,
+		scheduler:           scheduler,
+		aiProvider:          provider,
+		aiProviderName:      providerName,
+		aiTemplates:         templates,
+		aiTemplateSets:      sets,
+		aiTemplateIndex:     aiTemplateIndex,
+		autoPlayAudio:       autoPlayAudio,
+		strictNormalization: strictNormalization,
+		width:               80,
+		height:              24,
+		activeView:          ViewDashboard,
+		breakpoint:          BreakpointMedium,
+		status:              "Ready",
+		aiInput:             "der Kaffee",
+		importPath:          filepath.Clean(importPath),
+		exportPath:          filepath.Clean(exportPath),
+		onConfigChange:      opts.OnConfigChange,
+		browserSelected:     make(map[string]bool),
+		deckSelected:        make(map[string]bool),
+		logger:              logger, // Set the logger
 	}
 }
 

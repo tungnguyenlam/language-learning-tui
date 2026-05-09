@@ -30,12 +30,14 @@ def test_new_decks_visibility():
             # Go to Decks
             agent.act("2")
             agent.wait_for_text("Decks", timeout=5.0)
-            
-            # Check for new decks
-            agent.wait_for_text("Science & Technology", timeout=5.0)
-            agent.wait_for_text("German Proverbs & Idioms", timeout=5.0)
-            agent.wait_for_text("German Comprehensive", timeout=5.0)
-            
+
+            # Check for new decks using search
+            for search_term, deck_name in [("Science", "Science & Technology"), ("Proverbs", "German Proverbs & Idioms"), ("Comprehensive", "German Comprehensive")]:
+                agent.act("/")
+                agent.act(search_term)
+                agent.act("<Enter>")
+                agent.wait_for_text(deck_name, timeout=5.0)
+                agent.act("<Esc>") # Clear filter for next search
         finally:
             agent.close()
 

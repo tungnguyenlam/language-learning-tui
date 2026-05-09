@@ -1,0 +1,31 @@
+#deck:Art & Culture
+art-1	das Kunstwerk	work of art	Ein geschaffenes Werk der bildenden Kunst.	b2 c1 art noun
+art-2	die Ausstellung	exhibition	Eine öffentliche Schau von Kunstwerken.	b2 art noun
+art-3	die Vernissage	opening (of an exhibition)	Die Eröffnungsfeier einer Kunstausstellung.	c1 art noun
+art-4	das Gemälde	painting	Ein Bild, das mit Farben auf eine Fläche gemalt wurde.	b2 art noun
+art-5	die Skulptur	sculpture	Ein dreidimensionales Kunstwerk.	b2 art noun
+art-6	der Bildhauer	sculptor	Ein Künstler, der Skulpturen schafft.	b2 art noun
+art-7	das Atelier	studio	Die Werkstatt eines Künstlers.	b2 art noun
+art-8	die Leinwand	canvas	Das Material, auf dem oft gemalt wird.	b2 art noun
+art-9	der Pinselstrich	brushstroke	Die Spur, die ein Pinsel auf der Leinwand hinterlässt.	c1 art noun
+art-10	die Epoche	era/epoch	Ein längerer Zeitabschnitt in der Kunstgeschichte.	b2 art noun
+art-11	der Kubismus	Cubism	Eine Stilrichtung der modernen Kunst.	b2 art noun
+art-12	der Impressionismus	Impressionism	Eine Stilrichtung der Kunst im späten 19. Jahrhundert.	b2 art noun
+art-13	der Expressionismus	Expressionism	Eine Stilrichtung der Kunst im frühen 20. Jahrhundert.	b2 art noun
+art-14	zeitgenössisch	contemporary	Kunst, die in der Gegenwart entsteht.	b2 art adjective
+art-15	abstrakt	abstract	Nicht gegenständlich.	b2 art adjective
+art-16	gegenständlich	representational/figurative	Kunst, die reale Dinge darstellt.	c1 art adjective
+art-17	das Meisterwerk	masterpiece	Ein besonders gelungenes Kunstwerk.	b2 art noun
+art-18	die Galerie	gallery	Ein Ort, an dem Kunst ausgestellt und verkauft wird.	b2 art noun
+art-19	der Kurator	curator	Person, die eine Ausstellung organisiert.	c1 art noun
+art-20	die Ästhetik	aesthetics	Die Lehre von der Schönheit.	c1 art noun
+art-21	interpretieren	to interpret	Ein Kunstwerk deuten.	b2 art verb
+art-22	skizzieren	to sketch	Eine vorläufige Zeichnung anfertigen.	b2 art verb
+art-23	verewigen	to immortalize	In einem Kunstwerk festhalten.	c1 art verb
+art-24	inszenieren	to stage	Etwas wirkungsvoll zur Schau stellen.	c1 art verb
+art-25	der Dirigent	conductor	Leiter eines Orchesters.	b2 music noun
+art-26	die Partitur	score	Die Gesamtanlage eines Musikstücks in Noten.	c1 music noun
+art-27	das Lampenfieber	stage fright	Nervosität vor einem Auftritt.	b2 theater noun
+art-28	die Uraufführung	premiere	Die allererste Aufführung eines Werks.	c1 theater noun
+art-29	der Beifall	applause	Zustimmung durch Klatschen.	b2 culture noun
+art-30	die Kritik	review/criticism	Die Beurteilung eines Kunstwerks.	b2 culture noun

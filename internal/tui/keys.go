@@ -168,6 +168,7 @@ func (m *Model) textInputActive() bool {
 		(m.activeView == ViewImport && m.editingExportTag) ||
 		m.taggingCards ||
 		m.searchingBrowser ||
+		m.searchingTags ||
 		m.searchingDecks ||
 		m.searchingAI ||
 		m.drafting // AI drafting also uses input
@@ -251,7 +252,7 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 				m.typingChecked = true
 				if len(m.dueCards) > 0 {
 					card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
-					m.typingCorrect = normalizeAnswer(m.typedAnswer) == normalizeAnswer(card.Answer)
+					m.typingCorrect = m.normalizeAnswer(m.typedAnswer) == m.normalizeAnswer(card.Answer)
 					m.revealState = RevealRevealed
 					m.revealProgress = 100
 					return m.loadReviewPredictions(card.ID), true
@@ -651,7 +652,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 				}
 			}
 			if m.onConfigChange != nil {
-				m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio)
+				m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
 			}
 			return nil, true
 		case "esc":
@@ -667,7 +668,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 				}
 			}
 			if m.onConfigChange != nil {
-				m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio)
+				m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
 			}
 			return nil, true
 		case "backspace":
@@ -697,7 +698,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "down", "j":
-		if m.settingsCursor < 5 {
+		if m.settingsCursor < 6 {
 			m.settingsCursor++
 		}
 		return nil, true
@@ -739,6 +740,24 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, true
 	}
 
+	if m.searchingTags {
+		switch msg.String() {
+		case "enter", "\r", "\n", "esc":
+			m.searchingTags = false
+			return m.loadBrowserCards(), true
+		case "backspace":
+			if len(m.browserTag) > 0 {
+				m.browserTag = trimLastRune(m.browserTag)
+			}
+			return m.loadBrowserCards(), true
+		}
+		if ch, ok := singlePrintableInput(msg.String()); ok {
+			m.browserTag += ch
+			return m.loadBrowserCards(), true
+		}
+		return nil, true
+	}
+
 	if m.searchingBrowser {
 		switch msg.String() {
 		case "enter", "\r", "\n", "esc":
@@ -767,6 +786,10 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	case "/":
 		m.searchingBrowser = true
 		m.browserSearch = ""
+		return nil, true
+	case "#":
+		m.searchingTags = true
+		m.browserTag = ""
 		return nil, true
 	case "m":
 		if len(m.browserCards) > 0 {
@@ -971,6 +994,8 @@ func (m *Model) updateAIKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 
 func (m *Model) updateSessionSummaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	// Any key returns to dashboard and resets session stats
+	m.lastSessionReviewed = m.sessionReviewed
+	m.lastSessionCorrect = m.sessionCorrect
 	m.sessionReviewed = 0
 	m.sessionCorrect = 0
 	return m.updateView(ViewDashboard), true

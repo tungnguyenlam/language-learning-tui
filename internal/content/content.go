@@ -3,6 +3,7 @@ package content
 import (
 	"embed"
 	"path/filepath"
+	"strings"
 
 	"deutsch-tui/internal/core"
 )
@@ -56,33 +57,23 @@ func (s *GoSource) LoadDecks() ([]core.Deck, error) {
 var EmbeddedDecks embed.FS
 
 func EmbeddedDeckPaths() []string {
-	return []string{
-		filepath.Join("testdata/german-decks", "a1-essential.tsv"),
-		filepath.Join("testdata/german-decks", "a1-food-drink.tsv"),
-		filepath.Join("testdata/german-decks", "a1-health-body.tsv"),
-		filepath.Join("testdata/german-decks", "a1-travel.tsv"),
-		filepath.Join("testdata/german-decks", "a2-daily-life.tsv"),
-		filepath.Join("testdata/german-decks", "a2-grammar-essentials.tsv"),
-		filepath.Join("testdata/german-decks", "a2-shopping-services.tsv"),
-		filepath.Join("testdata/german-decks", "a2-transport-directions.tsv"),
-		filepath.Join("testdata/german-decks", "b1-business-professional.tsv"),
-		filepath.Join("testdata/german-decks", "b1-apartment-housing.tsv"),
-		filepath.Join("testdata/german-decks", "b1-emotions-feelings.tsv"),
-		filepath.Join("testdata/german-decks", "b1-idioms.tsv"),
-		filepath.Join("testdata/german-decks", "b1-false-friends.tsv"),
-		filepath.Join("testdata/german-decks", "b1-phrasal-verbs.tsv"),
-		filepath.Join("testdata/german-decks", "b1-workplace-office.tsv"),
-		filepath.Join("testdata/german-decks", "b1-travel-tourism.tsv"),
-		filepath.Join("testdata/german-decks", "b1-technology-internet.tsv"),
-		filepath.Join("testdata/german-decks", "b2-healthcare-systems.tsv"),
-		filepath.Join("testdata/german-decks", "b2-public-services-civic-life.tsv"),
-		filepath.Join("testdata/german-decks", "b2-advanced.tsv"),
+	entries, err := EmbeddedDecks.ReadDir("testdata/german-decks")
+	if err != nil {
+		return nil
 	}
+	var paths []string
+	for _, entry := range entries {
+		if strings.HasSuffix(entry.Name(), ".tsv") {
+			paths = append(paths, filepath.Join("testdata/german-decks", entry.Name()))
+		}
+	}
+	return paths
 }
 
 func AvailableDeckNames() []string {
-	names := []string{}
-	for _, path := range EmbeddedDeckPaths() {
+	paths := EmbeddedDeckPaths()
+	names := make([]string, 0, len(paths))
+	for _, path := range paths {
 		name := filepath.Base(path)
 		name = name[:len(name)-4]
 		names = append(names, name)

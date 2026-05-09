@@ -1198,7 +1198,7 @@ func parseChoices(raw string) []string {
 	return strings.Split(raw, "|||")
 }
 
-func (s *Store) Cards(ctx context.Context, deckID string, search string) ([]core.Card, error) {
+func (s *Store) Cards(ctx context.Context, deckID string, search string, tag string) ([]core.Card, error) {
 	query := `
 		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, c.audio, c.tags, COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0), COALESCE(rs.interval_seconds, 0)
 		FROM cards c
@@ -1216,7 +1216,13 @@ func (s *Store) Cards(ctx context.Context, deckID string, search string) ([]core
 		searchPattern := "%" + search + "%"
 		args = append(args, searchPattern, searchPattern, searchPattern)
 	}
+	if tag != "" {
+		query += ` AND c.tags LIKE ?`
+		args = append(args, "%"+tag+"%")
+	}
 	query += ` ORDER BY c.id LIMIT 1000`
+
+	// log.Printf("Cards query: %s, args: %v", query, args)
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {

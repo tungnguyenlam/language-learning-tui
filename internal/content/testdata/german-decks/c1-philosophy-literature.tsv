@@ -1,0 +1,88 @@
+#deck:Philosophy & Literature
+phil-1	das Sein	being/existence	Central concept in existential philosophy. Heidegger's 'Sein und Zeit'.	b2 c1 philosophy noun
+phil-2	das Dasein	existence/being-there	Heidegger's term for human existence, literally 'being-there'.	b2 c1 philosophy noun
+phil-3	die Weltanschauung	worldview	A comprehensive view of the world and human life.	b2 c1 philosophy noun
+phil-4	die Erkenntnis	knowledge/insight/recognition	Key term in epistemology (Erkenntnistheorie).	b2 c1 philosophy noun
+phil-5	die Wahrheit	truth	Nietzsche: 'Was ist Wahrheit?'	b2 c1 philosophy noun
+phil-6	die Freiheit	freedom/liberty	Central to Kant's moral philosophy and existentialism.	b2 c1 philosophy noun
+phil-7	die Gerechtigkeit	justice/fairness	Plato's 'Politeia' (The Republic) explores this concept.	b2 c1 philosophy noun
+phil-8	die Moral	morality/morals	Kant's 'Kritik der praktischen Vernunft'.	b2 c1 philosophy noun
+phil-9	die Ethik	ethics	Branch of philosophy dealing with right and wrong.	b2 c1 philosophy noun
+phil-10	die Dialektik	dialectics	Hegel's method: thesis-antithesis-synthesis.	b2 c1 philosophy noun
+phil-11	die Aufklärung	Enlightenment	Kant: 'Aufklärung ist der Ausgang des Menschen aus seiner selbstverschuldeten Unmündigkeit.'	b2 c1 philosophy noun
+phil-12	der Idealismus	idealism	Philosophical tradition from Kant to Hegel.	b2 c1 philosophy noun
+phil-13	der Existentialismus	existentialism	Jaspers, Heidegger, Sartre.	b2 c1 philosophy noun
+phil-14	der Nihilismus	nihilism	Nietzsche: 'Gott ist tot.'	b2 c1 philosophy noun
+phil-15	die Vernunft	reason	Kant's 'Kritik der reinen Vernunft'.	b2 c1 philosophy noun
+phil-16	die Pflicht	duty	Kant's categorical imperative acts from duty.	b2 c1 philosophy noun
+phil-17	der Übermensch	overman/superman	Nietzsche's concept in 'Also sprach Zarathustra'.	b2 c1 philosophy noun
+phil-18	das Gewissen	conscience	Central to moral philosophy and ethics.	b2 c1 philosophy noun
+phil-19	denken	to think		b2 c1 philosophy verb
+phil-20	reflektieren	to reflect		b2 c1 philosophy verb
+phil-21	hinterfragen	to question/challenge		b2 c1 philosophy verb
+phil-22	begreifen	to comprehend/grasp		b2 c1 philosophy verb
+phil-23	schließen	to conclude/deduce		b2 c1 philosophy verb
+phil-24	ableiten	to derive/deduce		b2 c1 philosophy verb
+phil-25	Immanuel Kant (1724-1804)	Critique of Pure Reason  categorical imperative	Königsberg philosopher, founder of German idealism.	b2 c1 philosophy philosopher
+phil-26	Georg W.F. Hegel (1770-1831)	Phenomenology of Spirit  dialectical method	Major figure in German idealism.	b2 c1 philosophy philosopher
+phil-27	Friedrich Nietzsche (1844-1900)	Thus Spoke Zarathustra  God is dead  will to power	Radical critic of morality and religion.	b2 c1 philosophy philosopher
+phil-28	Martin Heidegger (1889-1976)	Being and Time  Dasein  question of Being	Most influential 20th-century German philosopher.	b2 c1 philosophy philosopher
+phil-29	Arthur Schopenhauer (1788-1860)	The World as Will and Representation	Pessimistic philosophy, influenced Nietzsche and Wittgenstein.	b2 c1 philosophy philosopher
+phil-30	Gottfried Wilhelm Leibniz (1646-1716)	Monadology  best of all possible worlds	Also mathematician, co-inventor of calculus.	b2 c1 philosophy philosopher
+phil-31	die Dichtung	poetry/literature	General term for literary creation.	b2 c1 literature noun
+phil-32	der Roman	novel	der Bildungsroman = coming-of-age novel.	b2 c1 literature noun
+phil-33	die Erzählung	narrative/story	Short prose fiction, longer than a Kurzgeschichte.	b2 c1 literature noun
+phil-34	die Kurzgeschichte	short story	Popular form in post-war German literature.	b2 c1 literature noun
+phil-35	das Drama	drama/play	German drama tradition: Schiller, Goethe, Brecht.	b2 c1 literature noun
+phil-36	das Gedicht	poem	Lyric poetry (Lyrik) is a major German literary tradition.	b2 c1 literature noun
+phil-37	die Lyrik	lyric poetry	One of the three main literary genres.	b2 c1 literature noun
+phil-38	die Epik	epic/narrative literature	Prose fiction genre.	b2 c1 literature noun
+phil-39	die Tragödie	tragedy	Classical form adapted by Schiller and Goethe.	b2 c1 literature noun
+phil-40	die Komödie	comedy	Brecht's 'Dreigroschenoper' is a famous example.	b2 c1 literature noun
+phil-41	der Protagonist	protagonist	Main character in a narrative.	b2 c1 literature noun
+phil-42	der Antagonist	antagonist	Opposing character to the protagonist.	b2 c1 literature noun
+phil-43	die Handlung	plot/action	The sequence of events in a narrative.	b2 c1 literature noun
+phil-44	der Schauplatz	setting/scene	Where and when the story takes place.	b2 c1 literature noun
+phil-45	die Metapher	metaphor	A figure of speech making an implicit comparison.	b2 c1 literature noun
+phil-46	die Symbolik	symbolism	Use of symbols to represent ideas.	b2 c1 literature noun
+phil-47	die Ironie	irony	Saying the opposite of what one means.	b2 c1 literature noun
+phil-48	der Erzähler	narrator	Person or voice telling the story.	b2 c1 literature noun
+phil-49	die Perspektive	perspective/point of view	Ich-Erzähler = first-person narrator.	b2 c1 literature noun
+phil-50	das Motiv	motif	Recurring theme or element in literature.	b2 c1 literature noun
+phil-51	Johann Wolfgang von Goethe (1749-1832)	Faust  Die Leiden des jungen Werthers  Wilhelm Meister	Germany's greatest literary figure, Weimar Classicism.	b2 c1 literature author
+phil-52	Friedrich Schiller (1759-1805)	Die Räuber  Wilhelm Tell  An die Freude	Dramatist and poet, friend of Goethe.	b2 c1 literature author
+phil-53	Thomas Mann (1875-1955)	Buddenbrooks  Der Zauberberg  Doktor Faustus	Nobel Prize 1929. Exile in USA.	b2 c1 literature author
+phil-54	Franz Kafka (1883-1924)	Die Verwandlung  Der Prozess  Das Schloss	Prague-born, wrote in German. 'Kafkaesque'.	b2 c1 literature author
+phil-55	Hermann Hesse (1877-1962)	Steppenwolf  Siddhartha  Das Glasperlenspiel	Nobel Prize 1946. Themes of self-discovery.	b2 c1 literature author
+phil-56	Bertolt Brecht (1898-1956)	Die Dreigroschenoper  Mutter Courage  Episches Theater	Revolutionized modern theater.	b2 c1 literature author
+phil-57	Erich Maria Remarque (1898-1970)	Im Westen nichts Neues (All Quiet on the Western Front)	Anti-war novel, 1929. Exile literature.	b2 c1 literature author
+phil-58	Heinrich Böll (1917-1985)	Die verlorene Ehre der Katharina Blum  Gruppenbild mit Dame	Nobel Prize 1972. Trümmerliteratur (rubble literature).	b2 c1 literature author
+phil-59	Günter Grass (1927-2015)	Die Blechtrommel (The Tin Drum)	Nobel Prize 1999. Danzig Trilogy.	b2 c1 literature author
+phil-60	Sturm und Drang	Storm and Stress (1767-1785)	Youth movement: Goethe, Schiller. Emotion over reason.	b2 c1 literature period
+phil-61	Weimarer Klassik	Weimar Classicism (1786-1832)	Goethe and Schiller in Weimar. Harmony and beauty.	b2 c1 literature period
+phil-62	die Romantik	Romanticism (1795-1848)	Novalis, E.T.A. Hoffmann, Tieck. Imagination and nature.	b2 c1 literature period
+phil-63	der Realismus	Realism (1848-1890)	Fontane, Keller. Detailed portrayal of everyday life.	b2 c1 literature period
+phil-64	der Naturalismus	Naturalism (1880-1900)	Hauptmann. Scientific observation of life.	b2 c1 literature period
+phil-65	der Expressionismus	Expressionism (1910-1925)	Distorted reality, inner experience. Trakl, Heym.	b2 c1 literature period
+phil-66	die Exilliteratur	exile literature (1933-1945)	Thomas Mann, Brecht, Remarque fled Nazi Germany.	b2 c1 literature period
+phil-67	die Trümmerliteratur	rubble literature (1945-1950)	Post-war literature: Böll, Borchert. Germany in ruins.	b2 c1 literature period
+phil-68	Edel sei der Mensch, hilfreich und gut!	Noble be man, helpful and good!	Goethe, 'Das Göttliche' (1783).	b2 c1 literature quote
+phil-69	Alle Menschen werden Brüder.	All men become brothers.	Schiller, 'An die Freude' (1785), set by Beethoven.	b2 c1 literature quote
+phil-70	Handle nur nach derjenigen Maxime, durch die du zugleich wollen kannst, dass sie ein allgemeines Gesetz werde.	Act only according to that maxim by which you can at the same time will that it should become a universal law.	Kant's categorical imperative, Groundwork (1785).	b2 c1 philosophy quote
+phil-71	Was mich nicht umbringt, macht mich stärker.	What does not kill me makes me stronger.	Nietzsche, 'Götzen-Dämmerung' (1889).	b2 c1 philosophy quote
+phil-72	Der Mensch ist das Seiende, das sich in seinem Sein zu diesem Sein verhält.	Man is the entity which relates to its being.	Heidegger, 'Sein und Zeit' (1927).	b2 c1 philosophy quote
+phil-73	verfassen	to compose/write	Formal: ein Werk verfassen.	b2 c1 literature verb
+phil-74	erschaffen	to create	Künstler erschaffen Kunstwerke.	b2 c1 literature verb
+phil-75	deuten	to interpret/indicate	Ein text wird gedeutet.	b2 c1 literature verb
+phil-76	interpretieren	to interpret	Ein Gedicht interpretieren.	b2 c1 literature verb
+phil-77	umgestalten	to transform/reshape	Die Gesellschaft umgestalten.	b2 c1 literature verb
+phil-78	kritisieren	to criticize	Gesellschaft kritisieren.	b2 c1 literature verb
+phil-79	die Bildung	education/formation/self-cultivation	Uniquely German concept: holistic personal development.	b2 c1 culture noun
+phil-80	der Zeitgeist	spirit of the times	Hegel popularized this concept.	b2 c1 culture noun
+phil-81	der Weltschmerz	world-weariness/world-pain	Romantic-era melancholy about the world's imperfections.	b2 c1 culture noun
+phil-82	die Gemütlichkeit	coziness/comfort	Warm, friendly atmosphere. No direct English equivalent.	b2 c1 culture noun
+phil-83	das Fingerspitzengefühl	intuitive flair/tact	Literally 'fingertip feeling'. Tactful sensitivity.	b2 c1 culture noun
+phil-84	die Schadenfreude	malicious joy/gloating	Taking pleasure in others' misfortune. Borrowed into English.	b2 c1 culture noun
+phil-85	die Angst	anxiety/dread	Existential concept in Heidegger and Kierkegaard.	b2 c1 culture noun
+phil-86	die Heimat	homeland/home	Deep emotional attachment to one's region. Untranslatable.	b2 c1 culture noun
+phil-87	die Wanderlust	desire to travel/roam	Strong urge to travel. Borrowed into English.	b2 c1 culture noun

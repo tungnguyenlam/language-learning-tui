@@ -1,5 +1,27 @@
 # Done Backlog
 
+## 2026-05-09: Content Expansion and UI Polish (Batch H)
+
+### Content & Learning
+- Added B2-C1 **Art & Culture** deck in TSV format for easier management.
+- Migrated multiple Go-based decks (**Philosophy, Science, Proverbs, Environment, News**) to TSV format, consolidating content and simplifying the codebase.
+- Improved **Standard Content Seeding** to include all embedded TSV decks automatically.
+
+### UI & UX
+- Added a **Quick Actions** menu to the Dashboard for one-key access to common views (Review, Cram, Browser, etc.).
+- Integrated **Last Session Summary** on the Dashboard, showing cards reviewed and accuracy from the previous study session.
+- Implemented **Tag Filtering** in the Browser View using the `#` key.
+- Synced the **Active Deck** selection from the Decks view with the Browser filter.
+
+### Core & Settings
+- Added **Strict Character Normalization** setting to toggle whether German special characters (ß, ä, ö, ü) must be typed exactly in exercises.
+- Refactored `EmbeddedDeckPaths` to be **dynamic**, allowing new TSV decks to be discovered and loaded without code changes.
+
+### Verification
+- Added 8 new **E2E Tests** in `e2e_tests/test_batch_h.py`.
+- Verified all new features pass TUI-tester validation.
+- Current E2E state: 144/145 tests pass.
+
 ## 2026-05-09: Reliability, Content & UX (Batch G)
 
 ### Content & Learning

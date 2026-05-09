@@ -2,6 +2,8 @@ package content
 
 import (
 	"strings"
+
+	"deutsch-tui/internal/core"
 )
 
 func stripArticles(s string) string {
@@ -49,4 +51,28 @@ func findWordInSentence(sentence, word string) (int, int) {
 	}
 
 	return -1, -1
+}
+
+func DecksFromNotes(notes []core.Note) []core.Deck {
+	byID := make(map[string]int)
+	decks := make([]core.Deck, 0, 1)
+	for _, note := range notes {
+		deckID := strings.TrimSpace(note.DeckID)
+		if deckID == "" {
+			deckID = "Imported"
+			note.DeckID = deckID
+		}
+		index, ok := byID[deckID]
+		if !ok {
+			index = len(decks)
+			byID[deckID] = index
+			decks = append(decks, core.Deck{
+				ID:          deckID,
+				Name:        deckID,
+				Description: "Imported from Anki TSV.",
+			})
+		}
+		decks[index].Notes = append(decks[index].Notes, note)
+	}
+	return decks
 }

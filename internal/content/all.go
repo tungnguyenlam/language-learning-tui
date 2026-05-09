@@ -1,15 +1,33 @@
 package content
 
-import "deutsch-tui/internal/core"
+import (
+	"path/filepath"
+
+	"deutsch-tui/internal/core"
+)
 
 func StandardDecks() []core.Deck {
-	return []core.Deck{
+	decks := []core.Deck{
 		StarterDeck(),
-		ScienceTechDeck(),
 		GermanExpandedDeck(),
-		ProverbsDeck(),
-		PhilosophyLiteratureDeck(),
-		NewsDeck(),
-		EnvironmentDeck(),
 	}
+
+	// Load all embedded TSV decks
+	embeddedPaths := EmbeddedDeckPaths()
+	for _, path := range embeddedPaths {
+		file, err := EmbeddedDecks.Open(path)
+		if err != nil {
+			continue
+		}
+		notes, err := ImportAnkiTSV(file, ImportOptions{
+			DefaultDeck: filepath.Base(path)[:len(filepath.Base(path))-4],
+		})
+		file.Close()
+		if err != nil {
+			continue
+		}
+		decks = append(decks, DecksFromNotes(notes)...)
+	}
+
+	return decks
 }

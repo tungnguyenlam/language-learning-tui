@@ -135,6 +135,29 @@ func (m *Model) renderSettings(x, y int) string {
 		Height: 1,
 	})
 
+	strictIdx := 6
+	prefix = "  "
+	itemStyle = lipgloss.NewStyle()
+	if strictIdx == m.settingsCursor {
+		prefix = "> "
+		itemStyle = itemStyle.Bold(true).Foreground(lipgloss.Color("212"))
+	}
+	strictStatus := "off"
+	if m.strictNormalization {
+		strictStatus = "on"
+	}
+	strictItem := fmt.Sprintf("%sStrict Normalization (ss vs ß): %s", prefix, strictStatus)
+	rowY = layout.Y + strings.Count(b.String(), "\n")
+	b.WriteString(itemStyle.Render(strictItem) + "\n")
+	m.hitboxes = append(m.hitboxes, Hitbox{
+		ID:     fmt.Sprintf("settings-%d", strictIdx),
+		View:   ViewSettings,
+		X:      layout.X,
+		Y:      rowY,
+		Width:  lipgloss.Width(strictItem),
+		Height: 1,
+	})
+
 	if m.editingTemplate {
 		b.WriteString("\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("EDITING") + " - Enter to save, Esc to cancel.")
 	} else {

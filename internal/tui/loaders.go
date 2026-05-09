@@ -15,7 +15,7 @@ func (m *Model) loadBrowserCards() tea.Cmd {
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		cards, err := m.repo.Cards(ctx, m.browserDeckID, m.browserSearch)
+		cards, err := m.repo.Cards(ctx, m.browserDeckID, m.browserSearch, m.browserTag)
 		if err != nil {
 			return err
 		}
@@ -47,7 +47,7 @@ func (m *Model) loadCramCards() tea.Cmd {
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		cards, err := m.repo.Cards(ctx, "", "")
+		cards, err := m.repo.Cards(ctx, "", "", "")
 		if err != nil {
 			return err
 		}

@@ -31,6 +31,8 @@ def test_audio_autoplay_toggle_and_persistence():
             agent.act("<Enter>")
             agent.wait_for_text("Auto-play audio: on")
             agent.wait_for_text("Auto-play audio enabled")
+            agent.wait_until_stable()
+            time.sleep(1.0) # EXTRA WAIT FOR DISK IO
             
             # Restart and check persistence
             agent.close()

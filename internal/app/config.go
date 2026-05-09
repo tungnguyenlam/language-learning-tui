@@ -13,12 +13,13 @@ const (
 )
 
 type Config struct {
-	Theme         string                       `json:"theme"`
-	Keymap        string                       `json:"keymap"`
-	AIProvider    string                       `json:"ai_provider"`
-	LogLevel      string                       `json:"log_level"`
-	AutoPlayAudio bool                         `json:"autoplay_audio"`
-	AITemplates   map[string]map[string]string `json:"ai_templates,omitempty"`
+	Theme               string                       `json:"theme"`
+	Keymap              string                       `json:"keymap"`
+	AIProvider          string                       `json:"ai_provider"`
+	LogLevel            string                       `json:"log_level"`
+	AutoPlayAudio       bool                         `json:"autoplay_audio"`
+	StrictNormalization bool                         `json:"strict_normalization"`
+	AITemplates         map[string]map[string]string `json:"ai_templates,omitempty"`
 }
 
 func DefaultConfig() Config {
@@ -99,7 +100,7 @@ func LoadOrCreateConfig(dataDir string) (Config, error) {
 }
 
 func SaveConfig(dataDir string, cfg Config) error {
-	raw, err := json.MarshalIndent(cfg.withDefaults(), "", "  ")
+	raw, err := json.MarshalIndent(cfg, "", "  ")
 	if err != nil {
 		return err
 	}
@@ -135,12 +136,13 @@ func (c Config) withDefaults() Config {
 
 func unmarshalConfig(raw []byte, cfg *Config) error {
 	type configFile struct {
-		Theme         string          `json:"theme"`
-		Keymap        string          `json:"keymap"`
-		AIProvider    string          `json:"ai_provider"`
-		LogLevel      string          `json:"log_level"`
-		AutoPlayAudio bool            `json:"autoplay_audio"`
-		AITemplates   json.RawMessage `json:"ai_templates,omitempty"`
+		Theme               string          `json:"theme"`
+		Keymap              string          `json:"keymap"`
+		AIProvider          string          `json:"ai_provider"`
+		LogLevel            string          `json:"log_level"`
+		AutoPlayAudio       bool            `json:"autoplay_audio"`
+		StrictNormalization bool            `json:"strict_normalization"`
+		AITemplates         json.RawMessage `json:"ai_templates,omitempty"`
 	}
 
 	var file configFile
@@ -152,6 +154,7 @@ func unmarshalConfig(raw []byte, cfg *Config) error {
 	cfg.AIProvider = file.AIProvider
 	cfg.LogLevel = file.LogLevel
 	cfg.AutoPlayAudio = file.AutoPlayAudio
+	cfg.StrictNormalization = file.StrictNormalization
 
 	if len(file.AITemplates) == 0 || string(file.AITemplates) == "null" {
 		return nil

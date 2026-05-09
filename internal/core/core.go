@@ -135,7 +135,7 @@ type Repository interface {
 	SetDeckLimits(ctx context.Context, deckID string, newLimit, reviewLimit int) error
 	Statistics(ctx context.Context) (Statistics, error)
 	DeckStatistics(ctx context.Context, deckID string) (Statistics, error)
-	Cards(ctx context.Context, deckID string, search string) ([]Card, error)
+	Cards(ctx context.Context, deckID string, search string, tag string) ([]Card, error)
 	ReviewsPerDay(ctx context.Context, days int) (map[string]int, error)
 	ReviewHistory(ctx context.Context, cardID string, limit int) ([]ReviewLog, error)
 	DeleteCard(ctx context.Context, cardID string) error

@@ -35,6 +35,7 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+	pCfg := &cfg
 	logFile, logger, err := app.OpenLog(dir)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -71,18 +72,19 @@ func main() {
 
 	scheduler := srs.NewScheduler()
 	program := tea.NewProgram(tui.NewModelWithOptions(store, scheduler, tui.ModelOptions{
-		AIProvider:     nil,
-		AIProviderName: cfg.AIProvider,
-		AITemplates:    cfg.AITemplates,
-		AutoPlayAudio:  cfg.AutoPlayAudio,
-		ImportPath:     filepath.Join(dir, "import.tsv"),
-		ExportPath:     filepath.Join(dir, "export.tsv"),
-		Logger:         leveledLogger, // Pass the logger
-		OnConfigChange: func(name string, tmpls map[string]map[string]string, autoPlayAudio bool) {
-			cfg.AIProvider = name
-			cfg.AITemplates = tmpls
-			cfg.AutoPlayAudio = autoPlayAudio
-			if err := app.SaveConfig(dir, cfg); err != nil {
+		AIProvider:          nil,
+		AIProviderName:      cfg.AIProvider,
+		AITemplates:         cfg.AITemplates,
+		StrictNormalization: cfg.StrictNormalization,
+		ImportPath:          filepath.Join(dir, "import.tsv"),
+		ExportPath:          filepath.Join(dir, "export.tsv"),
+		Logger:              leveledLogger, // Pass the logger
+		OnConfigChange: func(name string, tmpls map[string]map[string]string, autoPlayAudio bool, strictNormalization bool) {
+			pCfg.AIProvider = name
+			pCfg.AITemplates = tmpls
+			pCfg.AutoPlayAudio = autoPlayAudio
+			pCfg.StrictNormalization = strictNormalization
+			if err := app.SaveConfig(dir, *pCfg); err != nil {
 				leveledLogger.Error("save config: %v", err)
 			}
 		},

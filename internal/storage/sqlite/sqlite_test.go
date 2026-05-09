@@ -750,7 +750,7 @@ func TestCards_DeckFilter(t *testing.T) {
 		t.Fatalf("upsert deck: %v", err)
 	}
 
-	cards, err := store.Cards(ctx, deck.ID, "")
+	cards, err := store.Cards(ctx, deck.ID, "", "")
 	if err != nil {
 		t.Fatalf("cards: %v", err)
 	}
@@ -779,7 +779,7 @@ func TestCards_SearchFilter(t *testing.T) {
 	firstCard := deck.Notes[0].Cards[0]
 	searchTerm := firstCard.Prompt[:5]
 
-	cards, err := store.Cards(ctx, "", searchTerm)
+	cards, err := store.Cards(ctx, "", searchTerm, "")
 	if err != nil {
 		t.Fatalf("cards: %v", err)
 	}
@@ -883,7 +883,7 @@ func TestAudioPersistence(t *testing.T) {
 		t.Fatalf("audio = %s, want audio.mp3", cards[0].Audio)
 	}
 
-	browserCards, err := store.Cards(ctx, "d1", "")
+	browserCards, err := store.Cards(ctx, "d1", "", "")
 	if err != nil {
 		t.Fatalf("cards: %v", err)
 	}
@@ -938,7 +938,7 @@ func TestSetCardsTags(t *testing.T) {
 	}
 
 	// Verify through Cards browser query too
-	cards, err := store.Cards(ctx, "d1", "")
+	cards, err := store.Cards(ctx, "d1", "", "")
 	if err != nil {
 		t.Fatalf("browser cards: %v", err)
 	}
@@ -949,7 +949,7 @@ func TestSetCardsTags(t *testing.T) {
 	}
 
 	// Verify searching by tag
-	searchResult, err := store.Cards(ctx, "d1", "tag1")
+	searchResult, err := store.Cards(ctx, "d1", "tag1", "")
 	if err != nil {
 		t.Fatalf("search browser cards: %v", err)
 	}

@@ -152,12 +152,22 @@ func (m *Model) seedStandardContent() tea.Cmd {
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
+		count := 0
 		for _, deck := range content.StandardDecks() {
 			if err := m.repo.UpsertDeck(ctx, deck); err != nil {
 				return err
 			}
+			count += len(deck.Notes)
 		}
-		return m.loadDecks()
+		loadedDecks, err := m.repo.Decks(ctx)
+		if err != nil {
+			return err
+		}
+		cards, err := m.repo.DueCards(ctx, time.Now(), 500)
+		if err != nil {
+			return err
+		}
+		return importDoneMsg{decks: loadedDecks, cards: cards, count: count, path: "Standard Content"}
 	}
 }
 
@@ -189,7 +199,8 @@ func (m *Model) importTSV() tea.Cmd {
 		if err != nil {
 			return fmt.Errorf("failed to parse TSV file '%s': %w", filepath.Base(path), err)
 		}
-		decks := decksFromNotes(notes)
+		decks := content.DecksFromNotes(
+			notes)
 		for _, deck := range decks {
 			if err := m.repo.UpsertDeck(ctx, deck); err != nil {
 				return fmt.Errorf("failed to save deck '%s': %w", deck.Name, err)
@@ -221,7 +232,7 @@ func (m *Model) exportTSV() tea.Cmd {
 		defer cancel()
 
 		var notes []core.Note
-		cards, err := m.repo.Cards(ctx, deckID, tag)
+		cards, err := m.repo.Cards(ctx, deckID, "", tag)
 		if err != nil {
 			return fmt.Errorf("failed to load cards for export: %w", err)
 		}
@@ -275,7 +286,8 @@ func (m *Model) importAPKG() tea.Cmd {
 		if err != nil {
 			return fmt.Errorf("failed to parse APKG file '%s': %w", filepath.Base(path), err)
 		}
-		decks := decksFromNotes(notes)
+		decks := content.DecksFromNotes(
+			notes)
 		for _, deck := range decks {
 			if err := m.repo.UpsertDeck(ctx, deck); err != nil {
 				return fmt.Errorf("failed to save deck '%s': %w", deck.Name, err)
@@ -306,7 +318,7 @@ func (m *Model) exportAPKG() tea.Cmd {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
 
-		cards, err := m.repo.Cards(ctx, deckID, tag)
+		cards, err := m.repo.Cards(ctx, deckID, "", tag)
 		if err != nil {
 			return fmt.Errorf("failed to load cards for export: %w", err)
 		}
@@ -350,7 +362,8 @@ func (m *Model) approveDraft() tea.Cmd {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
 
-		decks := decksFromNotes([]core.Note{draft.Note})
+		decks := content.DecksFromNotes(
+			[]core.Note{draft.Note})
 		for _, deck := range decks {
 			if err := m.repo.UpsertDeck(ctx, deck); err != nil {
 				return err
@@ -583,7 +596,7 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		}
 		m.status = fmt.Sprintf("Switched to %s AI provider", m.aiProviderName)
 		if m.onConfigChange != nil {
-			m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio)
+			m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
 		}
 
 	case 1, 2, 3:
@@ -608,7 +621,17 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		}
 		m.status = fmt.Sprintf("Auto-play audio %s", status)
 		if m.onConfigChange != nil {
-			m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio)
+			m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
+		}
+	case 6:
+		m.strictNormalization = !m.strictNormalization
+		status := "disabled"
+		if m.strictNormalization {
+			status = "enabled"
+		}
+		m.status = fmt.Sprintf("Strict normalization %s", status)
+		if m.onConfigChange != nil {
+			m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
 		}
 	}
 	return nil
@@ -642,7 +665,8 @@ func (m *Model) approveAllDrafts() tea.Cmd {
 		for _, d := range m.drafts {
 			notes = append(notes, d.Note)
 		}
-		decks := decksFromNotes(notes)
+		decks := content.DecksFromNotes(
+			notes)
 		for _, deck := range decks {
 			if err := m.repo.UpsertDeck(ctx, deck); err != nil {
 				return err

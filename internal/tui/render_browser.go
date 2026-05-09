@@ -35,8 +35,16 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		searchStyle = searchStyle.BorderForeground(lipgloss.Color("212"))
 		searchLabel = "TAGS"
 		b.WriteString(searchStyle.Render(fmt.Sprintf("%s: %s_", searchLabel, m.tagInput)) + "\n\n")
+	} else if m.searchingTags {
+		searchStyle = searchStyle.BorderForeground(lipgloss.Color("46"))
+		searchLabel = "FILTER BY TAG"
+		b.WriteString(searchStyle.Render(fmt.Sprintf("%s: %s_", searchLabel, m.browserTag)) + "\n\n")
 	} else {
-		b.WriteString(searchStyle.Render(fmt.Sprintf("%s: %s_", searchLabel, m.browserSearch)) + "\n\n")
+		filterText := ""
+		if m.browserTag != "" {
+			filterText = lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render(" [Tag: " + m.browserTag + "]")
+		}
+		b.WriteString(searchStyle.Render(fmt.Sprintf("%s: %s_", searchLabel, m.browserSearch)) + filterText + "\n\n")
 	}
 
 	if len(m.browserCards) == 0 {

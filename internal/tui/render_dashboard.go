@@ -97,8 +97,34 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 			fmt.Sprintf("  M:%d Y:%d N:%d", m.stats.MatureCards, m.stats.YoungCards, m.stats.NewCards) +
 			motivation)
 
+	quickActionsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
+	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
+	quickActionsBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("81")).
+		Padding(0, 1).
+		Width(layout.Width - 4).
+		Render(quickActionsStyle.Render("Quick Actions") + "\n" +
+			fmt.Sprintf("  %s %s  %s %s  %s %s  %s %s  %s %s  %s %s",
+				keyStyle.Render("[3]"), "Review",
+				keyStyle.Render("[9]"), "Cram",
+				keyStyle.Render("[8]"), "Browser",
+				keyStyle.Render("[4]"), "Stats",
+				keyStyle.Render("[5]"), "Import",
+				keyStyle.Render("[6]"), "AI Draft"))
+
 	var db strings.Builder
 	db.WriteString(titleStyle.Render("DASHBOARD") + "\n")
+
+	if m.lastSessionReviewed > 0 {
+		accuracy := 0.0
+		if m.lastSessionReviewed > 0 {
+			accuracy = float64(m.lastSessionCorrect) / float64(m.lastSessionReviewed) * 100
+		}
+		summaryStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Italic(true)
+		db.WriteString(summaryStyle.Render(fmt.Sprintf("Last Session: %d cards, %.1f%% accuracy", m.lastSessionReviewed, accuracy)) + "\n")
+	}
+
 	db.WriteString(headerBox + "\n")
 
 	queueY := strings.Count(db.String(), "\n")
@@ -111,8 +137,12 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 	m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-digest", View: ViewDashboard, X: layout.X + lipgloss.Width(progressBox) + 1, Y: layout.Y + progressY, Width: lipgloss.Width(dailyDigestBox), Height: lipgloss.Height(dailyDigestBox)})
 	db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, progressBox, " ", dailyDigestBox) + "\n")
 
+	if layout.Height > 24 {
+		db.WriteString(quickActionsBox + "\n")
+	}
+
 	// Only show grammar tip if there is enough vertical space
-	if layout.Height > 20 {
+	if layout.Height > 28 {
 		tip := content.GetDailyGrammarTip()
 		tipStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Bold(true)
 		tipBox := lipgloss.NewStyle().

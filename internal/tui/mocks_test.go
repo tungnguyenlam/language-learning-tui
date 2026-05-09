@@ -213,7 +213,7 @@ func (m *mockRepo) DeckStatistics(ctx context.Context, deckID string) (core.Stat
 	}
 	return stats, nil
 }
-func (m *mockRepo) Cards(ctx context.Context, deckID string, search string) ([]core.Card, error) {
+func (m *mockRepo) Cards(ctx context.Context, deckID string, search string, tag string) ([]core.Card, error) {
 	if m.errCards != nil {
 		return nil, m.errCards
 	}
@@ -226,6 +226,18 @@ func (m *mockRepo) Cards(ctx context.Context, deckID string, search string) ([]c
 			found := containsIgnoreCase(card.Prompt, search) || containsIgnoreCase(card.Answer, search)
 			for _, t := range card.Tags {
 				if containsIgnoreCase(t, search) {
+					found = true
+					break
+				}
+			}
+			if !found {
+				continue
+			}
+		}
+		if tag != "" {
+			found := false
+			for _, t := range card.Tags {
+				if containsIgnoreCase(t, tag) {
 					found = true
 					break
 				}

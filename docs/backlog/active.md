@@ -1,12 +1,39 @@
 # Active Backlog
 
-Last updated: 2026-05-09 (batch G)
+Last updated: 2026-05-09 (batch H - complete)
 
 ## Current Milestone
 
 Finalizing high-quality TUI experience with expanded content and robust UX.
 
-## Completed Work
+## Next Actions
+
+- [ ] Add more C1-C2 advanced content
+- [ ] Implement audio recording or external dictionary integration
+- [ ] Add deck export filtering (by date or success rate)
+
+## Completed Work (Latest)
+
+### Content & Learning
+- [x] Added B2-C1 "Art & Culture" deck (TSV)
+- [x] Migrated 5 Go decks to TSV for better editability
+- [x] Dynamic TSV deck discovery and loading
+
+### UI & UX
+- [x] Dashboard: Quick Actions menu
+- [x] Dashboard: Last Session stats summary
+- [x] Browser: Tag filtering support (#)
+- [x] Browser: Active deck syncing
+
+### Core Features
+- [x] Settings: Strict Character Normalization (toggle ss vs ß)
+- [x] Verified with 8 new E2E tests
+
+## Current State
+
+- Verified: All unit tests pass; 144/145 E2E tests pass.
+- Environment: Darwin, Go 1.x, Python 3.12.
+- Architecture: Modular monolith with dynamic content registry.
 
 ### UI Improvements
 - [x] Add visual feedback for keyboard navigation
