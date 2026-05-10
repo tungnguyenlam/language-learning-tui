@@ -1681,6 +1681,76 @@ func TestBulkBrowserToggleKindPropagatesError(t *testing.T) {
 	}
 }
 
+func TestReviewHeaderShowsDeckTagsAndCardType(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{{
+			ID:     "c1",
+			DeckID: "deck-1",
+			Kind:   core.CardKindCloze,
+			Prompt: "Die Stadt [baut] das Netz aus.",
+			Answer: "baut",
+			Tags:   []string{"b2", "mobility"},
+		}},
+		decks: []core.Deck{{ID: "deck-1", Name: "B2 Urban Mobility"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.Update(dueCardsMsg(repo.dueCards))
+	model.activeView = ViewReview
+
+	view := ansi.Strip(model.renderReview(0, 0))
+	if !strings.Contains(view, "Deck: B2 Urban Mobility") {
+		t.Fatalf("review header missing deck name:\n%s", view)
+	}
+	if !strings.Contains(view, "Tags: #b2 #mobility") {
+		t.Fatalf("review header missing tags:\n%s", view)
+	}
+	if !strings.Contains(view, "Type: Cloze") {
+		t.Fatalf("review header missing card type:\n%s", view)
+	}
+}
+
+func TestBrowserPreviewShowsDeckKindExtraAndTags(t *testing.T) {
+	repo := &mockRepo{
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.activeView = ViewBrowser
+	model.width = 110
+	model.height = 40
+	model.browserCards = []core.Card{{
+		ID:     "c1",
+		DeckID: "deck-1",
+		Kind:   core.CardKindMCQ,
+		Prompt: "Welche Option passt?",
+		Answer: "umsteigen",
+		Extra:  "Use umsteigen when changing vehicles.",
+		Tags:   []string{"b2", "mobility"},
+	}}
+
+	view := ansi.Strip(model.renderBrowserAt(viewportLayout{Width: 100, Height: 35}))
+	for _, want := range []string{"Card Preview:", "Deck : Deck One", "Kind: mcq", "Extra: Use umsteigen", "Tags : b2, mobility"} {
+		if !strings.Contains(view, want) {
+			t.Fatalf("browser preview missing %q:\n%s", want, view)
+		}
+	}
+}
+
+func TestDashboardShowsCardMixForTallLayouts(t *testing.T) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	model.width = 110
+	model.height = 42
+	model.stats = core.Statistics{NewCards: 4, YoungCards: 8, MatureCards: 12, DailyGoal: 10}
+
+	view := ansi.Strip(model.renderDashboard(viewportLayout{Width: 100, Height: 34}))
+	for _, want := range []string{"Card Mix", "New", "Young", "Mature"} {
+		if !strings.Contains(view, want) {
+			t.Fatalf("dashboard missing %q:\n%s", want, view)
+		}
+	}
+}
+
 func makeCards(count int) []core.Card {
 	cards := make([]core.Card, count)
 	for i := range cards {

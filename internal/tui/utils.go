@@ -62,6 +62,21 @@ func (m *Model) currentAITemplateSet() string {
 	return m.aiTemplateSets[clampInt(m.aiTemplateIndex, 0, len(m.aiTemplateSets)-1)]
 }
 
+func (m *Model) deckNameByID(deckID string) string {
+	if strings.TrimSpace(deckID) == "" {
+		return "Unknown Deck"
+	}
+	for _, deck := range m.decks {
+		if deck.ID == deckID {
+			return deck.Name
+		}
+	}
+	if m.deck.ID == deckID && m.deck.Name != "" {
+		return m.deck.Name
+	}
+	return deckID
+}
+
 func friendlyError(err error) string {
 	if err == nil {
 		return ""

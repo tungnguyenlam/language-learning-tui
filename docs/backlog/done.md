@@ -1,3 +1,14 @@
+## 2026-05-10: Autonomous Pass - Batch 1 Mobility & Review Surfaces
+
+- **German Content:** Added an embedded "B2 Urban Mobility" TSV deck with 25 notes covering public transport, commuting, accessibility, MCQs, and cloze cards.
+- **Dashboard UI:** Added a tall-layout "Card Mix" panel that visualizes New, Young, and Mature card distribution.
+- **Review UI:** Added deck name, card type, and tags to the Review header so learners can keep context while grading.
+- **Browser UI:** Expanded Card Preview with deck, kind, extra notes, and tag fallback text.
+- **AI/Settings UX:** Reworked AI suggested topics around CEFR levels and added a deterministic provider-cycle hint in Settings.
+- **Testing:** Added content and TUI unit tests plus 8 new tui-tester scenarios in `e2e_tests/test_autonomous_pass_mobility_ui.py`.
+- **Bug Fix:** Removed unescaped quote characters from mobility MCQ explanations after they caused CSV parsing to collapse rows.
+- **Verification:** `go test ./internal/content ./internal/tui` passed on 2026-05-10 13:31 +07.
+
 ## 2026-05-10: Batch 2 Improvements & UI Polish
 
 - **UI/UX Refinements:**

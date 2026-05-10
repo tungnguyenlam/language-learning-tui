@@ -50,8 +50,6 @@ Press [?] for full keybindings in the app.
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
-<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
-
 <a id="-why-deutsch-tui"></a>
 
 ## 🤔 Why deutsch-tui?
@@ -66,8 +64,6 @@ Press [?] for full keybindings in the app.
 | **Authoring** | Full editor, shared decks | Deck files + **AI drafting** workflow + TSV / `.apkg` |
 
 <p align="right"><a href="#top">↑ back to top</a></p>
-
-<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
 
 ## 🏗️ Architecture
 
@@ -105,8 +101,6 @@ graph TD
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
-<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
-
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -123,57 +117,34 @@ For full repo verification (optional): Python 3 with `pytest` / `pytest-xdist` f
 
 ### 🚀 Installation
 
-<div align="center">
+**From source** (clone, run):
 
-<pre>
-~ deutsch-tui — quick install
-────────────────────────────────────────────────────────
-$ git clone https://github.com/tungnguyenlam/language-learning-tui.git
-$ cd language-learning-tui
-$ go run ./cmd/deutsch-tui
-</pre>
+```bash
+git clone https://github.com/tungnguyenlam/language-learning-tui.git
+cd language-learning-tui
+go run ./cmd/deutsch-tui
+```
 
-</div>
-
-0. **Fast path — local binary.** Build with Make, then run:
+**Binary** (same artifact E2E tests use):
 
 ```bash
 make build
-```
-
-```bash
 ./deutsch-tui-bin
 ```
+
+Optional custom data directory:
 
 ```bash
 ./deutsch-tui-bin -data-dir ./my-data
 ```
 
-1. **Clone** (if you skipped the block above).
-
-```bash
-git clone https://github.com/tungnguyenlam/language-learning-tui.git
-```
-
-2. **Enter the project directory.**
-
-```bash
-cd language-learning-tui
-```
-
-3. **Run with Go.**
-
-```bash
-go run ./cmd/deutsch-tui
-```
-
-4. **Optional:** custom data directory.
+**Optional:** same flags with `go run`:
 
 ```bash
 go run ./cmd/deutsch-tui -data-dir ./my-data
 ```
 
-5. **Optional:** smoke-check initialization then exit.
+**Optional:** smoke-check initialization then exit:
 
 ```bash
 go run ./cmd/deutsch-tui -smoke
@@ -182,8 +153,6 @@ go run ./cmd/deutsch-tui -smoke
 > 💡 **Tip:** The Go module and binary are named `deutsch-tui`; default data lives under your OS user config directory in `deutsch-tui/`.
 
 <p align="right"><a href="#top">↑ back to top</a></p>
-
-<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
 
 <a id="-usage"></a>
 
@@ -255,8 +224,6 @@ Statistics: `j`/`k` scroll, `x` export CSV. Import: `i`/`I` import TSV/APKG, `x`
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
-<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
-
 ## ⚙️ Configuration
 
 All paths are under the resolved data directory (`config.json`, `learning.db`, `deutsch-tui.log`, default import/export filenames).
@@ -271,8 +238,6 @@ See [docs/ops/config-and-logs.md](docs/ops/config-and-logs.md) for defaults and 
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
-<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
-
 ## 🛠️ Tech stack
 
 <p align="center">
@@ -283,8 +248,6 @@ See [docs/ops/config-and-logs.md](docs/ops/config-and-logs.md) for defaults and 
 </p>
 
 <p align="right"><a href="#top">↑ back to top</a></p>
-
-<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
 
 ## 🗺️ Roadmap
 
@@ -298,8 +261,6 @@ See [docs/ops/config-and-logs.md](docs/ops/config-and-logs.md) for defaults and 
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
-<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
-
 <a id="-contributing"></a>
 
 ## 🤝 Contributing
@@ -308,35 +269,27 @@ Issues and PRs are welcome. Run `./scripts/verify.sh` before submitting (Go test
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
-<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
-
 ## 📦 Releases
 
 There are **no GitHub Releases** yet. Use **`make build`** to produce **`./deutsch-tui-bin`** at the repo root (same artifact E2E tests expect via `DEUTSCH_TUI_BIN`), or run from source as in [Installation](#-installation).
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
-<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
-
 ## 👥 Contributors
 
-<p align="center">
-  <a href="https://github.com/tungnguyenlam/language-learning-tui/graphs/contributors"><img src="https://contrib.rocks/image?repo=tungnguyenlam/language-learning-tui" alt="Contributors" /></a>
-</p>
+<div align="center">
+<a href="https://github.com/tungnguyenlam/language-learning-tui/graphs/contributors"><img src="https://contrib.rocks/image?repo=tungnguyenlam/language-learning-tui" alt="Contributors to language-learning-tui" width="700" /></a>
+</div>
 
 <p align="right"><a href="#top">↑ back to top</a></p>
-
-<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
 
 ## 📈 Star history
 
-<p align="center">
-  <a href="https://star-history.com/#tungnguyenlam/language-learning-tui&Date"><img src="https://api.star-history.com/svg?repos=tungnguyenlam/language-learning-tui&type=Date" alt="Star History Chart" /></a>
-</p>
+<div align="center">
+<a href="https://star-history.com/#tungnguyenlam/language-learning-tui&amp;Date"><img src="https://api.star-history.com/svg?repos=tungnguyenlam/language-learning-tui&amp;type=Date" alt="Star history chart for language-learning-tui" width="700" /></a>
+</div>
 
 <p align="right"><a href="#top">↑ back to top</a></p>
-
-<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
 
 ## 📄 License
 

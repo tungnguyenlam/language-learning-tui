@@ -1,0 +1,27 @@
+#separator:tab
+#deck:B2 Urban Mobility
+mobility-001	die Mobilitätswende	mobility transition	Die Mobilitätswende beschreibt den Wechsel zu klimafreundlicheren Verkehrsmitteln.	b2 mobility noun	B2 Urban Mobility
+mobility-002	der Radweg	bike lane	Plural: die Radwege	b1 b2 mobility noun	B2 Urban Mobility
+mobility-003	die Umleitung	detour / diversion	Die Buslinie fährt wegen Bauarbeiten eine Umleitung.	b2 mobility noun	B2 Urban Mobility
+mobility-004	der Schienenersatzverkehr	rail replacement service	Abkürzung: SEV. Wird bei Baustellen oder Störungen eingesetzt.	b2 mobility noun	B2 Urban Mobility
+mobility-005	die Verkehrslage	traffic situation	Die aktuelle Verkehrslage ist angespannt.	b2 mobility noun	B2 Urban Mobility
+mobility-006	das Tempolimit	speed limit	Plural: die Tempolimits	b1 b2 mobility noun	B2 Urban Mobility
+mobility-007	die Fahrgemeinschaft	carpool	Wir bilden eine Fahrgemeinschaft zur Arbeit.	b2 mobility noun	B2 Urban Mobility
+mobility-008	pendeln	to commute	Ich pendle jeden Tag zwischen Bonn und Köln.	b1 b2 mobility verb	B2 Urban Mobility
+mobility-009	umsteigen	to transfer / change vehicles	Ich muss am Hauptbahnhof in die U-Bahn umsteigen.	a2 b1 mobility verb	B2 Urban Mobility
+mobility-010	verspätet	delayed	Der Zug ist heute zwanzig Minuten verspätet.	b1 mobility adjective	B2 Urban Mobility
+mobility-011	barrierefrei	accessible / barrier-free	Der neue Bahnhof ist barrierefrei.	b2 mobility adjective	B2 Urban Mobility
+mobility-012	die Monatskarte	monthly pass	Plural: die Monatskarten	b1 mobility noun	B2 Urban Mobility
+mobility-013	das Deutschlandticket	Germany-wide public transport ticket	Seit 2023 gibt es das Deutschlandticket fuer den Nahverkehr.	b1 b2 mobility noun	B2 Urban Mobility
+mobility-014	der Berufsverkehr	rush-hour traffic	Morgens ist der Berufsverkehr besonders dicht.	b2 mobility noun	B2 Urban Mobility
+mobility-015	eine Strecke zuruecklegen	to cover a distance	Wir legen die Strecke mit dem Fahrrad zurueck.	b2 mobility phrase	B2 Urban Mobility
+mobility-016	etwas entlasten	to relieve something	Neue Busspuren sollen die Innenstadt entlasten.	b2 mobility verb	B2 Urban Mobility
+mobility-017	etwas ausbauen	to expand something	Die Stadt baut das Straßenbahnnetz aus.	b2 mobility verb	B2 Urban Mobility
+mobility-018	der Verkehrsknotenpunkt	transport hub	Der Bahnhof ist ein wichtiger Verkehrsknotenpunkt.	b2 mobility noun	B2 Urban Mobility
+mobility-019	der Fahrplanwechsel	timetable change	Der Fahrplanwechsel findet im Dezember statt.	b2 mobility noun	B2 Urban Mobility
+mobility-020	zuverlaessig	reliable	Die Verbindung ist schnell, aber nicht immer zuverlaessig.	b1 b2 mobility adjective	B2 Urban Mobility
+mobility-021	Welche Option passt? Ich muss am Hauptbahnhof in die U-Bahn ___.	umsteigen	Einsteigen means boarding; umsteigen means changing from one line or vehicle to another.	b1 b2 mobility mcq	B2 Urban Mobility	MCQ:umsteigen|||aussteigen|||einsteigen|||abfahren
+mobility-022	Welche Option passt? Wegen Bauarbeiten gibt es eine ___.	Umleitung	Eine Umleitung fuehrt Verkehr ueber eine andere Strecke.	b2 mobility mcq	B2 Urban Mobility	MCQ:Umleitung|||Fahrgemeinschaft|||Monatskarte|||Haltestelle
+mobility-023	Welche Option passt? Der Aufzug macht den Bahnhof ___.	barrierefrei	Barrierefrei describes accessible places without physical barriers.	b2 mobility mcq	B2 Urban Mobility	MCQ:barrierefrei|||verspaetet|||dicht|||ausgebaut
+mobility-024	Die Stadt {{c1::baut}} das Straßenbahnnetz aus.	ausbauen	Trennbares Verb: ausbauen -> die Stadt baut ... aus.	b2 mobility cloze	B2 Urban Mobility	Cloze
+mobility-025	Wir {{c1::legen}} die Strecke mit dem Fahrrad zurueck.	eine Strecke zuruecklegen	Trennbares Verb: zuruecklegen -> wir legen ... zurueck.	b2 mobility cloze	B2 Urban Mobility	Cloze

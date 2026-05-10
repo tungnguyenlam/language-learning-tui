@@ -62,6 +62,17 @@ func (m *Model) renderReview(x, y int) string {
 	if card.Audio != "" {
 		audioIndicator = " [Audio]"
 	}
+	deckMeta := fmt.Sprintf("Deck: %s", m.deckNameByID(card.DeckID))
+	if len(card.Tags) > 0 {
+		deckMeta += " | Tags: #" + strings.Join(card.Tags, " #")
+	}
+	cardTypeLabel := "Flashcard"
+	switch card.Kind {
+	case core.CardKindMCQ:
+		cardTypeLabel = "Multiple Choice"
+	case core.CardKindCloze:
+		cardTypeLabel = "Cloze"
+	}
 
 	gradeAgainText := "Again"
 	gradeHardText := "Hard"
@@ -102,7 +113,7 @@ func (m *Model) renderReview(x, y int) string {
 		mature = " ✨"
 	}
 
-	headerSection := fmt.Sprintf("%s%s\n%s | %s\n%s%s%s", header, sessionProgress, bookmark, keys, leech, suspended, audioIndicator)
+	headerSection := fmt.Sprintf("%s%s\n%s | Type: %s\n%s | %s\n%s%s%s", header, sessionProgress, deckMeta, cardTypeLabel, bookmark, keys, leech, suspended, audioIndicator)
 	if m.focusMode {
 		headerSection = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true).Render("Focus Mode Active (f to exit)")
 	}

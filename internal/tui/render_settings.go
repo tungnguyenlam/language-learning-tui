@@ -40,6 +40,7 @@ func (m *Model) renderSettings(x, y int) string {
 		MarginBottom(1)
 	b.WriteString(sectionStyle.Render("AI CONFIGURATION") + "\n")
 	b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Render(fmt.Sprintf("  Template Set: %s", activeSet)) + "\n\n")
+	b.WriteString(mutedStyle.Render("  Provider cycle: disabled -> offline -> template. Template mode is deterministic for tests.") + "\n")
 
 	setMap := m.aiTemplates[activeSet]
 	aiOptions := []string{

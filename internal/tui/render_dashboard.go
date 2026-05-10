@@ -46,6 +46,24 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 			fmt.Sprintf("  Leech:       %d\n", m.stats.LeechCards) +
 			fmt.Sprintf("  Suspended:   %d", m.stats.SuspendedCards))
 
+	totalKnown := m.stats.NewCards + m.stats.YoungCards + m.stats.MatureCards
+	mixWidth := maxInt(10, layout.Width/2-16)
+	newPct, youngPct, maturePct := 0.0, 0.0, 0.0
+	if totalKnown > 0 {
+		newPct = float64(m.stats.NewCards) / float64(totalKnown)
+		youngPct = float64(m.stats.YoungCards) / float64(totalKnown)
+		maturePct = float64(m.stats.MatureCards) / float64(totalKnown)
+	}
+	dueMixBox := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("105")).
+		Padding(0, 1).
+		Width(maxInt(25, (layout.Width-2)/2)).
+		Render(lipgloss.NewStyle().Foreground(lipgloss.Color("105")).Bold(true).Render("Card Mix") + "\n" +
+			fmt.Sprintf("  New    %3d %s\n", m.stats.NewCards, progressBar(mixWidth, newPct, "81", "238")) +
+			fmt.Sprintf("  Young  %3d %s\n", m.stats.YoungCards, progressBar(mixWidth, youngPct, "220", "238")) +
+			fmt.Sprintf("  Mature %3d %s", m.stats.MatureCards, progressBar(mixWidth, maturePct, "46", "238")))
+
 	percentage := 0.0
 	barColor := "46" // Green by default
 	if m.stats.DailyGoal > 0 {
@@ -184,10 +202,14 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 	db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, progressBox, " ", dailyDigestBox) + "\n")
 
 	activityY := strings.Count(db.String(), "\n")
-	if recentDecksBox != "" {
+	if recentDecksBox != "" && layout.Height > 30 {
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-activity", View: ViewDashboard, X: layout.X, Y: layout.Y + activityY, Width: lipgloss.Width(activityBox), Height: lipgloss.Height(activityBox)})
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-recent-decks", View: ViewDashboard, X: layout.X + lipgloss.Width(activityBox) + 1, Y: layout.Y + activityY, Width: lipgloss.Width(recentDecksBox), Height: lipgloss.Height(recentDecksBox)})
 		db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, activityBox, " ", recentDecksBox) + "\n")
+	} else if layout.Height > 26 {
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-activity", View: ViewDashboard, X: layout.X, Y: layout.Y + activityY, Width: lipgloss.Width(activityBox), Height: lipgloss.Height(activityBox)})
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-card-mix", View: ViewDashboard, X: layout.X + lipgloss.Width(activityBox) + 1, Y: layout.Y + activityY, Width: lipgloss.Width(dueMixBox), Height: lipgloss.Height(dueMixBox)})
+		db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, activityBox, " ", dueMixBox) + "\n")
 	} else {
 		activityBox = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).

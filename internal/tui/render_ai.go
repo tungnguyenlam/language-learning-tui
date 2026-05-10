@@ -56,12 +56,12 @@ func (m *Model) renderAI(x, y int) string {
 		b.WriteString(warnStyle.Render("AI provider is disabled. Enable Offline or Template in Settings to generate drafts.") + "\n")
 	}
 
-	b.WriteString(mutedStyle.Render("Tip: include level and use case, e.g. B1 workplace small talk.") + "\n")
+	b.WriteString(mutedStyle.Render("Tip: include CEFR level, situation, and answer format, e.g. B1 workplace small talk with 2 examples.") + "\n")
 
 	// Suggested Topics Section
 	if (m.aiInput == "" || m.aiInput == "der Kaffee") && len(m.drafts) == 0 {
 		b.WriteString("\n" + lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("81")).Render("Suggested Topics:") + "\n")
-		suggestions := []string{"business email", "doctor visit", "apartment viewing", "restaurant", "job interview", "travel phrases", "university", "shopping", "weather", "hobbies"}
+		suggestions := []string{"A1 survival", "B1 doctor visit", "B1 apartment viewing", "B2 job interview", "B2 urban mobility", "B2 news debate", "C1 business email", "C1 academic argument", "travel phrases", "weather small talk"}
 
 		suggestionStyle := lipgloss.NewStyle().
 			Foreground(lipgloss.Color("159")).
@@ -72,7 +72,7 @@ func (m *Model) renderAI(x, y int) string {
 		currentX := layout.X
 
 		for i, s := range suggestions {
-			if i > 0 && i%5 == 0 {
+			if i > 0 && i%4 == 0 {
 				b.WriteString("\n")
 				lineY++
 				currentX = layout.X
@@ -89,8 +89,7 @@ func (m *Model) renderAI(x, y int) string {
 			currentX += len(s) + 2
 		}
 		b.WriteString("\n")
-		b.WriteString(mutedStyle.Render("Topics: business email, doctor visit, apartment viewing, restaurant,") + "\n")
-		b.WriteString(mutedStyle.Render("  job interview, travel phrases, university, shopping, weather, hobbies.") + "\n")
+		b.WriteString(mutedStyle.Render("Suggested levels: A1 survival, B1 errands, B2 opinions, C1 formal writing.") + "\n")
 	}
 
 	if len(m.drafts) == 0 {
