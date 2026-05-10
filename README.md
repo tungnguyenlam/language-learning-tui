@@ -1,202 +1,294 @@
-<h1 align="center">🇩🇪 deutsch-tui</h1>
-
-<p align="center"><em>Your terminal. Your data. German flashcards and MCQs with FSRS scheduling—fast, local-first, and absurdly pleasant to use.</em></p>
+<a id="top"></a>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Go-1.26-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go 1.26"/>
-  <img src="https://img.shields.io/badge/Bubble%20Tea-TUI-FF69B4?style=for-the-badge&logo=terminal&logoColor=white" alt="Bubble Tea"/>
-  <img src="https://img.shields.io/badge/FSRS-Spaced%20Repetition-7C3AED?style=for-the-badge&logo=clockify&logoColor=white" alt="FSRS"/>
-  <img src="https://img.shields.io/badge/SQLite-Local%20First-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite"/>
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=30&pause=1000&color=gradient&center=true&vCenter=true&width=520&lines=language-learning-tui" alt="language-learning-tui" />
 </p>
 
 <p align="center">
-  <a href="https://github.com/tungnguyenlam/language-learning-tui/blob/main/LICENSE"><img src="https://img.shields.io/github/license/tungnguyenlam/language-learning-tui?style=for-the-badge&label=License" alt="License"/></a>
-  <a href="https://github.com/tungnguyenlam/language-learning-tui/stargazers"><img src="https://img.shields.io/github/stars/tungnguyenlam/language-learning-tui?style=for-the-badge&logo=github&label=Stars" alt="GitHub stars"/></a>
-  <a href="https://github.com/tungnguyenlam/language-learning-tui/commits/main/"><img src="https://img.shields.io/github/last-commit/tungnguyenlam/language-learning-tui?style=for-the-badge&logo=git&label=Last%20commit" alt="Last commit"/></a>
-  <a href="https://github.com/tungnguyenlam/language-learning-tui/pulls"><img src="https://img.shields.io/badge/PRs-welcome-brightgreen?style=for-the-badge&logo=github-sponsors" alt="PRs welcome"/></a>
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=18&pause=800&color=58A6FF&center=true&vCenter=true&multiline=true&width=600&height=100&lines=Local-first+German+study;FSRS+scheduling+%E2%80%A2+SQLite;Anki+TSV%2F.apkg;Bubble+Tea+TUI+with+mouse;AI-assisted+card+drafting" alt="Tagline" />
 </p>
 
 <p align="center">
-  <img src="https://via.placeholder.com/700x380/0d1117/58a6ff?text=Drop+a+asciinema+GIF+or+screenshot+here+%28docs%2Fassets%2Fdemo.gif%29" alt="deutsch-tui demo placeholder — replace with your recording" width="700"/>
+  <img src="https://img.shields.io/badge/Go-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go" />
+  <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License" />
+  <img src="https://img.shields.io/github/last-commit/tungnguyenlam/language-learning-tui?style=for-the-badge" alt="Last commit" />
+  <img src="https://img.shields.io/github/stars/tungnguyenlam/language-learning-tui?style=for-the-badge&logo=github" alt="Stars" />
+  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=for-the-badge" alt="PRs welcome" />
 </p>
 
 <p align="center">
-  <a href="#features">Features</a>
-  ·
-  <a href="#getting-started">Getting Started</a>
-  ·
-  <a href="#usage">Usage</a>
-  ·
-  <a href="#configuration">Configuration</a>
-  ·
-  <a href="#roadmap">Roadmap</a>
-  ·
-  <a href="#contributing">Contributing</a>
-  ·
-  <a href="#license">License</a>
+  <a href="#-features">✨ Features</a> &nbsp;•&nbsp; <a href="#-installation">🚀 Install</a> &nbsp;•&nbsp; <a href="#-usage">🎮 Usage</a> &nbsp;•&nbsp; <a href="#-contributing">🤝 Contribute</a>
 </p>
 
----
+<!-- Record a terminal demo with https://github.com/charmbracelet/vhs or https://github.com/faressoft/terminalizer and save as assets/demo.gif -->
+<p align="center"><img src="assets/demo.gif" alt="Demo" width="700"/></p>
 
-<a id="features"></a>
+<p align="center"><sub>Add <code>assets/demo.gif</code> to the repo (path above) so this renders.</sub></p>
+
+<br/>
 
 ## ✨ Features
 
-- **🧠 FSRS scheduling** — Modern spaced repetition via [`go-fsrs`](https://github.com/open-spaced-repetition/go-fsrs), persisted in SQLite (`modernc.org/sqlite`).
-- **🏠 Local-first** — Progress, decks, and settings stay on disk under one data directory; optional smoke init for automation.
-- **🖱️ Serious TUI polish** — [Bubble Tea](https://github.com/charmbracelet/bubbletea) + [Lip Gloss](https://github.com/charmbracelet/lipgloss): mouse support, hitboxes, drag-to-scroll, wide/medium/compact layouts.
-- **🎴 Rich card models** — Flashcards, multiple-choice, and cloze (`{{c1::…}}`) with reveal animations, typing practice, and grading (`again` / `hard` / `good` / `easy`).
-- **📚 Collection tools** — Dashboard, deck list with search & limits, card browser (bookmark / suspend / tags / bulk actions), **Cram** mode for targeted drills.
-- **📊 Stats & streaks** — Session metrics, accuracy, streaks, CSV export from Statistics.
-- **📥 Interop** — TSV import/export and **Anki `.apkg`** import; embedded starter decks from editable TSV sources (A1–advanced tracks).
-- **✍️ AI drafting (optional)** — Human-in-the-loop draft cards; works offline with template/offline providers—extend with real LLM backends when you wire them in.
-- **🔊 Audio hooks** — Play pronunciation when cards carry audio paths; autoplay toggle in settings.
+<table>
+<tr>
+<td width="50%">📚 <b>FSRS scheduling</b><br/>Spaced repetition via <code>go-fsrs</code> with grades persisted in SQLite.</td>
+<td width="50%">🖱️ <b>Mouse + keyboard</b><br/>Tabs, buttons, scrollbars, and WASD-friendly navigation.</td>
+</tr>
+<tr>
+<td>🗂️ <b>Decks & cram</b><br/>Deck list with limits, filters, merge/cram shortcuts, and session stats.</td>
+<td>🔍 <b>Browser</b><br/>Search, tags, bulk actions, card preview, and review history.</td>
+</tr>
+<tr>
+<td>📥 <b>Anki-friendly I/O</b><br/>Import/export TSV and <code>.apkg</code>; seed rich embedded German content.</td>
+<td>🤖 <b>AI drafting</b><br/>Offline/template providers and configurable prompt sets for new cards.</td>
+</tr>
+<tr>
+<td>📊 <b>Statistics</b><br/>Progress, streaks, session timing, and CSV export.</td>
+<td>🎯 <b>Review modes</b><br/>MCQ, cloze, typing check, focus mode, audio hooks, dictionary shortcut.</td>
+</tr>
+</table>
 
-> **Tip:** Press `?` anytime for the in-app help overlay—keyboard-first, but the mouse works where it counts.
+<p align="right"><a href="#top">↑ back to top</a></p>
 
-<a id="getting-started"></a>
+<p align="center">───────────────────────────────────────────────</p>
+
+## 🏗️ Architecture
+
+Local-first modular monolith: domain core stays pure; IO lives in storage, content, AI, and TUI layers.
+
+```mermaid
+graph TD
+  subgraph ui [TUI]
+    BT[Bubble Tea + Lip Gloss]
+  end
+  subgraph domain [Domain]
+    CORE[internal/core models]
+    SRS[internal/srs FSRS]
+  end
+  subgraph data [Persistence]
+    REPO[sqlite.Repository]
+    DB[(learning.db)]
+  end
+  subgraph content [Content]
+    TSV[TSV / APKG parsers]
+    DECKS[Embedded decks]
+  end
+  subgraph ai [AI]
+    PROV[Provider adapters]
+  end
+  BT --> CORE
+  BT --> SRS
+  BT --> REPO
+  BT --> PROV
+  REPO --> DB
+  TSV --> REPO
+  DECKS --> REPO
+  PROV --> CORE
+```
+
+<p align="right"><a href="#top">↑ back to top</a></p>
+
+<p align="center">───────────────────────────────────────────────</p>
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 
-| Requirement | Notes |
-|-------------|--------|
-| **Go** | **1.26+** (see `go.mod`). |
-| **Terminal** | True-color friendly; resize to see layout breakpoints. |
-| **Python + venv** *(dev only)* | For parallel E2E tests via `./scripts/verify.sh` (`tui_tester/venv`). |
+<p align="center">
+  <img src="https://img.shields.io/badge/Go-1.26+-00ADD8?style=for-the-badge&logo=go&logoColor=white" alt="Go 1.26+" />
+  <img src="https://img.shields.io/badge/Terminal-UTF--8-black?style=for-the-badge&logo=windowsterminal&logoColor=white" alt="Terminal" />
+  <img src="https://img.shields.io/badge/SQLite-embedded-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite" />
+</p>
 
-### Installation
+For full repo verification (optional): Python 3 with `pytest` / `pytest-xdist` for parallel E2E tests under `e2e_tests/`.
 
-Clone and run from source:
+<a id="-installation"></a>
+
+### 🚀 Installation
+
+1. Clone the repository.
 
 ```bash
 git clone https://github.com/tungnguyenlam/language-learning-tui.git
+```
+
+2. Enter the project directory.
+
+```bash
 cd language-learning-tui
+```
+
+3. Run the app (Go downloads modules automatically).
+
+```bash
 go run ./cmd/deutsch-tui
 ```
 
-Custom data directory (everything stays under this path):
+4. Optional: use a custom data directory.
 
 ```bash
-go run ./cmd/deutsch-tui -data-dir ./my-deutsch-data
+go run ./cmd/deutsch-tui -data-dir ./my-data
 ```
 
-Initialize data files and exit (great for CI smoke checks):
+5. Optional: smoke-check initialization then exit.
 
 ```bash
-go run ./cmd/deutsch-tui -data-dir ./my-deutsch-data -smoke
+go run ./cmd/deutsch-tui -smoke
 ```
 
-Build a static binary:
+> 💡 **Tip:** The Go module and binary are named `deutsch-tui`; default data lives under your OS user config directory in `deutsch-tui/`.
 
-```bash
-go build -o deutsch-tui ./cmd/deutsch-tui
-./deutsch-tui
-```
+<p align="right"><a href="#top">↑ back to top</a></p>
 
-<a id="usage"></a>
+<p align="center">───────────────────────────────────────────────</p>
+
+<a id="-usage"></a>
 
 ## 🎮 Usage
 
-### CLI flags
+Views are reachable via **Tab** / **Shift+Tab**, **←**/**→** (or **w**/**s**), and number keys **1**–**9** (Dashboard through Cram). Press **?** for the in-app overlay.
 
-| Flag | Description |
-|------|-------------|
-| `-data-dir <path>` | Store `learning.db`, `config.json`, logs, and default `import.tsv` / `export.tsv` here. If omitted, uses the OS config directory + `deutsch-tui`. |
-| `-smoke` | Create data dir & config, open DB, seed starter deck if empty, then exit successfully. |
+<details>
+<summary>📋 Full keybindings reference</summary>
 
-### Global shortcuts
+### Global
 
 | Key | Action |
 |-----|--------|
-| `Tab` / `Shift+Tab` · `→` / `←` · `s` / `w` | Cycle views (when not editing text). |
-| `0` `1` | Dashboard |
-| `2` | Deck list |
-| `3` | Review queue |
-| `4` | Statistics |
-| `5` | Import / export |
-| `6` | AI drafts |
-| `7` | Settings |
-| `8` | Card browser |
-| `9` | Cram |
-| `[` / `]` | Previous / next deck (context-aware). |
-| `?` | Toggle help overlay. |
-| `Ctrl+D` | Toggle debug view. |
-| `q` | Quit (or exit cram session when active). |
-| `Ctrl+C` | Quit immediately. |
+| `1` … `9` | Jump to Dashboard, Decks, Review, Statistics, Import, AI, Settings, Browser, Cram |
+| `Tab` / `Shift+Tab`, `→` / `←`, `s` / `w` | Cycle views when not editing text |
+| `[` / `]` | Previous / next deck (also reloads Browser when active) |
+| `?` | Toggle help overlay |
+| `q` | Quit (or exit cram session when active) |
+| `ctrl+c` | Quit |
+| `ctrl+d` | Toggle Debug log view |
 
-### Review mode (highlights)
+### Review
 
 | Key | Action |
 |-----|--------|
-| `Enter` / `Space` | Reveal / advance reveal / start grading. |
-| `a` `h` `g` `e` | Grade **Again** / **Hard** / **Good** / **Easy** after reveal. |
-| `1`–`4` | Answer MCQ choices when shown. |
-| `t` | Cloze typing mode. |
-| `p` | Play audio for current card. |
-| `b` / `B` | Bookmark · filter bookmarks. |
-| `d` | Dictionary lookup (token from prompt). |
-| `x` | Suspend card. |
-| `u` | Undo last review. |
-| `r` | Toggle review history. |
-| `f` | Focus mode. |
+| `↑` / `↓`, `k` / `j` | Move between due cards |
+| `Space` / `Enter` | Reveal / advance reveal / start grading |
+| `a` / `h` / `g` / `e` | Grade Again / Hard / Good / Easy |
+| `1`–`4` | Pick MCQ choice |
+| `t` | Typing mode (from idle) |
+| `f` | Focus mode |
+| `b` / `B` | Bookmark / bookmark-only filter |
+| `x` | Suspend card |
+| `u` | Undo last review |
+| `r` | Toggle review history |
+| `p` | Play audio |
+| `d` | Open dictionary for prompt line |
+| `delete` / `backspace` | Delete current card |
 
-> **Tip:** Deck list supports `/` to search, `Enter` to jump to first match, `L` for daily limits, `c` for cram, `v` for stats—explore the footer hints per view.
+### Decks
 
-<a id="configuration"></a>
+| Key | Action |
+|-----|--------|
+| `/` | Search decks |
+| `L` | Edit per-deck new/review limits |
+| `Enter` | Select deck → Dashboard |
+| `c` | Cram selected deck |
+| `v` | Statistics for deck |
+| `M` | Merge selected decks |
+| `Space` / `x` | Toggle deck selection |
+
+### Browser
+
+| Key | Action |
+|-----|--------|
+| `/` | Search cards |
+| `#` | Filter by tag |
+| `m` | Toggle selection |
+| `b` / `B`, `x` / `X`, `t` / `T` | Bookmark, suspend, kind/tags (single or bulk) |
+| `Enter` | Toggle review history for card |
+| `Backspace` | Delete |
+
+### Other views
+
+Statistics: `j`/`k` scroll, `x` export CSV. Import: `i`/`I` import TSV/APKG, `x`/`X` export, `R` reset DB (with confirmation flow). AI: `/` edit topic, `Enter` draft/approve, `[`/`]` templates, `a`/`A` / `d`/`D` approve or discard drafts. Cram: `1`–`5` filters, `Enter` start session, grades same as review when active.
+
+</details>
+
+<p align="right"><a href="#top">↑ back to top</a></p>
+
+<p align="center">───────────────────────────────────────────────</p>
 
 ## ⚙️ Configuration
 
-All persistent settings live beside the database as **`config.json`** inside your data directory.
+All paths are under the resolved data directory (`config.json`, `learning.db`, `deutsch-tui.log`, default import/export filenames).
 
-| Field | Purpose |
-|-------|---------|
-| `theme` | UI palette (`system` default—cycle in Settings). |
-| `keymap` | Layout preset (`default`). |
-| `ai_provider` | e.g. `disabled`, `offline`, `template`—controls draft generation behavior. |
-| `log_level` | Logging verbosity (`info`, etc.). |
-| `autoplay_audio` | Automatically play audio when available. |
-| `strict_normalization` | Stricter answer matching for typed/cloze checks. |
-| `ai_templates` | Per-topic template sets (`front` / `back` / `example`) for template-based drafting. |
+| File / knob | Purpose |
+|-------------|---------|
+| `config.json` | `theme`, `keymap`, `ai_provider`, `log_level`, `autoplay_audio`, `strict_normalization`, `ai_templates` |
+| `-data-dir` | Override data directory (default: OS user config dir + `/deutsch-tui`) |
+| `deutsch-tui.log` | Rotating local log; adjust verbosity with `log_level` |
 
-Other notable paths (under the same data directory):
+See [docs/ops/config-and-logs.md](docs/ops/config-and-logs.md) for defaults and layout.
 
-| Path | Role |
-|------|------|
-| `learning.db` | SQLite progress & cards. |
-| `deutsch-tui.log` | Application log. |
-| `import.tsv` / `export.tsv` | Default TSV paths surfaced in the Import view (override by editing in UI). |
+<p align="right"><a href="#top">↑ back to top</a></p>
 
-<a id="roadmap"></a>
+<p align="center">───────────────────────────────────────────────</p>
+
+## 🛠️ Tech stack
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Bubble_Tea-TUI-FF69B4?style=for-the-badge&logo=tea&logoColor=white" alt="Bubble Tea" />
+  <img src="https://img.shields.io/badge/Lip_Gloss-styles-DB7093?style=for-the-badge" alt="Lip Gloss" />
+  <img src="https://img.shields.io/badge/FSRS-scheduling-5865F2?style=for-the-badge" alt="FSRS" />
+  <img src="https://img.shields.io/badge/modernc-SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" alt="SQLite" />
+</p>
+
+<p align="right"><a href="#top">↑ back to top</a></p>
+
+<p align="center">───────────────────────────────────────────────</p>
 
 ## 🗺️ Roadmap
 
-Planned and in-flight ideas (from project backlog):
+- [x] FSRS + SQLite + TSV/APKG interop and Bubble Tea shell
+- [x] AI drafting workflow with offline/template providers
+- [x] Browser, cram, statistics, focus mode, debug log
+- [ ] Audio pronunciation integration
+- [ ] Deck merge/split polish in UI
+- [ ] Local LLM providers (e.g. Ollama)
+- [ ] Custom card templates UI
 
-- Recently studied section on the dashboard & grammar tip of the day persistence.
-- New curated decks (e.g. business vocabulary) and richer embedded content.
-- Card preview in the browser, dedicated debug log view, stronger AI prompts, local LLM providers (Ollama / llama.cpp).
-- Audio pronunciation stack, deck merge/split UX, custom card template UI, and expanded E2E coverage.
+<p align="right"><a href="#top">↑ back to top</a></p>
 
-<a id="contributing"></a>
+<p align="center">───────────────────────────────────────────────</p>
+
+<a id="-contributing"></a>
 
 ## 🤝 Contributing
 
-1. Fork the repo and create a focused branch.
-2. Run the full gate before pushing:
+Issues and PRs are welcome. Run `./scripts/verify.sh` before submitting (Go tests, vet, smoke build, and parallel E2E when Python tooling is set up). Read [AGENTS.md](AGENTS.md) for agent-oriented workflow and package boundaries.
 
-   ```bash
-   ./scripts/verify.sh
-   ```
+<p align="right"><a href="#top">↑ back to top</a></p>
 
-   This runs `gofmt` checks, `go test ./...`, `go vet`, a TUI smoke script, and (with `tui_tester/venv`) parallel pytest over `e2e_tests/`.
-3. AI-facing workflow notes live in [`AGENTS.md`](AGENTS.md); package-level contracts are in nested `AGENTS.md` files—read the area you touch before large edits.
+<p align="center">───────────────────────────────────────────────</p>
 
-> **Callout:** Keep contributions tight and tested; the project optimizes for maintainable agents *and* humans.
+## 👥 Contributors
 
-<a id="license"></a>
+<p align="center">
+  <a href="https://github.com/tungnguyenlam/language-learning-tui/graphs/contributors"><img src="https://contrib.rocks/image?repo=tungnguyenlam/language-learning-tui" alt="Contributors" /></a>
+</p>
+
+<p align="right"><a href="#top">↑ back to top</a></p>
+
+<p align="center">───────────────────────────────────────────────</p>
+
+## 📈 Star history
+
+<p align="center">
+  <a href="https://star-history.com/#tungnguyenlam/language-learning-tui&Date"><img src="https://api.star-history.com/svg?repos=tungnguyenlam/language-learning-tui&type=Date" alt="Star History Chart" /></a>
+</p>
+
+<p align="right"><a href="#top">↑ back to top</a></p>
+
+<p align="center">───────────────────────────────────────────────</p>
 
 ## 📄 License
 
-MIT License © 2026 tungnguyen — see [`LICENSE`](LICENSE).
+MIT — see [LICENSE](LICENSE).
+
+<p align="right"><a href="#top">↑ back to top</a></p>
