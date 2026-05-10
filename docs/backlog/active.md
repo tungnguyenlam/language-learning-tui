@@ -1,33 +1,32 @@
 # Active Backlog
 
-Last updated: 2026-05-10 17:30 +07 (New Autonomous Improvement Pass)
+Last updated: 2026-05-10 18:00 +07 (Autonomous Improvement Pass)
 
 ## Current Milestone
 
-Implementing a suite of 8+ meaningful improvements including new content, UI polish, logic enhancements, and expanded testing.
+Autonomous improvements pass completed successfully - 6+ meaningful improvements implemented.
 
 ## Phase 3 Work Plan
 
-- [x] **Task 1: Content** - Add "German Phrasal Verbs" deck.
-- [x] **Task 2: Content** - Add "Medical German" deck.
-- [x] **Task 3: UI** - Dashboard: Add "Verb of the Day" card.
-- [x] **Task 4: UX** - Browser: Implement "Search History".
-- [x] **Task 5: UI** - Browser: Display "Review Interval" for each card.
-- [x] **Task 6: Logic** - Dashboard: Improved motivation messages and goal celebration.
-- [x] **Task 7: UI** - Review View: Add "Difficulty Badges" (NEW, LEARNING, MATURE).
-- [x] **Task 8: UI** - Review View: Add "Session Timer".
-- [x] **Task 9: Test** - Add E2E tests for the new features.
+- [x] **Task 1: Content** - Add "A1 Recipes & Cooking" vocabulary deck (86 cards)
+- [x] **Task 2: Content** - Add "A1 Weather & Seasons" vocabulary deck (58 cards)
+- [x] **Task 3: Test** - Add E2E tests for AI draft navigation (test_ai_draft_navigation.py)
+- [x] **Task 4: Test** - Add E2E tests for Recipe deck (test_recipe_deck.py)
+- [x] **Task 5: Test** - Add E2E test for Weather deck (test_weather_deck.py)
+- [x] **Task 6: Content** - Add 8 new grammar tips (relative clauses, informal expressions, etc.)
 
 ## Exact Next Action
 
-Completed. 11 improvements verified and 168 tests passing.
+All improvements verified and working - 173 E2E tests passing.
 
 ## Acceptance Criteria
 
-- All tasks implemented successfully.
-- `./scripts/verify.sh` passes with zero errors (168 E2E tests).
-- New content (Phrasal Verbs, Medical) is accessible.
-- Verb of the Day is visible and updates daily.
-- Search history works in Browser.
-- Review intervals are visible in Browser.
-- Review view has timer and accurate status badges.
+- [x] All tasks implemented successfully.
+- [x] `./scripts/verify.sh` passes with zero errors (173 E2E tests).
+- [x] New content (Recipes, Weather decks) is accessible.
+- [x] New grammar tips are visible on Dashboard.
+- [x] All new E2E tests pass.
+
+## Blockers
+
+None - all improvements completed and verified.

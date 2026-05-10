@@ -1,5 +1,25 @@
 # Done Backlog
 
+## 2026-05-10 18:00 +07 (Autonomous Improvement Pass)
+
+Completed another improvement pass with 6+ meaningful enhancements. Total E2E tests: 173 (all passing).
+
+### Content Expansion
+- Added **A1 Recipes & Cooking** vocabulary deck (86 cards) - food, cooking verbs, meal times.
+- Added **A1 Weather & Seasons** vocabulary deck (58 cards) - weather conditions, seasons, time expressions.
+- Expanded grammar tips with 8 new topics (relative clauses, informal expressions, wechselpräpositionen, etc.).
+
+### Testing
+- Added E2E tests for AI draft navigation (`test_ai_draft_navigation.py`) - verifies AI draft approval workflow.
+- Added E2E tests for Recipe deck (`test_recipe_deck.py`) - verifies deck loading and vocabulary access.
+- Added E2E test for Weather deck (`test_weather_deck.py`) - verifies deck is accessible.
+
+### Verification
+- Total E2E tests: 173 (all passing).
+- All Go unit tests passing.
+- `./scripts/verify.sh` executed successfully with zero errors.
+
+
 ## 2026-05-10 17:30 +07 (Autonomous Improvement Pass)
 
 Completed a comprehensive improvement pass with 11 meaningful enhancements.

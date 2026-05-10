@@ -291,6 +291,41 @@ var grammarTips = []GrammarTip{
 		Tip:     "Many verbs require specific prepositions.",
 		Example: "warten auf (+Akk), denken an (+Akk)",
 	},
+	{
+		Title:   "Relative Clauses with 'der/die/das'",
+		Tip:     "Use the same gender/number as the noun they describe.",
+		Example: "Der Mann, der dort steht, ist mein Lehrer.",
+	},
+	{
+		Title:   "Welch- vs Was für ein",
+		Tip:     "welch- asks about specific selection; 'was für ein' asks about type.",
+		Example: "Welches Buch? Was für ein Buch?",
+	},
+	{
+		Title:   "Umgangssprachliche Ausdrücke",
+		Tip:     "Common informal phrases: 'Alles klar?' (How's it going?), 'Kein Problem!' (No problem!)",
+		Example: "Alles klar? Ja, alles gut!",
+	},
+	{
+		Title:   "Wechselpräpositionen",
+		Tip:     "Some prepositions can take either Dativ or Akkusativ: 'in, an, auf, über, unter, vor, hinter, neben, zwischen'",
+		Example: "Ich bin in dem Haus (wo?). -> Ich gehe in das Haus (wohin?).",
+	},
+	{
+		Title:   "Participial Phrases",
+		Tip:     "Partizip I (-nd) for ongoing actions; Partizip II for completed.",
+		Example: "Der singende Mann (aktive Handlung). Das gekochte Essen.",
+	},
+	{
+		Title:   "Modal Particles",
+		Tip:     "Particles like 'doch', 'mal', 'schon' add nuance.",
+		Example: "Kommst du mit? -> Kommst du doch mit? (encouragement)",
+	},
+	{
+		Title:   "Depersonal Phrases",
+		Tip:     "Start sentences with 'Es' or 'Man' for impersonal expressions.",
+		Example: "Es regnet. Man sagt, dass...",
+	},
 }
 
 func GetDailyGrammarTip() GrammarTip {

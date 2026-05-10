@@ -1,0 +1,89 @@
+#separator:tab
+#html:false
+#deck:A1 Recipes & Cooking
+a1-recipe-kochbuch	Das Kochbuch	cookbook	Plural: die Kochbücher	a1 noun
+a1-recipe-rezept	Das Rezept	recipe	Plural: die Rezepte	a1 noun
+a1-recipe-zutat	Die Zutat	ingredient	Plural: die Zutaten	a1 noun
+a1-recipe-essen	Das Essen	meal/food	Plural: die Essen	a1 noun
+a1-recipe-fruehstueck	Das Frühstück	breakfast		a1 noun
+a1-recipe-mittagessen	Das Mittagessen	lunch		a1 noun
+a1-recipe-abendessen	Das Abendessen	dinner		a1 noun
+a1-recipe-snack	Der Snack	snack	Plural: die Snacks	a1 noun
+a1-recipe-dessert	Das Dessert	dessert	Plural: die Desserts	a1 noun
+a1-recipe-vorspeise	Die Vorspeise	appetizer	Plural: die Vorspeisen	a1 noun
+a1-recipe-hauptgericht	Das Hauptgericht	main course	Plural: die Hauptgerichte	a1 noun
+a1-recipe-beilage	Die Beilage	side dish	Plural: die Beilagen	a1 noun
+a1-recipe-salat	Der Salat	salad	Plural: die Salate	a1 noun
+a1-recipe-suppe	Die Suppe	soup	Plural: die Suppen	a1 noun
+a1-recipe-nudel	Die Nudel	noodle	Plural: die Nudeln	a1 noun
+a1-recipe-kartoffel	Die Kartoffel	potato	Plural: die Kartoffeln	a1 noun
+a1-recipe-reis	Der Reis	rice		a1 noun
+a1-recipe-brot	Das Brot	bread	Plural: die Brote	a1 noun
+a1-recipe-kaese	Der Käse	cheese	Plural: die Käse	a1 noun
+a1-recipe-fleisch	Das Fleisch	meat		a1 noun
+a1-recipe-fisch	Der Fisch	fish	Plural: die Fische	a1 noun
+a1-recipe-huhn	Das Huhn	chicken	Plural: die Hühner	a1 noun
+a1-recipe-ei	Das Ei	egg	Plural: die Eier	a1 noun
+a1-recipe-gemuese	Das Gemüse	vegetables		a1 noun
+a1-recipe-obst	Das Obst	fruit		a1 noun
+a1-recipe-apfel	Der Apfel	apple	Plural: die Äpfel	a1 noun
+a1-recipe-tomate	Die Tomate	tomato	Plural: die Tomaten	a1 noun
+a1-recipe-zwiebel	Die Zwiebel	onion	Plural: die Zwiebeln	a1 noun
+a1-recipe-knoblauch	Der Knoblauch	garlic		a1 noun
+a1-recipe-moehre	Die Möhre	carrot	Plural: die Möhren	a1 noun
+a1-recipe-paprika	Der Paprika	bell pepper	Plural: die Paprikas	a1 noun
+a1-recipe-kohl	Der Kohl	cabbage	Plural: die Kohlsorten	a1 noun
+a1-recipe-salat	Der Salat	lettuce	Plural: die Salate	a1 noun
+a1-recipe-gurke	Die Gurke	cucumber	Plural: die Gurken	a1 noun
+a1-recipe-bananane	Die Banane	banana	Plural: die Bananen	a1 noun
+a1-recipe-orange	Die Orange	orange	Plural: die Orangen	a1 noun
+a1-recipe-zucker	Der Zucker	sugar		a1 noun
+a1-recipe-mehl	Das Mehl	flour		a1 noun
+a1-recipe-butter	Die Butter	butter		a1 noun
+a1-recipe-milch	Die Milch	milk		a1 noun
+a1-recipe-sahne	Die Sahne	cream		a1 noun
+a1-recipe-oel	Das Öl	oil	Plural: die Öle	a1 noun
+a1-recipe-salz	Das Salz	salt		a1 noun
+a1-recipe-pfeffer	Der Pfeffer	pepper		a1 noun
+a1-recipe-gewuerz	Das Gewürz	spice	Plural: die Gewürze	a1 noun
+a1-recipe-kochen	Kochen	to cook		a1 verb
+a1-recipe-backen	Backen	to bake		a1 verb
+a1-recipe-bruehen	Brühen	to boil		a1 verb
+a1-recipe-braten	Braten	to fry/roast		a1 verb
+a1-recipe-dampfen	Dampfen	to steam		a1 verb
+a1-recipe-schneiden	Schneiden	to cut		a1 verb
+a1-recipe-roehren	Rühren	to stir		a1 verb
+a1-recipe-mischen	Mischen	to mix		a1 verb
+a1-recipe-wuerzen	Würzen	to season		a1 verb
+a1-recipe-schuetteln	Schütteln	to shake		a1 verb
+a1-recipe-abwaschen	Abwaschen	to wash (dishes)		a1 verb
+a1-recipe-decken	Decken	to set (table)		a1 verb
+a1-recipe-kochen-vorbereiten	Das Essen zubereiten	to prepare the meal		a1 phrase
+a1-recipe-der-tisch-gedeckt	The table is set	Der Tisch ist gedeckt.		a1 phrase
+a1-recipe-lasst-uns-essen	Let's eat	Lass uns essen!		a1 phrase
+a1-recipe-guten-appetit	Enjoy your meal	Guten Appetit!		a1 phrase
+a1-recipe-danke-fuer-das-essen	Thank you for the meal	Danke für das Essen!		a1 phrase
+a1-recipe-es-schmeckt-lecker	It tastes delicious	Es schmeckt lecker!		a1 phrase
+a1-recipe-noch-eine-portion	Another serving	Noch eine Portion, bitte!		a1 phrase
+a1-recipe-ich-bin-satt	I'm full	Ich bin satt.		a1 phrase
+a1-recipe-wasser	Das Wasser	water		a1 noun
+a1-recipe-tee	Der Tee	tea	Plural: die Tees	a1 noun
+a1-recipe-kaffee	Der Kaffee	coffee		a1 noun
+a1-recipe-saft	Der Saft	juice	Plural: die Säfte	a1 noun
+a1-recipe-bier	Das Bier	beer		a1 noun
+a1-recipe-wein	Der Wein	wine	Plural: die Weine	a1 noun
+a1-recipe-men	Das Menü	menu	Plural: die Menüs	a1 noun
+a1-recipe-speisekarte	Die Speisekarte	menu (restaurant)	Plural: die Speisekarten	a1 noun
+a1-recipe-bestellen	Bestellen	to order		a1 verb
+a1-recipe-servieren	Servieren	to serve		a1 verb
+a1-recipe-trinken	Trinken	to drink		a1 verb
+a1-recipe-prost	Cheers	Prost!		a1 phrase
+a1-recipe-zum-wohl	To your health	Zum Wohl!		a1 phrase
+a1-recipe-einladen	Einladen	to invite		a1 verb
+a1-recipe-gast	Gast	guest	Plural: die Gäste	a1 noun
+a1-recipe-party	Die Party	party	Plural: die Partys	a1 noun
+a1-recipe-geburtstag	Der Geburtstag	birthday	Plural: die Geburtstage	a1 noun
+a1-recipe-fest	Das Fest	celebration	Plural: die Feste	a1 noun
+a1-recipe-feiern	Feiern	to celebrate		a1 verb
+a1-recipe-schenken	Schenken	to give (a gift)		a1 verb
+a1-recipe-geschenk	Das Geschenk	gift	Plural: die Geschenke	a1 noun
