@@ -1,10 +1,7 @@
 <a id="top"></a>
 
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=30&pause=1000&color=gradient&center=true&vCenter=true&width=520&lines=language-learning-tui" alt="language-learning-tui" />
-</p>
-
-<p align="center">
+  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=30&pause=1000&color=gradient&center=true&vCenter=true&width=520&lines=language-learning-tui" alt="language-learning-tui" /><br/>
   <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=18&pause=800&color=58A6FF&center=true&vCenter=true&multiline=true&width=600&height=100&lines=Local-first+German+study;FSRS+scheduling+%E2%80%A2+SQLite;Anki+TSV%2F.apkg;Bubble+Tea+TUI+with+mouse;AI-assisted+card+drafting" alt="Tagline" />
 </p>
 
@@ -17,13 +14,15 @@
 </p>
 
 <p align="center">
-  <a href="#-features">✨ Features</a> &nbsp;•&nbsp; <a href="#-installation">🚀 Install</a> &nbsp;•&nbsp; <a href="#-usage">🎮 Usage</a> &nbsp;•&nbsp; <a href="#-contributing">🤝 Contribute</a>
+  <a href="#-features">✨ Features</a> &nbsp;•&nbsp; <a href="#-why-deutsch-tui">🤔 Why</a> &nbsp;•&nbsp; <a href="#-installation">🚀 Install</a> &nbsp;•&nbsp; <a href="#-usage">🎮 Usage</a> &nbsp;•&nbsp; <a href="#-contributing">🤝 Contribute</a>
 </p>
 
-<!-- Record a terminal demo with https://github.com/charmbracelet/vhs or https://github.com/faressoft/terminalizer and save as assets/demo.gif -->
-<p align="center"><img src="assets/demo.gif" alt="Demo" width="700"/></p>
+<p align="center"><em><strong>deutsch-tui</strong> is a terminal-native German flashcard and quiz app with FSRS scheduling, SQLite progress, and optional AI-assisted drafting. It is built for learners who want a fast, offline-capable workflow and keyboard-first control—without Electron or a browser tab—while staying compatible with Anki decks via TSV and <code>.apkg</code>.</em></p>
 
-<p align="center"><sub>Add <code>assets/demo.gif</code> to the repo (path above) so this renders.</sub></p>
+<!-- GIF: run `vhs demo.tape` from repo root (requires https://github.com/charmbracelet/vhs ) -->
+<p align="center"><img src="assets/demo.gif" alt="Terminal demo of deutsch-tui" width="700"/></p>
+
+<p align="center"><sub>Record or refresh with <code>vhs demo.tape</code> → writes <code>assets/demo.gif</code>. Requires <a href="https://github.com/charmbracelet/vhs">VHS</a>, <code>ffmpeg</code>, and <code>ttyd</code> on your <code>PATH</code>.</sub></p>
 
 <br/>
 
@@ -47,6 +46,23 @@
 <td>🎯 <b>Review modes</b><br/>MCQ, cloze, typing check, focus mode, audio hooks, dictionary shortcut.</td>
 </tr>
 </table>
+
+<p align="right"><a href="#top">↑ back to top</a></p>
+
+<p align="center">───────────────────────────────────────────────</p>
+
+<a id="-why-deutsch-tui"></a>
+
+## 🤔 Why deutsch-tui?
+
+> Prefer a **terminal** over another browser tab? Want **local-first** data with **FSRS** quality and optional **AI drafts**—without vendor lock-in? This project targets exactly that niche.
+
+| | Anki / typical web SRS | deutsch-tui |
+|--|------------------------|-------------|
+| **Surface** | Desktop GUI or browser | Terminal TUI (Bubble Tea + Lip Gloss) |
+| **Data** | Local collection + sync ecosystems | Single local dir: SQLite + plain config |
+| **Scheduling** | SM-2 family / FSRS add-ons | Built-in **FSRS** mapping |
+| **Authoring** | Full editor, shared decks | Deck files + **AI drafting** workflow + TSV / `.apkg` |
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
@@ -106,7 +122,21 @@ For full repo verification (optional): Python 3 with `pytest` / `pytest-xdist` f
 
 ### 🚀 Installation
 
-1. Clone the repository.
+0. **Fast path — local binary.** Build the checked-in target name with Make, then run it (same flags as `go run`):
+
+```bash
+make build
+```
+
+```bash
+./deutsch-tui-bin
+```
+
+```bash
+./deutsch-tui-bin -data-dir ./my-data
+```
+
+1. **From source — clone the repository.**
 
 ```bash
 git clone https://github.com/tungnguyenlam/language-learning-tui.git
@@ -118,13 +148,13 @@ git clone https://github.com/tungnguyenlam/language-learning-tui.git
 cd language-learning-tui
 ```
 
-3. Run the app (Go downloads modules automatically).
+3. Run with Go (downloads modules automatically).
 
 ```bash
 go run ./cmd/deutsch-tui
 ```
 
-4. Optional: use a custom data directory.
+4. Optional: custom data directory.
 
 ```bash
 go run ./cmd/deutsch-tui -data-dir ./my-data
@@ -146,10 +176,10 @@ go run ./cmd/deutsch-tui -smoke
 
 ## 🎮 Usage
 
-Views are reachable via **Tab** / **Shift+Tab**, **←**/**→** (or **w**/**s**), and number keys **1**–**9** (Dashboard through Cram). Press **?** for the in-app overlay.
+Switch views with **Tab** / **Shift+Tab**, **←**/**→** (or **w**/**s**), or **1**–**9** (Dashboard through Cram). Press **?** for the in-app overlay.
 
 <details>
-<summary>📋 Full keybindings reference</summary>
+<summary>📋 Show all keybindings</summary>
 
 ### Global
 
@@ -262,6 +292,14 @@ See [docs/ops/config-and-logs.md](docs/ops/config-and-logs.md) for defaults and 
 ## 🤝 Contributing
 
 Issues and PRs are welcome. Run `./scripts/verify.sh` before submitting (Go tests, vet, smoke build, and parallel E2E when Python tooling is set up). Read [AGENTS.md](AGENTS.md) for agent-oriented workflow and package boundaries.
+
+<p align="right"><a href="#top">↑ back to top</a></p>
+
+<p align="center">───────────────────────────────────────────────</p>
+
+## 📦 Releases
+
+There are **no GitHub Releases** yet. Use **`make build`** to produce **`./deutsch-tui-bin`** at the repo root (same artifact E2E tests expect via `DEUTSCH_TUI_BIN`), or run from source as in [Installation](#-installation).
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
