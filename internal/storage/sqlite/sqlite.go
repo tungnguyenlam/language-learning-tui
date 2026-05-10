@@ -322,7 +322,9 @@ func (s *Store) notesForDeck(ctx context.Context, deckID string) ([]core.Note, e
 
 func (s *Store) cardsForNote(ctx context.Context, noteID string) ([]core.Card, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, c.audio, c.tags, COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0), COALESCE(rs.interval_seconds, 0)
+		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, c.audio, c.tags, 
+		       COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0), 
+		       COALESCE(rs.interval_seconds, 0), COALESCE(rs.reviews, 0)
 		FROM cards c
 		LEFT JOIN card_flags cf ON cf.card_id = c.id
 		LEFT JOIN review_states rs ON rs.card_id = c.id
@@ -339,14 +341,16 @@ func (s *Store) cardsForNote(ctx context.Context, noteID string) ([]core.Card, e
 		var card core.Card
 		var kind string
 		var choicesStr, tags string
-		var bookmarked, leech, suspended, intervalSec int
-		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &card.Audio, &tags, &bookmarked, &leech, &suspended, &intervalSec); err != nil {
+		var bookmarked, leech, suspended, intervalSec, reviews int
+		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &card.Audio, &tags, &bookmarked, &leech, &suspended, &intervalSec, &reviews); err != nil {
 			return nil, err
 		}
 		card.Kind = core.CardKind(kind)
 		card.Bookmarked = bookmarked != 0
 		card.Leech = leech != 0
 		card.Suspended = suspended != 0
+		card.Interval = time.Duration(intervalSec) * time.Second
+		card.Reviews = reviews
 		card.Mature = intervalSec >= 1814400
 		card.Choices = parseChoices(choicesStr)
 		if tags != "" {
@@ -559,7 +563,9 @@ func (s *Store) DueCards(ctx context.Context, now time.Time, limit int) ([]core.
 		limit = 500
 	}
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, c.audio, COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0), COALESCE(rs.interval_seconds, 0)
+		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, c.audio, c.tags,
+		       COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0), 
+		       COALESCE(rs.interval_seconds, 0), COALESCE(rs.reviews, 0)
 		FROM cards c
 		LEFT JOIN review_states rs ON rs.card_id = c.id
 		LEFT JOIN card_flags cf ON cf.card_id = c.id
@@ -577,17 +583,22 @@ func (s *Store) DueCards(ctx context.Context, now time.Time, limit int) ([]core.
 	for rows.Next() {
 		var card core.Card
 		var kind string
-		var choicesStr string
-		var bookmarked, leech, suspended, intervalSec int
-		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &card.Audio, &bookmarked, &leech, &suspended, &intervalSec); err != nil {
+		var choicesStr, tags string
+		var bookmarked, leech, suspended, intervalSec, reviews int
+		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &card.Audio, &tags, &bookmarked, &leech, &suspended, &intervalSec, &reviews); err != nil {
 			return nil, err
 		}
 		card.Kind = core.CardKind(kind)
 		card.Bookmarked = bookmarked != 0
 		card.Leech = leech != 0
 		card.Suspended = suspended != 0
+		card.Interval = time.Duration(intervalSec) * time.Second
+		card.Reviews = reviews
 		card.Mature = intervalSec >= 1814400
 		card.Choices = parseChoices(choicesStr)
+		if tags != "" {
+			card.Tags = strings.Fields(tags)
+		}
 		cards = append(cards, card)
 	}
 	return cards, rows.Err()
@@ -598,7 +609,9 @@ func (s *Store) DueCardsBookmarked(ctx context.Context, now time.Time, limit int
 		limit = 500
 	}
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, c.audio, COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0), COALESCE(rs.interval_seconds, 0)
+		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, c.audio, c.tags,
+		       COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0), 
+		       COALESCE(rs.interval_seconds, 0), COALESCE(rs.reviews, 0)
 		FROM cards c
 		INNER JOIN card_flags cf ON cf.card_id = c.id AND cf.bookmarked = 1
 		LEFT JOIN review_states rs ON rs.card_id = c.id
@@ -616,17 +629,22 @@ func (s *Store) DueCardsBookmarked(ctx context.Context, now time.Time, limit int
 	for rows.Next() {
 		var card core.Card
 		var kind string
-		var choicesStr string
-		var bookmarked, leech, suspended, intervalSec int
-		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &card.Audio, &bookmarked, &leech, &suspended, &intervalSec); err != nil {
+		var choicesStr, tags string
+		var bookmarked, leech, suspended, intervalSec, reviews int
+		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &card.Audio, &tags, &bookmarked, &leech, &suspended, &intervalSec, &reviews); err != nil {
 			return nil, err
 		}
 		card.Kind = core.CardKind(kind)
 		card.Bookmarked = bookmarked != 0
 		card.Leech = leech != 0
 		card.Suspended = suspended != 0
+		card.Interval = time.Duration(intervalSec) * time.Second
+		card.Reviews = reviews
 		card.Mature = intervalSec >= 1814400
 		card.Choices = parseChoices(choicesStr)
+		if tags != "" {
+			card.Tags = strings.Fields(tags)
+		}
 		cards = append(cards, card)
 	}
 	return cards, rows.Err()
@@ -1244,7 +1262,9 @@ func parseChoices(raw string) []string {
 
 func (s *Store) Cards(ctx context.Context, deckID string, search string, tag string) ([]core.Card, error) {
 	query := `
-		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, c.audio, c.tags, COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0), COALESCE(rs.interval_seconds, 0)
+		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, c.audio, c.tags, 
+		       COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0), 
+		       COALESCE(rs.interval_seconds, 0), COALESCE(rs.reviews, 0)
 		FROM cards c
 		LEFT JOIN card_flags cf ON cf.card_id = c.id
 		LEFT JOIN review_states rs ON rs.card_id = c.id
@@ -1279,14 +1299,16 @@ func (s *Store) Cards(ctx context.Context, deckID string, search string, tag str
 		var card core.Card
 		var kind string
 		var choicesStr, tags string
-		var bookmarked, leech, suspended, intervalSec int
-		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &card.Audio, &tags, &bookmarked, &leech, &suspended, &intervalSec); err != nil {
+		var bookmarked, leech, suspended, intervalSec, reviews int
+		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &card.Audio, &tags, &bookmarked, &leech, &suspended, &intervalSec, &reviews); err != nil {
 			return nil, err
 		}
 		card.Kind = core.CardKind(kind)
 		card.Bookmarked = bookmarked != 0
 		card.Leech = leech != 0
 		card.Suspended = suspended != 0
+		card.Interval = time.Duration(intervalSec) * time.Second
+		card.Reviews = reviews
 		card.Mature = intervalSec >= 1814400
 		card.Choices = parseChoices(choicesStr)
 		if tags != "" {

@@ -52,6 +52,11 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		searchLabel = "FILTER BY TAG"
 		b.WriteString(searchStyle.Render(fmt.Sprintf("%s: %s_", searchLabel, m.browserTag)) + "\n\n")
 	} else {
+		if m.searchingBrowser && len(m.browserSearchHistory) > 0 {
+			historyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true)
+			historyStr := "History: " + strings.Join(m.browserSearchHistory, " | ")
+			b.WriteString(historyStyle.Render(historyStr) + "\n")
+		}
 		filterText := ""
 		if m.browserTag != "" {
 			filterText = lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render(" [Tag: " + m.browserTag + "]")
@@ -122,6 +127,10 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 			suspended = " [S]"
 		}
 		mature := ""
+		interval := ""
+		if card.Interval > 0 {
+			interval = " (" + formatReviewInterval(card.Interval) + ")"
+		}
 		if card.Mature {
 			mature = " ✨"
 		}
@@ -129,7 +138,7 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		if len(card.Tags) > 0 {
 			tags = " " + mutedStyle.Render("#"+strings.Join(card.Tags, " #"))
 		}
-		label := fmt.Sprintf("%s%s[%s] %s%s%s%s%s%s", prefix, selected, kind, card.Prompt, mature, bookmark, leech, suspended, tags)
+		label := fmt.Sprintf("%s%s[%s] %s%s%s%s%s%s%s", prefix, selected, kind, card.Prompt, interval, mature, bookmark, leech, suspended, tags)
 		line := padLine(style.Render(label), lineWidth)
 		if len(m.browserCards) > maxVisible {
 			currentPos := i - start

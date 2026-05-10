@@ -115,6 +115,7 @@ type Model struct {
 	browserCursor         int
 	browserSearch         string
 	browserTag            string
+	browserSearchHistory  []string
 	browserDeckID         string
 	searchingTags         bool
 	browserSelected       map[string]bool

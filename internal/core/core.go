@@ -70,6 +70,8 @@ type Card struct {
 	Leech      bool
 	Suspended  bool
 	Mature     bool
+	Interval   time.Duration
+	Reviews    int
 }
 
 type ReviewState struct {

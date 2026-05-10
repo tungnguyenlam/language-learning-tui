@@ -819,6 +819,15 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		switch msg.String() {
 		case "enter", "\r", "\n":
 			m.searchingBrowser = false
+			if m.browserSearch != "" {
+				// Add to history if not already most recent
+				if len(m.browserSearchHistory) == 0 || m.browserSearchHistory[len(m.browserSearchHistory)-1] != m.browserSearch {
+					m.browserSearchHistory = append(m.browserSearchHistory, m.browserSearch)
+					if len(m.browserSearchHistory) > 5 {
+						m.browserSearchHistory = m.browserSearchHistory[1:]
+					}
+				}
+			}
 			return m.loadBrowserCards(), true
 		case "esc":
 			m.searchingBrowser = false

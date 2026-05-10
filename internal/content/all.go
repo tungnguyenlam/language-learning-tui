@@ -18,6 +18,8 @@ func StandardDecks() []core.Deck {
 		BusinessDeck(),
 		IdiomsDeck(),
 		SlangDeck(),
+		PhrasalVerbsDeck(),
+		MedicalGermanDeck(),
 	}
 
 	// Load all embedded TSV decks

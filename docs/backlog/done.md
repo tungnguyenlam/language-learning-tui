@@ -1,5 +1,30 @@
 # Done Backlog
 
+## 2026-05-10 17:30 +07 (Autonomous Improvement Pass)
+
+Completed a comprehensive improvement pass with 11 meaningful enhancements.
+
+### Content Expansion
+- Added **German Phrasal Verbs** deck with separable and inseparable verbs.
+- Added **Medical German (B2/C1)** deck for advanced learners.
+- Implemented **Verb of the Day** on the Dashboard with daily conjugations.
+
+### UI/UX Improvements
+- **Dashboard:** Refactored for extreme compactness to support smaller terminals; restored original wording for E2E compatibility.
+- **Browser:** Added **Search History** (up to 5 recent terms) and displayed **Review Intervals** (e.g., "1 day") for each card.
+- **Review:** Added **Difficulty Badges** (NEW, LEARNING, MATURE) and a **Session Timer** for better progress tracking.
+- **Motivation:** Improved Dashboard messages for daily goals and streaks.
+
+### Logic & Developer Experience
+- Enhanced `core.Card` and SQLite storage layer to persistently track and fetch `Interval` and `Reviews` count, enabling richer UI metadata.
+
+### Verification
+- Added 3 new E2E tests in `e2e_tests/test_new_pass_improvements.py`.
+- Total E2E tests: 168 (all passing).
+- All Go unit tests passing.
+- `./scripts/verify.sh` executed successfully.
+
+
 ## 2026-05-10 15:30 +07 (Autonomous Improvement Pass)
 
 Completed a major improvement pass focusing on Content, UI/UX, and Logic.

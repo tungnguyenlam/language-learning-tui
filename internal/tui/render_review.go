@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"deutsch-tui/internal/core"
 
@@ -99,21 +100,35 @@ func (m *Model) renderReview(x, y int) string {
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
 	header := fmt.Sprintf("%s%s %d/%d", titleStyle.Render("Review"), filterBanner, cursor+1, len(m.dueCards))
 
-	// Session progress bar
+	// Session progress bar and timer
 	sessionTotal := m.sessionReviewed + len(m.dueCards)
 	sessionPercentage := 0.0
 	if sessionTotal > 0 {
 		sessionPercentage = float64(m.sessionReviewed) / float64(sessionTotal)
 	}
-	sessionBar := progressBar(20, sessionPercentage, "46", "238")
-	sessionProgress := fmt.Sprintf(" | Session: %s %d%%", sessionBar, int(sessionPercentage*100))
+	sessionBar := progressBar(15, sessionPercentage, "46", "238")
+
+	duration := time.Since(m.sessionStartTime)
+	timerStr := fmt.Sprintf("%02d:%02d", int(duration.Minutes()), int(duration.Seconds())%60)
+
+	sessionProgress := fmt.Sprintf(" | Session: %s %d%% | ⏱ %s", sessionBar, int(sessionPercentage*100), timerStr)
 
 	mature := ""
 	if card.Mature {
 		mature = " ✨"
 	}
 
-	headerSection := fmt.Sprintf("%s%s\n%s | Type: %s\n%s | %s\n%s%s%s", header, sessionProgress, deckMeta, cardTypeLabel, bookmark, keys, leech, suspended, audioIndicator)
+	// Determine card state/difficulty for badge
+	stateBadge := lipgloss.NewStyle().Foreground(lipgloss.Color("255")).Padding(0, 1)
+	if card.Mature {
+		stateBadge = stateBadge.Background(lipgloss.Color("34")).SetString("MATURE")
+	} else if card.Reviews > 0 {
+		stateBadge = stateBadge.Background(lipgloss.Color("39")).SetString("LEARNING")
+	} else {
+		stateBadge = stateBadge.Background(lipgloss.Color("208")).SetString("NEW")
+	}
+
+	headerSection := fmt.Sprintf("%s%s %s\n%s | Type: %s\n%s | %s\n%s%s%s", header, sessionProgress, stateBadge.Render(), deckMeta, cardTypeLabel, bookmark, keys, leech, suspended, audioIndicator)
 	if m.focusMode {
 		headerSection = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true).Render("Focus Mode Active (f to exit)")
 	}
