@@ -16,6 +16,8 @@ func StandardDecks() []core.Deck {
 		B1NatureDeck(),
 		AdvancedEmotionsDeck(),
 		BusinessDeck(),
+		IdiomsDeck(),
+		SlangDeck(),
 	}
 
 	// Load all embedded TSV decks

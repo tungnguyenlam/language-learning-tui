@@ -44,6 +44,9 @@ The project is a Go Bubble Tea TUI for German flashcard and MCQ learning. It is 
 - macOS shells used in this repo may not provide `timeout`; use a TTY session or `./scripts/tui_smoke.sh` for launch checks.
 - Embedded TSV decks are parsed by Go's TSV reader; avoid unescaped quote characters inside fields because they can merge following rows.
 - Settings screens are height-sensitive in E2E tests; keep durable guidance short enough that `status:` and editing prompts remain visible on 90x28 terminals.
+- E2E tests often wait for "DASHBOARD" to verify app readiness. When updating the Dashboard header, ensure the word "DASHBOARD" remains visible to maintain test compatibility.
+- Dashboard layouts are height-sensitive. Avoid adding vertical space in top sections (header/boxes) as it can push bottom elements (Grammar Tip, help overlays) off-screen, causing E2E test timeouts on standard terminal sizes.
+- Bubble Tea unit tests that manually call commands often fail if a command is changed to a `tea.Batch`. Use a `executeCmd` helper in tests to flatten batches and prevent `undefined: msg` errors.
 
 ## Handoff Rules
 

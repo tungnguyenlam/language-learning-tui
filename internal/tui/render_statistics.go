@@ -83,6 +83,31 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 	)
 	content.WriteString(joinedCols + "\n")
 
+	// --- Success Rate per Deck ---
+	if len(m.decks) > 1 {
+		deckSuccess := strings.Builder{}
+		deckSuccess.WriteString(titleStyle.Copy().Underline(true).Render("Success Rate per Deck") + "\n")
+		hasData := false
+		for _, d := range m.decks {
+			if d.ID == "" || d.SuccessRate <= 0 {
+				continue
+			}
+			hasData = true
+			successColor := "196"
+			if d.SuccessRate >= 0.85 {
+				successColor = "46"
+			} else if d.SuccessRate >= 0.70 {
+				successColor = "226"
+			}
+			successStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(successColor)).Bold(true)
+			bar := progressBar(20, d.SuccessRate, successColor, "238")
+			deckSuccess.WriteString(fmt.Sprintf("  %-20s %s %s\n", truncateLine(d.Name, 20), bar, successStyle.Render(fmt.Sprintf("%.1f%%", d.SuccessRate*100))))
+		}
+		if hasData {
+			content.WriteString(deckSuccess.String() + "\n")
+		}
+	}
+
 	// --- Session Stats ---
 	content.WriteString(titleStyle.Copy().Underline(true).Render("Session Stats:") + "\n")
 	if m.sessionReviewed > 0 {

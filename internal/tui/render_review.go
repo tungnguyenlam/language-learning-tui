@@ -160,8 +160,10 @@ func (m *Model) renderReview(x, y int) string {
 	answerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
 	extraDisplay := ""
 	if card.Extra != "" {
-		extraStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("245")).Italic(true)
-		extraDisplay = "\n" + extraStyle.Render("💡 "+card.Extra)
+		extraStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("159")).
+			Italic(true)
+		extraDisplay = "\n\n" + extraStyle.Render("💡 CONTEXT: "+card.Extra)
 	}
 
 	// Typing mode display

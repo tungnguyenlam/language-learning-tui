@@ -17,6 +17,21 @@ import (
 	"github.com/charmbracelet/x/ansi"
 )
 
+func executeCmd(cmd tea.Cmd) []tea.Msg {
+	if cmd == nil {
+		return nil
+	}
+	msg := cmd()
+	if batch, ok := msg.(tea.BatchMsg); ok {
+		var msgs []tea.Msg
+		for _, c := range batch {
+			msgs = append(msgs, executeCmd(c)...)
+		}
+		return msgs
+	}
+	return []tea.Msg{msg}
+}
+
 func TestBreakpointForWidth(t *testing.T) {
 	tests := []struct {
 		width int
@@ -290,8 +305,10 @@ func TestAIDraftApprovalPersistsAndReloadsDueCards(t *testing.T) {
 	model.aiInput = "der Tee"
 
 	generate := model.generateDrafts()
-	msg := generate()
-	model.Update(msg)
+	msgs := executeCmd(generate)
+	for _, msg := range msgs {
+		model.Update(msg)
+	}
 	if len(model.drafts) != 1 {
 		t.Fatalf("drafts = %d, want 1", len(model.drafts))
 	}
@@ -300,7 +317,7 @@ func TestAIDraftApprovalPersistsAndReloadsDueCards(t *testing.T) {
 	if approve == nil {
 		t.Fatal("approveDraft returned nil command")
 	}
-	msg = approve()
+	msg := approve()
 	model.Update(msg)
 
 	if repo.upsertedDeck.ID != "deck-1" {
@@ -482,8 +499,10 @@ func TestAIGenerateErrorFromProvider(t *testing.T) {
 	model.activeView = ViewAI
 
 	cmd := model.generateDrafts()
-	msg := cmd()
-	model.Update(msg)
+	msgs := executeCmd(cmd)
+	for _, msg := range msgs {
+		model.Update(msg)
+	}
 	if !strings.Contains(model.status, "context canceled") {
 		t.Fatalf("status = %q, want provider error", model.status)
 	}
@@ -692,8 +711,10 @@ func TestAIDraftWithTemplateProvider(t *testing.T) {
 	model.aiInput = "test"
 
 	generate := model.generateDrafts()
-	msg := generate()
-	model.Update(msg)
+	msgs := executeCmd(generate)
+	for _, msg := range msgs {
+		model.Update(msg)
+	}
 
 	if len(model.drafts) != 1 {
 		t.Fatalf("drafts = %d, want 1", len(model.drafts))

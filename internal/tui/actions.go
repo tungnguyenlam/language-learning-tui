@@ -443,25 +443,28 @@ func (m *Model) startDrafting() tea.Cmd {
 	}
 	m.drafting = true
 	m.status = "AI is drafting flashcards..."
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-		defer cancel()
+	return tea.Batch(
+		m.tickSpinner(),
+		func() tea.Msg {
+			ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+			defer cancel()
 
-		deckID := m.deck.ID
-		if deckID == "" {
-			deckID = "Imported"
-		}
+			deckID := m.deck.ID
+			if deckID == "" {
+				deckID = "Imported"
+			}
 
-		drafts, err := m.aiProvider.GenerateDrafts(ctx, ai.DraftRequest{
-			SourceText: m.aiInput,
-			DeckID:     deckID,
-		})
+			drafts, err := m.aiProvider.GenerateDrafts(ctx, ai.DraftRequest{
+				SourceText: m.aiInput,
+				DeckID:     deckID,
+			})
 
-		if err != nil {
-			return err
-		}
-		return draftsMsg(drafts)
-	}
+			if err != nil {
+				return err
+			}
+			return draftsMsg(drafts)
+		},
+	)
 }
 
 func (m *Model) setCardBookmarkLocal(cardID string, bookmarked bool) {

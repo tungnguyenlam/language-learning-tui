@@ -40,6 +40,11 @@ func DefaultConfig() Config {
 				"back":    "Grammar: {{.Topic}}\nRule: Explanation of the rule for {{.Topic}}.",
 				"example": "Ich {{c1::bin}} {{.Topic}}.",
 			},
+			"explanation": {
+				"front":   "Explain the grammar rule for: {{.Topic}}",
+				"back":    "Grammar Point: {{.Topic}}\n\nCore Rule: [Detailed explanation here]\nUsage: [When and how to use it]\nCommon Pitfalls: [Frequent mistakes]",
+				"example": "Practice Sentence: [Example 1]\nPractice Sentence: [Example 2]",
+			},
 			"articles": {
 				"front":   "{{c1::...}} {{.Topic}}",
 				"back":    "Article for {{.Topic}}: der/die/das",

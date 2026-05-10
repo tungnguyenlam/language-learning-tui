@@ -795,8 +795,12 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 
 	if m.searchingTags {
 		switch msg.String() {
-		case "enter", "\r", "\n", "esc":
+		case "enter", "\r", "\n":
 			m.searchingTags = false
+			return m.loadBrowserCards(), true
+		case "esc":
+			m.searchingTags = false
+			m.browserTag = ""
 			return m.loadBrowserCards(), true
 		case "backspace":
 			if len(m.browserTag) > 0 {
@@ -813,8 +817,12 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 
 	if m.searchingBrowser {
 		switch msg.String() {
-		case "enter", "\r", "\n", "esc":
+		case "enter", "\r", "\n":
 			m.searchingBrowser = false
+			return m.loadBrowserCards(), true
+		case "esc":
+			m.searchingBrowser = false
+			m.browserSearch = ""
 			return m.loadBrowserCards(), true
 		case "backspace":
 			if len(m.browserSearch) > 0 {

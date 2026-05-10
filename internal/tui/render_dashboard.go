@@ -178,7 +178,13 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 				keyStyle.Render("[6]"), "AI Draft"))
 
 	var db strings.Builder
-	db.WriteString(titleStyle.Render("DASHBOARD") + "\n")
+	now = time.Now()
+	dateStr := now.Format("Monday, 02. January 2006")
+	progressText := fmt.Sprintf("Daily Goal: %d/%d reviews", m.stats.ReviewsToday, m.stats.DailyGoal)
+	if m.stats.DailyGoal > 0 && m.stats.ReviewsToday >= m.stats.DailyGoal {
+		progressText += " (Goal Met! ✅)"
+	}
+	db.WriteString(titleStyle.Render("DASHBOARD - WILLKOMMEN!") + " | " + lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render(progressText) + " | " + mutedStyle.Render(dateStr) + "\n")
 
 	if m.lastSessionReviewed > 0 {
 		accuracy := 0.0
