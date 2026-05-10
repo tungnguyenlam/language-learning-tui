@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 380" width="700" height="380" role="img" aria-label="deutsch-tui terminal mockup">
+  <defs>
+    <filter id="sh" x="-8%" y="-8%" width="116%" height="120%">
+      <feDropShadow dx="0" dy="10" stdDeviation="12" flood-opacity="0.45"/>
+    </filter>
+    <linearGradient id="bar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2a2a3d"/>
+      <stop offset="1" stop-color="#1e1e2e"/>
+    </linearGradient>
+  </defs>
+  <rect x="4" y="4" width="692" height="372" rx="14" ry="14" fill="#0d1117" filter="url(#sh)"/>
+  <rect x="4" y="4" width="692" height="40" rx="14" ry="14" fill="url(#bar)"/>
+  <rect x="4" y="28" width="692" height="16" fill="#1e1e2e"/>
+  <circle cx="28" cy="24" r="7" fill="#ff5f57"/>
+  <circle cx="52" cy="24" r="7" fill="#febc2e"/>
+  <circle cx="76" cy="24" r="7" fill="#28c840"/>
+  <text x="350" y="29" text-anchor="middle" fill="#cdd6f4" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13" font-weight="600">deutsch-tui &#8212; language learning</text>
+  <path d="M4 44 L696 44 L696 368 Q696 376 688 376 L12 376 Q4 376 4 368 Z" fill="#1a1b26"/>
+  <text x="24" y="72" fill="#7aa2f7" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12">+-- deutsch-tui &#183; DECK LIST -------------------------------------------+</text>
+  <text x="24" y="94" fill="#565f89" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11">|  Tab &#183; 1-9 views &#183; ? help &#183; q quit                              |</text>
+  <text x="24" y="116" fill="#45475a" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11">|  ---------------------------------------------------------------  |</text>
+  <text x="24" y="142" fill="#a6e3a1" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12">&gt; A1 Starter Deck</text>
+  <text x="280" y="142" fill="#89b4fa" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12">due 12</text>
+  <text x="340" y="142" fill="#f9e2af" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12">new 5</text>
+  <text x="400" y="142" fill="#cba6f7" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12">reviews 47</text>
+  <text x="620" y="142" fill="#565f89" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12">|</text>
+  <text x="24" y="164" fill="#bac2de" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12">|  Business Vocabulary        3    2       18                     |</text>
+  <text x="24" y="186" fill="#bac2de" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12">|  Common Verbs (A1-A2)       0    8        4                     |</text>
+  <text x="24" y="220" fill="#565f89" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11">|                                                                 |</text>
+  <text x="24" y="248" fill="#94e2d5" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="11">|  [Enter] open deck   [c] cram   [L] limits   [/] search decks   |</text>
+  <text x="24" y="278" fill="#7aa2f7" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12">+-------------------------------------------------------------------+</text>
+  <text x="24" y="318" fill="#f38ba8" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13">$</text>
+  <text x="40" y="318" fill="#a6e3a1" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="13">go run ./cmd/deutsch-tui</text>
+  <g>
+    <animate attributeName="opacity" values="1;0;1" dur="1.05s" repeatCount="indefinite"/>
+    <text x="40" y="346" fill="#89dceb" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="14" font-weight="700">&#9612;</text>
+  </g>
+</svg>

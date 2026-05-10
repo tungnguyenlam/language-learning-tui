@@ -1,16 +1,20 @@
-# deutsch-tui demo — requires https://github.com/charmbracelet/vhs , ffmpeg, and ttyd on PATH
-# From repository root: vhs demo.tape  →  writes assets/demo.gif (120×32 terminal, 24 fps)
+# deutsch-tui · charmbracelet/vhs (needs ffmpeg + ttyd on PATH)
+# Regenerate demo: vhs demo.tape   →   assets/demo.gif
+# Install VHS: brew install vhs   OR   go install github.com/charmbracelet/vhs@latest
 
 Output assets/demo.gif
 
-Set Width 120
-Set Height 32
+Set Shell "bash"
+Set FontFamily "JetBrains Mono"
+Set FontSize 14
+Set Width 1200
+Set Height 700
+Set Theme "Catppuccin Mocha"
 Set Framerate 24
+Set PlaybackSpeed 0.8
+Set TypingSpeed 35ms
 
 Require go
-
-Set Shell "bash"
-Set TypingSpeed 30ms
 
 Hide
 Type "rm -rf /tmp/deutsch-tui-vhs && mkdir -p /tmp/deutsch-tui-vhs"
@@ -19,35 +23,39 @@ Sleep 400ms
 Show
 
 Type "go run ./cmd/deutsch-tui -data-dir /tmp/deutsch-tui-vhs"
+Sleep 500ms
 Enter
 
-Sleep 4s
-
-Type "2"
-Sleep 900ms
-Type "c"
 Sleep 3s
 
+Type "2"
+Sleep 1s
+
+Down
+Sleep 500ms
 Enter
+Sleep 1s
+
+Type "3"
+Sleep 1s
+
 Sleep 2s
 
 Space
-Sleep 1500ms
-Type "g"
-Sleep 1500ms
-
-Escape
 Sleep 1s
 
+Type "g"
+Sleep 500ms
+
 Type "8"
-Sleep 3s
+Sleep 1s
 
 Type "/"
-Sleep 400ms
-Type "der"
-Sleep 600ms
+Sleep 500ms
+Type "vocabulary"
+Sleep 1s
 Enter
-Sleep 2s
+Sleep 1s
 
 Type "q"
-Sleep 1500ms
+Sleep 500ms

@@ -1,8 +1,11 @@
 <a id="top"></a>
 
 <p align="center">
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=30&pause=1000&color=gradient&center=true&vCenter=true&width=520&lines=language-learning-tui" alt="language-learning-tui" /><br/>
-  <img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=18&pause=800&color=58A6FF&center=true&vCenter=true&multiline=true&width=600&height=100&lines=Local-first+German+study;FSRS+scheduling+%E2%80%A2+SQLite;Anki+TSV%2F.apkg;Bubble+Tea+TUI+with+mouse;AI-assisted+card+drafting" alt="Tagline" />
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/hero-dark.svg">
+    <source media="(prefers-color-scheme: light)" srcset="assets/hero-light.svg">
+    <img src="assets/hero-dark.svg" width="700" alt="deutsch-tui terminal mockup">
+  </picture>
 </p>
 
 <p align="center">
@@ -19,37 +22,35 @@
 
 <p align="center"><em><strong>deutsch-tui</strong> is a terminal-native German flashcard and quiz app with FSRS scheduling, SQLite progress, and optional AI-assisted drafting. It is built for learners who want a fast, offline-capable workflow and keyboard-first control—without Electron or a browser tab—while staying compatible with Anki decks via TSV and <code>.apkg</code>.</em></p>
 
-<!-- GIF: run `vhs demo.tape` from repo root (requires https://github.com/charmbracelet/vhs ) -->
+<p align="center"><sub><code>❯ cat README.md</code> — scroll on; this page is for humans and robots alike.</sub></p>
+
+<!-- Regenerate recording: vhs demo.tape → assets/demo.gif -->
 <p align="center"><img src="assets/demo.gif" alt="Terminal demo of deutsch-tui" width="700"/></p>
 
-<p align="center"><sub>Record or refresh with <code>vhs demo.tape</code> → writes <code>assets/demo.gif</code>. Requires <a href="https://github.com/charmbracelet/vhs">VHS</a>, <code>ffmpeg</code>, and <code>ttyd</code> on your <code>PATH</code>.</sub></p>
+<p align="center"><sub>Install <a href="https://github.com/charmbracelet/vhs">VHS</a> (<code>brew install vhs</code> or <code>go install github.com/charmbracelet/vhs@latest</code>), ensure <code>ffmpeg</code> and <code>ttyd</code> are on <code>PATH</code>, then run <code>vhs demo.tape</code> from the repo root to refresh the GIF after UI changes (ideal for local prep or CI).</sub></p>
 
 <br/>
 
 ## ✨ Features
 
-<table>
-<tr>
-<td width="50%">📚 <b>FSRS scheduling</b><br/>Spaced repetition via <code>go-fsrs</code> with grades persisted in SQLite.</td>
-<td width="50%">🖱️ <b>Mouse + keyboard</b><br/>Tabs, buttons, scrollbars, and WASD-friendly navigation.</td>
-</tr>
-<tr>
-<td>🗂️ <b>Decks & cram</b><br/>Deck list with limits, filters, merge/cram shortcuts, and session stats.</td>
-<td>🔍 <b>Browser</b><br/>Search, tags, bulk actions, card preview, and review history.</td>
-</tr>
-<tr>
-<td>📥 <b>Anki-friendly I/O</b><br/>Import/export TSV and <code>.apkg</code>; seed rich embedded German content.</td>
-<td>🤖 <b>AI drafting</b><br/>Offline/template providers and configurable prompt sets for new cards.</td>
-</tr>
-<tr>
-<td>📊 <b>Statistics</b><br/>Progress, streaks, session timing, and CSV export.</td>
-<td>🎯 <b>Review modes</b><br/>MCQ, cloze, typing check, focus mode, audio hooks, dictionary shortcut.</td>
-</tr>
-</table>
+```text
+$ deutsch-tui --features
+
+  FSRS scheduling      spaced repetition via go-fsrs + SQLite
+  Mouse + keyboard   tabs, buttons, scrollbars, WASD navigation
+  Decks & cram       limits, filters, merge/cram, session stats
+  Browser            search, tags, bulk actions, card preview
+  Anki I/O           import/export TSV and .apkg
+  AI drafting        offline/template providers, prompt sets
+  Statistics         streaks, timing, CSV export
+  Review modes       MCQ, cloze, typing, focus, audio, dict
+
+Press [?] for full keybindings in the app.
+```
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
-<p align="center">───────────────────────────────────────────────</p>
+<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
 
 <a id="-why-deutsch-tui"></a>
 
@@ -66,7 +67,7 @@
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
-<p align="center">───────────────────────────────────────────────</p>
+<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
 
 ## 🏗️ Architecture
 
@@ -104,7 +105,7 @@ graph TD
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
-<p align="center">───────────────────────────────────────────────</p>
+<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
 
 ## 🚀 Getting Started
 
@@ -122,7 +123,19 @@ For full repo verification (optional): Python 3 with `pytest` / `pytest-xdist` f
 
 ### 🚀 Installation
 
-0. **Fast path — local binary.** Build the checked-in target name with Make, then run it (same flags as `go run`):
+<div align="center">
+
+<pre>
+~ deutsch-tui — quick install
+────────────────────────────────────────────────────────
+$ git clone https://github.com/tungnguyenlam/language-learning-tui.git
+$ cd language-learning-tui
+$ go run ./cmd/deutsch-tui
+</pre>
+
+</div>
+
+0. **Fast path — local binary.** Build with Make, then run:
 
 ```bash
 make build
@@ -136,31 +149,31 @@ make build
 ./deutsch-tui-bin -data-dir ./my-data
 ```
 
-1. **From source — clone the repository.**
+1. **Clone** (if you skipped the block above).
 
 ```bash
 git clone https://github.com/tungnguyenlam/language-learning-tui.git
 ```
 
-2. Enter the project directory.
+2. **Enter the project directory.**
 
 ```bash
 cd language-learning-tui
 ```
 
-3. Run with Go (downloads modules automatically).
+3. **Run with Go.**
 
 ```bash
 go run ./cmd/deutsch-tui
 ```
 
-4. Optional: custom data directory.
+4. **Optional:** custom data directory.
 
 ```bash
 go run ./cmd/deutsch-tui -data-dir ./my-data
 ```
 
-5. Optional: smoke-check initialization then exit.
+5. **Optional:** smoke-check initialization then exit.
 
 ```bash
 go run ./cmd/deutsch-tui -smoke
@@ -170,7 +183,7 @@ go run ./cmd/deutsch-tui -smoke
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
-<p align="center">───────────────────────────────────────────────</p>
+<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
 
 <a id="-usage"></a>
 
@@ -242,7 +255,7 @@ Statistics: `j`/`k` scroll, `x` export CSV. Import: `i`/`I` import TSV/APKG, `x`
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
-<p align="center">───────────────────────────────────────────────</p>
+<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
 
 ## ⚙️ Configuration
 
@@ -258,7 +271,7 @@ See [docs/ops/config-and-logs.md](docs/ops/config-and-logs.md) for defaults and 
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
-<p align="center">───────────────────────────────────────────────</p>
+<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
 
 ## 🛠️ Tech stack
 
@@ -271,7 +284,7 @@ See [docs/ops/config-and-logs.md](docs/ops/config-and-logs.md) for defaults and 
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
-<p align="center">───────────────────────────────────────────────</p>
+<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
 
 ## 🗺️ Roadmap
 
@@ -285,7 +298,7 @@ See [docs/ops/config-and-logs.md](docs/ops/config-and-logs.md) for defaults and 
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
-<p align="center">───────────────────────────────────────────────</p>
+<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
 
 <a id="-contributing"></a>
 
@@ -295,7 +308,7 @@ Issues and PRs are welcome. Run `./scripts/verify.sh` before submitting (Go test
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
-<p align="center">───────────────────────────────────────────────</p>
+<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
 
 ## 📦 Releases
 
@@ -303,7 +316,7 @@ There are **no GitHub Releases** yet. Use **`make build`** to produce **`./deuts
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
-<p align="center">───────────────────────────────────────────────</p>
+<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
 
 ## 👥 Contributors
 
@@ -313,7 +326,7 @@ There are **no GitHub Releases** yet. Use **`make build`** to produce **`./deuts
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
-<p align="center">───────────────────────────────────────────────</p>
+<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
 
 ## 📈 Star history
 
@@ -323,7 +336,7 @@ There are **no GitHub Releases** yet. Use **`make build`** to produce **`./deuts
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
-<p align="center">───────────────────────────────────────────────</p>
+<p align="center"><code>$ ─────────────────────────────────────────────── $</code></p>
 
 ## 📄 License
 
