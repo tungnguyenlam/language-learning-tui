@@ -9,6 +9,7 @@ import (
 func StandardDecks() []core.Deck {
 	decks := []core.Deck{
 		StarterDeck(),
+		CommonVerbsDeck(),
 		GermanExpandedDeck(),
 		PrepositionsDeck(),
 		B1NatureDeck(),

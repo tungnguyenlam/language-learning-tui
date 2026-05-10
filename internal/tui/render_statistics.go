@@ -97,10 +97,19 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 		}
 		accStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(accuracyColor)).Bold(true)
 
-		content.WriteString(fmt.Sprintf("  %s %d | %s %d | %s %s\n\n",
+		duration := time.Since(m.sessionStartTime).Round(time.Second)
+		speed := 0.0
+		if duration.Seconds() > 0 {
+			speed = float64(m.sessionReviewed) / (duration.Minutes())
+		}
+
+		content.WriteString(fmt.Sprintf("  %s %d | %s %d | %s %s\n",
 			labelStyle.Render("Reviewed:"), m.sessionReviewed,
 			labelStyle.Render("Correct:"), m.sessionCorrect,
 			labelStyle.Render("Accuracy:"), accStyle.Render(fmt.Sprintf("%.1f%%", accuracy))))
+		content.WriteString(fmt.Sprintf("  %s %s | %s %s cards/min\n\n",
+			labelStyle.Render("Duration:"), valueStyle.Render(duration.String()),
+			labelStyle.Render("Speed:"), valueStyle.Render(fmt.Sprintf("%.1f", speed))))
 	} else {
 		content.WriteString("  (no reviews yet this session)\n\n")
 	}

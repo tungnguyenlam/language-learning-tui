@@ -171,6 +171,30 @@ func (m *Model) seedStandardContent() tea.Cmd {
 	}
 }
 
+func (m *Model) handleResetDatabase() tea.Cmd {
+	m.confirmingDelete = true
+	m.deleteAction = m.executeResetDatabase
+	m.status = "WIPE ALL DATA? (y/n)"
+	return nil
+}
+
+func (m *Model) executeResetDatabase() tea.Cmd {
+	m.status = "Resetting database..."
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		if err := m.repo.Reset(ctx); err != nil {
+			return err
+		}
+		// Reset everything
+		decks, _ := m.repo.Decks(ctx)
+		cards, _ := m.repo.DueCards(ctx, time.Now(), 500)
+
+		// Create a compound message or just trigger reloads
+		return importDoneMsg{decks: decks, cards: cards, count: 0, path: "Database Reset"}
+	}
+}
+
 func (m *Model) importTSV() tea.Cmd {
 	path := strings.TrimSpace(m.importPath)
 	if path == "" {

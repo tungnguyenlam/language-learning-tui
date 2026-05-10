@@ -327,6 +327,15 @@ func (m *mockRepo) CleanupTags(ctx context.Context, deckID string) error {
 	return nil
 }
 
+func (m *mockRepo) Reset(ctx context.Context) error {
+	m.decks = nil
+	m.dueCards = nil
+	m.bookmarks = nil
+	m.suspended = nil
+	m.reviews = nil
+	return nil
+}
+
 func (m *mockRepo) ReviewHistory(ctx context.Context, cardID string, limit int) ([]core.ReviewLog, error) {
 	if limit <= 0 {
 		limit = 10

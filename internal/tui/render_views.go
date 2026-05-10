@@ -13,7 +13,8 @@ func (m *Model) renderHelp() string {
 
 func (m *Model) renderDecks(layout viewportLayout) string {
 	var b strings.Builder
-	b.WriteString("Decks\n\n")
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205"))
+	b.WriteString(titleStyle.Render("DECK LIST") + "\n\n")
 
 	// Show filter if active or searching
 	if m.searchingDecks || m.deckFilter != "" {

@@ -1,10 +1,10 @@
 # Active Backlog
 
-Last updated: 2026-05-10 (Post-Improvements Phase)
+Last updated: 2026-05-10 (Post-Improvements Phase 2)
 
 ## Current Milestone
 
-Advanced Content & UI Polish - **COMPLETED**
+Stability & Navigation Polish - **COMPLETED**
 
 ## Next Actions
 
@@ -16,16 +16,17 @@ Advanced Content & UI Polish - **COMPLETED**
 ## Recent Completed (2026-05-10)
 
 ### UI/UX
-- [x] Modernized Statistics view with 2-column layout and visual charts
-- [x] Added 7-day review activity bar chart
-- [x] Responsive Dashboard (dynamic space calculation for tips/actions)
-- [x] Interactive "[Study]" and "[Cram]" buttons in Decks view
+- [x] Renamed Decks view title to "DECK LIST" for better differentiation
+- [x] Auto-select first matching deck on search Enter in Decks view
+- [x] Added Backspace shortcut to Browser view help hints
+- [x] Added session duration and speed to Statistics view
 
 ### Learning Content
-- [x] Added B2 "Society & Social Issues" deck
-- [x] Expanded Grammar Tips with B2-C1 advanced content
+- [x] Added "Common German Verbs (A1-A2)" deck
+- [x] Expanded Grammar Tips with advanced C1-C2 level tips
 
-### Core Features
-- [x] Full Cloze deletion support (highlighting + typing mode)
-- [x] Fixed typing mode state reset bug
-- [x] Added Cloze typing mode E2E test
+### Core & Stability
+- [x] Fixed critical panic in Decks view search/filter
+- [x] Non-blocking audio playback with `playAudio`
+- [x] Added database reset action with confirmation
+- [x] Fixed E2E test `test_new_content_visibility.py` wrapping and matching issues

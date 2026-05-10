@@ -1191,6 +1191,23 @@ func (s *Store) SetCardsTags(ctx context.Context, cardIDs []string, tags []strin
 	return tx.Commit()
 }
 
+func (s *Store) Reset(ctx context.Context) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	tables := []string{"reviews", "review_states", "card_flags", "cards", "notes", "decks", "statistics"}
+	for _, table := range tables {
+		if _, err := tx.ExecContext(ctx, fmt.Sprintf("DELETE FROM %s", table)); err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
+}
+
 func parseChoices(raw string) []string {
 	if strings.TrimSpace(raw) == "" {
 		return nil

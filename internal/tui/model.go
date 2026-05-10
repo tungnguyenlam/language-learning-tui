@@ -1119,9 +1119,10 @@ func (m *Model) playAudio(audioPath string) tea.Cmd {
 		} else {
 			cmd = exec.Command("play", audioPath)
 		}
-		if err := cmd.Run(); err != nil {
+		if err := cmd.Start(); err != nil {
 			return err
 		}
+		go cmd.Wait() // Don't block the TUI
 		return nil
 	}
 }

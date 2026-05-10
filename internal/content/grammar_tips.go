@@ -206,6 +206,18 @@ var grammarTips = []GrammarTip{
 		Title: "Genitive Prepositions (Advanced)",
 		Tip:   "Use 'unweit', 'jenseits', 'infolge', 'kraft' for formal C1/C2 level writing.",
 	},
+	{
+		Title: "Konjunktiv I for Neutral Distance",
+		Tip:   "In high-level journalism, Konjunktiv I indicates that the author is reporting someone else's statement neutrally without validation.",
+	},
+	{
+		Title: "Nominalstil (Nominal Style)",
+		Tip:   "Academic German uses many nouns instead of verbs. 'Bei der Durchführung des Projekts...' instead of 'Als wir das Projekt durchführten...'.",
+	},
+	{
+		Title: "Adverbial Genitive",
+		Tip:   "Some fixed expressions use genitive for adverbs: 'meines Erachtens' (in my opinion), 'eines Tages' (one day).",
+	},
 }
 
 func GetDailyGrammarTip() GrammarTip {

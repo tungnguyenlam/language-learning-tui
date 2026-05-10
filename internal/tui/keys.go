@@ -409,7 +409,15 @@ func (m *Model) updateStatisticsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	if m.searchingDecks {
 		switch msg.String() {
-		case "enter", "\r", "\n", "esc", "ctrl+m", "ctrl+j", "\x1b":
+		case "enter", "\r", "\n":
+			m.searchingDecks = false
+			m.applyDeckFilter()
+			filtered := m.filteredDecks()
+			if len(filtered) > 0 {
+				m.selectDeckByID(filtered[0].ID)
+			}
+			return nil, true
+		case "esc", "\x1b":
 			m.searchingDecks = false
 			m.applyDeckFilter()
 			return nil, true
@@ -464,6 +472,10 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	}
 
 	filtered := m.filteredDecks()
+	if m.deckCursor >= len(filtered) && len(filtered) > 0 {
+		m.deckCursor = len(filtered) - 1
+	}
+
 	switch msg.String() {
 	case "L":
 		if len(filtered) > 0 {
@@ -641,6 +653,8 @@ func (m *Model) updateImportKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return m.importAPKG(), true
 	case "S":
 		return m.seedStandardContent(), true
+	case "R":
+		return m.handleResetDatabase(), true
 	case "x":
 		return m.exportTSV(), true
 	case "X":

@@ -7,6 +7,17 @@
 - **Robustness & Stability:** Fixed multiple E2E test regressions by implementing intelligent status message preservation (preventing background updates from overwriting help or grading messages).
 - **Bug Fix:** Resolved a missing import issue in the dashboard rendering logic.
 
+## 2026-05-10: Stability, Content & UX Improvements
+
+- **Stability & Bug Fixes:** Fixed a critical panic in the Decks view when applying filters. Resolved E2E test failures in `test_new_content_visibility.py` by improving wait text and robustness.
+- **Decks View Navigation:** Renamed Decks view title to "DECK LIST" for better differentiation. Enhanced the search feature to automatically select the first matching deck, streamlining the workflow for large collections.
+- **German Content:** Added a new "Common German Verbs (A1-A2)" deck with 20 essential verbs and conjugation MCQ cards. Added advanced grammar tips for C1-C2 level learners.
+- **Audio Improvements:** Optimized the `playAudio` command to be non-blocking, preventing TUI hangs during audio playback.
+- **Enhanced Statistics:** Added session duration tracking and average review speed (cards/min) to the Statistics view.
+- **Developer Tools:** Implemented a "Reset Database" action in the Import view with a confirmation step, making it easier to wipe state during development.
+- **UI Polish:** Improved the Browser view's help hint to include the previously hidden Backspace shortcut for deleting cards.
+- **Verification:** Successfully passed all 150 project tests, including updated and new E2E scenarios.
+
 ## 2026-05-10: Multi-Area Enhancements & Cloze Support
 
 - **German Content:** Added new B2-level "Society & Social Issues" deck (30 notes) and expanded Grammar Tips with 10 advanced B2-C1 level tips.
