@@ -150,6 +150,19 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		b.WriteString("\n")
 		b.WriteString(m.renderReviewHistory(m.browserCards[m.browserCursor].Prompt))
 		b.WriteString("\n")
+	} else if layout.Height > 25 && len(m.browserCards) > 0 && m.browserCursor < len(m.browserCards) {
+		selected := m.browserCards[m.browserCursor]
+		previewBox := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("240")).
+			Padding(0, 1).
+			Width(layout.Width - 10).
+			Render(fmt.Sprintf("%s\n%s: %s\n%s: %s\n%s: %s",
+				lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).Render("Card Preview:"),
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Front"), selected.Prompt,
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Back "), selected.Answer,
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Tags "), strings.Join(selected.Tags, ", ")))
+		b.WriteString("\n" + previewBox + "\n")
 	}
 
 	if numSelected > 0 {

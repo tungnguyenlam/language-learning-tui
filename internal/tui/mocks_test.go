@@ -336,6 +336,10 @@ func (m *mockRepo) Reset(ctx context.Context) error {
 	return nil
 }
 
+func (m *mockRepo) RecentDecks(ctx context.Context, limit int) ([]string, error) {
+	return []string{}, nil
+}
+
 func (m *mockRepo) ReviewHistory(ctx context.Context, cardID string, limit int) ([]core.ReviewLog, error) {
 	if limit <= 0 {
 		limit = 10

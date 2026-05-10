@@ -218,6 +218,22 @@ var grammarTips = []GrammarTip{
 		Title: "Adverbial Genitive",
 		Tip:   "Some fixed expressions use genitive for adverbs: 'meines Erachtens' (in my opinion), 'eines Tages' (one day).",
 	},
+	{
+		Title: "Wissen vs Kennen",
+		Tip:   "Use 'wissen' for facts and information. Use 'kennen' for people, places, and things you are familiar with.",
+	},
+	{
+		Title: "Position of 'nicht'",
+		Tip:   "'nicht' usually comes after the conjugated verb, but before the element it negates (adjectives, adverbs, or the whole predicate).",
+	},
+	{
+		Title: "The Suffix -in",
+		Tip:   "Add -in to masculine professions to make them feminine (der Lehrer -> die Lehrerin). The plural is usually -innen.",
+	},
+	{
+		Title: "Verb-Preposition Fixed Pairs",
+		Tip:   "Many verbs require specific prepositions: 'warten auf' (Akk), 'denken an' (Akk), 'interessieren für' (Akk).",
+	},
 }
 
 func GetDailyGrammarTip() GrammarTip {

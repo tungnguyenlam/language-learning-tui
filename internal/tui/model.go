@@ -33,6 +33,7 @@ const (
 	ViewSettings       View = "settings"
 	ViewBrowser        View = "browser"
 	ViewCram           View = "cram"
+	ViewDebug          View = "debug"
 	ViewSessionSummary View = "session_summary"
 )
 
@@ -131,6 +132,7 @@ type Model struct {
 	cramActive            bool
 	cramRevealed          bool
 	reviewsPerDay         map[string]int
+	recentDecks           []string
 	reviewHistory         []core.ReviewLog
 	reviewHistoryCard     string
 	showReviewHistory     bool
@@ -142,6 +144,7 @@ type Model struct {
 	statsScroll           int
 	statsTotalLines       int
 	isDragging            bool
+	focusMode             bool
 	dragView              View
 	dragTrackStartY       int
 	dragVisible           int
@@ -199,8 +202,8 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		templates = map[string]map[string]string{
 			"vocabulary": {
 				"front":   "{{.Topic}}",
-				"back":    "German prompt for {{.Topic}}",
-				"example": "Practice sentence using {{.Topic}}.",
+				"back":    "Translation: German prompt for {{.Topic}}.\nPlural: die {{.Topic}}e (example)\nGender: der/die/das",
+				"example": "Ich lerne {{.Topic}}.",
 			},
 			"phrases": {
 				"front":   "Common German phrase for {{.Topic}}",
@@ -208,9 +211,9 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 				"example": "Context sentence using the phrase.",
 			},
 			"grammar": {
-				"front":   "Grammar rule for {{.Topic}}",
-				"back":    "Explanation with examples",
-				"example": "Example sentence demonstrating the rule.",
+				"front":   "Ich {{c1::...}} {{.Topic}}.",
+				"back":    "Grammar: {{.Topic}}\nRule: Explanation of the rule for {{.Topic}}.",
+				"example": "Ich {{c1::bin}} {{.Topic}}.",
 			},
 		}
 	}
@@ -218,8 +221,8 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		templates = map[string]map[string]string{
 			"vocabulary": {
 				"front":   "{{.Topic}}",
-				"back":    "German prompt for {{.Topic}}",
-				"example": "Practice sentence using {{.Topic}}.",
+				"back":    "Translation: German prompt for {{.Topic}}.\nPlural: die {{.Topic}}e (example)\nGender: der/die/das",
+				"example": "Ich lerne {{.Topic}}.",
 			},
 			"phrases": {
 				"front":   "Common German phrase for {{.Topic}}",
@@ -227,9 +230,9 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 				"example": "Context sentence using the phrase.",
 			},
 			"grammar": {
-				"front":   "Grammar rule for {{.Topic}}",
-				"back":    "Explanation with examples",
-				"example": "Example sentence demonstrating the rule.",
+				"front":   "Ich {{c1::...}} {{.Topic}}.",
+				"back":    "Grammar: {{.Topic}}\nRule: Explanation of the rule for {{.Topic}}.",
+				"example": "Ich {{c1::bin}} {{.Topic}}.",
 			},
 		}
 	}
@@ -374,7 +377,7 @@ type tagsUpdatedMsg struct {
 type deckDeletedMsg struct{}
 
 func (m *Model) Init() tea.Cmd {
-	return tea.Sequence(m.loadDueCards, m.loadDecks, m.loadStatistics(), m.loadReviewsPerDay())
+	return tea.Sequence(m.loadDueCards, m.loadDecks, m.loadStatistics(), m.loadReviewsPerDay(), m.loadRecentDecks())
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -433,6 +436,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case reviewsPerDayMsg:
 		m.reviewsPerDay = map[string]int(msg)
 		m.logger.Debug("Received reviews per day data")
+	case recentDecksMsg:
+		m.recentDecks = []string(msg)
+		m.logger.Debug("Received %d recent decks", len(msg))
 	case reviewHistoryMsg:
 		if msg.cardID == m.reviewHistoryCard {
 			m.reviewHistory = msg.logs
@@ -516,7 +522,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if len(m.dueCards) == 0 && m.sessionReviewed > 0 {
 			m.activeView = ViewSessionSummary
 		}
-		return m, m.loadReviewsPerDay()
+		return m, tea.Batch(m.loadReviewsPerDay(), m.loadRecentDecks())
 	case bookmarkToggledMsg:
 		m.setCardBookmarkLocal(msg.cardID, msg.bookmarked)
 		if msg.bookmarked {
@@ -966,6 +972,8 @@ func (m *Model) renderActiveViewPlainAt(layout viewportLayout) string {
 		content = m.renderBrowserAt(layout)
 	case ViewCram:
 		content = m.renderCramAt(layout)
+	case ViewDebug:
+		content = m.renderDebug(layout.X, layout.Y)
 	case ViewSessionSummary:
 		content = m.renderSessionSummary(layout)
 	default:

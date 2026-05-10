@@ -1,3 +1,25 @@
+## 2026-05-10: Batch 2 Improvements & UI Polish
+
+- **UI/UX Refinements:**
+    - Added "Recently Studied" section to Dashboard, showing the last 3 decks studied.
+    - Added "Card Preview" box to Browser view, showing front/back/tags of the selected card.
+    - Escaped newlines in AI template previews in Settings to maintain layout integrity.
+    - Optimized Dashboard height thresholds for Grammar Tips and Quick Actions.
+- **Content Expansion:**
+    - Added new "German Business Vocabulary" deck with 15 workplace-relevant notes.
+    - Expanded Grammar Tips with advanced topics (Adverbial Genitive, Wissen vs Kennen, etc.).
+- **AI Improvements:**
+    - Significantly improved AI templates for vocabulary, grammar, and conjugation.
+- **Developer Experience:**
+    - Added a "Debug Log" view accessible via `Ctrl+D`, showing internal state and active view info.
+- **Testing:**
+    - Added 8 new E2E tests in `e2e_tests/test_batch_2_improvements.py` verifying all new features.
+    - Fixed multiple regressions in existing tests caused by layout and default config changes.
+- **Bug Fixes:**
+    - Fixed tag splitting logic to handle both commas and whitespace.
+    - Fixed special key handling in TUI tester (`Ctrl-D` sequence).
+    - Fixed missing imports in `handlers.go`.
+
 ## 2026-05-10: Advanced Content & UI Polish
 
 - **German Content Expansion:** Added three new decks: "German Prepositions" (mastering Accusative/Dative cases with MCQs), "B1 Nature & Environment" (essential ecological vocabulary), and "Advanced Feelings" (nuanced B2-C1 emotional vocabulary).

@@ -99,6 +99,20 @@ func (m *Model) loadReviewsPerDay() tea.Cmd {
 	}
 }
 
+type recentDecksMsg []string
+
+func (m *Model) loadRecentDecks() tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		data, err := m.repo.RecentDecks(ctx, 5)
+		if err != nil {
+			return err
+		}
+		return recentDecksMsg(data)
+	}
+}
+
 func (m *Model) loadReviewHistory(cardID string) tea.Cmd {
 	if strings.TrimSpace(cardID) == "" {
 		return nil

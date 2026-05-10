@@ -47,6 +47,13 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch key {
 	case "ctrl+c":
 		return m, tea.Quit
+	case "ctrl+d":
+		if m.activeView == ViewDebug {
+			m.activeView = ViewDashboard
+		} else {
+			m.activeView = ViewDebug
+		}
+		return m, nil
 	case "q":
 		if !m.textInputActive() {
 			if m.activeView == ViewCram && m.cramActive {
@@ -352,6 +359,14 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return m.undoLastReview(), true
 	case "r":
 		return m.toggleReviewHistory(), true
+	case "f":
+		m.focusMode = !m.focusMode
+		if m.focusMode {
+			m.status = "Focus mode enabled"
+		} else {
+			m.status = "Focus mode disabled"
+		}
+		return nil, true
 	case "p":
 		if len(m.dueCards) > 0 {
 			return m.playAudio(m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)].Audio), true

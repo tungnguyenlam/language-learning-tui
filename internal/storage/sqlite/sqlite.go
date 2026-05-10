@@ -1036,6 +1036,33 @@ func (s *Store) ReviewsPerDay(ctx context.Context, days int) (map[string]int, er
 	return result, rows.Err()
 }
 
+func (s *Store) RecentDecks(ctx context.Context, limit int) ([]string, error) {
+	if limit <= 0 {
+		limit = 5
+	}
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT DISTINCT c.deck_id
+		FROM reviews r
+		JOIN cards c ON r.card_id = c.id
+		ORDER BY r.reviewed_at DESC
+		LIMIT ?
+	`, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var deckIDs []string
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		deckIDs = append(deckIDs, id)
+	}
+	return deckIDs, nil
+}
+
 func (s *Store) GetReviewState(ctx context.Context, cardID string) (core.ReviewState, error) {
 	var state core.ReviewState
 	var intervalSec int64

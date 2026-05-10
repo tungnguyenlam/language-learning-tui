@@ -84,6 +84,30 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 			"  " + spark + "\n" +
 			"  Last 14 days review trend")
 
+	recentDecksBox := ""
+	if layout.Height > 22 && len(m.recentDecks) > 0 {
+		recentDecksContent := lipgloss.NewStyle().Foreground(lipgloss.Color("99")).Bold(true).Render("Recently Studied") + "\n"
+		for i, deckID := range m.recentDecks {
+			if i >= 3 {
+				break
+			}
+			name := deckID
+			for _, d := range m.decks {
+				if d.ID == deckID {
+					name = d.Name
+					break
+				}
+			}
+			recentDecksContent += fmt.Sprintf("  • %s\n", truncateLine(name, (layout.Width-2)/2-4))
+		}
+		recentDecksBox = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("99")).
+			Padding(0, 1).
+			Width(maxInt(25, (layout.Width-2)/2)).
+			Render(recentDecksContent)
+	}
+
 	digestStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("213")).Bold(true)
 	message := "All caught up!"
 	nextPreview := ""
@@ -160,25 +184,31 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 	db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, progressBox, " ", dailyDigestBox) + "\n")
 
 	activityY := strings.Count(db.String(), "\n")
-	m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-activity", View: ViewDashboard, X: layout.X, Y: layout.Y + activityY, Width: layout.Width - 4, Height: lipgloss.Height(activityBox)})
-	activityBox = lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("39")).
-		Padding(0, 1).
-		Width(layout.Width - 4).
-		Render(lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Bold(true).Render("Recent Activity") + "\n" +
-			"  " + spark + "  (Last 14 days review trend)")
-	db.WriteString(activityBox + "\n")
+	if recentDecksBox != "" {
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-activity", View: ViewDashboard, X: layout.X, Y: layout.Y + activityY, Width: lipgloss.Width(activityBox), Height: lipgloss.Height(activityBox)})
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-recent-decks", View: ViewDashboard, X: layout.X + lipgloss.Width(activityBox) + 1, Y: layout.Y + activityY, Width: lipgloss.Width(recentDecksBox), Height: lipgloss.Height(recentDecksBox)})
+		db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, activityBox, " ", recentDecksBox) + "\n")
+	} else {
+		activityBox = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("39")).
+			Padding(0, 1).
+			Width(layout.Width - 4).
+			Render(lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Bold(true).Render("Recent Activity") + "\n" +
+				"  " + spark + "  (Last 14 days review trend)")
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-activity", View: ViewDashboard, X: layout.X, Y: layout.Y + activityY, Width: layout.Width - 4, Height: lipgloss.Height(activityBox)})
+		db.WriteString(activityBox + "\n")
+	}
 
 	usedHeight := strings.Count(db.String(), "\n") + 2
 	remainingHeight := layout.Height - usedHeight
 
-	if remainingHeight > 6 {
+	if remainingHeight >= 5 {
 		db.WriteString(quickActionsBox + "\n")
-		remainingHeight -= 6
+		remainingHeight -= 5
 	}
 
-	if remainingHeight > 3 { // Tip box needs about 4 lines, let's be safe with 3
+	if remainingHeight >= 4 { // Tip box needs about 4 lines
 		tip := content.GetDailyGrammarTip()
 		tipStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Bold(true)
 		tipBox := lipgloss.NewStyle().

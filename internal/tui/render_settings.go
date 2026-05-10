@@ -44,9 +44,9 @@ func (m *Model) renderSettings(x, y int) string {
 	setMap := m.aiTemplates[activeSet]
 	aiOptions := []string{
 		fmt.Sprintf("AI Provider:    %s", aiProviderName),
-		fmt.Sprintf("Front Template: %s", setMap["front"]),
-		fmt.Sprintf("Back Template:  %s", setMap["back"]),
-		fmt.Sprintf("Example Tmpl:   %s", setMap["example"]),
+		fmt.Sprintf("Front Template: %s", strings.ReplaceAll(setMap["front"], "\n", "\\n")),
+		fmt.Sprintf("Back Template:  %s", strings.ReplaceAll(setMap["back"], "\n", "\\n")),
+		fmt.Sprintf("Example Tmpl:   %s", strings.ReplaceAll(setMap["example"], "\n", "\\n")),
 	}
 	var rowY int
 	var prefix string

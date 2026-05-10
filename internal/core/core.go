@@ -137,6 +137,7 @@ type Repository interface {
 	DeckStatistics(ctx context.Context, deckID string) (Statistics, error)
 	Cards(ctx context.Context, deckID string, search string, tag string) ([]Card, error)
 	ReviewsPerDay(ctx context.Context, days int) (map[string]int, error)
+	RecentDecks(ctx context.Context, limit int) ([]string, error)
 	ReviewHistory(ctx context.Context, cardID string, limit int) ([]ReviewLog, error)
 	DeleteCard(ctx context.Context, cardID string) error
 	DeleteDecks(ctx context.Context, ids []string) error

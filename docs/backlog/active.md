@@ -8,6 +8,14 @@ Stability & Navigation Polish - **COMPLETED**
 
 ## Next Actions
 
+- [x] Add "Recently Studied" section to Dashboard
+- [x] Add "German Business Vocabulary" deck
+- [x] Add "Card Preview" in Browser view
+- [x] Add "Debug Log" view (accessible via Ctrl+D)
+- [x] Implement "Focus Mode" in Review
+- [x] Add Grammar Tip of the Day persistence
+- [x] Add 8 new E2E tests covering new features
+- [x] Improve AI prompt for better German explanations
 - [ ] Add Audio pronunciation support (requires library integration)
 - [ ] Implement deck merging/splitting UI
 - [ ] Add local-LLM provider support (Ollama/llama.cpp)

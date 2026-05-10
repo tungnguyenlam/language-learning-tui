@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 	"time"
+	"unicode"
 
 	"deutsch-tui/internal/ai"
 	"deutsch-tui/internal/core"
@@ -138,7 +139,10 @@ func (m *Model) bulkBrowserSuspend(suspended bool) tea.Cmd {
 
 func (m *Model) handleTagInput() tea.Cmd {
 	m.taggingCards = false
-	tags := strings.Fields(m.tagInput)
+	// Split by comma or whitespace
+	tags := strings.FieldsFunc(m.tagInput, func(r rune) bool {
+		return r == ',' || unicode.IsSpace(r)
+	})
 	selectedIDs := m.getSelectedCardIDs()
 
 	if len(selectedIDs) == 0 {

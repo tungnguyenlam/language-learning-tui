@@ -32,22 +32,22 @@ func DefaultConfig() Config {
 		AITemplates: map[string]map[string]string{
 			"vocabulary": {
 				"front":   "{{.Topic}}",
-				"back":    "German prompt for {{.Topic}}.",
-				"example": "Practice sentence using {{.Topic}}.",
+				"back":    "Translation: German prompt for {{.Topic}}.\nPlural: die {{.Topic}}e (example)\nGender: der/die/das",
+				"example": "Ich lerne {{.Topic}}.",
 			},
 			"grammar": {
 				"front":   "Ich {{c1::...}} {{.Topic}}.",
-				"back":    "Grammar: {{.Topic}}",
+				"back":    "Grammar: {{.Topic}}\nRule: Explanation of the rule for {{.Topic}}.",
 				"example": "Ich {{c1::bin}} {{.Topic}}.",
 			},
 			"articles": {
 				"front":   "{{c1::...}} {{.Topic}}",
-				"back":    "Article for {{.Topic}}",
+				"back":    "Article for {{.Topic}}: der/die/das",
 				"example": "MCQ:der,die,das",
 			},
 			"conjugation": {
-				"front":   "{{.Topic}} (ich) -> {{c1::...}}",
-				"back":    "Conjugate {{.Topic}}",
+				"front":   "{{.Topic}} (ich/du/er/sie/es) -> {{c1::...}}",
+				"back":    "Conjugate {{.Topic}}\nIch {{c1::lerne}}, du {{c2::lernst}}, er {{c3::lernt}}.",
 				"example": "Ich {{c1::lerne}} Deutsch.",
 			},
 			"passive_voice": {

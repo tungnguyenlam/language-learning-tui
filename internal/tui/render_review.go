@@ -103,6 +103,9 @@ func (m *Model) renderReview(x, y int) string {
 	}
 
 	headerSection := fmt.Sprintf("%s%s\n%s | %s\n%s%s%s", header, sessionProgress, bookmark, keys, leech, suspended, audioIndicator)
+	if m.focusMode {
+		headerSection = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true).Render("Focus Mode Active (f to exit)")
+	}
 	headerLines := strings.Count(headerSection, "\n") + 1
 
 	promptDisplay := card.Prompt
