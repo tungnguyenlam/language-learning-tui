@@ -23,6 +23,11 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		}
 		titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
 		b.WriteString(titleStyle.Render("Cram Review") + "\n\n")
+		b.WriteString(fmt.Sprintf("Deck: %s | Card %d/%d | Type: %s\n", m.deckNameByID(card.DeckID), m.cramCursor+1, len(m.cramCards), card.Kind))
+		if len(card.Tags) > 0 {
+			b.WriteString(fmt.Sprintf("Tags: #%s\n", strings.Join(card.Tags, " #")))
+		}
+		b.WriteString("\n")
 		b.WriteString(fmt.Sprintf("Prompt: %s%s\n\n", card.Prompt, audioIndicator))
 		if m.cramRevealed {
 			answerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
@@ -63,6 +68,7 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 
 	var b strings.Builder
 	b.WriteString("Cram Mode\n\n")
+	b.WriteString(fmt.Sprintf("Deck: %s\n", m.deckLabel()))
 	b.WriteString(fmt.Sprintf("Filter: %s\n\n", m.cramType))
 	if len(m.cramCards) == 0 {
 		b.WriteString("No cards found for this filter.\n\n")
@@ -155,7 +161,11 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		if card.Mature {
 			mature = " ⭐"
 		}
-		label := fmt.Sprintf("%s[%s] %s%s%s%s%s", prefix, kind, card.Prompt, mature, bookmark, leech, suspended)
+		deckName := ""
+		if m.deck.ID == "" {
+			deckName = " " + mutedStyle.Render("("+truncateLine(m.deckNameByID(card.DeckID), 18)+")")
+		}
+		label := fmt.Sprintf("%s[%s] %s%s%s%s%s%s", prefix, kind, card.Prompt, deckName, mature, bookmark, leech, suspended)
 		line := padLine(style.Render(label), lineWidth)
 		if len(m.cramCards) > maxVisible {
 			currentPos := i - start

@@ -20,6 +20,11 @@ func (m *Model) renderSettings(x, y int) string {
 		Padding(0, 2).
 		MarginBottom(1)
 	b.WriteString(titleStyle.Render("⚙ SETTINGS") + "\n\n")
+	if m.editingTemplate {
+		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("EDITING - Enter to save, Esc to cancel.") + "\n")
+	} else if strings.HasPrefix(m.status, "Daily goal set") {
+		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render(m.status) + "\n")
+	}
 
 	autoPlayStatus := "off"
 	if m.autoPlayAudio {
@@ -40,7 +45,7 @@ func (m *Model) renderSettings(x, y int) string {
 		MarginBottom(1)
 	b.WriteString(sectionStyle.Render("AI CONFIGURATION") + "\n")
 	b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Render(fmt.Sprintf("  Template Set: %s", activeSet)) + "\n\n")
-	b.WriteString(mutedStyle.Render("  Provider cycle: disabled -> offline -> template. Template mode is deterministic for tests.") + "\n")
+	b.WriteString(mutedStyle.Render("  Provider cycle: disabled -> offline -> template.") + "\n")
 
 	setMap := m.aiTemplates[activeSet]
 	aiOptions := []string{
@@ -172,9 +177,7 @@ func (m *Model) renderSettings(x, y int) string {
 	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 	b.WriteString(fmt.Sprintf("\nColor Theme: %s (Press %s to cycle)\n", m.theme, keyStyle.Render("c")))
 
-	if m.editingTemplate {
-		b.WriteString("\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("EDITING") + " - Enter to save, Esc to cancel.")
-	} else {
+	if !m.editingTemplate {
 		keyStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 		b.WriteString(fmt.Sprintf("\nUse %s/%s to move, %s goal, %s theme, Enter edit/toggle, %s/%s templates.",
 			keyStyle.Render("j"), keyStyle.Render("k"), keyStyle.Render("+/-"), keyStyle.Render("c"), keyStyle.Render("["), keyStyle.Render("]")))

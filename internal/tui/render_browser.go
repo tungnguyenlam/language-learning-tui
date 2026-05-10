@@ -60,8 +60,12 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 	}
 
 	if len(m.browserCards) == 0 {
-		b.WriteString("No cards found. Press / to search.\n\n")
-		b.WriteString(mutedStyle.Render("Use left/right/[ to change deck filter.\n"))
+		b.WriteString(fmt.Sprintf("No cards found in %s.\n\n", m.deckLabel()))
+		if m.browserSearch != "" || m.browserTag != "" {
+			b.WriteString(mutedStyle.Render("Press Esc to clear search/tag filters, or use [ / ] to change deck filter.\n"))
+		} else {
+			b.WriteString(mutedStyle.Render("Press / to search, # to filter by tag, or use [ / ] to change deck filter.\n"))
+		}
 		return b.String()
 	}
 	start := 0

@@ -56,7 +56,7 @@ func (m *Model) renderAI(x, y int) string {
 		b.WriteString(warnStyle.Render("AI provider is disabled. Enable Offline or Template in Settings to generate drafts.") + "\n")
 	}
 
-	b.WriteString(mutedStyle.Render("Tip: include CEFR level, situation, and answer format, e.g. B1 workplace small talk with 2 examples.") + "\n")
+	b.WriteString(mutedStyle.Render("Tip: include level and use case, e.g. B1 workplace small talk with 2 examples.") + "\n")
 
 	// Suggested Topics Section
 	if (m.aiInput == "" || m.aiInput == "der Kaffee") && len(m.drafts) == 0 {

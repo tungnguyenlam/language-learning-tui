@@ -8,7 +8,7 @@ import (
 )
 
 func (m *Model) renderHelp() string {
-	return "Keyboard Shortcuts\n\nGlobal:\n  1-9          Switch to view\n  Tab/arrows   Cycle views\n  w/s          Previous/next view\n  ?            Toggle this help\n  q/Ctrl+c     Quit\n\nDashboard/Decks:\n  [ ]          Previous/next deck\n  /            Search decks\n  L            Edit per-deck limits\n  h/l or <-/-> Switch limit field (while editing)\n  +/-          Adjust selected limit (while editing)\n  Enter        Select deck (Decks view)\n\nReview:\n  Space/Enter  Reveal answer\n  a/h/g/e      Grade Again/Hard/Good/Easy\n  b            Toggle bookmark\n  B            Toggle bookmarked-only mode\n  x            Suspend card\n  u            Undo last review\n  r            Toggle card review history\n  p            Play audio\n  1-4          Select MCQ choice\n\nStatistics:\n  j/k          Scroll stats\n  x            Export deck stats to CSV\n\nBrowser:\n  j/k          Navigate cards\n  /            Search cards\n  m            Select card\n  b/B          Bookmark (single/bulk)\n  x/X          Suspend (single/bulk)\n  t/T          Toggle kind / edit tags\n  C            Cleanup unused tags\n  Enter        Toggle card review history\n  Backspace    Delete selected card(s)\n\nAI:\n  /            Edit topic\n  Enter        Generate or approve selected draft\n  [ / ]        Previous/next template\n  a / A        Approve one/all drafts\n  d / D        Discard one/all drafts\n\nCram:\n  j/k          Navigate cards\n  Enter        Start cram review\n  p            Play audio (in review)\n  1-5          Filter: bookmarked/suspended/leech/flagged/all\n\nImport:\n  j/k          Select field\n  Enter        Start/stop editing path\n  i/I          Import TSV/APKG\n  x/X          Export TSV/APKG\n\nSettings:\n  j/k          Navigate options\n  [ / ]        Cycle AI template set\n  +/-          Adjust daily goal\n  Enter        Toggle AI provider / edit template"
+	return "Keyboard Shortcuts\n\nGlobal:\n  1-9          Switch to view\n  Tab/arrows   Cycle views\n  w/s          Previous/next view\n  ?            Toggle this help\n  q/Ctrl+c     Quit\n\nDashboard/Decks:\n  [ ]          Previous/next deck\n  /            Search decks\n  L            Edit per-deck limits\n  h/l or <-/-> Switch limit field (while editing)\n  +/-          Adjust selected limit (while editing)\n  Enter        Select deck (Decks view)\n\nReview:\n  Space/Enter  Reveal answer\n  a/h/g/e      Grade Again/Hard/Good/Easy\n  b            Toggle bookmark\n  B            Toggle bookmarked-only mode\n  x            Suspend card\n  u            Undo last review\n  r            Toggle card review history\n  p            Play audio\n  1-4          Select MCQ choice\n\nStatistics:\n  j/k          Scroll stats\n  x            Export deck stats to CSV\n\nBrowser:\n  j/k          Navigate cards\n  /            Search cards\n  #            Filter by tag\n  m            Select card\n  b/B          Bookmark (single/bulk)\n  x/X          Suspend (single/bulk)\n  t/T          Toggle kind / edit tags\n  C            Cleanup unused tags\n  Enter        Toggle card review history\n  Backspace    Delete selected card(s)\n\nAI:\n  /            Edit topic\n  Enter        Generate or approve selected draft\n  [ / ]        Previous/next template\n  a / A        Approve one/all drafts\n  d / D        Discard one/all drafts\n\nCram:\n  j/k          Navigate cards\n  Enter        Start cram review\n  p            Play audio (in review)\n  1-5          Filter: bookmarked/suspended/leech/flagged/all\n\nImport:\n  j/k          Select field\n  Enter        Start/stop editing path\n  i/I          Import TSV/APKG\n  x/X          Export TSV/APKG\n  R            Reset database\n\nSettings:\n  j/k          Navigate options\n  [ / ]        Cycle AI template set\n  +/-          Adjust daily goal\n  Enter        Toggle AI provider / edit template"
 }
 
 func (m *Model) renderDecks(layout viewportLayout) string {
@@ -339,6 +339,7 @@ func (m *Model) renderImport(x, y int) string {
 		{"seed-std", "Seed Standard", "S"},
 		{"export-tsv", "Export TSV", "x"},
 		{"export-apkg", "Export APKG", "X"},
+		{"reset-db", "Reset DB", "R"},
 	}
 
 	btnStyle := lipgloss.NewStyle().
@@ -367,7 +368,7 @@ func (m *Model) renderImport(x, y int) string {
 		b.WriteString("\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("EDITING - Enter to save, Esc to cancel.") + "\n\n")
 	} else {
 		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-		b.WriteString(fmt.Sprintf("\n\nCurrent Deck: %s\nUse %s/%s to navigate, %s/%s to edit, %s / %s to change deck, or click buttons.\n",
+		b.WriteString(fmt.Sprintf("\n\nCurrent Deck: %s\nStatus filters apply to TSV and APKG exports.\nUse %s/%s to navigate, %s/%s to edit, %s / %s to change deck, or click buttons.\n",
 			m.deckLabel(),
 			keyStyle.Render("j"), keyStyle.Render("k"),
 			keyStyle.Render("Enter"), keyStyle.Render("t"),

@@ -9,6 +9,23 @@
 - **Bug Fix:** Removed unescaped quote characters from mobility MCQ explanations after they caused CSV parsing to collapse rows.
 - **Verification:** `go test ./internal/content ./internal/tui` passed on 2026-05-10 13:31 +07.
 
+## 2026-05-10: Autonomous Pass - Batch 2 Export & Empty-State Polish
+
+- **Bug Fix:** TSV export now honors the same Mature/Learning status filter that APKG export already used.
+- **Import UX:** Added a visible `[R] Reset DB` action, click handling for Seed Standard and Reset DB, and explicit status-filter guidance.
+- **Browser UX:** Empty Browser results now name the active deck and tell learners how to clear search/tag filters.
+- **Cram UX:** Cram Review now shows deck name, card position, card type, and tags; all-deck cram lists include deck context.
+- **Help Polish:** Help overlay now documents Browser tag filtering and Import database reset.
+- **Testing:** Added unit tests for TSV status filtering, Import guidance, Browser empty states, and Cram metadata.
+- **Verification:** `go test ./internal/content ./internal/tui` and `pytest -q e2e_tests/test_autonomous_pass_mobility_ui.py` passed on 2026-05-10 13:47 +07.
+
+## 2026-05-10: Autonomous Pass - Final Verification
+
+- **Regression Fixes:** Restored Dashboard "Recently Studied" visibility at standard E2E heights, restored the AI tip text expected by core-view tests, and moved Settings editing/status prompts into visible content for compact terminals.
+- **Instruction Hygiene:** Added concise AGENTS.md gotchas for macOS launch checks, embedded TSV quoting, and compact Settings layout constraints.
+- **Verification:** `./scripts/verify.sh` passed on 2026-05-10 14:09 +07: all Go tests, `go vet`, smoke startup, and 166 tui-tester E2E tests.
+- **Milestone Summary:** Completed a multi-area pass covering content, dashboard/review/browser/cram/settings/import/AI UX, TSV export correctness, click handling, unit tests, E2E coverage, and continuity documentation.
+
 ## 2026-05-10: Batch 2 Improvements & UI Polish
 
 - **UI/UX Refinements:**

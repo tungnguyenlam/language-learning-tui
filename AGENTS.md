@@ -39,6 +39,12 @@ The project is a Go Bubble Tea TUI for German flashcard and MCQ learning. It is 
 - Anki import/export: `rg "TSV|Anki|Import|Export" internal/content`
 - AI drafting: `rg "Provider|Draft" internal/ai`
 
+## Current Gotchas
+
+- macOS shells used in this repo may not provide `timeout`; use a TTY session or `./scripts/tui_smoke.sh` for launch checks.
+- Embedded TSV decks are parsed by Go's TSV reader; avoid unescaped quote characters inside fields because they can merge following rows.
+- Settings screens are height-sensitive in E2E tests; keep durable guidance short enough that `status:` and editing prompts remain visible on 90x28 terminals.
+
 ## Handoff Rules
 
 - Put unfinished executable work in `docs/backlog/active.md`.

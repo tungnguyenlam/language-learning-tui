@@ -439,6 +439,43 @@ func TestExportTSVWritesSelectedDeck(t *testing.T) {
 	}
 }
 
+func TestExportTSVAppliesStatusFilter(t *testing.T) {
+	tmp := t.TempDir()
+	exportPath := filepath.Join(tmp, "learning.tsv")
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "n1:front", NoteID: "n1", DeckID: "deck-1", Prompt: "jung", Answer: "young", Mature: false},
+			{ID: "n2:front", NoteID: "n2", DeckID: "deck-1", Prompt: "reif", Answer: "mature", Mature: true},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModelWithOptions(repo, &mockScheduler{}, ModelOptions{
+		AIProvider: ai.OfflineProvider{},
+		ExportPath: exportPath,
+	})
+	model.Update(decksMsg(repo.decks))
+	model.activeView = ViewImport
+	model.exportFilter = "Mature"
+
+	cmd := model.exportTSV()
+	if cmd == nil {
+		t.Fatal("exportTSV should return command")
+	}
+	model.Update(cmd())
+
+	raw, err := os.ReadFile(exportPath)
+	if err != nil {
+		t.Fatalf("read export: %v", err)
+	}
+	out := string(raw)
+	if strings.Contains(out, "jung\tyoung") {
+		t.Fatalf("mature-only TSV export included learning card: %s", out)
+	}
+	if !strings.Contains(out, "reif\tmature") {
+		t.Fatalf("mature-only TSV export missing mature card: %s", out)
+	}
+}
+
 func TestAIGenerateErrorFromProvider(t *testing.T) {
 	model := NewModelWithAI(&mockRepo{}, &mockScheduler{}, ai.FakeProvider{Err: context.Canceled})
 	model.Update(decksMsg([]core.Deck{{ID: "deck-1", Name: "Deck One"}}))
@@ -841,6 +878,52 @@ func TestSettingsDailyGoalAdjustsAndRenders(t *testing.T) {
 	model = updated.(*Model)
 	if model.stats.DailyGoal != 1 {
 		t.Fatalf("daily goal floor = %d, want 1", model.stats.DailyGoal)
+	}
+}
+
+func TestImportViewShowsResetAndStatusFilterGuidance(t *testing.T) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	model.activeView = ViewImport
+
+	view := ansi.Strip(model.renderImport(0, 0))
+	for _, want := range []string{"[R] Reset DB", "Status filters apply to TSV and APKG exports"} {
+		if !strings.Contains(view, want) {
+			t.Fatalf("import view missing %q:\n%s", want, view)
+		}
+	}
+}
+
+func TestBrowserEmptyStateExplainsActiveFilters(t *testing.T) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	model.activeView = ViewBrowser
+	model.browserSearch = "zzzz"
+
+	view := ansi.Strip(model.renderBrowserAt(viewportLayout{Width: 90, Height: 30}))
+	for _, want := range []string{"No cards found in No deck.", "Press Esc to clear search/tag filters"} {
+		if !strings.Contains(view, want) {
+			t.Fatalf("browser empty state missing %q:\n%s", want, view)
+		}
+	}
+}
+
+func TestCramReviewShowsDeckTagsAndPosition(t *testing.T) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	model.decks = []core.Deck{{ID: "deck-1", Name: "Deck One"}}
+	model.cramCards = []core.Card{{
+		ID:     "c1",
+		DeckID: "deck-1",
+		Kind:   core.CardKindFlashcard,
+		Prompt: "die Bahn",
+		Answer: "train",
+		Tags:   []string{"b2", "mobility"},
+	}}
+	model.cramActive = true
+
+	view := ansi.Strip(model.renderCramAt(viewportLayout{Width: 90, Height: 30}))
+	for _, want := range []string{"Deck: Deck One", "Card 1/1", "Tags: #b2 #mobility"} {
+		if !strings.Contains(view, want) {
+			t.Fatalf("cram review missing %q:\n%s", want, view)
+		}
 	}
 }
 

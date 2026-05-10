@@ -1,6 +1,6 @@
 # Active Backlog
 
-Last updated: 2026-05-10 13:31 +07 (Autonomous improvement pass)
+Last updated: 2026-05-10 14:10 +07 (Autonomous improvement pass)
 
 ## Current Milestone
 
@@ -16,12 +16,12 @@ End-to-end TUI recertification plus multi-area improvement batch.
 ## Top Issues / Work Plan
 
 - [x] Batch 1: add new German content, improve deck/browser/dashboard review surfaces, and add focused unit/E2E coverage.
-- [ ] Batch 2: improve AI/settings/import developer UX, add additional E2E scenarios, and fix regressions found by tests.
-- [ ] Batch 3: final polish, AGENTS.md hygiene, full `./scripts/verify.sh`, and commit all changes.
+- [x] Batch 2: improve AI/settings/import developer UX, add additional E2E scenarios, and fix regressions found by tests.
+- [x] Batch 3: final polish, AGENTS.md hygiene, full `./scripts/verify.sh`, and commit all changes.
 
 ## Exact Next Action
 
-Run the new mobility/UI E2E file, fix any regressions, then continue with Batch 2 polish for import/AI/settings/developer UX.
+Commit the verified autonomous improvement pass, then leave the backlog in completed state.
 
 ## Acceptance Criteria
 
@@ -38,3 +38,5 @@ Run the new mobility/UI E2E file, fix any regressions, then continue with Batch 
 
 - 2026-05-10 13:15 +07: `go run ./cmd/deutsch-tui` launched successfully; stopped with `q`.
 - 2026-05-10 13:31 +07: `go test ./internal/content ./internal/tui` passed after fixing the mobility TSV quote parsing issue.
+- 2026-05-10 13:47 +07: `go test ./internal/content ./internal/tui` and `pytest -q e2e_tests/test_autonomous_pass_mobility_ui.py` passed.
+- 2026-05-10 14:09 +07: `./scripts/verify.sh` passed with all Go tests, vet, smoke, and 166 E2E tests.

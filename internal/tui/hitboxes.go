@@ -127,7 +127,7 @@ func (m *Model) activateHitbox(id string) tea.Cmd {
 		}
 	case strings.HasPrefix(id, "import-path-"):
 		idx, err := strconv.Atoi(strings.TrimPrefix(id, "import-path-"))
-		if err == nil && (idx >= 0 && idx <= 3) {
+		if err == nil && (idx >= 0 && idx <= 4) {
 			m.importCursor = idx
 			if idx < 2 {
 				m.editingImportPath = true
@@ -135,6 +135,8 @@ func (m *Model) activateHitbox(id string) tea.Cmd {
 				m.nextExportDeck()
 			} else if idx == 3 {
 				m.editingExportTag = true
+			} else if idx == 4 {
+				m.cycleExportFilter(true)
 			}
 			return nil
 		}
@@ -143,10 +145,14 @@ func (m *Model) activateHitbox(id string) tea.Cmd {
 		return m.importTSV()
 	case id == "import-apkg":
 		return m.importAPKG()
+	case id == "seed-std":
+		return m.seedStandardContent()
 	case id == "export-tsv":
 		return m.exportTSV()
 	case id == "export-apkg":
 		return m.exportAPKG()
+	case id == "reset-db":
+		return m.handleResetDatabase()
 	case strings.HasPrefix(id, "stats-scroll-"):
 		line, err := strconv.Atoi(strings.TrimPrefix(id, "stats-scroll-"))
 		if err == nil {

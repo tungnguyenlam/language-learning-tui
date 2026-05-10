@@ -250,6 +250,7 @@ func (m *Model) exportTSV() tea.Cmd {
 	}
 	deckID := m.exportDeckID
 	tag := m.exportTag
+	filter := m.exportFilter
 	m.status = "Exporting TSV..."
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
@@ -262,6 +263,12 @@ func (m *Model) exportTSV() tea.Cmd {
 		}
 		seen := make(map[string]bool)
 		for _, c := range cards {
+			if filter == "Mature" && !c.Mature {
+				continue
+			}
+			if filter == "Learning" && c.Mature {
+				continue
+			}
 			if seen[c.NoteID] {
 				continue
 			}
