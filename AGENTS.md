@@ -53,3 +53,4 @@ The project is a Go Bubble Tea TUI for German flashcard and MCQ learning. It is 
 - Keep all continuity notes concise and indexed from `docs/agent/index.md`.
 - Do not dump chat history into `AGENTS.md`; write searchable, task-shaped records instead.
 - Use `./scripts/verify.sh` as the full project verification command.
+- When adding UI elements that increase vertical height (e.g. Dashboard boxes), ensure E2E tests using `tui-tester` have sufficient terminal `lines` configured. Elements appended after the main layout (like help overlays) may be clipped and become invisible to `wait_for_text` if the terminal is too short.

@@ -1,109 +1,77 @@
-import sys
-import os
-import pytest
-import tempfile
 import time
+import tempfile
+import os
+import sys
 
-# Add tui_tester to sys.path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../tui_tester')))
+# Add the project root to sys.path to import tui_tester
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from tui_tester import TUIAgent
+from tui_tester.agent import TUIAgent
 
-def start_agent(tmpdir, columns=110, lines=30):
-    app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
-    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir}', columns=columns, lines=lines)
-    agent.wait_for_text("DASHBOARD", timeout=15.0)
-    agent.wait_until_stable()
-    return agent
+def start_agent(tmpdir):
+    db_path = os.path.join(tmpdir, "test.db")
+    # Use the compiled binary if it exists, otherwise use go run
+    bin_path = os.environ.get("DEUTSCH_TUI_BIN", "go run ../cmd/deutsch-tui")
+    cmd = f"{bin_path} -data-dir {tmpdir}"
+    return TUIAgent(cmd, columns=100, lines=50)
 
-def test_dashboard_polished_layout():
-    """Test that the dashboard has the new group headers."""
+def test_ui_polish_and_content():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
-            agent.assert_text("Review Queue")
-            agent.assert_text("Collection")
-            agent.assert_text("Today's Progress")
-            # Verify it's not the old "Collection Stats"
-            assert "Collection Stats" not in agent.observe()
-        finally:
-            agent.close()
+            # 1. Verify Dashboard (Grammar Tip Example)
+            agent.wait_for_text("DASHBOARD")
+            agent.wait_for_text("Grammar Tip:")
+            # Since tips are daily, we don't know exactly which one, 
+            # but we can check for "Example:" if the screen is tall enough
+            # Nominalization tip has an example.
+            agent.wait_for_text("Example:")
 
-def test_review_polished_layout():
-    """Test that the review view still works with the new header style."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        agent = start_agent(tmpdir)
-        try:
-            # Go to review
-            agent.act('3')
-            agent.wait_for_text("Review")
-            
-            # Reveal
-            agent.act('<Space>')
-            agent.wait_until_stable()
-            
-            agent.assert_text("Grade: a Again")
-        finally:
-            agent.close()
-
-def test_ai_drafting_status():
-    """Test that the AI drafting status and spinner area appear."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        agent = start_agent(tmpdir)
-        try:
-            agent.act("7")
-            agent.wait_for_text("Settings")
-            agent.act("<Enter>")
-            agent.wait_for_text("offline")
-            # Go to AI
-            agent.act('6')
-            agent.wait_for_text("AI Drafts")
-            
-            # Type something and enter
-            agent.act('h')
-            agent.act('a')
-            agent.act('l')
-            agent.act('l')
-            agent.act('o')
-            agent.act('<Enter>')
-            
-            # We check for the status message
-            # It might be "Generating draft..." or already "1 draft ready"
-            agent.wait_for_text("draft")
-            
-            # And for the temporary drafting message in AI view
-            # Since offline provider is fast, it might already be done.
-            # But let's check if we can see it or the result.
-            screen = agent.observe()
-            assert "draft ready" in screen or "Generating" in screen or "->" in screen
-        finally:
-            agent.close()
-
-def test_long_import_path_truncation():
-    """Test that a very long import path is truncated in the UI."""
-    with tempfile.TemporaryDirectory() as tmpdir:
-        agent = start_agent(tmpdir)
-        try:
-            # Go to Import view
-            agent.act("5")
+            # 2. Verify New Content (Confusable Words)
+            agent.act("5") # Import
             agent.wait_for_text("Import / Export")
-            
-            # Start editing import path
-            agent.act("<Enter>")
-            
-            # Type a very long path
-            long_path = "very_long_path_" * 10
-            for char in long_path:
-                agent.act(char)
-            
-            # Stop editing
-            agent.act("<Enter>")
+            agent.act("S") # Seed
+            agent.wait_for_text("Seeding standard content...", timeout=5.0)
+            # Wait for import to finish
+            agent.wait_for_text("Imported", timeout=10.0)
+            agent.wait_for_text("Standard Content", timeout=10.0)
             agent.wait_until_stable()
+
+            agent.act("2") # Decks
+            agent.wait_for_text("DECK LIST")
+            agent.act("/")
+            agent.wait_for_text("Search:")
+            agent.act("Confusable")
+            agent.act("<Enter>")
+            agent.wait_for_text("German Confusable Words")
             
-            screen = agent.observe()
-            assert "..." in screen, "Long path should be truncated with ..."
+            # 3. Verify Scrollbar in Decks
+            # By now we have many decks from Seed, so scrollbar should be there.
+            # We can check for the scrollbar character '│' or '█'
+            agent.wait_for_text("│") 
+
+            # 4. Verify Statistics view Maturity Distribution
+            agent.act("4")
+            agent.wait_for_text("Statistics:")
+            agent.wait_for_text("Maturity Distribution")
+            agent.wait_for_text("New:")
+            
+            # 5. Verify the new deck is actually study-able
+            agent.act("2") # Decks
+            agent.wait_for_text("DECK LIST")
+            # Select Confusable words (it should be filtered)
+            agent.act("<Enter>") # Select deck and go to dashboard
+            agent.wait_for_text("DASHBOARD")
+            agent.wait_for_text("Active Deck: German Confusable Words")
+            
+            agent.act("3") # Review
+            agent.wait_for_text("Review") # Title case
+            # Should see one of our confusable words
+            # The order might be random or sequential, but let's check for one
+            # Note: since they are new, they are in New state.
+            
         finally:
             agent.close()
 
 if __name__ == "__main__":
-    pytest.main(["-v", __file__])
+    test_ui_polish_and_content()

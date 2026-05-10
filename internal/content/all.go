@@ -10,6 +10,7 @@ func StandardDecks() []core.Deck {
 	decks := []core.Deck{
 		StarterDeck(),
 		CommonVerbsDeck(),
+		ConfusableWordsDeck(),
 		GermanExpandedDeck(),
 		PrepositionsDeck(),
 		B1NatureDeck(),

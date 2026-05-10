@@ -54,7 +54,9 @@ def test_new_decks_visibility():
                 # Go back to Decks for next search
                 agent.act("2")
                 agent.wait_for_text("DECK LIST", timeout=5.0)
+                agent.wait_until_stable()
                 agent.act("<Esc>")  # Clear filter
+                agent.wait_until_stable()
         finally:
             agent.close()
 

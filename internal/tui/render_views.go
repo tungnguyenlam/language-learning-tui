@@ -65,6 +65,10 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		}
 	}
 
+	listStartY := strings.Count(b.String(), "\n")
+	lineWidth := scrollbarLineWidth(layout.Width)
+	thumbStart, thumbHeight := scrollbarThumb(len(filteredDecks), maxVisible, start)
+
 	for i := start; i < end; i++ {
 		deck := filteredDecks[i]
 		prefix := "  "
@@ -99,14 +103,26 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		}
 
 		rowY := layout.Y + strings.Count(b.String(), "\n")
-		b.WriteString(style.Render(label))
+		line := padLine(style.Render(label)+btnStyle.Render(studyBtn)+btnStyle.Render(cramBtn), lineWidth)
 
-		studyX := layout.X + lipgloss.Width(label)
-		cramX := studyX + lipgloss.Width(studyBtn)
+		if len(filteredDecks) > maxVisible {
+			currentPos := i - start
+			scrollbarChar := "│"
+			if currentPos >= thumbStart && currentPos < thumbStart+thumbHeight {
+				scrollbarChar = "█"
+			}
+			line += " " + scrollbarChar
 
-		b.WriteString(btnStyle.Render(studyBtn))
-		b.WriteString(btnStyle.Render(cramBtn))
-		b.WriteString("\n")
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID:     fmt.Sprintf("deck-scroll-%d", currentPos),
+				View:   ViewDecks,
+				X:      layout.X + lineWidth + 1,
+				Y:      layout.Y + listStartY + currentPos,
+				Width:  1,
+				Height: 1,
+			})
+		}
+		b.WriteString(line + "\n")
 
 		m.hitboxes = append(m.hitboxes, Hitbox{
 			ID:     fmt.Sprintf("deck-select-%d", i),
@@ -119,7 +135,7 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		m.hitboxes = append(m.hitboxes, Hitbox{
 			ID:     fmt.Sprintf("deck-study-%d", i),
 			View:   ViewDecks,
-			X:      studyX,
+			X:      layout.X + lipgloss.Width(label),
 			Y:      rowY,
 			Width:  lipgloss.Width(studyBtn),
 			Height: 1,
@@ -127,7 +143,7 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		m.hitboxes = append(m.hitboxes, Hitbox{
 			ID:     fmt.Sprintf("deck-cram-%d", i),
 			View:   ViewDecks,
-			X:      cramX,
+			X:      layout.X + lipgloss.Width(label) + lipgloss.Width(studyBtn),
 			Y:      rowY,
 			Width:  lipgloss.Width(cramBtn),
 			Height: 1,

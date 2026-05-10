@@ -230,16 +230,20 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		remainingHeight -= 5
 	}
 
-	if remainingHeight >= 4 { // Tip box needs about 4 lines
+	if remainingHeight >= 3 { // Tip box needs at least 3 lines
 		tip := content.GetDailyGrammarTip()
 		tipStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Bold(true)
+		exampleText := ""
+		if remainingHeight >= 4 && tip.Example != "" {
+			exampleText = fmt.Sprintf("\n  Example: %s", lipgloss.NewStyle().Italic(true).Foreground(lipgloss.Color("81")).Render(tip.Example))
+		}
 		tipBox := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("39")).
 			Padding(0, 1).
 			Width(layout.Width - 4).
 			Render(tipStyle.Render("Grammar Tip: "+tip.Title) + "\n" +
-				fmt.Sprintf("  %s", tip.Tip))
+				fmt.Sprintf("  %s", tip.Tip) + exampleText)
 		db.WriteString(tipBox + "\n")
 	}
 

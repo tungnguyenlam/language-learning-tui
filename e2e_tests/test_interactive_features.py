@@ -109,7 +109,7 @@ def test_statistics_drag_to_scroll():
             agent.wait_until_stable()
 
             # The view should have scrolled. We check for the last lines.
-            agent.wait_for_text("Lines 22-33 of 33")
+            agent.wait_for_text("of 38")
         finally:
             agent.close()
 

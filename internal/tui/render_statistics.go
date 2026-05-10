@@ -185,6 +185,21 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 		content.WriteString(fmt.Sprintf("  %s %s %d\n", labelStyle.Render(dayName), bar, d.count))
 	}
 
+	// --- Maturity Distribution ---
+	content.WriteString("\n" + titleStyle.Copy().Underline(true).Render("Maturity Distribution") + "\n")
+	totalKnown := m.stats.NewCards + m.stats.YoungCards + m.stats.MatureCards
+	if totalKnown > 0 {
+		newPct := float64(m.stats.NewCards) / float64(totalKnown)
+		youngPct := float64(m.stats.YoungCards) / float64(totalKnown)
+		maturePct := float64(m.stats.MatureCards) / float64(totalKnown)
+
+		content.WriteString(fmt.Sprintf("  %-8s %s %d (%.1f%%)\n", labelStyle.Render("New:"), progressBar(20, newPct, "81", "238"), m.stats.NewCards, newPct*100))
+		content.WriteString(fmt.Sprintf("  %-8s %s %d (%.1f%%)\n", labelStyle.Render("Young:"), progressBar(20, youngPct, "220", "238"), m.stats.YoungCards, youngPct*100))
+		content.WriteString(fmt.Sprintf("  %-8s %s %d (%.1f%%)\n", labelStyle.Render("Mature:"), progressBar(20, maturePct, "46", "238"), m.stats.MatureCards, maturePct*100))
+	} else {
+		content.WriteString("  (no cards in collection)\n")
+	}
+
 	// Review Heatmap (last 3 months)
 	content.WriteString("\n" + titleStyle.Copy().Underline(true).Render("Review Heatmap (last 3 months)") + "\n")
 	if len(m.reviewsPerDay) == 0 {

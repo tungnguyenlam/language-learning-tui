@@ -178,6 +178,23 @@ func (m *Model) activateHitbox(id string) tea.Cmd {
 			m.cramCursor = selectedIndexForTrackRow(len(m.cramCards), visible, line)
 		}
 		return nil
+	case strings.HasPrefix(id, "deck-scroll-"):
+		line, err := strconv.Atoi(strings.TrimPrefix(id, "deck-scroll-"))
+		if err == nil {
+			filtered := m.filteredDecks()
+			if len(filtered) > 0 {
+				layout := m.activeViewContentLayout()
+				maxVisible := 10
+				if layout.Height > 25 {
+					maxVisible = (layout.Height - 10) / 2
+				}
+				if maxVisible < 5 {
+					maxVisible = 5
+				}
+				m.deckCursor = selectedIndexForTrackRow(len(filtered), maxVisible, line)
+			}
+		}
+		return nil
 	}
 	return nil
 }

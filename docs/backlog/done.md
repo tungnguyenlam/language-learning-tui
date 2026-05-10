@@ -68,13 +68,14 @@
 - **UI Polish:** Improved the Browser view's help hint to include the previously hidden Backspace shortcut for deleting cards.
 - **Verification:** Successfully passed all 150 project tests, including updated and new E2E scenarios.
 
-## 2026-05-10: Multi-Area Enhancements & Cloze Support
+## 2026-05-10: Content, UI Polish & SRS Robustness
 
-- **German Content:** Added new B2-level "Society & Social Issues" deck (30 notes) and expanded Grammar Tips with 10 advanced B2-C1 level tips.
-- **Cloze Support:** Fully implemented Cloze deletion support in the TUI, including multi-marker highlighting and correct typing mode verification against the missing word.
-- **Statistics View:** Modernized with a 2-column layout, visual progress bars for daily goals and grades, and a new 7-day activity bar chart.
-- **Dashboard:** Improved responsiveness by dynamically calculating available height for the Grammar Tip and Quick Actions sections.
-- **Decks View:** Added interactive "[Study]" and "[Cram]" buttons for each deck, allowing users to jump directly into a session.
-- **Bug Fix:** Resolved a critical bug where typing mode state was not reset between cards, causing input collisions and accidental view switching.
-- **E2E Testing:** Added `test_cloze_typing.py` to verify the new Cloze typing functionality.
-- **Verification:** Fixed multiple test regressions caused by layout changes, ensuring all 150 tests pass.
+- **German Content:** Added "German Confusable Words" deck (wissen/kennen, liegen/legen, etc.) with 20+ notes, including MCQs and Cloze cards.
+- **Grammar Tips:** Expanded `GrammarTip` struct to include a concrete `Example` field and updated all 50+ tips with German examples.
+- **Dashboard UI:** Updated layout to display the new grammar tip examples when space permits, enhancing daily learning value.
+- **Decks View:** Implemented a visual scrollbar with mouse-hitbox support, bringing it in line with Browser and Statistics views.
+- **Statistics View:** Added a "Maturity Distribution" chart visualizing the percentage of New, Young, and Mature cards in the collection.
+- **SRS Robustness:** Added comprehensive unit tests for the scheduler logic, covering various grading sequences and interval growth.
+- **Developer Experience:** Enhanced key event logging in `internal/tui/keys.go` to help debug text input trapping and global navigation issues.
+- **Bug Fix:** Fixed a race condition in `test_new_content_visibility.py` by adding stability waits and ensuring consistent view state.
+- **Verification:** Successfully passed the full suite of 163 tests, including a new E2E test `test_ui_polish.py` and fixes for layout regressions.
