@@ -4,32 +4,31 @@ Last updated: 2026-05-11 (Autonomous Improvement Pass)
 
 ## Current Milestone
 
-Autonomous improvements pass completed - 202 E2E tests passing.
+Autonomous improvements pass completed - 215 E2E tests passing.
 
 ## Phase 3 Work Plan
 
-- [x] **Task 1: Content** - Add B1 Technology deck (40 cards)
-- [x] **Task 2: Content** - Add B1 Finance deck (40 cards)
-- [x] **Task 3: Content** - Add B1 Environment deck (40 cards)
-- [x] **Task 4: Content** - Add 15 more verbs to Verb of the Day (50 total)
-- [x] **Task 5: Content** - Add 10+ advanced grammar tips (B1/B2/C1 level)
-- [x] **Task 6: UI** - Enhanced browser card preview with State and Reviews
-- [x] **Task 7: UI** - Improved AI view suggestions with 12 clickable topics
-- [x] **Task 8: Tests** - Fixed E2E tests for AI suggestions and browser preview
-- [x] **Task 9: Verify** - Run full verification suite (202 tests passing)
+- [x] **Task 1: Content** - Add B1 Health & Medicine deck (40 cards)
+- [x] **Task 2: Content** - Add B1 Culture & Society deck (40 cards)
+- [x] **Task 3: Content** - Add B1 Sports & Fitness deck (40 cards)
+- [x] **Task 4: Content** - Add B1 Education & Studying deck (40 cards)
+- [x] **Task 5: Content** - Add 10 advanced grammar tips (C1/C2 level)
+- [x] **Task 6: UI** - Enhanced Settings view with bold section headers and status colors
+- [x] **Task 7: UI** - Review card borders dynamically adjust based on learning state (New, Learning, Mature)
+- [x] **Task 8: UI** - Settings toggle statuses ("on"/"off") colorized for clarity
+- [x] **Task 9: Verify** - Run full verification suite (215 tests passing)
 
 ## Exact Next Action
 
-All improvements verified and working - 202 E2E tests passing. Ready for next improvement pass.
+All improvements verified and working - 215 E2E tests passing. Ready for next improvement pass.
 
 ## Acceptance Criteria
 
-- [x] 3 new B1 content decks created (Technology, Finance, Environment)
-- [x] Verb of the Day expanded to 50 verbs
-- [x] Grammar tips expanded with 10+ advanced tips
-- [x] Browser card preview enhanced with State and Reviews fields
-- [x] AI view improved with 12 clickable topic suggestions
-- [x] `./scripts/verify.sh` passes with zero errors (202 E2E tests)
+- [x] 4 new B1 content decks created (Health, Culture, Sports, Education)
+- [x] Grammar tips expanded with 10 advanced tips
+- [x] Settings view headers and toggles visually enhanced
+- [x] Review card dynamically styles borders according to card maturity
+- [x] `./scripts/verify.sh` passes with zero errors (215 E2E tests)
 
 ## Blockers
 

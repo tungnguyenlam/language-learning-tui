@@ -26,9 +26,9 @@ func (m *Model) renderSettings(x, y int) string {
 		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render(m.status) + "\n")
 	}
 
-	autoPlayStatus := "off"
+	autoPlayStatus := lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Render("off")
 	if m.autoPlayAudio {
-		autoPlayStatus = "on"
+		autoPlayStatus = lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render("on")
 	}
 
 	aiProviderName := m.aiProviderName
@@ -38,9 +38,10 @@ func (m *Model) renderSettings(x, y int) string {
 	}
 
 	sectionStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("81")).
+		Foreground(lipgloss.Color("255")).
+		Background(lipgloss.Color("62")).
 		Bold(true).
-		Underline(true).
+		Padding(0, 1).
 		MarginTop(1).
 		MarginBottom(1)
 	b.WriteString(sectionStyle.Render("AI CONFIGURATION") + "\n")
@@ -158,9 +159,9 @@ func (m *Model) renderSettings(x, y int) string {
 		prefix = "> "
 		itemStyle = itemStyle.Bold(true).Foreground(lipgloss.Color("212"))
 	}
-	strictStatus := "off"
+	strictStatus := lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Render("off")
 	if m.strictNormalization {
-		strictStatus = "on"
+		strictStatus = lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render("on")
 	}
 	strictItem := fmt.Sprintf("%sStrict Normalization (ss vs ß): %s", prefix, strictStatus)
 	rowY = layout.Y + strings.Count(b.String(), "\n")

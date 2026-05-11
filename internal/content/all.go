@@ -26,6 +26,10 @@ func StandardDecks() []core.Deck {
 		B1TechnologyDeck(),
 		B1FinanceDeck(),
 		B1EnvironmentDeck(),
+		B1HealthDeck(),
+		B1CultureDeck(),
+		B1SportsDeck(),
+		B1EducationDeck(),
 	}
 
 	// Load all embedded TSV decks

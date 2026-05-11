@@ -416,6 +416,56 @@ var grammarTips = []GrammarTip{
 		Tip:     "Participles can be extended with objects and other modifiers.",
 		Example: "Der am Dienstag von mir gekaufte Artikel...",
 	},
+	{
+		Title:   "Verbs with Prepositional Objects",
+		Tip:     "Some verbs always require a specific preposition and case (e.g. sich interessieren für + Akk).",
+		Example: "Ich interessiere mich für Kunst.",
+	},
+	{
+		Title:   "Conjunctions with Inverted Word Order",
+		Tip:     "Conjunctions like 'deshalb', 'trotzdem', 'daher' are adverbs and cause inversion (verb comes first after them).",
+		Example: "Es regnet, deshalb bleibe ich hier.",
+	},
+	{
+		Title:   "Subordinating vs Coordinating Conjunctions",
+		Tip:     "'und', 'aber', 'oder', 'denn', 'sondern' don't change word order (Position 0).",
+		Example: "Ich bin müde, aber ich lerne weiter.",
+	},
+	{
+		Title:   "Relative Pronouns in Genitive",
+		Tip:     "Use 'dessen' for masc/neut, and 'deren' for fem/plural to show possession.",
+		Example: "Der Mann, dessen Auto kaputt ist...",
+	},
+	{
+		Title:   "Als ob / Als wenn",
+		Tip:     "'As if' triggers Konjunktiv II and usually sends the verb to the end.",
+		Example: "Er tut so, als ob er alles wüsste.",
+	},
+	{
+		Title:   "Infinitivsätze with 'anstatt zu' & 'ohne zu'",
+		Tip:     "Use these to mean 'instead of doing' or 'without doing' when the subject is the same.",
+		Example: "Er ging, ohne ein Wort zu sagen.",
+	},
+	{
+		Title:   "Partizip Perfekt as Adverb",
+		Tip:     "Past participles can be used as adverbs without an ending.",
+		Example: "Das Auto ist völlig zerstört.",
+	},
+	{
+		Title:   "N-Declension for Nationalities",
+		Tip:     "Many masculine nationalities ending in -e or a consonant add -n/-en (der Franzose -> den Franzosen).",
+		Example: "Ich kenne den Schweden.",
+	},
+	{
+		Title:   "Position of 'auch'",
+		Tip:     "When 'auch' emphasizes a whole sentence, it comes after the finite verb.",
+		Example: "Er ist auch nach Berlin gefahren.",
+	},
+	{
+		Title:   "Reflexive Pronouns in Dative",
+		Tip:     "When there is already an accusative object, the reflexive pronoun becomes dative.",
+		Example: "Ich wasche mir die Hände.",
+	},
 }
 
 func GetDailyGrammarTip() GrammarTip {

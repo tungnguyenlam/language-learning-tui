@@ -120,12 +120,16 @@ func (m *Model) renderReview(x, y int) string {
 
 	// Determine card state/difficulty for badge
 	stateBadge := lipgloss.NewStyle().Foreground(lipgloss.Color("255")).Padding(0, 1)
+	cardBorderColor := "62"
 	if card.Mature {
 		stateBadge = stateBadge.Background(lipgloss.Color("34")).SetString("MATURE")
+		cardBorderColor = "34"
 	} else if card.Reviews > 0 {
 		stateBadge = stateBadge.Background(lipgloss.Color("39")).SetString("LEARNING")
+		cardBorderColor = "39"
 	} else {
 		stateBadge = stateBadge.Background(lipgloss.Color("208")).SetString("NEW")
+		cardBorderColor = "208"
 	}
 
 	headerSection := fmt.Sprintf("%s%s %s\n%s | Type: %s\n%s | %s\n%s%s%s", header, sessionProgress, stateBadge.Render(), deckMeta, cardTypeLabel, bookmark, keys, leech, suspended, audioIndicator)
@@ -152,7 +156,7 @@ func (m *Model) renderReview(x, y int) string {
 	// Enhanced card styling with better visual hierarchy
 	cardStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("62")).
+		BorderForeground(lipgloss.Color(cardBorderColor)).
 		Padding(1, 2).
 		Width(cardWidth).
 		Align(lipgloss.Center)

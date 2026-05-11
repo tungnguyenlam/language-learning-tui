@@ -1,5 +1,26 @@
 # Done Backlog
 
+## 2026-05-11 14:00 +07 (Autonomous Improvement Pass)
+
+Completed comprehensive improvement pass with new B1 content decks, grammar expansion, and UI/UX refinements. Total E2E tests: 215 (all passing).
+
+### Content Expansion
+- Added **B1 Health & Medicine** vocabulary deck (40 cards).
+- Added **B1 Culture & Society** vocabulary deck (40 cards).
+- Added **B1 Sports & Fitness** vocabulary deck (40 cards).
+- Added **B1 Education & Studying** vocabulary deck (40 cards).
+- Expanded **Grammar Tips** with 10 advanced topics (C1/C2 level) including participle extensions and nominalization.
+
+### UI/UX Improvements
+- **Settings View:** Enhanced visual hierarchy with bold, colored section headers.
+- **Review View:** Dynamic card borders that change color based on learning state (New/Learning/Mature).
+- **Settings Toggles:** Colorized toggle statuses (e.g., "on" / "off") for better visibility and affordance.
+
+### Verification
+- Total E2E tests: 215 (all passing).
+- All Go unit tests passing.
+- `./scripts/verify.sh` executed successfully with zero errors.
+
 ## 2026-05-11 12:30 +07 (Autonomous Improvement Pass)
 
 Completed comprehensive improvement pass with new B1 content decks, expanded vocabulary, enhanced UI, and test fixes. Total E2E tests: 202 (all passing).
