@@ -56,13 +56,29 @@ func (m *Model) renderAI(x, y int) string {
 
 	// Suggested Topics Section
 	if (m.aiInput == "" || m.aiInput == "der Kaffee") && len(m.drafts) == 0 {
-		b.WriteString("\n" + infoStyle.Bold(true).Render("Suggested Topics:") + "\n")
-		suggestions := []string{"A1 survival", "B1 doctor visit", "B1 apartment viewing", "B2 job interview", "B2 urban mobility", "B2 news debate", "C1 business email", "C1 academic argument", "travel phrases", "weather small talk"}
+		b.WriteString("\n" + infoStyle.Bold(true).Render("Click a topic or type your own, then press Enter:") + "\n")
+		suggestions := []struct {
+			topic string
+			desc  string
+		}{
+			{"A1 survival", "basic phrases"},
+			{"B1 doctor visit", "medical vocabulary"},
+			{"B1 apartment viewing", "housing search"},
+			{"B2 job interview", "professional talk"},
+			{"B2 urban mobility", "transport & city"},
+			{"B2 news debate", "current topics"},
+			{"C1 business email", "formal writing"},
+			{"C1 academic argument", "university German"},
+			{"travel phrases", "tourist essentials"},
+			{"weather small talk", "daily conversation"},
+			{"B1 at the restaurant", "ordering food"},
+			{"B2 complaining politely", "diplomatic German"},
+		}
 
 		suggestionStyle := lipgloss.NewStyle().
 			Foreground(colorCyan).
 			Underline(true).
-			MarginRight(2)
+			MarginRight(1)
 
 		lineY := layout.Y + strings.Count(b.String(), "\n")
 		currentX := layout.X
@@ -73,19 +89,19 @@ func (m *Model) renderAI(x, y int) string {
 				lineY++
 				currentX = layout.X
 			}
-			b.WriteString(suggestionStyle.Render(s))
+			b.WriteString(suggestionStyle.Render(s.topic))
 			m.hitboxes = append(m.hitboxes, Hitbox{
-				ID:     "ai-topic-" + s,
+				ID:     "ai-topic-" + s.topic,
 				View:   ViewAI,
 				X:      currentX,
 				Y:      lineY,
-				Width:  len(s),
+				Width:  len(s.topic),
 				Height: 1,
 			})
-			currentX += len(s) + 2
+			currentX += len(s.topic) + 1
 		}
 		b.WriteString("\n")
-		b.WriteString(mutedStyle.Render("Suggested levels: A1 survival, B1 errands, B2 opinions, C1 formal writing.") + "\n")
+		b.WriteString(mutedStyle.Render("Tip: be specific (level, situation, examples) for better results.") + "\n")
 	}
 
 	if len(m.drafts) == 0 {

@@ -54,7 +54,7 @@ def test_browser_preview_shows_kind_and_extra():
             agent.wait_for_text("Card Browser")
             agent.wait_for_text("Card Preview:")
             agent.assert_text("Kind")
-            agent.assert_text("Extra")
+            agent.assert_text("State")
         finally:
             agent.close()
 
@@ -67,7 +67,7 @@ def test_ai_suggestions_include_levels_and_mobility():
             agent.wait_for_text("AI Drafts")
             agent.assert_text("B2 urban mobility")
             agent.assert_text("C1 business email")
-            agent.assert_text("Suggested levels:")
+            agent.assert_text("Click a topic")
         finally:
             agent.close()
 

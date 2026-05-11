@@ -173,20 +173,39 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		if tags == "" {
 			tags = "(none)"
 		}
+
+		state := "NEW"
+		stateColor := "208"
+		if selected.Mature {
+			state = "MATURE"
+			stateColor = "34"
+		} else if selected.Reviews > 0 {
+			state = "LEARNING"
+			stateColor = "39"
+		}
+
+		stateStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(stateColor)).Bold(true)
+		intervalStr := formatReviewInterval(selected.Interval)
+		if selected.Interval <= 0 {
+			intervalStr = "none"
+		}
+
 		previewWidth := maxInt(35, layout.Width-10)
 		previewBox := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("240")).
 			Padding(0, 1).
 			Width(previewWidth).
-			Render(fmt.Sprintf("%s\n%s: %s    %s: %s\n%s: %s\n%s: %s\n%s: %s\n%s: %s",
+			Render(fmt.Sprintf("%s\n%s: %s    %s: %s    %s: %s\n%s: %s    %s: %s    %s: %s\n%s: %s\n%s: %s",
 				lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).Render("Card Preview:"),
-				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Deck "), truncateLine(m.deckNameByID(selected.DeckID), previewWidth/2-10),
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Deck"), truncateLine(m.deckNameByID(selected.DeckID), previewWidth/2-10),
 				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Kind"), selected.Kind,
-				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Front"), selected.Prompt,
-				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Back "), selected.Answer,
-				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Extra"), truncateLine(extra, previewWidth-12),
-				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Tags "), tags))
+				stateStyle.Render("State"), state,
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Front"), truncateLine(selected.Prompt, previewWidth/2-6),
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Back"), truncateLine(selected.Answer, previewWidth/2-6),
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Interval"), intervalStr,
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Reviews"), fmt.Sprintf("%d", selected.Reviews),
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Tags"), tags))
 		b.WriteString("\n" + previewBox + "\n")
 	}
 

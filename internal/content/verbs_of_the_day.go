@@ -227,6 +227,90 @@ var dailyVerbs = []DailyVerb{
 		Wir: "halten", Ihr: "haltet", SieSie: "halten",
 		Example: "Der Zug hält hier.",
 	},
+	{
+		German: "erklären", English: "to explain",
+		Ich: "erkläre", Du: "erklärst", ErSieEs: "erklärt",
+		Wir: "erklären", Ihr: "erklärt", SieSie: "erklären",
+		Example: "Kannst du das erklären?",
+	},
+	{
+		German: "beginnen", English: "to begin",
+		Ich: "beginne", Du: "beginnst", ErSieEs: "beginnt",
+		Wir: "beginnen", Ihr: "beginnt", SieSie: "beginnen",
+		Example: "Der Unterricht beginnt um 9 Uhr.",
+	},
+	{
+		German: "warten", English: "to wait",
+		Ich: "warte", Du: "wartest", ErSieEs: "wartet",
+		Wir: "warten", Ihr: "wartet", SieSie: "warten",
+		Example: "Ich warte auf dich.",
+	},
+	{
+		German: "antworten", English: "to answer",
+		Ich: "antworte", Du: "antwortest", ErSieEs: "antwortet",
+		Wir: "antworten", Ihr: "antwortet", SieSie: "antworten",
+		Example: "Kannst du mir antworten?",
+	},
+	{
+		German: "fragen", English: "to ask",
+		Ich: "frage", Du: "fragst", ErSieEs: "fragt",
+		Wir: "fragen", Ihr: "fragt", SieSie: "fragen",
+		Example: "Darf ich etwas fragen?",
+	},
+	{
+		German: "zeigen", English: "to show",
+		Ich: "zeige", Du: "zeigst", ErSieEs: "zeigt",
+		Wir: "zeigen", Ihr: "zeigt", SieSie: "zeigen",
+		Example: "Zeig mir bitte den Weg.",
+	},
+	{
+		German: "hören", English: "to hear",
+		Ich: "höre", Du: "hörst", ErSieEs: "hört",
+		Wir: "hören", Ihr: "hört", SieSie: "hören",
+		Example: "Ich höre die Musik.",
+	},
+	{
+		German: "vergessen", English: "to forget",
+		Ich: "vergesse", Du: "vergisst", ErSieEs: "vergisst",
+		Wir: "vergessen", Ihr: "vergesst", SieSie: "vergessen",
+		Example: "Ich habe es leider vergessen.",
+	},
+	{
+		German: "wollen", English: "to want",
+		Ich: "will", Du: "willst", ErSieEs: "will",
+		Wir: "wollen", Ihr: "wollt", SieSie: "wollen",
+		Example: "Ich will Deutsch lernen.",
+	},
+	{
+		German: "können", English: "to be able/can",
+		Ich: "kann", Du: "kannst", ErSieEs: "kann",
+		Wir: "können", Ihr: "könnt", SieSie: "können",
+		Example: "Ich kann gut schwimmen.",
+	},
+	{
+		German: "müssen", English: "to have to/must",
+		Ich: "muss", Du: "musst", ErSieEs: "muss",
+		Wir: "müssen", Ihr: "müsst", SieSie: "müssen",
+		Example: "Ich muss jetzt gehen.",
+	},
+	{
+		German: "sollen", English: "to should/ought to",
+		Ich: "soll", Du: "sollst", ErSieEs: "soll",
+		Wir: "sollen", Ihr: "sollt", SieSie: "sollen",
+		Example: "Du sollst das nicht tun.",
+	},
+	{
+		German: "dürfen", English: "to be allowed/may",
+		Ich: "darf", Du: "darfst", ErSieEs: "darf",
+		Wir: "dürfen", Ihr: "dürft", SieSie: "dürfen",
+		Example: "Darf ich hier rauchen?",
+	},
+	{
+		German: "treffen", English: "to meet",
+		Ich: "treffe", Du: "triffst", ErSieEs: "trifft",
+		Wir: "treffen", Ihr: "trefft", SieSie: "treffen",
+		Example: "Wir treffen uns um 6 Uhr.",
+	},
 }
 
 func GetVerbOfTheDay() DailyVerb {

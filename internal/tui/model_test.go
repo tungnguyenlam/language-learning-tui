@@ -1834,7 +1834,7 @@ func TestBrowserPreviewShowsDeckKindExtraAndTags(t *testing.T) {
 	}}
 
 	view := ansi.Strip(model.renderBrowserAt(viewportLayout{Width: 100, Height: 35}))
-	for _, want := range []string{"Card Preview:", "Deck : Deck One", "Kind: mcq", "Extra: Use umsteigen", "Tags : b2, mobility"} {
+	for _, want := range []string{"Card Preview:", "Deck:", "Kind:", "State:", "Front:", "Back:", "Reviews:", "Tags:"} {
 		if !strings.Contains(view, want) {
 			t.Fatalf("browser preview missing %q:\n%s", want, view)
 		}

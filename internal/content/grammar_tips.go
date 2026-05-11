@@ -371,6 +371,51 @@ var grammarTips = []GrammarTip{
 		Tip:     "Use genitive after 'because of' words: wegen, während, trotz.",
 		Example: "Während des Unterrichts.",
 	},
+	{
+		Title:   "Konjunktiv II Subtle Distinctions",
+		Tip:     "Simple past forms differ: 'wäre' vs 'würde', 'hätte' vs 'würde haben'.",
+		Example: "Wenn ich Zeit gehabt hätte... Wenn ich Zeit gehabt würde...",
+	},
+	{
+		Title:   "Passiv with Modal Verbs",
+		Tip:     "Form: Modal + werden + Partizip II.",
+		Example: "Das muss erledigt werden.",
+	},
+	{
+		Title:   "Infinitive Groups",
+		Tip:     "Certain verbs end with 'zu' when preceding another verb.",
+		Example: "Ich freue mich, Sie kennenzulernen.",
+	},
+	{
+		Title:   "Konjunktiv I in Newspapers",
+		Tip:     "Used to report what someone said without confirming it.",
+		Example: "Er sagte, er komme morgen.",
+	},
+	{
+		Title:   "Genitive after Demonstratives",
+		Tip:     "Demonstrative pronouns can introduce genitive constructions.",
+		Example: "derjenige, dessen Buch das ist",
+	},
+	{
+		Title:   "Causative with lassen",
+		Tip:     "'Lassen' can indicate allowing or making something happen.",
+		Example: "Er ließ ihn gehen.",
+	},
+	{
+		Title:   "Past Participle with zu",
+		Tip:     "Adjective with 'zu' implies necessity or possibility.",
+		Example: "Die zu lösende Aufgabe.",
+	},
+	{
+		Title:   "Subjunctive Reporting Verbs",
+		Tip:     "Verben wie 'sagen, meinen, berichten' mit Konjunktiv I.",
+		Example: "Er sagte, er habe das Problem gelöst.",
+	},
+	{
+		Title:   "Erweiterte Partizipialkonstruktionen",
+		Tip:     "Participles can be extended with objects and other modifiers.",
+		Example: "Der am Dienstag von mir gekaufte Artikel...",
+	},
 }
 
 func GetDailyGrammarTip() GrammarTip {

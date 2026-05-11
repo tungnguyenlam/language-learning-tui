@@ -61,7 +61,7 @@ def test_ai_view_renders():
         try:
             agent.act("6")
             agent.wait_for_text("AI Drafts", timeout=5.0)
-            agent.wait_for_text("Suggested Topics", timeout=5.0)
+            agent.wait_for_text("Click a topic", timeout=5.0)
         finally:
             agent.close()
 

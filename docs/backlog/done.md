@@ -1,5 +1,31 @@
 # Done Backlog
 
+## 2026-05-11 12:30 +07 (Autonomous Improvement Pass)
+
+Completed comprehensive improvement pass with new B1 content decks, expanded vocabulary, enhanced UI, and test fixes. Total E2E tests: 202 (all passing).
+
+### Content Expansion
+- Added **B1 Technology & Digital Life** vocabulary deck (40 cards) - technology, computers, digital communication, internet terms.
+- Added **B1 Finance & Banking** vocabulary deck (40 cards) - financial vocabulary, banking, money management.
+- Added **B1 Environment & Sustainability** vocabulary deck (40 cards) - environmental vocabulary, ecology, sustainability topics.
+- Expanded **Verb of the Day** with 15 additional verbs (50 total) - added modal verbs (wollen, können, müssen, sollen, dürfen), erklärären, beginnen, warten, antworten, fragen, zeigen, hören, vergessen, treffen.
+- Added **10+ advanced grammar tips** (B1/B2/C1 level) - Konjunktiv II, Passiv, Infinitivgruppen, Konjunktiv I, Genitiv, etc.
+
+### UI/UX Improvements
+- **Browser Card Preview:** Enhanced preview panel with State indicator (NEW/LEARNING/MATURE) and Reviews count, replacing Extra field with more useful metadata.
+- **AI View Suggestions:** Improved suggestion section with 12 clickable topic suggestions with descriptions, replacing generic "Suggested Topics:" header with "Click a topic or type your own, then press Enter:".
+
+### Testing & Quality
+- Fixed E2E tests in `test_autonomous_pass_mobility_ui.py` to match new browser preview format (State field).
+- Fixed E2E tests in `test_new_batch3.py` and `test_ui_views_may11.py` to match new AI suggestions format.
+- All Go unit tests passing.
+- `./scripts/verify.sh` executed successfully with zero errors (202 E2E tests).
+
+### Verification
+- Total E2E tests: 202 (all passing).
+- All Go unit tests passing.
+- `./scripts/verify.sh` executed successfully with zero errors.
+
 ## 2026-05-11 10:00 +07 (Autonomous Improvement Pass)
 
 Completed comprehensive improvement pass with new content decks, verbs expansion, UI improvements, and 8 new E2E tests. Total E2E tests: 202 (all passing).

@@ -82,7 +82,7 @@ def test_ai_draft_suggestions(agent: TUIAgent):
     agent.wait_for_text("DASHBOARD")
     agent.act("6")
     agent.wait_for_text("AI Drafts")
-    agent.wait_for_text("Suggested Topics:")
+    agent.wait_for_text("Click a topic")
     agent.wait_for_text("A1 survival")
     agent.wait_for_text("B1 doctor visit")
 
