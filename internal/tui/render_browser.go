@@ -174,6 +174,11 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 			tags = "(none)"
 		}
 
+		kind := "FC"
+		if selected.Kind == core.CardKindMCQ {
+			kind = "MCQ"
+		}
+
 		state := "NEW"
 		stateColor := "208"
 		if selected.Mature {
@@ -199,12 +204,12 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 			Render(fmt.Sprintf("%s\n%s: %s    %s: %s    %s: %s\n%s: %s    %s: %s    %s: %s\n%s: %s\n%s: %s",
 				lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).Render("Card Preview:"),
 				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Deck"), truncateLine(m.deckNameByID(selected.DeckID), previewWidth/2-10),
-				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Kind"), selected.Kind,
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Kind"), kind,
 				stateStyle.Render("State"), state,
 				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Front"), truncateLine(selected.Prompt, previewWidth/2-6),
 				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Back"), truncateLine(selected.Answer, previewWidth/2-6),
-				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Interval"), intervalStr,
 				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Reviews"), fmt.Sprintf("%d", selected.Reviews),
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Interval"), intervalStr,
 				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Tags"), tags))
 		b.WriteString("\n" + previewBox + "\n")
 	}

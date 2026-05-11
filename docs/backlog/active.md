@@ -1,34 +1,42 @@
 # Active Backlog
 
-Last updated: 2026-05-11 (Autonomous Improvement Pass)
+Last updated: 2026-05-12 (Autonomous Improvement Pass)
 
 ## Current Milestone
 
-Autonomous improvements pass completed - 215 E2E tests passing.
+Autonomous improvements pass completed - 230 E2E tests passing.
 
 ## Phase 3 Work Plan
 
-- [x] **Task 1: Content** - Add B1 Health & Medicine deck (40 cards)
-- [x] **Task 2: Content** - Add B1 Culture & Society deck (40 cards)
-- [x] **Task 3: Content** - Add B1 Sports & Fitness deck (40 cards)
-- [x] **Task 4: Content** - Add B1 Education & Studying deck (40 cards)
-- [x] **Task 5: Content** - Add 10 advanced grammar tips (C1/C2 level)
-- [x] **Task 6: UI** - Enhanced Settings view with bold section headers and status colors
-- [x] **Task 7: UI** - Review card borders dynamically adjust based on learning state (New, Learning, Mature)
-- [x] **Task 8: UI** - Settings toggle statuses ("on"/"off") colorized for clarity
-- [x] **Task 9: Verify** - Run full verification suite (215 tests passing)
+- [x] **Task 1: Content** - Add A2 Daily Life & Household deck (52 cards)
+- [x] **Task 2: Content** - Add B2 Media & News deck (50 cards)
+- [x] **Task 3: Content** - Add C1 Academic & Scientific German deck (52 cards)
+- [x] **Task 4: Content** - Add A2 Shopping & Services deck (52 cards)
+- [x] **Task 5: Content** - Add B2 Business & Workplace deck (52 cards)
+- [x] **Task 6: Content** - Add C2 German Legal & Juridical deck (52 cards)
+- [x] **Task 7: Content** - Add B2 Travel & Tourism deck (52 cards)
+- [x] **Task 8: Content** - Add B2 Environment & Sustainability deck (52 cards)
+- [x] **Task 9: Content** - Add C1 German Science & Technology deck (52 cards)
+- [x] **Task 10: Content** - Expand B1 Technology deck with 16 more cards
+- [x] **Task 11: Content** - Add 5 new grammar tips
+- [x] **Task 12: UI** - Enhanced Statistics view with grade icons (✗, ~, ✓, ★)
+- [x] **Task 13: UI** - Fixed Browser preview kind variable scoping
+- [x] **Task 14: Testing** - Added 15 new E2E tests for new decks
+- [x] **Task 15: Verify** - Run full verification suite (230 tests passing)
 
 ## Exact Next Action
 
-All improvements verified and working - 215 E2E tests passing. Ready for next improvement pass.
+All improvements verified and working - 230 E2E tests passing. Commit all changes.
 
 ## Acceptance Criteria
 
-- [x] 4 new B1 content decks created (Health, Culture, Sports, Education)
-- [x] Grammar tips expanded with 10 advanced tips
-- [x] Settings view headers and toggles visually enhanced
-- [x] Review card dynamically styles borders according to card maturity
-- [x] `./scripts/verify.sh` passes with zero errors (215 E2E tests)
+- [x] 9 new content decks created
+- [x] B1 Technology expanded with 16 additional cards
+- [x] Grammar tips expanded with 5 new tips
+- [x] Statistics view enhanced with grade icons
+- [x] Browser preview fixed with proper variable scoping
+- [x] 15 new E2E tests added for new decks
+- [x] `./scripts/verify.sh` passes with zero errors (230 E2E tests)
 
 ## Blockers
 

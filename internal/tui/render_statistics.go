@@ -148,6 +148,12 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 		core.GradeGood:  "46",
 		core.GradeEasy:  "81",
 	}
+	gradeIcons := map[core.ReviewGrade]string{
+		core.GradeAgain: "✗",
+		core.GradeHard:  "~",
+		core.GradeGood:  "✓",
+		core.GradeEasy:  "★",
+	}
 
 	maxGradeCount := 0
 	for _, g := range grades {
@@ -164,7 +170,7 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 			gPercentage = float64(count) / float64(maxGradeCount)
 		}
 		gBar := progressBar(20, gPercentage, gradeColors[g], "238")
-		content.WriteString(fmt.Sprintf("  %s %s %d\n", labelStyle.Render(gradeLabel), gBar, count))
+		content.WriteString(fmt.Sprintf("  %s %s %d  %s\n", labelStyle.Render(gradeLabel), gBar, count, lipgloss.NewStyle().Foreground(lipgloss.Color(gradeColors[g])).Render(gradeIcons[g])))
 	}
 
 	// --- 7-Day Activity Chart ---

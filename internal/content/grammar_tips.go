@@ -466,6 +466,26 @@ var grammarTips = []GrammarTip{
 		Tip:     "When there is already an accusative object, the reflexive pronoun becomes dative.",
 		Example: "Ich wasche mir die Hände.",
 	},
+	{
+		Title:   "Präteritum von sein",
+		Tip:     "Narrative German uses 'war' for past tense of sein.",
+		Example: "Ich war glücklich.",
+	},
+	{
+		Title:   "Präteritum von haben",
+		Tip:     "Narrative German uses 'hatte' for past tense of haben.",
+		Example: "Er hatte viel Zeit.",
+	},
+	{
+		Title:   "Konjunktiv II for Wishes",
+		Tip:     "Use 'hätte', 'wäre', 'würde' to express wishes.",
+		Example: "Wenn ich nur mehr Zeit hätte!",
+	},
+	{
+		Title:   "Imperative Forms",
+		Tip:     "Du-imperative: remove -st. ihr-imperative: add -t. Sie-imperative: verb first.",
+		Example: "Geh! Geht! Gehen Sie!",
+	},
 }
 
 func GetDailyGrammarTip() GrammarTip {

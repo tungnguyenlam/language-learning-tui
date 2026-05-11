@@ -46,6 +46,21 @@ func B1TechnologyDeck() core.Deck {
 		{ID: "tech-038", DeckID: "b1-technology", Front: "sicher", Back: "secure, safe", Extra: "Related: die Sicherheit", Tags: []string{"b1", "technology", "adjective"}},
 		{ID: "tech-039", DeckID: "b1-technology", Front: "der Chip", Back: "chip", Extra: "Plural: die Chips", Tags: []string{"b1", "technology", "noun"}},
 		{ID: "tech-040", DeckID: "b1-technology", Front: "die Künstliche Intelligenz", Back: "artificial intelligence", Tags: []string{"b1", "technology", "noun"}},
+		{ID: "tech-041", DeckID: "b1-technology", Front: "der Roboter", Back: "robot", Extra: "Plural: die Roboter", Tags: []string{"b1", "technology", "noun"}},
+		{ID: "tech-042", DeckID: "b1-technology", Front: "automatisieren", Back: "to automate", Extra: "Konjugation: ich automatisiere", Tags: []string{"b1", "technology", "verb"}},
+		{ID: "tech-043", DeckID: "b1-technology", Front: "das Programm", Back: "program, app", Extra: "Plural: die Programme", Tags: []string{"b1", "technology", "noun"}},
+		{ID: "tech-044", DeckID: "b1-technology", Front: "programmieren", Back: "to program", Extra: "Konjugation: ich programmiere", Tags: []string{"b1", "technology", "verb"}},
+		{ID: "tech-045", DeckID: "b1-technology", Front: "der Code", Back: "code", Extra: "Plural: die Codes", Tags: []string{"b1", "technology", "noun"}},
+		{ID: "tech-046", DeckID: "b1-technology", Front: "debuggen", Back: "to debug", Extra: "Konjugation: ich debugge", Tags: []string{"b1", "technology", "verb"}},
+		{ID: "tech-047", DeckID: "b1-technology", Front: "das Netzwerk", Back: "network", Extra: "Plural: die Netzwerke", Tags: []string{"b1", "technology", "noun"}},
+		{ID: "tech-048", DeckID: "b1-technology", Front: "der Server", Back: "server", Extra: "Plural: die Server", Tags: []string{"b1", "technology", "noun"}},
+		{ID: "tech-049", DeckID: "b1-technology", Front: "die Datenbank", Back: "database", Extra: "Plural: die Datenbanken", Tags: []string{"b1", "technology", "noun"}},
+		{ID: "tech-050", DeckID: "b1-technology", Front: "der Algorithmus", Back: "algorithm", Extra: "Plural: die Algorithmen", Tags: []string{"b1", "technology", "noun"}},
+		{ID: "tech-051", DeckID: "b1-technology", Front: "virtuell", Back: "virtual", Tags: []string{"b1", "technology", "adjective"}},
+		{ID: "tech-052", DeckID: "b1-technology", Front: "die Virtualisierung", Back: "virtualization", Tags: []string{"b1", "technology", "noun"}},
+		{ID: "tech-053", DeckID: "b1-technology", Front: "das Rechenzentrum", Back: "data center", Extra: "Plural: die Rechenzentren", Tags: []string{"b1", "technology", "noun"}},
+		{ID: "tech-054", DeckID: "b1-technology", Front: "die IT-Abteilung", Back: "IT department", Tags: []string{"b1", "technology", "noun"}},
+		{ID: "tech-055", DeckID: "b1-technology", Front: "der Techniker", Back: "technician", Tags: []string{"b1", "technology", "noun"}},
 	}
 
 	for i := range notes {

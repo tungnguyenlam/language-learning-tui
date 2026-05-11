@@ -191,3 +191,29 @@ Completed a multi-area improvement pass covering German content expansion, UI re
 - All 163 E2E tests passed.
 - All Go unit tests passed.
 - `./scripts/verify.sh` executed successfully.
+
+## 2026-05-12 10:30 +07 (Autonomous Improvement Pass)
+
+Completed comprehensive improvement pass with 6 new German content decks, grammar expansion, UI polish, and testing. Total E2E tests: 226 (all passing).
+
+### Content Expansion
+- Added **A2 Daily Life & Household** vocabulary deck (52 cards) - daily routines, household chores, home objects.
+- Added **B2 Media & News** vocabulary deck (50 cards) - journalism, broadcasting, media vocabulary.
+- Added **C1 Academic & Scientific German** vocabulary deck (52 cards) - research, methodology, academic contexts.
+- Added **A2 Shopping & Services** vocabulary deck (52 cards) - commerce, services, retail vocabulary.
+- Added **B2 Business & Workplace** vocabulary deck (52 cards) - professional, corporate, employment.
+- Added **C2 German Legal & Juridical** vocabulary deck (52 cards) - law, legislation, judicial terms.
+- Expanded **Grammar Tips** with 5 new topics (Präteritum, Konjunktiv II wishes, Imperative forms).
+
+### UI/UX Improvements
+- **Statistics View:** Enhanced grade chart with visual icons (✗ for Again, ~ for Hard, ✓ for Good, ★ for Easy).
+- **Browser Preview:** Fixed variable scoping issue where `kind` variable was referenced outside its scope.
+
+### Testing
+- Added comprehensive E2E test file `test_new_decks_may12.py` with 11 tests for new decks.
+- Verified all new decks are accessible and vocabulary is searchable.
+
+### Verification
+- Total E2E tests: 226 (all passing).
+- All Go unit tests passing.
+- `./scripts/verify.sh` executed successfully with zero errors.
