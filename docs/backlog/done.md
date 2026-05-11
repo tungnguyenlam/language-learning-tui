@@ -1,5 +1,28 @@
 # Done Backlog
 
+## 2026-05-12 12:00 +07 (Autonomous Improvement Pass - New Content & UI)
+
+Completed comprehensive improvement pass with 3 new German content decks, UI enhancements for Cram mode and Decks view, and 15 new verbs. Total E2E tests: 233 (all passing).
+
+### Content Expansion
+- Added **B1 Art & Literature** vocabulary deck (40 cards).
+- Added **A2 Hobbies & Free Time II** vocabulary deck (40 cards).
+- Added **B2 Science & Nature II** vocabulary deck (40 cards).
+- Expanded **Verb of the Day** with 15 additional verbs.
+
+### UI/UX Improvements
+- **Cram View:** Added progress bar, formatted the card with a rounded border, and improved alignment.
+- **Decks View:** Padded deck names for alignment and colored the New (orange), Due (green), and Total (cyan) counts for better readability.
+
+### Testing
+- Added comprehensive E2E test file `test_new_decks_batch_3.py` for new decks.
+- Fixed broken UI navigation and layout tests caused by styling upgrades.
+
+### Verification
+- Total E2E tests: 233 (all passing).
+- All Go unit tests passing.
+- `./scripts/verify.sh` executed successfully with zero errors.
+
 ## 2026-05-11 14:00 +07 (Autonomous Improvement Pass)
 
 Completed comprehensive improvement pass with new B1 content decks, grammar expansion, and UI/UX refinements. Total E2E tests: 215 (all passing).
@@ -217,3 +240,42 @@ Completed comprehensive improvement pass with 6 new German content decks, gramma
 - Total E2E tests: 226 (all passing).
 - All Go unit tests passing.
 - `./scripts/verify.sh` executed successfully with zero errors.
+
+## 2026-05-12 11:00 +07 (Autonomous Improvement Pass - Final)
+
+Completed comprehensive improvement pass with 9 new German content decks, UI enhancements, bug fixes, and testing expansion. Total E2E tests: 230 (all passing).
+
+### Content Expansion (468+ new vocabulary cards)
+- **A2 Daily Life & Household** (52 cards) - daily routines, household chores, home objects, visitors, rooms
+- **B2 Media & News** (50 cards) - journalism, broadcasting, media vocabulary, credibility, digital media
+- **C1 Academic & Scientific German** (52 cards) - research methodology, academic writing, citations
+- **A2 Shopping & Services** (52 cards) - commerce, retail, services, pricing, measurements
+- **B2 Business & Workplace** (52 cards) - corporate, employment, contracts, business operations
+- **C2 German Legal & Juridical** (52 cards) - law, legislation, judicial proceedings, rights
+- **B2 Travel & Tourism** (52 cards) - travel, accommodation, transportation, attractions
+- **B2 Environment & Sustainability** (52 cards) - ecology, climate change, renewable energy, pollution
+- **C1 German Science & Technology** (52 cards) - physics, chemistry, biology, astronomy, research
+- **B1 Technology expanded** with 16 additional cards (AI, robotics, programming, networks, IT)
+
+### Grammar Expansion
+- Added 5 new grammar tips: Präteritum von sein, Präteritum von haben, Konjunktiv II for Wishes, Imperative Forms, Reflexive Pronouns in Dative
+
+### UI/UX Improvements
+- **Statistics View:** Enhanced grade chart with visual icons (✗ for Again, ~ for Hard, ✓ for Good, ★ for Easy)
+- **Browser Preview:** Fixed variable scoping issue where `kind` variable was referenced outside its definition scope
+- **AI Suggestions:** Maintained existing suggestions for E2E test compatibility
+
+### Testing
+- Added comprehensive E2E test file `test_new_decks_may12.py` with 15 tests covering all new decks
+- All tests verified to pass with `./scripts/verify.sh`
+
+### Verification
+- Total E2E tests: 230 (all passing)
+- All Go unit tests passing
+- `./scripts/verify.sh` executed successfully with zero errors
+
+### Commit Summary
+- 17 files changed, 1031 insertions(+), 21 deletions(-)
+- 10 new content deck files created
+- 1 new E2E test file with 15 tests
+- UI fixes in 2 files (render_browser.go, render_statistics.go)

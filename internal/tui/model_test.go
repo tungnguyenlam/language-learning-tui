@@ -529,7 +529,7 @@ func TestDecksViewNavigationAndSelection(t *testing.T) {
 		t.Fatalf("deckCursor = %d, want 0", model.deckCursor)
 	}
 	layout := viewportLayout{Width: 80, Height: 24, X: 0, Y: 0}
-	view := model.renderDecks(layout)
+	view := ansi.Strip(model.renderDecks(layout))
 	if !strings.Contains(view, "5 due") || !strings.Contains(view, "10 total") {
 		t.Fatalf("deck view missing progress metrics: %s", view)
 	}
@@ -550,7 +550,7 @@ func TestDecksViewNavigationAndSelection(t *testing.T) {
 	}
 
 	// Check rendering contains stats
-	view = model.renderDecks(layout)
+	view = ansi.Strip(model.renderDecks(layout))
 	if !strings.Contains(view, "Deck Two") || !strings.Contains(view, "due") || !strings.Contains(view, "total") {
 		t.Fatalf("decks view rendering missing stats: %s", view)
 	}
@@ -941,7 +941,7 @@ func TestCramReviewShowsDeckTagsAndPosition(t *testing.T) {
 	model.cramActive = true
 
 	view := ansi.Strip(model.renderCramAt(viewportLayout{Width: 90, Height: 30}))
-	for _, want := range []string{"Deck: Deck One", "Card 1/1", "Tags: #b2 #mobility"} {
+	for _, want := range []string{"Deck: Deck One", "1/1", "Tags: #b2 #mobility"} {
 		if !strings.Contains(view, want) {
 			t.Fatalf("cram review missing %q:\n%s", want, view)
 		}
@@ -1600,7 +1600,7 @@ func TestCramRevealAtFullProgressRendersWithoutNegativeRepeat(t *testing.T) {
 	model.revealProgress = 100
 
 	view := model.renderCramAt(viewportLayout{X: 0, Y: 0, Width: 80, Height: 24})
-	if !strings.Contains(view, "Answer: Antwort") {
+	if !strings.Contains(view, "Antwort") {
 		t.Fatalf("expected full answer at 100%% progress, got: %s", view)
 	}
 }

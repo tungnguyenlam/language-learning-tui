@@ -104,7 +104,7 @@ def test_cram_all_shortcut():
             
             # Start cram
             agent.act('<Enter>')
-            agent.wait_for_text("Prompt:")
+            agent.wait_for_text("Press Space or Enter to reveal.")
 
             # Reveal
             agent.act(' ')

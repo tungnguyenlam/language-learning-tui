@@ -82,7 +82,10 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 			selectMark = "[x] "
 		}
 
-		counts := fmt.Sprintf("%d new, %d due, %d total", deck.NewCards, deck.DueCards, deck.TotalCards)
+		newStyled := lipgloss.NewStyle().Foreground(lipgloss.Color("208")).Render(fmt.Sprintf("%d", deck.NewCards))
+		dueStyled := lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render(fmt.Sprintf("%d", deck.DueCards))
+		totalStyled := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render(fmt.Sprintf("%d", deck.TotalCards))
+		counts := fmt.Sprintf("%s new, %s due, %s total", newStyled, dueStyled, totalStyled)
 
 		// Add a mini progress bar for deck completion
 		deckPercentage := 0.0
@@ -91,8 +94,15 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		}
 		miniBar := progressBar(5, deckPercentage, "46", "238")
 
-		label := fmt.Sprintf("%s%s%s  %s  %s | today %d, %.0f%% success",
-			prefix, selectMark, deck.Name, miniBar, counts, deck.ReviewsToday, deck.SuccessRate*100)
+		deckNamePadded := deck.Name
+		if len(deckNamePadded) < 28 {
+			deckNamePadded += strings.Repeat(" ", 28-len(deckNamePadded))
+		} else if len(deckNamePadded) > 28 {
+			deckNamePadded = deckNamePadded[:25] + "..."
+		}
+
+		label := fmt.Sprintf("%s%s%s %s  %s | today %d, %.0f%% success",
+			prefix, selectMark, deckNamePadded, miniBar, counts, deck.ReviewsToday, deck.SuccessRate*100)
 
 		studyBtn := " [Study]"
 		cramBtn := " [Cram]"

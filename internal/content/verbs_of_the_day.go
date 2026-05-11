@@ -311,6 +311,96 @@ var dailyVerbs = []DailyVerb{
 		Wir: "treffen", Ihr: "trefft", SieSie: "treffen",
 		Example: "Wir treffen uns um 6 Uhr.",
 	},
+	{
+		German: "suchen", English: "to search/look for",
+		Ich: "suche", Du: "suchst", ErSieEs: "sucht",
+		Wir: "suchen", Ihr: "sucht", SieSie: "suchen",
+		Example: "Ich suche meine Schlüssel.",
+	},
+	{
+		German: "versuchen", English: "to try",
+		Ich: "versuche", Du: "versuchst", ErSieEs: "versucht",
+		Wir: "versuchen", Ihr: "versucht", SieSie: "versuchen",
+		Example: "Ich versuche es noch einmal.",
+	},
+	{
+		German: "kaufen", English: "to buy",
+		Ich: "kaufe", Du: "kaufst", ErSieEs: "kauft",
+		Wir: "kaufen", Ihr: "kauft", SieSie: "kaufen",
+		Example: "Wir kaufen ein neues Auto.",
+	},
+	{
+		German: "verkaufen", English: "to sell",
+		Ich: "verkaufe", Du: "verkaufst", ErSieEs: "verkauft",
+		Wir: "verkaufen", Ihr: "verkauft", SieSie: "verkaufen",
+		Example: "Er verkauft sein altes Fahrrad.",
+	},
+	{
+		German: "leben", English: "to live/be alive",
+		Ich: "lebe", Du: "lebst", ErSieEs: "lebt",
+		Wir: "leben", Ihr: "lebt", SieSie: "leben",
+		Example: "Sie leben in Deutschland.",
+	},
+	{
+		German: "schlafen", English: "to sleep",
+		Ich: "schlafe", Du: "schläfst", ErSieEs: "schläft",
+		Wir: "schlafen", Ihr: "schlaft", SieSie: "schlafen",
+		Example: "Ich schlafe nachts sehr gut.",
+	},
+	{
+		German: "waschen", English: "to wash",
+		Ich: "wasche", Du: "wäschst", ErSieEs: "wäscht",
+		Wir: "waschen", Ihr: "wascht", SieSie: "waschen",
+		Example: "Ich wasche meine Hände.",
+	},
+	{
+		German: "putzen", English: "to clean/brush",
+		Ich: "putze", Du: "putzt", ErSieEs: "putzt",
+		Wir: "putzen", Ihr: "putzt", SieSie: "putzen",
+		Example: "Ich putze mir die Zähne.",
+	},
+	{
+		German: "gewinnen", English: "to win",
+		Ich: "gewinne", Du: "gewinnst", ErSieEs: "gewinnt",
+		Wir: "gewinnen", Ihr: "gewinnt", SieSie: "gewinnen",
+		Example: "Wir gewinnen das Spiel.",
+	},
+	{
+		German: "lieben", English: "to love",
+		Ich: "liebe", Du: "liebst", ErSieEs: "liebt",
+		Wir: "lieben", Ihr: "liebt", SieSie: "lieben",
+		Example: "Ich liebe dich.",
+	},
+	{
+		German: "kosten", English: "to cost",
+		Ich: "koste", Du: "kostest", ErSieEs: "kostet",
+		Wir: "kosten", Ihr: "kostet", SieSie: "kosten",
+		Example: "Wie viel kostet das?",
+	},
+	{
+		German: "laufen", English: "to run/walk",
+		Ich: "laufe", Du: "läufst", ErSieEs: "läuft",
+		Wir: "laufen", Ihr: "lauft", SieSie: "laufen",
+		Example: "Wir laufen im Park.",
+	},
+	{
+		German: "fliegen", English: "to fly",
+		Ich: "fliege", Du: "fliegst", ErSieEs: "fliegt",
+		Wir: "fliegen", Ihr: "fliegt", SieSie: "fliegen",
+		Example: "Wir fliegen nach Spanien.",
+	},
+	{
+		German: "tragen", English: "to wear/carry",
+		Ich: "trage", Du: "trägst", ErSieEs: "trägt",
+		Wir: "tragen", Ihr: "tragt", SieSie: "tragen",
+		Example: "Sie trägt ein rotes Kleid.",
+	},
+	{
+		German: "singen", English: "to sing",
+		Ich: "singe", Du: "singst", ErSieEs: "singt",
+		Wir: "singen", Ihr: "singt", SieSie: "singen",
+		Example: "Er singt ein schönes Lied.",
+	},
 }
 
 func GetVerbOfTheDay() DailyVerb {

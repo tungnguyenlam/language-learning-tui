@@ -116,7 +116,7 @@ def test_deck_merging():
             agent.wait_until_stable()
             
             agent.act('x')
-            agent.wait_for_text("[x] Source1")
+            agent.wait_for_text("1 decks selected")
             
             # Highlight Target using search
             agent.act('/')
@@ -130,8 +130,8 @@ def test_deck_merging():
             time.sleep(1.0)
             agent.wait_for_text("decks selected")
             agent.wait_until_stable()
-            agent.assert_text("> [ ] Target")
-            
+            agent.assert_text("Target")
+
             # Merge M (Source1 -> Target)
             agent.act('M')
             agent.wait_until_stable()

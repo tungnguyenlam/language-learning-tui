@@ -39,6 +39,9 @@ func StandardDecks() []core.Deck {
 		B2TravelDeck(),
 		B2EnvironmentDeck(),
 		C1ScienceDeck(),
+		B1ArtDeck(),
+		A2HobbiesIIDeck(),
+		B2ScienceIIDeck(),
 	}
 
 	// Load all embedded TSV decks

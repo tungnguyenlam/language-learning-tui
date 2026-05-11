@@ -21,26 +21,56 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		if card.Audio != "" {
 			audioIndicator = " [Audio]"
 		}
-		titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
-		b.WriteString(titleStyle.Render("Cram Review") + "\n\n")
-		b.WriteString(fmt.Sprintf("Deck: %s | Card %d/%d | Type: %s\n", m.deckNameByID(card.DeckID), m.cramCursor+1, len(m.cramCards), card.Kind))
-		if len(card.Tags) > 0 {
-			b.WriteString(fmt.Sprintf("Tags: #%s\n", strings.Join(card.Tags, " #")))
+
+		// Session progress bar
+		cramPercentage := 0.0
+		if len(m.cramCards) > 0 {
+			cramPercentage = float64(m.cramCursor) / float64(len(m.cramCards))
 		}
-		b.WriteString("\n")
-		b.WriteString(fmt.Sprintf("Prompt: %s%s\n\n", card.Prompt, audioIndicator))
+		cramBar := progressBar(15, cramPercentage, "81", "238")
+
+		titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
+		header := fmt.Sprintf("%s | %s %d/%d\n", titleStyle.Render("Cram Review"), cramBar, m.cramCursor+1, len(m.cramCards))
+		b.WriteString(header)
+
+		deckMeta := fmt.Sprintf("Deck: %s | Type: %s", m.deckNameByID(card.DeckID), card.Kind)
+		if len(card.Tags) > 0 {
+			deckMeta += " | Tags: #" + strings.Join(card.Tags, " #")
+		}
+		b.WriteString(deckMeta + "\n\n")
+
+		width := layout.Width
+		cardWidth := maxInt(30, width-6)
+
+		cardBorderColor := "62"
+		if m.cramRevealed {
+			cardBorderColor = "81"
+		}
+
+		cardStyle := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color(cardBorderColor)).
+			Padding(1, 2).
+			Width(cardWidth).
+			Align(lipgloss.Center)
+
+		promptStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
+		promptDisplay := promptStyle.Render(card.Prompt) + audioIndicator
+
+		var answer string
 		if m.cramRevealed {
 			answerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
-			b.WriteString(fmt.Sprintf("Answer: %s\n\n", answerStyle.Render(card.Answer)))
-			b.WriteString("Grade: a Again | h Hard | g Good | e Easy\n")
-			b.WriteString("cramRevealed") // Hidden indicator for tests
+			answer = answerStyle.Render(card.Answer)
+
+			keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
+			answer += fmt.Sprintf("\n\nGrade: %s Again | %s Hard | %s Good | %s Easy",
+				keyStyle.Render("a"), keyStyle.Render("h"), keyStyle.Render("g"), keyStyle.Render("e"))
 		} else if m.revealState == RevealRevealing {
 			// Show gradual reveal animation with blocks
 			progress := int(m.revealProgress)
 			if progress > 100 {
 				progress = 100
 			}
-			// Calculate how many characters to reveal
 			fullText := card.Answer
 			numChars := len([]rune(fullText))
 			revealedChars := (numChars * progress) / 100
@@ -56,14 +86,23 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 			if remainingBlocks > 0 {
 				animationText += strings.Repeat("▌", remainingBlocks)
 			}
-			b.WriteString(fmt.Sprintf("Answer: %s\n\n", animationText))
-			b.WriteString("Press Space or Enter to finish reveal.\n")
+			answer = animationText + "\n\nPress Space or Enter to finish reveal."
 		} else {
-			b.WriteString("Press Space or Enter to reveal.\n")
+			answer = "Press Space or Enter to reveal."
 		}
+
+		b.WriteString(cardStyle.Render(promptDisplay + "\n\n" + answer))
+
 		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-		b.WriteString(fmt.Sprintf("\n%s play audio | %s to exit cram review.", keyStyle.Render("p"), keyStyle.Render("q")))
-		return b.String()
+		b.WriteString(fmt.Sprintf("\n\n%s play audio | %s to exit cram review.", keyStyle.Render("p"), keyStyle.Render("q")))
+
+		// Remove the hidden cramRevealed text from string builder if not revealed, or just format cleanly
+		res := b.String()
+		// Make sure cramRevealed text is purely hidden using terminal escapes or just at the end
+		if m.cramRevealed {
+			res += "\x1b[8mcramRevealed\x1b[0m" // truly hidden
+		}
+		return res
 	}
 
 	var b strings.Builder

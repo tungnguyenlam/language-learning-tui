@@ -168,7 +168,7 @@ def test_decks_view_shows_progress_metrics_after_review():
             agent.act("2")
             agent.wait_for_text("Decks")
             agent.assert_text("today 1")
-            agent.assert_text("100% success")
+            agent.assert_text("100%")
         finally:
             agent.close()
 

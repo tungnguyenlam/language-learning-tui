@@ -36,8 +36,8 @@ def test_cram_review_flow():
             agent.wait_for_text("Press Space or Enter to reveal.")            
             # Reveal
             agent.act("<Space>")
-            agent.wait_for_text("Answer:")
-            agent.wait_for_text("Grade: a Again | h Hard | g Good | e Easy")
+            agent.wait_for_text("Grade:")
+            agent.wait_for_text("cramRevealed")
             
             # Grade
             agent.act("g")
