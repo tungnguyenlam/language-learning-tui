@@ -1,0 +1,57 @@
+#separator:tab
+#html:false
+#deck:A1 Numbers & Time
+number-eins	eins	One	Numbers & Time	a1 numbers
+number-zwei	zwei	Two	Numbers & Time	a1 numbers
+number-drei	drei	Three	Numbers & Time	a1 numbers
+number-vier	vier	Four	Numbers & Time	a1 numbers
+number-fünf	fünf	Five	Numbers & Time	a1 numbers
+number-sechs	sechs	Six	Numbers & Time	a1 numbers
+number-sieben	sieben	Seven	Numbers & Time	a1 numbers
+number-acht	acht	Eight	Numbers & Time	a1 numbers
+number-neun	neun	Nine	Numbers & Time	a1 numbers
+number-zehn	zehn	Ten	Numbers & Time	a1 numbers
+number-elf	elf	Eleven	Numbers & Time	a1 numbers
+number-zwölf	zwölf	Twelve	Numbers & Time	a1 numbers
+number-zwanzig	zwanzig	Twenty	Numbers & Time	a1 numbers
+number-dreißig	dreißig	Thirty	Numbers & Time	a1 numbers
+number-vierzig	vierzig	Forty	Numbers & Time	a1 numbers
+number-fünfzig	fünfzig	Fifty	Numbers & Time	a1 numbers
+number-hundert	einhundert	One hundred	Numbers & Time	a1 numbers
+number-tausend	eintausend	One thousand	Numbers & Time	a1 numbers
+number-zahl	die Zahl	Number	Numbers & Time	a1 numbers
+number-stück	das Stück	Piece	Numbers & Time	a1 numbers
+number-paar	das Paar	Pair/Couple	Numbers & Time	a1 numbers
+number-alle	alle	All	Numbers & Time	a1 numbers
+number-jede	jede	Every	Numbers & Time	a1 numbers
+number-einmal	einmal	Once	Numbers & Time	a1 numbers
+number-zweimal	zweimal	Twice	Numbers & Time	a1 numbers
+number-dreimal	dreimal	Three times	Numbers & Time	a1 numbers
+time-uhr	die Uhr	Clock	Numbers & Time	a1 numbers
+time-stunde	die Stunde	Hour	Numbers & Time	a1 numbers
+time-minute	die Minute	Minute	Numbers & Time	a1 numbers
+time-sekunde	die Sekunde	Second	Numbers & Time	a1 numbers
+time-tag	der Tag	Day	Numbers & Time	a1 numbers
+time-woche	die Woche	Week	Numbers & Time	a1 numbers
+time-monat	der Monat	Month	Numbers & Time	a1 numbers
+time-jahr	das Jahr	Year	Numbers & Time	a1 numbers
+time-morgen	morgen	Tomorrow/Morning	Numbers & Time	a1 numbers
+time-heute	heute	Today	Numbers & Time	a1 numbers
+time-gestern	gestern	Yesterday	Numbers & Time	a1 numbers
+time-abend	der Abend	Evening	Numbers & Time	a1 numbers
+time-nacht	die Nacht	Night	Numbers & Time	a1 numbers
+time-mittag	der Mittag	Noon	Numbers & Time	a1 numbers
+time-mitternacht	die Mitternacht	Midnight	Numbers & Time	a1 numbers
+time-früh	früh	Early	Numbers & Time	a1 numbers
+time-spät	spät	Late	Numbers & Time	a1 numbers
+time-immer	immer	Always	Numbers & Time	a1 numbers
+time-nie	nie	Never	Numbers & Time	a1 numbers
+time-manchmal	manchmal	Sometimes	Numbers & Time	a1 numbers
+time-oft	oft	Often	Numbers & Time	a1 numbers
+time-selten	selten	Rarely	Numbers & Time	a1 numbers
+time-morgens	morgens	In the mornings	Numbers & Time	a1 numbers
+time-abends	abends	In the evenings	Numbers & Time	a1 numbers
+time-nachts	nachts	At night	Numbers & Time	a1 numbers
+time-wann	Wann?	When?	Numbers & Time	a1 numbers
+time-wie-spat	Wie spät ist es?	What time is it?	Numbers & Time	a1 numbers
+time-welcher-tag	Welcher Tag ist heute?	What day is today?	Numbers & Time	a1 numbers

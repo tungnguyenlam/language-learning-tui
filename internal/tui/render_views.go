@@ -13,8 +13,7 @@ func (m *Model) renderHelp() string {
 
 func (m *Model) renderDecks(layout viewportLayout) string {
 	var b strings.Builder
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205"))
-	b.WriteString(titleStyle.Render("DECK LIST") + "\n\n")
+	b.WriteString(dashTitleStyle.Render("DECK LIST") + "\n\n")
 
 	// Show filter if active or searching
 	if m.searchingDecks || m.deckFilter != "" {
@@ -75,7 +74,7 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		style := lipgloss.NewStyle()
 		if i == m.deckCursor {
 			prefix = "> "
-			style = style.Bold(true).Foreground(lipgloss.Color("212"))
+			style = style.Bold(true).Foreground(colorPink)
 		}
 
 		selectMark := "[ ] "
@@ -97,13 +96,13 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 
 		studyBtn := " [Study]"
 		cramBtn := " [Cram]"
-		btnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+		currBtnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 		if i == m.deckCursor {
-			btnStyle = btnStyle.Foreground(lipgloss.Color("81"))
+			currBtnStyle = currBtnStyle.Foreground(colorBlue)
 		}
 
 		rowY := layout.Y + strings.Count(b.String(), "\n")
-		line := padLine(style.Render(label)+btnStyle.Render(studyBtn)+btnStyle.Render(cramBtn), lineWidth)
+		line := padLine(style.Render(label)+currBtnStyle.Render(studyBtn)+currBtnStyle.Render(cramBtn), lineWidth)
 
 		if len(filteredDecks) > maxVisible {
 			currentPos := i - start
@@ -151,8 +150,8 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 
 		// Show limits only when editing this deck
 		if i == m.deckCursor && m.editingDeckLimits {
-			newStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81"))
-			reviewStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81"))
+			newStyle := lipgloss.NewStyle().Foreground(colorBlue)
+			reviewStyle := lipgloss.NewStyle().Foreground(colorBlue)
 			if m.limitCursor == 0 {
 				newStyle = newStyle.Bold(true).Underline(true)
 			} else {
@@ -185,10 +184,9 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		}
 		if selectedCount > 0 {
 			b.WriteString(fmt.Sprintf("\n%d decks selected. Press %s to delete, %s to merge into current.", selectedCount,
-				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("Backspace"),
-				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("M")))
+				keyStyle.Render("Backspace"),
+				keyStyle.Render("M")))
 		} else {
-			keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 			b.WriteString(fmt.Sprintf("\n%s select | %s search | %s stats | %s multi-select | %s cram deck | %s clear\n",
 				keyStyle.Render("enter"), keyStyle.Render("/"), keyStyle.Render("v"), keyStyle.Render("x"), keyStyle.Render("c"), keyStyle.Render("Esc")))
 			b.WriteString(mutedStyle.Render("Press enter to select deck."))
@@ -207,8 +205,8 @@ func (m *Model) renderImport(x, y int) string {
 	layout := contentLayoutForStyle(style, x, y)
 
 	var b strings.Builder
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).MarginBottom(1)
-	b.WriteString(titleStyle.Render("Import / Export") + "\n\n")
+	titleLabelStyle := lipgloss.NewStyle().Bold(true).Foreground(colorCyan).MarginBottom(1)
+	b.WriteString(titleLabelStyle.Render("Import / Export") + "\n\n")
 
 	importPathDisplay := m.importPath
 	exportPathDisplay := m.exportPath
@@ -222,8 +220,7 @@ func (m *Model) renderImport(x, y int) string {
 	importPathLabel := "Import file: " + importPathDisplay
 	exportPathLabel := "Export file: " + exportPathDisplay
 
-	btnActiveStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212"))
-	editStyle := lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("62"))
+	btnActiveStyle := lipgloss.NewStyle().Bold(true).Foreground(colorPink)
 
 	// Import Path
 	importLabel := importPathLabel
@@ -336,12 +333,11 @@ func (m *Model) renderImport(x, y int) string {
 		Height: 1,
 	})
 
-	warningStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("208"))
 	if strings.TrimSpace(m.importPath) == "" {
-		b.WriteString(warningStyle.Render("Import file is empty; set a path before importing.") + "\n")
+		b.WriteString(warnStyle.Render("Import file is empty; set a path before importing.") + "\n")
 	}
 	if strings.TrimSpace(m.exportPath) == "" {
-		b.WriteString(warningStyle.Render("Export file is empty; set a path before exporting.") + "\n")
+		b.WriteString(warnStyle.Render("Export file is empty; set a path before exporting.") + "\n")
 	}
 
 	b.WriteString("Actions:\n")
@@ -357,12 +353,6 @@ func (m *Model) renderImport(x, y int) string {
 		{"export-apkg", "Export APKG", "X"},
 		{"reset-db", "Reset DB", "R"},
 	}
-
-	btnStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("255")).
-		Background(lipgloss.Color("62")).
-		Padding(0, 1).
-		MarginRight(1)
 
 	rowY = layout.Y + strings.Count(b.String(), "\n")
 	currentX := layout.X
@@ -381,9 +371,8 @@ func (m *Model) renderImport(x, y int) string {
 	}
 
 	if m.editingImportPath || m.editingExportTag {
-		b.WriteString("\n\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("EDITING - Enter to save, Esc to cancel.") + "\n\n")
+		b.WriteString("\n\n" + infoStyle.Render("EDITING - Enter to save, Esc to cancel.") + "\n\n")
 	} else {
-		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 		b.WriteString(fmt.Sprintf("\n\nCurrent Deck: %s\nStatus filters apply to TSV and APKG exports.\nUse %s/%s to navigate, %s/%s to edit, %s / %s to change deck, or click buttons.\n",
 			m.deckLabel(),
 			keyStyle.Render("j"), keyStyle.Render("k"),

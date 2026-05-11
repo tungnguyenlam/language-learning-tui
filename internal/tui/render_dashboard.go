@@ -16,25 +16,15 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		streakIndicator = " 🔥"
 	}
 
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205"))
-
-	statsStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("226")).Bold(true)
-
-	reviewQueue := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("81")).
-		Padding(0, 1).
+	reviewQueue := dashReviewStyle.
 		Width(maxInt(25, (layout.Width-2)/2)).
-		Render(statsStyle.Render("Review Queue") + "\n" +
+		Render(dashStatsStyle.Render("Review Queue") + "\n" +
 			fmt.Sprintf("  Due cards:   %d\n", len(m.dueCards)) +
 			fmt.Sprintf("  Bookmarked:  %d (%d due)", m.stats.BookmarkedCards, m.stats.BookmarkedDue))
 
-	collectionStats := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("208")).
-		Padding(0, 1).
+	collectionStats := dashCollectionStyle.
 		Width(maxInt(25, (layout.Width-2)/2)).
-		Render(statsStyle.Render("Collection") + "\n" +
+		Render(dashStatsStyle.Render("Collection") + "\n" +
 			fmt.Sprintf("  Decks:       %d (%d active)\n", m.stats.TotalDecks, m.stats.ActiveDecks) +
 			fmt.Sprintf("  Leech:       %d\n", m.stats.LeechCards) +
 			fmt.Sprintf("  Suspended:   %d", m.stats.SuspendedCards))
@@ -47,12 +37,9 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		youngPct = float64(m.stats.YoungCards) / float64(totalKnown)
 		maturePct = float64(m.stats.MatureCards) / float64(totalKnown)
 	}
-	dueMixBox := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("105")).
-		Padding(0, 1).
+	dueMixBox := dashMixStyle.
 		Width(maxInt(25, (layout.Width-2)/2)).
-		Render(lipgloss.NewStyle().Foreground(lipgloss.Color("105")).Bold(true).Render("Card Mix") + "\n" +
+		Render(lipgloss.NewStyle().Foreground(colorSecondary).Bold(true).Render("Card Mix") + "\n" +
 			fmt.Sprintf("  New    %3d %s\n", m.stats.NewCards, progressBar(mixWidth, newPct, "81", "238")) +
 			fmt.Sprintf("  Young  %3d %s\n", m.stats.YoungCards, progressBar(mixWidth, youngPct, "220", "238")) +
 			fmt.Sprintf("  Mature %3d %s", m.stats.MatureCards, progressBar(mixWidth, maturePct, "46", "238")))
@@ -68,10 +55,8 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 	goalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(barColor)).Bold(true)
 	bar := progressBar(maxInt(10, layout.Width/2-10), percentage, barColor, "238")
 
-	progressBox := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
+	progressBox := dashProgressStyle.
 		BorderForeground(lipgloss.Color(barColor)).
-		Padding(0, 1).
 		Width(maxInt(25, (layout.Width-2)/2)).
 		Render(goalStyle.Render("Today's Progress") + "\n" +
 			fmt.Sprintf("  Reviews:     %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal) +
@@ -86,12 +71,9 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		recentData[i] = m.reviewsPerDay[date]
 	}
 	spark := sparkline(recentData, maxInt(10, layout.Width/2-10))
-	activityBox := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("39")).
-		Padding(0, 1).
+	activityBox := dashActivityStyle.
 		Width(maxInt(25, (layout.Width-2)/2)).
-		Render(lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Bold(true).Render("Recent Activity") + "\n" +
+		Render(lipgloss.NewStyle().Foreground(colorAITitle).Bold(true).Render("Recent Activity") + "\n" +
 			"  " + spark + "\n" +
 			"  Last 14 days review trend")
 
@@ -109,28 +91,23 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 
 	motivation := ""
 	if m.stats.DailyGoal > 0 && m.stats.ReviewsToday >= m.stats.DailyGoal {
-		motivation = "  🌟 Daily Goal Met! You're doing great!"
+		motivation = "  " + successStyle.Render("Daily Goal Met! Great work!")
 	} else if m.stats.CurrentStreak >= 30 {
-		motivation = "  🔥 Incredible dedication! 30+ day streak!"
+		motivation = "  " + successStyle.Render("30+ day streak! Incredible!")
 	} else if m.stats.CurrentStreak >= 7 {
-		motivation = "  📈 One week streak! Habit formed!"
+		motivation = "  📈 One week streak! Keep it up!"
 	} else if m.sessionReviewed > 0 {
 		motivation = fmt.Sprintf("  ✅ Great session! %d cards today.", m.sessionReviewed)
 	} else {
 		motivation = "  💪 Ready for your daily German practice?"
 	}
 
-	dailyDigestBox := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("213")).
-		Padding(0, 1).
+	dailyDigestBox := dashDigestStyle.
 		Width(maxInt(25, (layout.Width-2)/2)).
 		Render(digestStyle.Render("Daily Digest") + "\n" +
 			fmt.Sprintf("  %s", message) + nextPreview + "\n" +
 			fmt.Sprintf("  M:%d Y:%d N:%d", m.stats.MatureCards, m.stats.YoungCards, m.stats.NewCards) +
 			motivation)
-
-	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
 
 	var db strings.Builder
 	now = time.Now()
@@ -139,18 +116,18 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 	if m.stats.DailyGoal > 0 && m.stats.ReviewsToday >= m.stats.DailyGoal {
 		progressText += " (Goal Met! ✅)"
 	}
-	db.WriteString(titleStyle.Render("DASHBOARD - WILLKOMMEN!") + " | " + lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render(progressText) + " | " + mutedStyle.Render(dateStr) + "\n")
+	db.WriteString(dashTitleStyle.Render("DASHBOARD - WILLKOMMEN!") + " | " + lipgloss.NewStyle().Foreground(colorGreen).Render(progressText) + " | " + mutedStyle.Render(dateStr) + "\n")
 
 	if m.lastSessionReviewed > 0 {
 		accuracy := 0.0
 		if m.lastSessionCorrect > 0 {
 			accuracy = float64(m.lastSessionCorrect) / float64(m.lastSessionReviewed) * 100
 		}
-		summaryStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Italic(true)
+		summaryStyle := lipgloss.NewStyle().Foreground(colorGreen).Italic(true)
 		db.WriteString(summaryStyle.Render(fmt.Sprintf("Last Session: %d cards, %.1f%% accuracy", m.lastSessionReviewed, accuracy)) + "\n")
 	}
 
-	activeDeckText := lipgloss.NewStyle().Foreground(lipgloss.Color("159")).Render("Active Deck: " + m.deckLabel())
+	activeDeckText := lipgloss.NewStyle().Foreground(colorCyan).Render("Active Deck: " + m.deckLabel())
 	db.WriteString(activeDeckText + "\n")
 
 	queueY := strings.Count(db.String(), "\n")
@@ -165,7 +142,7 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 
 	recentDecksBox := ""
 	if layout.Height > 22 && len(m.recentDecks) > 0 {
-		recentDecksContent := lipgloss.NewStyle().Foreground(lipgloss.Color("99")).Bold(true).Render("Recently Studied") + "\n"
+		recentDecksContent := lipgloss.NewStyle().Foreground(colorPurple).Bold(true).Render("Recently Studied") + "\n"
 		for i, deckID := range m.recentDecks {
 			if i >= 3 {
 				break
@@ -179,10 +156,7 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 			}
 			recentDecksContent += fmt.Sprintf("  • %s\n", truncateLine(name, maxInt(20, (layout.Width-2)/2-4)))
 		}
-		recentDecksBox = lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("99")).
-			Padding(0, 1).
+		recentDecksBox = dashRecentStyle.
 			Width(maxInt(25, (layout.Width-2)/2)).
 			Render(recentDecksContent)
 	}
@@ -198,12 +172,9 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, activityBox, " ", dueMixBox) + "\n")
 	} else {
 		// Even more compact row
-		activityBox = lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("39")).
-			Padding(0, 1).
+		activityBox = dashActivityStyle.
 			Width(layout.Width - 4).
-			Render(lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Bold(true).Render("Recent Activity") + "  " + spark)
+			Render(lipgloss.NewStyle().Foreground(colorAITitle).Bold(true).Render("Recent Activity") + "  " + spark)
 		db.WriteString(activityBox + "\n")
 	}
 
@@ -219,7 +190,7 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 			keyStyle.Render("[4]"), "Stats",
 			keyStyle.Render("[5]"), "Import",
 			keyStyle.Render("[6]"), "AI Draft")
-		db.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("  Quick Actions:") + " " + quickActions + "\n")
+		db.WriteString(lipgloss.NewStyle().Foreground(colorBlue).Bold(true).Render("  Quick Actions:") + " " + quickActions + "\n")
 		remainingHeight -= 2
 	}
 
@@ -227,40 +198,34 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		tip := content.GetDailyGrammarTip()
 		verb := content.GetVerbOfTheDay()
 
-		tipStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Bold(true)
-		verbStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
+		tipLabelStyle := lipgloss.NewStyle().Foreground(colorAITitle).Bold(true)
+		verbLabelStyle := lipgloss.NewStyle().Foreground(colorPink).Bold(true)
 
 		exampleText := ""
 		if tip.Example != "" && remainingHeight >= 5 {
-			exampleText = fmt.Sprintf("\n  Example: %s", lipgloss.NewStyle().Italic(true).Foreground(lipgloss.Color("81")).Render(tip.Example))
+			exampleText = fmt.Sprintf("\n  Example: %s", lipgloss.NewStyle().Italic(true).Foreground(colorBlue).Render(tip.Example))
 		}
 
 		boxWidth := maxInt(35, layout.Width/2-3)
-		tipBox := lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("39")).
-			Padding(0, 1).
+		tipBox := dashTipStyle.
 			Width(boxWidth).
-			Render(tipStyle.Render("Grammar Tip: "+tip.Title) + "\n" +
+			Render(tipLabelStyle.Render("Grammar Tip: "+tip.Title) + "\n" +
 				fmt.Sprintf("  %s", tip.Tip) + exampleText)
 
-		verbBox := lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("212")).
-			Padding(0, 1).
+		verbBox := dashVerbStyle.
 			Width(boxWidth).
-			Render(verbStyle.Render("Verb: "+verb.German) + "\n" +
+			Render(verbLabelStyle.Render("Verb: "+verb.German) + "\n" +
 				fmt.Sprintf("  ich %-8s wir %-8s\n  du  %-8s ihr %-8s", verb.Ich, verb.Wir, verb.Du, verb.Ihr))
 
 		db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, tipBox, " ", verbBox) + "\n")
 	}
 
 	db.WriteString(mutedStyle.Render(fmt.Sprintf("Use %s and %s to switch decks.\nUse %s (%s) to start studying.\nPress %s for help.",
-		lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("["),
-		lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("]"),
-		lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("Review"),
-		lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("3"),
-		lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("?"))))
+		lipgloss.NewStyle().Foreground(colorBlue).Bold(true).Render("["),
+		lipgloss.NewStyle().Foreground(colorBlue).Bold(true).Render("]"),
+		lipgloss.NewStyle().Foreground(colorBlue).Bold(true).Render("Review"),
+		lipgloss.NewStyle().Foreground(colorBlue).Bold(true).Render("3"),
+		lipgloss.NewStyle().Foreground(colorBlue).Bold(true).Render("?"))))
 
 	return db.String()
 }

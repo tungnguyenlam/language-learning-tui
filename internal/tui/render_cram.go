@@ -67,9 +67,11 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 	}
 
 	var b strings.Builder
-	b.WriteString("Cram Mode\n\n")
-	b.WriteString(fmt.Sprintf("Deck: %s\n", m.deckLabel()))
-	b.WriteString(fmt.Sprintf("Filter: %s\n\n", m.cramType))
+	filterTitleStyle := lipgloss.NewStyle().Bold(true).Foreground(colorCyan)
+	b.WriteString(filterTitleStyle.Render("Cram Mode") + "\n")
+	b.WriteString(fmt.Sprintf("Deck: %s | ", m.deckLabel()))
+	b.WriteString(fmt.Sprintf("Filter: %s", successStyle.Render(m.cramType)))
+	b.WriteString("\n\n")
 	if len(m.cramCards) == 0 {
 		b.WriteString("No cards found for this filter.\n\n")
 	}

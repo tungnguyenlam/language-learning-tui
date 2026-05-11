@@ -326,6 +326,51 @@ var grammarTips = []GrammarTip{
 		Tip:     "Start sentences with 'Es' or 'Man' for impersonal expressions.",
 		Example: "Es regnet. Man sagt, dass...",
 	},
+	{
+		Title:   "Numbers & Time",
+		Tip:     "Use 'halb' for half hours: halb drei = 2:30.",
+		Example: "Es ist halb zwölf.",
+	},
+	{
+		Title:   "Greetings & Farewells",
+		Tip:     "Guten Morgen (until 10), Guten Tag (formal), Tschüss (informal).",
+		Example: "Guten Morgen! Wie geht es Ihnen?",
+	},
+	{
+		Title:   "Word Formation with Präfixe",
+		Tip:     "Verbs can change meaning with prefixes: -ver, -er, -ent-.",
+		Example: "stehen vs verstehen (to understand)",
+	},
+	{
+		Title:   "Impersonal Expressions with es",
+		Tip:     "Use 'Es gibt' for there is/are, 'Es tut mir leid' for sorry.",
+		Example: "Es gibt viele Probleme.",
+	},
+	{
+		Title:   "Adjective Endings After der-words",
+		Tip:     "These words carry the adjective ending: der, die, das, ein, dieser, jener.",
+		Example: "der große Hund",
+	},
+	{
+		Title:   "Adjective Endings After ein-words",
+		Tip:     "With 'ein' words, adjective has weak endings: mein kleines Haus.",
+		Example: "ein neues Auto",
+	},
+	{
+		Title:   "Past Tense with haben/sein",
+		Tip:     "Narrative German prefers Präteritum for 'sein, haben, werden, modals'.",
+		Example: "Ich war müde. Er hatte Hunger.",
+	},
+	{
+		Title:   "Ordinal Numbers",
+		Tip:     "Add -te for numbers up to 19, then -ste: der dritte, der zwanzigste.",
+		Example: "Am ersten Mai feiern wir.",
+	},
+	{
+		Title:   "Genitive Case Overview",
+		Tip:     "Use genitive after 'because of' words: wegen, während, trotz.",
+		Example: "Während des Unterrichts.",
+	},
 }
 
 func GetDailyGrammarTip() GrammarTip {

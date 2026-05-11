@@ -1,0 +1,58 @@
+#separator:tab
+#html:false
+#deck:A1 Clothing & Fashion
+cloth-kleidung	die Kleidung	Clothing	Clothing & Fashion	a1 clothing
+cloth-hemd	das Hemd	Shirt	Clothing & Fashion	a1 clothing
+cloth-hose	die Hose	Pants	Clothing & Fashion	a1 clothing
+cloth-rock	der Rock	Skirt	Clothing & Fashion	a1 clothing
+cloth-kleid	das Kleid	Dress	Clothing & Fashion	a1 clothing
+cloth-jacke	die Jacke	Jacket	Clothing & Fashion	a1 clothing
+cloth-mantel	der Mantel	Coat	Clothing & Fashion	a1 clothing
+cloth-hut	der Hut	Hat	Clothing & Fashion	a1 clothing
+cloth-mütze	die Mütze	Cap/Beanie	Clothing & Fashion	a1 clothing
+cloth-socke	die Socke	Sock	Clothing & Fashion	a1 clothing
+cloth-schuh	der Schuh	Shoe	Clothing & Fashion	a1 clothing
+cloth-stiefel	der Stiefel	Boot	Clothing & Fashion	a1 clothing
+cloth-sandalen	die Sandalen	Sandals	Clothing & Fashion	a1 clothing
+cloth-handschuh	der Handschuh	Glove	Clothing & Fashion	a1 clothing
+cloth-schal	der Schal	Scarf	Clothing & Fashion	a1 clothing
+cloth-mütze2	die Mütze	Cap	Clothing & Fashion	a1 clothing
+cloth-tasche	die Tasche	Bag	Clothing & Fashion	a1 clothing
+cloth-geldbeutel	der Geldbeutel	Wallet	Clothing & Fashion	a1 clothing
+cloth-uhr	die Uhr	Watch/Clock	Clothing & Fashion	a1 clothing
+cloth-brille	die Brille	Glasses	Clothing & Fashion	a1 clothing
+cloth-ohrring	der Ohrring	Earring	Clothing & Fashion	a1 clothing
+cloth-ring	der Ring	Ring	Clothing & Fashion	a1 clothing
+cloth-armband	das Armband	Bracelet	Clothing & Fashion	a1 clothing
+cloth-halskette	die Halskette	Necklace	Clothing & Fashion	a1 clothing
+cloth-groesse	die Größe	Size	Clothing & Fashion	a1 clothing
+cloth-farbe	die Farbe	Color	Clothing & Fashion	a1 clothing
+cloth-anziehen	Ich ziehe mich an.	I get dressed.	Clothing & Fashion	a1 clothing
+cloth-ausziehen	Ich ziehe mich aus.	I undress.	Clothing & Fashion	a1 clothing
+cloth-kaufen	Ich kaufe neue Schuhe.	I buy new shoes.	Clothing & Fashion	a1 clothing
+cloth-tragen	Ich trage eine Jacke.	I wear a jacket.	Clothing & Fashion	a1 clothing
+cloth-passen	Die Hose passt gut.	The pants fit well.	Clothing & Fashion	a1 clothing
+cloth-leder	das Leder	Leather	Clothing & Fashion	a1 clothing
+cloth-wolle	die Wolle	Wool	Clothing & Fashion	a1 clothing
+cloth-baumwolle	die Baumwolle	Cotton	Clothing & Fashion	a1 clothing
+cloth-seide	die Seide	Silk	Clothing & Fashion	a1 clothing
+cloth-reinigung	die Reinigung	Dry cleaning	Clothing & Fashion	a1 clothing
+cloth-größe	die Größe	Size	Clothing & Fashion	a1 clothing
+cloth-klein	klein	Small	Clothing & Fashion	a1 clothing
+cloth-mittel	mittel	Medium	Clothing & Fashion	a1 clothing
+cloth-gross	groß	Large	Clothing & Fashion	a1 clothing
+cloth-schuhgröße	die Schuhgröße	Shoe size	Clothing & Fashion	a1 clothing
+cloth-anzug	der Anzug	Suit	Clothing & Fashion	a1 clothing
+cloth-krawatte	die Krawatte	Tie	Clothing & Fashion	a1 clothing
+cloth-bluse	die Bluse	Blouse	Clothing & Fashion	a1 clothing
+cloth-pullover	der Pullover	Sweater	Clothing & Fashion	a1 clothing
+cloth-jeans	die Jeans	Jeans	Clothing & Fashion	a1 clothing
+cloth-badehose	die Badehose	Swimsuit	Clothing & Fashion	a1 clothing
+cloth-badeanzug	der Badeanzug	Swimsuit (f)	Clothing & Fashion	a1 clothing
+cloth-regenmantel	der Regenmantel	Raincoat	Clothing & Fashion	a1 clothing
+cloth-schirm	der Schirm	Umbrella	Clothing & Fashion	a1 clothing
+cloth-waesche	die Wäsche	Underwear	Clothing & Fashion	a1 clothing
+cloth-socken	die Socken	Socks	Clothing & Fashion	a1 clothing
+cloth-stoff	der Stoff	Fabric	Clothing & Fashion	a1 clothing
+cloth-schneider	der Schneider	Tailor	Clothing & Fashion	a1 clothing
+cloth-schneidern	Ich nähe selbst.	I sew myself.	Clothing & Fashion	a1 clothing

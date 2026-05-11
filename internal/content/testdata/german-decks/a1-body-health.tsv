@@ -1,0 +1,42 @@
+#separator:tab
+#html:false
+#deck:A1 Body Parts & Health
+body-kopf	der Kopf	Head	Body Parts & Health	a1 body
+body-auge	das Auge	Eye	Body Parts & Health	a1 body
+body-ohr	das Ohr	Ear	Body Parts & Health	a1 body
+body-nase	die Nase	Nose	Body Parts & Health	a1 body
+body-mund	der Mund	Mouth	Body Parts & Health	a1 body
+body-zahn	der Zahn	Tooth	Body Parts & Health	a1 body
+body-hand	die Hand	Hand	Body Parts & Health	a1 body
+body-fuss	der Fuß	Foot	Body Parts & Health	a1 body
+body-arm	der Arm	Arm	Body Parts & Health	a1 body
+body-bein	das Bein	Leg	Body Parts & Health	a1 body
+body-herz	das Herz	Heart	Body Parts & Health	a1 body
+body-hals	der Hals	Neck	Body Parts & Health	a1 body
+body-schulter	die Schulter	Shoulder	Body Parts & Health	a1 body
+body-ruecken	der Rücken	Back	Body Parts & Health	a1 body
+body-bauch	der Bauch	Belly/Stomach	Body Parts & Health	a1 body
+body-knie	das Knie	Knee	Body Parts & Health	a1 body
+body-haar	das Haar	Hair	Body Parts & Health	a1 body
+body-haut	die Haut	Skin	Body Parts & Health	a1 body
+body-finger	der Finger	Finger	Body Parts & Health	a1 body
+body-zehe	die Zehe	Toe	Body Parts & Health	a1 body
+health-kopfschmerzen	die Kopfschmerzen	Headache	Body Parts & Health	a1 body
+health-schmerzhaft	schmerzhaft	Painful	Body Parts & Health	a1 body
+health-arzt	der Arzt	Doctor	Body Parts & Health	a1 body
+health-ärztin	die Ärztin	Doctor (f)	Body Parts & Health	a1 body
+health-apotheke	die Apotheke	Pharmacy	Body Parts & Health	a1 body
+health-krankenhaus	das Krankenhaus	Hospital	Body Parts & Health	a1 body
+health-medizin	die Medizin	Medicine	Body Parts & Health	a1 body
+health-gesund	gesund	Healthy	Body Parts & Health	a1 body
+health-krank	krank	Ill/Sick	Body Parts & Health	a1 body
+health-müde	müde	Tired	Body Parts & Health	a1 body
+health-hungrig	hungrig	Hungry	Body Parts & Health	a1 body
+health-durstig	durstig	Thirsty	Body Parts & Health	a1 body
+health-schläfrig	schläfrig	Sleepy	Body Parts & Health	a1 body
+health-fit	fit	Fit	Body Parts & Health	a1 body
+health-schwindlig	schwindlig	Dizzy	Body Parts & Health	a1 body
+health-atmen	Ich atme tief.	I breathe deeply.	Body Parts & Health	a1 body
+health-auputschen	Ich schneide mich.	I cut myself.	Body Parts & Health	a1 body
+health-friseur	der Friseur	Barber/Hairdresser	Body Parts & Health	a1 body
+health-frisur	die Frisur	Hairstyle	Body Parts & Health	a1 body

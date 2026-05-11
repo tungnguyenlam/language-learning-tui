@@ -171,18 +171,7 @@ func sparkline(data []int, width int) string {
 	return res.String()
 }
 
-var (
-	headerStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("229"))
-	mutedStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("244"))
-	panelStyle  = lipgloss.NewStyle().Padding(1, 2).Border(lipgloss.RoundedBorder()).BorderForeground(lipgloss.Color("240"))
-
-	compactStyle   = lipgloss.NewStyle().Padding(1, 0)
-	navStyle       = lipgloss.NewStyle().PaddingRight(2)
-	navActiveStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212")).PaddingRight(2)
-	tabStyle       = lipgloss.NewStyle().Padding(0, 1).Foreground(lipgloss.Color("250"))
-	tabActiveStyle = lipgloss.NewStyle().Padding(0, 1).Bold(true).Foreground(lipgloss.Color("229")).Background(lipgloss.Color("57"))
-	statusStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color("250")).Background(lipgloss.Color("236")).Padding(0, 1)
-)
+var ()
 
 func padLine(line string, width int) string {
 	padding := width - lipgloss.Width(line)

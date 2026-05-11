@@ -1,0 +1,39 @@
+#separator:tab
+#html:false
+#deck:A1 Colors & Shapes
+color-rot	rot	Red	Colors & Shapes	a1 colors
+color-blau	blau	Blue	Colors & Shapes	a1 colors
+color-gruen	grün	Green	Colors & Shapes	a1 colors
+color-gelb	gelb	Yellow	Colors & Shapes	a1 colors
+color-orange	orange	Orange	Colors & Shapes	a1 colors
+color-lila	lila	Purple	Colors & Shapes	a1 colors
+color-rosa	rosa	Pink	Colors & Shapes	a1 colors
+color-braun	braun	Brown	Colors & Shapes	a1 colors
+color-schwarz	schwarz	Black	Colors & Shapes	a1 colors
+color-weiss	weiß	White	Colors & Shapes	a1 colors
+color-grau	grau	Grey	Colors & Shapes	a1 colors
+color-silbern	silbern	Silver	Colors & Shapes	a1 colors
+color-golden	golden	Golden	Colors & Shapes	a1 colors
+color-hell	hell	Light/Bright	Colors & Shapes	a1 colors
+color-dunkel	dunkel	Dark	Colors & Shapes	a1 colors
+color-farbe	die Farbe	Color	Colors & Shapes	a1 colors
+shape-kreis	der Kreis	Circle	Colors & Shapes	a1 colors
+shape-quadrat	das Quadrat	Square	Colors & Shapes	a1 colors
+shape-dreieck	das Dreieck	Triangle	Colors & Shapes	a1 colors
+shape-rechteck	das Rechteck	Rectangle	Colors & Shapes	a1 colors
+shape-kugel	die Kugel	Sphere/Ball	Colors & Shapes	a1 colors
+shape-wuerfel	der Würfel	Cube	Colors & Shapes	a1 colors
+shape-linie	die Linie	Line	Colors & Shapes	a1 colors
+shape-punkt	der Punkt	Point/Dot	Colors & Shapes	a1 colors
+shape-form	die Form	Shape	Colors & Shapes	a1 colors
+shape-gross	groß	Big	Colors & Shapes	a1 colors
+shape-klein	klein	Small	Colors & Shapes	a1 colors
+shape-lang	lang	Long	Colors & Shapes	a1 colors
+shape-kurz	kurz	Short	Colors & Shapes	a1 colors
+shape-breit	breit	Wide	Colors & Shapes	a1 colors
+shape-schmal	schmal	Narrow	Colors & Shapes	a1 colors
+shape-runde	rund	Round	Colors & Shapes	a1 colors
+shape-eckig	eckig	Square (adj)	Colors & Shapes	a1 colors
+color-welche-farbe	Welche Farbe hat das?	What color is it?	Colors & Shapes	a1 colors
+color-mag	Ich mag die Farbe Blau.	I like the color blue.	Colors & Shapes	a1 colors
+shape-aussehen	Das sieht rund aus.	That looks round.	Colors & Shapes	a1 colors

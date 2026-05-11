@@ -17,42 +17,38 @@ func (m *Model) renderAI(x, y int) string {
 	if m.drafting {
 		// Enhanced spinner with more visual appeal
 		frames := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
-		spinnerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-		spinner = " " + spinnerStyle.Render(frames[m.spinnerFrame%len(frames)])
+		spinner = " " + infoStyle.Render(frames[m.spinnerFrame%len(frames)])
 	}
 	templateName := "None"
 	if set := m.currentAITemplateSet(); set != "" {
 		templateName = set
 	}
 
-	searchBorderColor := "62"
+	searchBorderColor := colorPanel
 	searchLabel := "Topic"
 	if m.searchingAI {
-		searchBorderColor = "81"
+		searchBorderColor = colorBlue
 	}
 	searchStyle := lipgloss.NewStyle().
 		Border(lipgloss.NormalBorder()).
-		BorderForeground(lipgloss.Color(searchBorderColor)).
+		BorderForeground(searchBorderColor).
 		Padding(0, 1).
 		Width(maxInt(30, width-20))
 
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
+	currTitleStyle := dashTitleStyle
 	if m.drafting {
-		titleStyle = titleStyle.Foreground(lipgloss.Color("81"))
+		currTitleStyle = currTitleStyle.Foreground(colorBlue)
 	}
-	b.WriteString(titleStyle.Render("AI Drafts") + spinner + "\n\n")
+	b.WriteString(currTitleStyle.Render("AI Drafts") + spinner + "\n\n")
 	b.WriteString(fmt.Sprintf("Deck: %s\nTemplate: %s (use [ / ])\n", m.deckLabel(), templateName))
 	displayText := m.aiInput + "_"
 	if m.aiInput == "" && !m.searchingAI {
-		placeholderStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
-		displayText = placeholderStyle.Render("(e.g., business email, doctor visit, apartment viewing)") + "_"
+		displayText = mutedStyle.Render("(e.g., business email, doctor visit, apartment viewing)") + "_"
 	}
 	b.WriteString(searchStyle.Render(fmt.Sprintf("%s: %s", searchLabel, displayText)) + "\n")
-	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 	b.WriteString(fmt.Sprintf("\nPress %s to edit topic | %s generate | %s approve | %s discard | %s clear\n",
 		keyStyle.Render("/"), keyStyle.Render("Enter"), keyStyle.Render("a"), keyStyle.Render("d"), keyStyle.Render("esc")))
 	if m.aiProvider == nil {
-		warnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("208")).Bold(true)
 		b.WriteString(warnStyle.Render("AI provider is disabled. Enable Offline or Template in Settings to generate drafts.") + "\n")
 	}
 
@@ -60,11 +56,11 @@ func (m *Model) renderAI(x, y int) string {
 
 	// Suggested Topics Section
 	if (m.aiInput == "" || m.aiInput == "der Kaffee") && len(m.drafts) == 0 {
-		b.WriteString("\n" + lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("81")).Render("Suggested Topics:") + "\n")
+		b.WriteString("\n" + infoStyle.Bold(true).Render("Suggested Topics:") + "\n")
 		suggestions := []string{"A1 survival", "B1 doctor visit", "B1 apartment viewing", "B2 job interview", "B2 urban mobility", "B2 news debate", "C1 business email", "C1 academic argument", "travel phrases", "weather small talk"}
 
 		suggestionStyle := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("159")).
+			Foreground(colorCyan).
 			Underline(true).
 			MarginRight(2)
 
@@ -94,10 +90,10 @@ func (m *Model) renderAI(x, y int) string {
 
 	if len(m.drafts) == 0 {
 		if m.drafting {
-			draftingStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-			b.WriteString("\n" + draftingStyle.Render("🤖 AI is crafting your flashcards...") + spinner)
+			b.WriteString("\n" + infoStyle.Bold(true).Render("AI is crafting flashcards...") + spinner)
 		} else {
-			b.WriteString("\nNo drafts yet. Type a topic and press Enter to generate.")
+			b.WriteString("\n" + mutedStyle.Render("No drafts yet. Type a topic and press Enter to generate.") + "\n")
+			b.WriteString(mutedStyle.Render("Tip: include level and use case, e.g. B1 workplace small talk with 2 examples.") + "\n")
 		}
 		return b.String()
 	}
@@ -129,27 +125,27 @@ func (m *Model) renderAI(x, y int) string {
 	var listBuilder strings.Builder
 	for i := start; i < end; i++ {
 		prefix := "  "
-		style := lipgloss.NewStyle()
+		currStyle := lipgloss.NewStyle()
 		if i == m.draftCursor {
 			prefix = "> "
-			style = style.Bold(true).Foreground(lipgloss.Color("212"))
+			currStyle = currStyle.Bold(true).Foreground(colorPink)
 		}
 		draft := m.drafts[i]
 		item := fmt.Sprintf("%s%s -> %s", prefix, draft.Note.Front, truncateLine(draft.Note.Back, 40))
 
-		listBuilder.WriteString(style.Render(item))
+		listBuilder.WriteString(currStyle.Render(item))
 
 		// Add interactive buttons
-		btnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
+		currBtnStyle := lipgloss.NewStyle().Foreground(colorPanel)
 		approveBtn := " [Approve]"
 		discardBtn := " [Discard]"
 
 		if i == m.draftCursor {
-			btnStyle = btnStyle.Foreground(lipgloss.Color("81"))
+			currBtnStyle = currBtnStyle.Foreground(colorBlue)
 		}
 
-		listBuilder.WriteString(btnStyle.Render(approveBtn))
-		listBuilder.WriteString(btnStyle.Render(discardBtn))
+		listBuilder.WriteString(currBtnStyle.Render(approveBtn))
+		listBuilder.WriteString(currBtnStyle.Render(discardBtn))
 		listBuilder.WriteString("\n")
 	}
 
@@ -202,9 +198,9 @@ func (m *Model) renderAI(x, y int) string {
 	// Show detailed preview for selected draft
 	if len(m.drafts) > 0 && m.draftCursor < len(m.drafts) {
 		selected := m.drafts[m.draftCursor]
-		previewTitleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205"))
+		previewTitleLabelStyle := lipgloss.NewStyle().Bold(true).Foreground(colorAccent)
 
-		previewContent := previewTitleStyle.Render("Preview:") + "\n"
+		previewContent := previewTitleLabelStyle.Render("Preview:") + "\n"
 		previewContent += fmt.Sprintf("  Front:    %s\n", selected.Note.Front)
 		previewContent += fmt.Sprintf("  Back:     %s\n", selected.Note.Back)
 		previewContent += fmt.Sprintf("  Extra:    %s\n", selected.Note.Extra)
@@ -220,7 +216,7 @@ func (m *Model) renderAI(x, y int) string {
 
 		previewBox := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("240")).
+			BorderForeground(colorPanel).
 			Padding(0, 1).
 			Width(maxInt(40, width-10)).
 			Render(previewContent)
