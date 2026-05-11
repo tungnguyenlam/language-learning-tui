@@ -18,7 +18,7 @@ def start_agent(tmpdir, columns=100, lines=30):
 def test_wasd_view_switching():
     """Test that WASD keys can switch between views like arrow keys"""
     with tempfile.TemporaryDirectory() as tmpdir:
-        agent = start_agent(tmpdir, columns=90, lines=28)
+        agent = start_agent(tmpdir, columns=90, lines=35)
         try:
             agent.assert_text("DASHBOARD")
             
@@ -78,7 +78,7 @@ def test_wasd_view_switching():
 def test_wasd_navigation_preserves_existing_functions():
     """Test that WASD keys don't interfere with existing functions"""
     with tempfile.TemporaryDirectory() as tmpdir:
-        agent = start_agent(tmpdir, columns=90, lines=28)
+        agent = start_agent(tmpdir, columns=90, lines=35)
         try:
             agent.act("7")
             agent.wait_for_text("Settings")

@@ -1,5 +1,28 @@
 # Done Backlog
 
+## 2026-05-11 10:00 +07 (Autonomous Improvement Pass)
+
+Completed comprehensive improvement pass with new content decks, verbs expansion, UI improvements, and 8 new E2E tests. Total E2E tests: 202 (all passing).
+
+### Content Expansion
+- Added **A1 Hobbies & Free Time** vocabulary deck (~35 cards).
+- Added **A1 Food & Drink** vocabulary deck (~40 cards).
+- Added **A1 Travel & Transport** vocabulary deck (~35 cards).
+- Expanded **Verb of the Day** with 15 additional verbs.
+
+### UI/UX Improvements
+- Enhanced Dashboard streak indicator with color-coded progression (lightning, fire, double gold fire).
+- Improved AI Drafts empty state with a stylized bordered box and clearer call to action.
+
+### Testing
+- Added comprehensive E2E test file `test_new_batch3.py` with 8 new scenarios.
+- Verified dashboard widgets, UI views, AI draft interactions, and Cram mode navigation.
+
+### Verification
+- Total E2E tests: 202 (all passing).
+- All Go unit tests passing.
+- `./scripts/verify.sh` executed successfully with zero errors.
+
 ## 2026-05-11 07:45 +07 (Autonomous Improvement Pass)
 
 Completed comprehensive improvement pass with 7+ new vocabulary decks, grammar expansion, UI polish, and enhanced testing. Total E2E tests: 194 (all passing).

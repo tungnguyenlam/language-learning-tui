@@ -20,6 +20,9 @@ func StandardDecks() []core.Deck {
 		SlangDeck(),
 		PhrasalVerbsDeck(),
 		MedicalGermanDeck(),
+		A1HobbiesDeck(),
+		A1FoodDrinkDeck(),
+		A1TravelDeck(),
 	}
 
 	// Load all embedded TSV decks

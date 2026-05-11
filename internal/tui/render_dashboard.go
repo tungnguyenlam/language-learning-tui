@@ -12,8 +12,10 @@ import (
 
 func (m *Model) renderDashboard(layout viewportLayout) string {
 	streakIndicator := ""
-	if m.stats.CurrentStreak > 0 {
-		streakIndicator = " 🔥"
+	if m.stats.CurrentStreak >= 30 {
+		streakIndicator = lipgloss.NewStyle().Foreground(colorGold).Render(" 🔥🔥")
+	} else if m.stats.CurrentStreak > 0 {
+		streakIndicator = lipgloss.NewStyle().Foreground(colorOrange).Render(" 🔥")
 	}
 
 	reviewQueue := dashReviewStyle.

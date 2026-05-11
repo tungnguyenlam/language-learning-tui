@@ -92,8 +92,14 @@ func (m *Model) renderAI(x, y int) string {
 		if m.drafting {
 			b.WriteString("\n" + infoStyle.Bold(true).Render("AI is crafting flashcards...") + spinner)
 		} else {
-			b.WriteString("\n" + mutedStyle.Render("No drafts yet. Type a topic and press Enter to generate.") + "\n")
-			b.WriteString(mutedStyle.Render("Tip: include level and use case, e.g. B1 workplace small talk with 2 examples.") + "\n")
+			emptyBox := lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(colorMuted).
+				Padding(0, 1).
+				Render(infoStyle.Bold(true).Render("✨ Ready to create new flashcards!") + "\n" +
+					mutedStyle.Render("No drafts yet. Type a topic and press Enter to generate.") + "\n" +
+					mutedStyle.Render("Tip: include level and use case, e.g. B1 workplace small talk."))
+			b.WriteString("\n" + emptyBox + "\n")
 		}
 		return b.String()
 	}

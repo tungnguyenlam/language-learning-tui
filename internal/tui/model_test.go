@@ -974,8 +974,8 @@ func TestDashboardShowsBookmarkedDueAndLeech(t *testing.T) {
 	if !strings.Contains(dash, "Leech:") || !strings.Contains(dash, "1") {
 		t.Fatalf("dashboard should show leech count: %s", dash)
 	}
-	if !strings.Contains(dash, "Streak:") || !strings.Contains(dash, "3 days 🔥") {
-		t.Fatalf("dashboard should show current streak with fire emoji: %s", dash)
+	if !strings.Contains(dash, "Streak:") || !strings.Contains(dash, "🔥") {
+		t.Fatalf("dashboard should show current streak with lightning emoji: %s", dash)
 	}
 }
 

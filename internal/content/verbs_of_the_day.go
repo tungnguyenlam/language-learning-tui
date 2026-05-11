@@ -137,6 +137,96 @@ var dailyVerbs = []DailyVerb{
 		Wir: "finden", Ihr: "findet", SieSie: "finden",
 		Example: "Ich finde das gut.",
 	},
+	{
+		German: "bleiben", English: "to stay",
+		Ich: "bleibe", Du: "bleibst", ErSieEs: "bleibt",
+		Wir: "bleiben", Ihr: "bleibt", SieSie: "bleiben",
+		Example: "Ich bleibe heute zu Hause.",
+	},
+	{
+		German: "denken", English: "to think",
+		Ich: "denke", Du: "denkst", ErSieEs: "denkt",
+		Wir: "denken", Ihr: "denkt", SieSie: "denken",
+		Example: "Was denkst du?",
+	},
+	{
+		German: "glauben", English: "to believe",
+		Ich: "glaube", Du: "glaubst", ErSieEs: "glaubt",
+		Wir: "glauben", Ihr: "glaubt", SieSie: "glauben",
+		Example: "Ich glaube dir.",
+	},
+	{
+		German: "helfen", English: "to help",
+		Ich: "helfe", Du: "hilfst", ErSieEs: "hilft",
+		Wir: "helfen", Ihr: "helft", SieSie: "helfen",
+		Example: "Kannst du mir helfen?",
+	},
+	{
+		German: "lassen", English: "to let",
+		Ich: "lasse", Du: "lässt", ErSieEs: "lässt",
+		Wir: "lassen", Ihr: "lasst", SieSie: "lassen",
+		Example: "Lass uns gehen!",
+	},
+	{
+		German: "nehmen", English: "to take",
+		Ich: "nehme", Du: "nimmst", ErSieEs: "nimmt",
+		Wir: "nehmen", Ihr: "nehmt", SieSie: "nehmen",
+		Example: "Ich nehme einen Kaffee.",
+	},
+	{
+		German: "sagen", English: "to say",
+		Ich: "sage", Du: "sagst", ErSieEs: "sagt",
+		Wir: "sagen", Ihr: "sagt", SieSie: "sagen",
+		Example: "Was sagst du?",
+	},
+	{
+		German: "spielen", English: "to play",
+		Ich: "spiele", Du: "spielst", ErSieEs: "spielt",
+		Wir: "spielen", Ihr: "spielt", SieSie: "spielen",
+		Example: "Wir spielen Fußball.",
+	},
+	{
+		German: "stehen", English: "to stand",
+		Ich: "stehe", Du: "stehst", ErSieEs: "steht",
+		Wir: "stehen", Ihr: "steht", SieSie: "stehen",
+		Example: "Das Auto steht hier.",
+	},
+	{
+		German: "tun", English: "to do",
+		Ich: "tue", Du: "tust", ErSieEs: "tut",
+		Wir: "tun", Ihr: "tut", SieSie: "tun",
+		Example: "Was kann ich für dich tun?",
+	},
+	{
+		German: "verlieren", English: "to lose",
+		Ich: "verliere", Du: "verlierst", ErSieEs: "verliert",
+		Wir: "verlieren", Ihr: "verliert", SieSie: "verlieren",
+		Example: "Ich verliere das Spiel.",
+	},
+	{
+		German: "ziehen", English: "to pull/move",
+		Ich: "ziehe", Du: "ziehst", ErSieEs: "zieht",
+		Wir: "ziehen", Ihr: "zieht", SieSie: "ziehen",
+		Example: "Wir ziehen nach Berlin.",
+	},
+	{
+		German: "bringen", English: "to bring",
+		Ich: "bringe", Du: "bringst", ErSieEs: "bringt",
+		Wir: "bringen", Ihr: "bringt", SieSie: "bringen",
+		Example: "Kannst du mir Wasser bringen?",
+	},
+	{
+		German: "fallen", English: "to fall",
+		Ich: "falle", Du: "fällst", ErSieEs: "fällt",
+		Wir: "fallen", Ihr: "fallt", SieSie: "fallen",
+		Example: "Der Apfel fällt.",
+	},
+	{
+		German: "halten", English: "to hold/stop",
+		Ich: "halte", Du: "hältst", ErSieEs: "hält",
+		Wir: "halten", Ihr: "haltet", SieSie: "halten",
+		Example: "Der Zug hält hier.",
+	},
 }
 
 func GetVerbOfTheDay() DailyVerb {
