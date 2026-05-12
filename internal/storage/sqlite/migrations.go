@@ -130,6 +130,30 @@ var migrations = []migration{
 		SQL: `
 			ALTER TABLE decks ADD COLUMN new_cards_per_day INTEGER NOT NULL DEFAULT 20;
 			ALTER TABLE decks ADD COLUMN review_limit_per_day INTEGER NOT NULL DEFAULT 200;
+	`,
+	},
+	{
+		ID: 20,
+		SQL: `
+			DELETE FROM notes
+			WHERE id = 'front'
+			  AND front = 'back'
+			  AND back = 'extra';
+
+			UPDATE cards
+			SET answer = 'Alle Wege führen nach Rom'
+			WHERE deck_id = 'b1_idioms'
+			  AND prompt = 'All roads lead to Rome'
+			  AND answer = 'Literal: all ways lead to Rome';
+
+			UPDATE notes
+			SET front = 'Alle Wege führen nach Rom',
+			    back = 'All roads lead to Rome',
+			    extra = 'Literal: all ways lead to Rome',
+			    tags = 'idiom b1'
+			WHERE id = 'Alle Wege führen nach Rom'
+			  AND front = 'All roads lead to Rome'
+			  AND back = 'Literal: all ways lead to Rome';
 		`,
 	},
 }

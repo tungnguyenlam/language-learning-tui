@@ -32,6 +32,9 @@ func Open(path string) (*Store, error) {
 	store := &Store{db: db}
 	if err := store.Migrate(context.Background()); err != nil {
 		_ = db.Close()
+		if strings.Contains(err.Error(), "database is locked") {
+			return nil, fmt.Errorf("database is locked (is another instance of deutsch-tui running?): %w", err)
+		}
 		return nil, err
 	}
 	return store, nil

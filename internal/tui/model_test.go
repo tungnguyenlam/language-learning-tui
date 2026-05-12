@@ -213,6 +213,39 @@ func TestReviewFlow(t *testing.T) {
 	}
 }
 
+func TestReviewExtraRevealKeyDoesNotBlockGrading(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", Prompt: "P1", Answer: "A1"},
+			{ID: "c2", Prompt: "P2", Answer: "A2"},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(dueCardsMsg(repo.dueCards))
+	model.activeView = ViewReview
+	model.revealState = RevealRevealed
+	model.revealProgress = 100
+
+	updated, cmd := model.Update(tea.KeyPressMsg{Code: ' '})
+	model = updated.(*Model)
+	if cmd != nil {
+		t.Fatal("extra reveal key on revealed card should not grade")
+	}
+	if model.gradingInProgress {
+		t.Fatal("extra reveal key should not block grade keys")
+	}
+
+	updated, cmd = model.Update(tea.KeyPressMsg{Code: 'e'})
+	model = updated.(*Model)
+	if cmd == nil {
+		t.Fatal("easy grade should return a command after an extra reveal key")
+	}
+	if !strings.Contains(model.status, "Grade: Easy") {
+		t.Fatalf("status should contain easy grade, got: %s", model.status)
+	}
+}
+
 func TestReviewBookmarkToggleUpdatesCardAndRendering(t *testing.T) {
 	repo := &mockRepo{
 		dueCards: []core.Card{{ID: "c1", DeckID: "deck-1", Prompt: "P1", Answer: "A1"}},

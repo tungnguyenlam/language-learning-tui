@@ -1,39 +1,27 @@
 # Active Backlog
 
-Last updated: 2026-05-12 (Autonomous Improvement Pass - Final)
+Last updated: 2026-05-12 (Review grade key stuck-state regression fix complete)
 
 ## Current Milestone
 
-Complete all improvements and commit changes.
+Fix review cards getting stuck before `a/h/g/e` grading.
 
-## Phase 3 Work Plan
+## Current Work
 
-- [x] **Task 1: Content** - Add B1 Art & Literature deck (approx 40 cards)
-- [x] **Task 2: Content** - Add A2 Hobbies II deck (approx 40 cards)
-- [x] **Task 3: Content** - Add B2 Science & Nature II deck (approx 40 cards)
-- [x] **Task 4: UI/UX** - Improve Cram mode UI (add progress visualization/better styling)
-- [x] **Task 5: UI/UX** - Refine Deck view item spacing/styling for better readability
-- [x] **Task 6: Logic/UX** - Add visual feedback on grading (shows grade icon, remaining cards, accuracy)
-- [x] **Task 7: Content** - Expand verb of the day list with 15 new verbs
-- [x] **Task 8: Testing** - Add E2E tests for the new content decks
-- [x] **Task 9: Verify** - Run full verification suite
-
-## Additional Improvements This Run
-
-- Added "A1 Emergency German" deck (20 cards) - emergency phrases
-- Added "A2 Restaurant & Dining" deck (52 cards) - restaurant vocabulary
-- Added 6 new grammar tips (Reflexive Verbs, Modal Particles, Word Order, Compound Nouns, etc.)
-- Added 8 new verbs to verb of the day (total now 72)
-- Fixed E2E test compatibility for new grading status format
+- [x] Traced the stuck path to extra Space/Enter presses on a revealed review card setting `gradingInProgress` without recording a grade.
+- [x] Changed revealed-card Space/Enter handling to keep grading keys enabled and show the explicit `a/h/g/e` status hint.
+- [x] Added a unit regression test proving `e` still grades after an extra reveal key.
 
 ## Exact Next Action
 
-Commit all changes to git.
+No active executable work. Next agent should follow the user’s newest request.
 
 ## Acceptance Criteria
 
-- [x] Minimum 6 improvements implemented.
-- [x] `./scripts/verify.sh` passes with zero errors (238 tests passing).
+- [x] Extra Space/Enter on a revealed review card does not set `gradingInProgress`.
+- [x] `a/h/g/e` still grade normally after that extra reveal key.
+- [x] Focused `go test ./internal/tui` passes.
+- [x] Full `./scripts/verify.sh` passes with 238 E2E tests.
 
 ## Blockers
 

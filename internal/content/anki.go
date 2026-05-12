@@ -20,6 +20,7 @@ type ImportOptions struct {
 
 func ImportAnkiTSV(r io.Reader, opts ImportOptions) ([]core.Note, error) {
 	deck := opts.DefaultDeck
+	deckExplicit := false
 
 	// Read headers and metadata first
 	scanner := bufio.NewScanner(r)
@@ -30,6 +31,7 @@ func ImportAnkiTSV(r io.Reader, opts ImportOptions) ([]core.Note, error) {
 		trimmed := strings.TrimSpace(line)
 		if strings.HasPrefix(trimmed, "#deck:") {
 			deck = strings.TrimSpace(strings.TrimPrefix(trimmed, "#deck:"))
+			deckExplicit = deck != ""
 			continue
 		}
 		if strings.HasPrefix(trimmed, "#") || trimmed == "" {
@@ -63,11 +65,27 @@ func ImportAnkiTSV(r io.Reader, opts ImportOptions) ([]core.Note, error) {
 		return nil, err
 	}
 
+	header := []string(nil)
+	if len(records) > 0 && isTSVHeader(records[0]) {
+		header = normalizeHeader(records[0])
+		records = records[1:]
+	}
+
 	notes := make([]core.Note, 0, len(records))
 	for i, record := range records {
+		if len(header) > 0 {
+			note, err := noteFromHeaderedRecord(record, header, deck, deckExplicit, i+1)
+			if err != nil {
+				return nil, err
+			}
+			notes = append(notes, note)
+			continue
+		}
+
 		if len(record) < 3 {
 			return nil, fmt.Errorf("record %d has %d fields, want at least 3", i+1, len(record))
 		}
+
 		id := strings.TrimSpace(record[0])
 		if id == "" {
 			return nil, fmt.Errorf("record %d has empty id", i+1)
@@ -90,19 +108,7 @@ func ImportAnkiTSV(r io.Reader, opts ImportOptions) ([]core.Note, error) {
 			note.Tags = splitTags(record[4])
 		}
 		if len(record) > 6 {
-			noteType := strings.TrimSpace(record[6])
-			if strings.HasPrefix(noteType, "MCQ:") {
-				choicesStr := strings.TrimPrefix(noteType, "MCQ:")
-				note.Choices = strings.Split(choicesStr, "|||")
-				for i := range note.Choices {
-					note.Choices[i] = strings.TrimSpace(note.Choices[i])
-				}
-				note.Type = "MCQ"
-			} else if noteType == "Reverse" || noteType == "Basic (and reversed card)" || noteType == "BasicReversed" {
-				note.Type = "Reverse"
-			} else {
-				note.Type = noteType
-			}
+			applyNoteType(&note, strings.TrimSpace(record[6]))
 		}
 		if len(record) > 7 {
 			note.Audio = strings.TrimSpace(record[7])
@@ -112,6 +118,165 @@ func ImportAnkiTSV(r io.Reader, opts ImportOptions) ([]core.Note, error) {
 	}
 
 	return notes, nil
+}
+
+func noteFromHeaderedRecord(record []string, header []string, defaultDeck string, deckExplicit bool, row int) (core.Note, error) {
+	field := func(name string) string {
+		for i, headerName := range headerForRecord(header, record) {
+			if headerName == name && i < len(record) {
+				return record[i]
+			}
+		}
+		return ""
+	}
+
+	front := field("front")
+	back := field("back")
+	if strings.TrimSpace(front) == "" || strings.TrimSpace(back) == "" {
+		return core.Note{}, fmt.Errorf("record %d has empty front/back", row)
+	}
+
+	id := strings.TrimSpace(field("id"))
+	if id == "" {
+		id = generatedNoteID(front, row)
+	}
+
+	noteDeck := defaultDeck
+	if noteDeck == "" {
+		noteDeck = "Imported"
+	}
+	if deckField := strings.TrimSpace(firstNonEmpty(field("deck"), field("deckid"))); deckField != "" && !deckExplicit {
+		noteDeck = deckField
+	}
+
+	noteType := strings.TrimSpace(firstNonEmpty(field("notetype"), field("type")))
+	if deckField, splitNoteType, ok := splitCombinedDeckNoteType(noteType); ok {
+		noteType = splitNoteType
+		if !deckExplicit {
+			noteDeck = deckField
+		}
+	}
+
+	note := core.Note{
+		ID:     id,
+		DeckID: noteDeck,
+		Front:  front,
+		Back:   back,
+		Extra:  field("extra"),
+		Tags:   splitTags(field("tags")),
+		Type:   "Basic",
+		Audio:  strings.TrimSpace(field("audio")),
+	}
+
+	applyNoteType(&note, noteType)
+	note.Cards = CardsForNote(note)
+	return note, nil
+}
+
+func applyNoteType(note *core.Note, noteType string) {
+	if noteType == "" {
+		return
+	}
+	if strings.HasPrefix(noteType, "MCQ:") {
+		choicesStr := strings.TrimPrefix(noteType, "MCQ:")
+		choices := strings.Split(choicesStr, "|||")
+		if len(choices) == 1 {
+			choices = strings.Split(choicesStr, ",")
+		}
+		note.Choices = note.Choices[:0]
+		for _, choice := range choices {
+			choice = strings.TrimSpace(choice)
+			if choice != "" {
+				note.Choices = append(note.Choices, choice)
+			}
+		}
+		if len(note.Choices) < 2 {
+			note.Type = "Basic"
+			note.Choices = nil
+			return
+		}
+		note.Type = "MCQ"
+		return
+	}
+	if noteType == "Reverse" || noteType == "Basic (and reversed card)" || noteType == "BasicReversed" {
+		note.Type = "Reverse"
+		return
+	}
+	note.Type = noteType
+}
+
+func splitCombinedDeckNoteType(value string) (string, string, bool) {
+	for _, marker := range []string{" MCQ:", " Reverse", " Basic", " Cloze"} {
+		if idx := strings.LastIndex(value, marker); idx > 0 {
+			return strings.TrimSpace(value[:idx]), strings.TrimSpace(value[idx+1:]), true
+		}
+	}
+	return "", "", false
+}
+
+func isTSVHeader(record []string) bool {
+	if len(record) == 0 {
+		return false
+	}
+	known := 0
+	for _, field := range record {
+		switch normalizeHeaderName(field) {
+		case "id", "deck", "deckid", "front", "back", "extra", "tags", "notetype", "type", "audio":
+			known++
+		}
+	}
+	return known >= 2 && known == len(record)
+}
+
+func normalizeHeader(record []string) []string {
+	header := make([]string, len(record))
+	for i, field := range record {
+		header[i] = normalizeHeaderName(field)
+	}
+	return header
+}
+
+func normalizeHeaderName(field string) string {
+	field = strings.ToLower(strings.TrimSpace(field))
+	field = strings.ReplaceAll(field, "_", "")
+	field = strings.ReplaceAll(field, " ", "")
+	return field
+}
+
+func headerForRecord(header []string, record []string) []string {
+	if len(record) == len(header)+1 && !containsHeader(header, "deck") && len(header) > 0 && header[len(header)-1] == "notetype" {
+		expanded := make([]string, 0, len(header)+1)
+		expanded = append(expanded, header[:len(header)-1]...)
+		expanded = append(expanded, "deck", "notetype")
+		return expanded
+	}
+	return header
+}
+
+func containsHeader(header []string, name string) bool {
+	for _, headerName := range header {
+		if headerName == name {
+			return true
+		}
+	}
+	return false
+}
+
+func generatedNoteID(front string, row int) string {
+	id := strings.TrimSpace(front)
+	if id != "" {
+		return id
+	}
+	return fmt.Sprintf("note-%d", row)
+}
+
+func firstNonEmpty(values ...string) string {
+	for _, value := range values {
+		if strings.TrimSpace(value) != "" {
+			return value
+		}
+	}
+	return ""
 }
 
 func ExportAnkiTSV(w io.Writer, notes []core.Note) error {

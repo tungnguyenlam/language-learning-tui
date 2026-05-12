@@ -506,6 +506,16 @@ var grammarTips = []GrammarTip{
 		Tip:     "Combine nouns to create new words: Haus + Tür = Haustür.",
 		Example: "Das Schlafzimmer hat ein großes Fenster.",
 	},
+	{
+		Title:   "Double Infinitive in Subordinate Clauses",
+		Tip:     "In a subordinate clause, if there's a double infinitive, the finite verb comes BEFORE the infinitives.",
+		Example: "Ich glaube, dass er das nicht hat machen können.",
+	},
+	{
+		Title:   "N-Declension with Adjectives as Nouns",
+		Tip:     "Adjectives used as nouns follow adjective declension, not n-declension.",
+		Example: "der Beamte, ein Beamter",
+	},
 }
 
 func GetDailyGrammarTip() GrammarTip {

@@ -333,14 +333,8 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			}
 			return m.loadReviewPredictions(card.ID), true
 		case RevealRevealed:
-			if m.gradingInProgress {
-				// In this state, we wait for a/h/g/e or enter for 'Good'
-				return m.gradeCard(core.GradeGood), true
-			} else {
-				m.gradingInProgress = true
-				m.status = "Grading: a=again h=hard g=good e=easy"
-				return nil, true
-			}
+			m.status = "Grade with a=again h=hard g=good e=easy"
+			return nil, true
 		}
 	case "a":
 		if m.revealState == RevealRevealed {

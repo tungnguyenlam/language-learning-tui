@@ -1,5 +1,30 @@
 # Done Backlog
 
+## 2026-05-12 16:00 +07 (Autonomous Improvement Pass)
+
+Completed comprehensive improvement pass with content expansion, UX enhancements, bug fixes, and testing expansion. Total E2E tests: 239 (all passing).
+
+### Content Expansion
+- Added **A1 Family & Friends** vocabulary deck (25 cards).
+- Added **A1 Greetings & Farewells** vocabulary deck (15 cards).
+- Expanded **Verb of the Day** with new verbs (bezahlen, bestellen).
+- Expanded **Grammar Tips** with 2 advanced topics (Compound Nouns, N-Declension for adjectives).
+
+### UI/UX Improvements
+- **Browser:** Made the `SEARCHING` label visually distinct when active.
+
+### Logic & Developer Experience
+- **Database:** Improved startup error handling for SQLite locked databases to provide clearer debugging hints to developers.
+
+### Testing
+- Added comprehensive E2E test file `test_a1_family_deck.py`.
+- Fixed space interpretation issues in search boxes by narrowing search criteria.
+
+### Verification
+- Total E2E tests: 239 (all passing).
+- All Go unit tests passing.
+- `./scripts/verify.sh` executed successfully with zero errors.
+
 ## 2026-05-12 14:00 +07 (Autonomous Improvement Pass - Final)
 
 Completed comprehensive improvement pass with content expansion, grading UX improvements, and test updates. Total E2E tests: 238 (all passing).
@@ -305,3 +330,19 @@ Completed comprehensive improvement pass with 9 new German content decks, UI enh
 - 10 new content deck files created
 - 1 new E2E test file with 15 tests
 - UI fixes in 2 files (render_browser.go, render_statistics.go)
+
+## 2026-05-12 (Review TSV Header Regression Fix)
+
+Fixed headered embedded TSV parsing so review cards no longer treat `front/back/extra/tags/notetype` headers or `Literal:` explanation fields as card content. The B1 idioms Rome reverse card now answers `Alle Wege führen nach Rom`, malformed B1 idioms proverb data was corrected, and a SQLite migration repairs already-seeded header/Rome artifacts.
+
+### Verification
+- `go test ./internal/content` passed.
+- `./scripts/verify.sh` passed with 238 E2E tests.
+
+## 2026-05-12 (Review Grade Key Stuck-State Regression Fix)
+
+Fixed a review-key regression where pressing Space/Enter after the answer was already revealed set `gradingInProgress` without recording a review, which blocked subsequent `a/h/g/e` grading keys. Extra reveal keys on a revealed card now leave grading available and show the explicit grade-key hint.
+
+### Verification
+- `go test ./internal/tui` passed.
+- `./scripts/verify.sh` passed with 238 E2E tests.

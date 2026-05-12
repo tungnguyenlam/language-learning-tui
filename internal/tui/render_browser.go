@@ -35,7 +35,7 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 	searchLabel := "Search"
 	if m.searchingBrowser {
 		searchBorderColor = "81"
-		searchLabel = "SEARCHING"
+		searchLabel = lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("SEARCHING")
 	}
 	searchStyle := lipgloss.NewStyle().
 		Border(lipgloss.NormalBorder()).

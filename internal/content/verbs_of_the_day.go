@@ -443,6 +443,18 @@ var dailyVerbs = []DailyVerb{
 		Wir: "spielen", Ihr: "spielt", SieSie: "spielen",
 		Example: "Die Kinder spielen im Garten.",
 	},
+	{
+		German: "bestellen", English: "to order",
+		Ich: "bestelle", Du: "bestellst", ErSieEs: "bestellt",
+		Wir: "bestellen", Ihr: "bestellt", SieSie: "bestellen",
+		Example: "Ich möchte ein Bier bestellen.",
+	},
+	{
+		German: "bezahlen", English: "to pay",
+		Ich: "bezahle", Du: "bezahlst", ErSieEs: "bezahlt",
+		Wir: "bezahlen", Ihr: "bezahlt", SieSie: "bezahlen",
+		Example: "Wir möchten bitte bezahlen.",
+	},
 }
 
 func GetVerbOfTheDay() DailyVerb {

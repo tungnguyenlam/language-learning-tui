@@ -178,6 +178,102 @@ func TestImportReverse(t *testing.T) {
 	}
 }
 
+func TestImportHeaderedReverseDeckWithoutIDs(t *testing.T) {
+	input := strings.Join([]string{
+		"#separator:tab",
+		"#html:false",
+		"#deck:B1 German Idioms",
+		"front\tback\textra\ttags\tnotetype",
+		"Alle Wege führen nach Rom\tAll roads lead to Rome\tLiteral: all ways lead to Rome\tidiom b1\tB1 German Idioms\tReverse",
+		"",
+	}, "\n")
+
+	notes, err := ImportAnkiTSV(strings.NewReader(input), ImportOptions{})
+	if err != nil {
+		t.Fatalf("import failed: %v", err)
+	}
+	if len(notes) != 1 {
+		t.Fatalf("notes = %d, want 1", len(notes))
+	}
+
+	note := notes[0]
+	if note.ID == "front" {
+		t.Fatalf("header row leaked as note: %+v", note)
+	}
+	if note.Type != "Reverse" {
+		t.Fatalf("note.Type = %q, want Reverse", note.Type)
+	}
+	if note.DeckID != "B1 German Idioms" {
+		t.Fatalf("note.DeckID = %q, want B1 German Idioms", note.DeckID)
+	}
+	if len(note.Cards) != 2 {
+		t.Fatalf("len(note.Cards) = %d, want 2", len(note.Cards))
+	}
+
+	backCard := note.Cards[1]
+	if backCard.Prompt != "All roads lead to Rome" {
+		t.Fatalf("backCard.Prompt = %q, want All roads lead to Rome", backCard.Prompt)
+	}
+	if backCard.Answer != "Alle Wege führen nach Rom" {
+		t.Fatalf("backCard.Answer = %q, want Alle Wege führen nach Rom", backCard.Answer)
+	}
+	if strings.HasPrefix(backCard.Answer, "Literal:") {
+		t.Fatalf("literal explanation became answer: %+v", backCard)
+	}
+}
+
+func TestImportHeaderedDeckUsesDeckMetadataOverRowDeckLabel(t *testing.T) {
+	input := strings.Join([]string{
+		"#separator:tab",
+		"#deck:B2 Healthcare Systems",
+		"front\tback\textra\ttags\tnotetype",
+		"das Gesundheitssystem\thealthcare system\tdas Gesundheitssystem, die Gesundheitssysteme\tb2 healthcare systems\tB2 Healthcare\tBasic",
+		"",
+	}, "\n")
+
+	notes, err := ImportAnkiTSV(strings.NewReader(input), ImportOptions{})
+	if err != nil {
+		t.Fatalf("import failed: %v", err)
+	}
+	if notes[0].DeckID != "B2 Healthcare Systems" {
+		t.Fatalf("DeckID = %q, want B2 Healthcare Systems", notes[0].DeckID)
+	}
+}
+
+func TestImportHeaderedMCQWithCommaChoices(t *testing.T) {
+	input := strings.Join([]string{
+		"#separator:tab",
+		"#deck:Grammar",
+		"front\tback\textra\ttags\tnotetype",
+		"Ich gebe ___ das Buch.\tdem Mann\tDativ\tgrammar\tMCQ:der Mann,den Mann,dem Mann,des Mannes",
+		"",
+	}, "\n")
+
+	notes, err := ImportAnkiTSV(strings.NewReader(input), ImportOptions{})
+	if err != nil {
+		t.Fatalf("import failed: %v", err)
+	}
+	if notes[0].Type != "MCQ" {
+		t.Fatalf("Type = %q, want MCQ", notes[0].Type)
+	}
+	if len(notes[0].Choices) != 4 {
+		t.Fatalf("choices = %v, want 4 choices", notes[0].Choices)
+	}
+
+	var foundMCQ bool
+	for _, card := range notes[0].Cards {
+		if card.Kind == core.CardKindMCQ {
+			foundMCQ = true
+			if len(card.Choices) != 4 {
+				t.Fatalf("card choices = %v, want 4 choices", card.Choices)
+			}
+		}
+	}
+	if !foundMCQ {
+		t.Fatal("no MCQ card generated")
+	}
+}
+
 func TestExportReverseRoundTrip(t *testing.T) {
 	note := core.Note{
 		ID:     "rev-1",
