@@ -401,6 +401,48 @@ var dailyVerbs = []DailyVerb{
 		Wir: "singen", Ihr: "singt", SieSie: "singen",
 		Example: "Er singt ein schönes Lied.",
 	},
+	{
+		German: "schwimmen", English: "to swim",
+		Ich: "schwimme", Du: "schwimmst", ErSieEs: "schwimmt",
+		Wir: "schwimmen", Ihr: "schwimmt", SieSie: "schwimmen",
+		Example: "Die Kinder schwimmen im See.",
+	},
+	{
+		German: "kochen", English: "to cook",
+		Ich: "koche", Du: "kochst", ErSieEs: "kocht",
+		Wir: "kochen", Ihr: "kocht", SieSie: "kochen",
+		Example: "Meine Mutter kocht gern.",
+	},
+	{
+		German: "reparieren", English: "to repair",
+		Ich: "repariere", Du: "reparierst", ErSieEs: "repariert",
+		Wir: "reparieren", Ihr: "repariert", SieSie: "reparieren",
+		Example: "Er repariert das Auto.",
+	},
+	{
+		German: "studieren", English: "to study",
+		Ich: "studiere", Du: "studierst", ErSieEs: "studiert",
+		Wir: "studieren", Ihr: "studiert", SieSie: "studieren",
+		Example: "Ich studiere Medizin.",
+	},
+	{
+		German: "arbeiten", English: "to work",
+		Ich: "arbeite", Du: "arbeitest", ErSieEs: "arbeitet",
+		Wir: "arbeiten", Ihr: "arbeitet", SieSie: "arbeiten",
+		Example: "Sie arbeitet in einem Büro.",
+	},
+	{
+		German: "reisen", English: "to travel",
+		Ich: "reise", Du: "reist", ErSieEs: "reist",
+		Wir: "reisen", Ihr: "reist", SieSie: "reisen",
+		Example: "Wir reisen gern nach Italien.",
+	},
+	{
+		German: "spielen", English: "to play",
+		Ich: "spiele", Du: "spielst", ErSieEs: "spielt",
+		Wir: "spielen", Ihr: "spielt", SieSie: "spielen",
+		Example: "Die Kinder spielen im Garten.",
+	},
 }
 
 func GetVerbOfTheDay() DailyVerb {

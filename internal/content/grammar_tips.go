@@ -486,6 +486,26 @@ var grammarTips = []GrammarTip{
 		Tip:     "Du-imperative: remove -st. ihr-imperative: add -t. Sie-imperative: verb first.",
 		Example: "Geh! Geht! Gehen Sie!",
 	},
+	{
+		Title:   "Reflexive Verbs",
+		Tip:     "Reflexive verbs use 'sich' (mich, dich, uns, euch, sich) as their object.",
+		Example: "Ich wasche mich. Sie kämmen sich.",
+	},
+	{
+		Title:   "Modal Particles",
+		Tip:     "Particles like 'doch', 'ja', 'bloß' add emotional nuance.",
+		Example: "Das ist doch klar!",
+	},
+	{
+		Title:   "Word Order in Subordinates",
+		Tip:     "In subordinate clauses, the verb goes to the end.",
+		Example: "Ich weiß, dass er kommt.",
+	},
+	{
+		Title:   "Compound Nouns",
+		Tip:     "Combine nouns to create new words: Haus + Tür = Haustür.",
+		Example: "Das Schlafzimmer hat ein großes Fenster.",
+	},
 }
 
 func GetDailyGrammarTip() GrammarTip {

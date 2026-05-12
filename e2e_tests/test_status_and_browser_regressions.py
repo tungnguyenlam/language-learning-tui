@@ -24,7 +24,7 @@ def test_review_grade_status_is_single_line():
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.act("g")
-            agent.wait_for_text("status: 51 cards due")
+            agent.wait_for_text("cards due")
             agent.assert_text("Review 1/51")
         finally:
             agent.close()

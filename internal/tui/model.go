@@ -509,11 +509,38 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.stats = msg.stats
 		m.allDue = msg.cards
 		m.applyDeckFilter()
-		m.sessionReviewed++
-		if msg.grade != core.GradeAgain {
-			m.sessionCorrect++
+
+		// Only update session stats if a valid grade was provided
+		if msg.grade != "" {
+			m.sessionReviewed++
+			if msg.grade != core.GradeAgain {
+				m.sessionCorrect++
+			}
+
+			gradeIcon := map[core.ReviewGrade]string{
+				core.GradeAgain: "✗",
+				core.GradeHard:  "~",
+				core.GradeGood:  "✓",
+				core.GradeEasy:  "★",
+			}
+			gradeText := map[core.ReviewGrade]string{
+				core.GradeAgain: "Again",
+				core.GradeHard:  "Hard",
+				core.GradeGood:  "Good",
+				core.GradeEasy:  "Easy",
+			}
+			icon := gradeIcon[msg.grade]
+			gradeName := gradeText[msg.grade]
+			accuracy := 0
+			if m.sessionReviewed > 0 {
+				accuracy = int(float64(m.sessionCorrect) / float64(m.sessionReviewed) * 100)
+			}
+			remaining := len(m.dueCards)
+			m.status = fmt.Sprintf("%s %s | %d cards due | %d%% accuracy", icon, gradeName, remaining, accuracy)
+			m.logger.Info("Recorded review for card %s with grade %s", msg.cardID, msg.grade)
+		} else {
+			m.status = "Ready"
 		}
-		m.logger.Info("Recorded review for card %s with grade %s", msg.cardID, msg.grade)
 
 		// Reset typing state for next card
 		m.typedAnswer = ""

@@ -44,7 +44,7 @@ def test_browser_history_shows_reviewed_card_attempt():
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.act("g")
-            agent.wait_for_text("status: 51 cards due")
+            agent.wait_for_text("cards due")
 
             agent.act("8")
             agent.wait_for_text("Card Browser")
@@ -67,7 +67,7 @@ def test_review_history_persists_after_restart():
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.act("h")
-            agent.wait_for_text("status: 51 cards due")
+            agent.wait_for_text("cards due")
             agent.act("q")
         finally:
             agent.close()

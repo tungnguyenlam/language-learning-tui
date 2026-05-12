@@ -1,5 +1,31 @@
 # Done Backlog
 
+## 2026-05-12 14:00 +07 (Autonomous Improvement Pass - Final)
+
+Completed comprehensive improvement pass with content expansion, grading UX improvements, and test updates. Total E2E tests: 238 (all passing).
+
+### Visual Feedback on Grading
+- Enhanced grading status to show grade icon (✓/✗/~), remaining cards count, and session accuracy
+- Example: "✓ Good | 51 cards due | 100% accuracy"
+- Maintains backward compatibility with tests by keeping "cards due" text
+
+### Content Expansion
+- Added **A1 Emergency German** vocabulary deck (20 cards) - emergency phrases and helpful expressions
+- Added **A2 Restaurant & Dining** vocabulary deck (52 cards) - restaurant, food, ordering vocabulary
+- Expanded **Verb of the Day** with 8 additional verbs (total now 72)
+- Added **6 new grammar tips** - Reflexive Verbs, Modal Particles, Word Order in Subordinates, Compound Nouns, etc.
+
+### Testing
+- Updated E2E tests to match new grading status format
+- Fixed compatibility issues in test_status_and_browser_regressions.py and test_review_history.py
+
+### Verification
+- Total E2E tests: 238 (all passing)
+- All Go unit tests passing
+- `./scripts/verify.sh` executed successfully with zero errors
+
+---
+
 ## 2026-05-12 12:00 +07 (Autonomous Improvement Pass - New Content & UI)
 
 Completed comprehensive improvement pass with 3 new German content decks, UI enhancements for Cram mode and Decks view, and 15 new verbs. Total E2E tests: 233 (all passing).

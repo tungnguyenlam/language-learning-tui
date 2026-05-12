@@ -1,0 +1,53 @@
+#separator:tab
+#html:false
+#deck:A2 Restaurant & Dining
+a2-res-table	einen Tisch	reserve a table	Restaurant action	restaurant
+a2-res-reservation	Reservierung	reservation	Booking	restaurant
+a2-res-menu	die Speisekarte	the menu	Restaurant item	restaurant
+a2-res-order	bestellen	to order	Restaurant action	restaurant
+a2-res-waiter	Ober	waiter	Service staff	restaurant
+a2-res-waitress	Bedienung	waitress	Service staff	restaurant
+a2-res-bill	die Rechnung	the bill	Payment	restaurant
+a2-res-pay	bezahlen	to pay	Payment	restaurant
+a2-res-tip	Trinkgeld	Tip	Gratuity	restaurant
+a2-res-delicious	lecker	delicious	Taste adjective	restaurant
+a2-res-hungry	hungrig	hungry	State	restaurant
+a2-res-thirsty	durstig	thirsty	State	restaurant
+a2-res-water	Wasser	water	Drink	restaurant
+a2-res-coffee	Kaffee	coffee	Drink	restaurant
+a2-res-wine	Wein	wine	Drink	restaurant
+a2-res-beer	Bier	beer	Drink	restaurant
+a2-res-soft-drink	alkoholfreies Getränk	soft drink	Drink	restaurant
+a2-res-appetizer	die Vorspeise	starter	Course	restaurant
+a2-res-main	das Hauptgericht	main course	Course	restaurant
+a2-res-dessert	der Nachtisch	dessert	Course	restaurant
+a2-res-breakfast	Frühstück	breakfast	Meal	restaurant
+a2-res-lunch	Mittagessen	lunch	Meal	restaurant
+a2-res-dinner	Abendessen	dinner	Meal	restaurant
+a2-res-vegetarian	vegetarisch	vegetarian	Dietary	restaurant
+a2-res-vegan	vegan	vegan	Dietary	restaurant
+a2-res-allergy	Allergie	allergy	Dietary restriction	restaurant
+a2-res-gluten	Gluten	intolerance	Allergen	restaurant
+a2-res-spicy	scharf	spicy	Taste	restaurant
+a2-res-sweet	süß	sweet	Taste	restaurant
+a2-res-salty	salzig	salty	Taste	restaurant
+a2-res-plate	der Teller	plate	Service item	restaurant
+a2-res-glass	das Glas	glass	Service item	restaurant
+a2-res-knife	das Messer	knife	Utensil	restaurant
+a2-res-fork	die Gabel	fork	Utensil	restaurant
+a2-res-spoon	der Löffel	spoon	Utensil	restaurant
+a2-res-napkin	die Serviette	napkin	Service item	restaurant
+a2-res-enjoy	Guten Appetit	Enjoy your meal	Phrase	restaurant
+a2-res-cheers	Prost	Cheers	Toast	restaurant
+a2-res-compliment	Köstlich	Delicious	Compliment	restaurant
+a2-res-complain	Beschwerde	complaint	Service issue	restaurant
+a2-res-foreign	Ich bin Tourist	I am a tourist	Visitor	restaurant
+a2-res-english-menu	Haben Sie eine englische Speisekarte?	Do you have an English menu?	Language help	restaurant
+a2-res-vegan-option	Gibt es eine vegane Option?	Is there a vegan option?	Dietary question	restaurant
+a2-res-allergen	Kann ich die Allergene wissen?	Can I know the allergens?	Allergy info	restaurant
+a2-res-recommend	Was empfehlen Sie?	What do you recommend?	Recommendation	restaurant
+a2-res-special	Das Tagesgericht	the special of the day	Daily special	restaurant
+a2-res-portion	die Portion	the portion	Size	restaurant
+a2-res-more	mehr	more	Quantity	restaurant
+a2-res-less	weniger	less	Quantity	restaurant
+a2-res-again	noch einmal	again	Repeat order	restaurant

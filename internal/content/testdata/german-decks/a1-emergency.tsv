@@ -1,0 +1,23 @@
+#separator:tab
+#html:false
+#deck:A1 Emergency German
+a1-emg-help	Hilfe!	Help!	Emergency call	emergency
+a1-emg-police	Die Polizei rufen	Call the police	Emergency number 110	emergency
+a1-emg-fire	Die Feuerwehr rufen	Call the fire department	Emergency number 112	emergency
+a1-emg-ambulance	Den Krankenwagen rufen	Call an ambulance	Emergency number 112	emergency
+a1-emg-emergency	Notfall	Emergency	Critical situation	emergency
+a1-emg-danger	Gefahr	Danger	Warning word	emergency
+a1-emg-quick	Schnell!	Quick! / Hurry!	Urgent call	emergency
+a1-emg-here	Hier	Here	Location reference	emergency
+a1-emg-there	Dort	There	Location reference	emergency
+a1-emg-accident	Unfall	Accident	Road incident	emergency
+a1-emg-injured	Verletzt	Injured	Health emergency	emergency
+a1-emg-sick	Krank	Sick	Health issue	emergency
+a1-emg-doctor	Arzt	Doctor	Medical help	emergency
+a1-emg-hospital	Krankenhaus	Hospital	Medical facility	emergency
+a1-emg-pharmacy	Apotheke	Pharmacy	Medicine store	emergency
+a1-emg-lost	Verloren	Lost	Navigation issue	emergency
+a1-emg-here-english	Ich spreche Englisch	I speak English	Language help	emergency
+a1-emg-need-help	Ich brauche Hilfe	I need help	Request assistance	emergency
+a1-emg-call-doctor	Bitte rufen Sie einen Arzt	Please call a doctor	Medical request	emergency
+a1-emg-where-hospital	Wo ist das Krankenhaus?	Where is the hospital?	Navigation	emergency
