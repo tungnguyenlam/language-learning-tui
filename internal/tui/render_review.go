@@ -21,14 +21,14 @@ func (m *Model) renderReview(x, y int) string {
 
 		// Enhanced empty state with keyboard guidance
 		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-		shortcutGuide := fmt.Sprintf("Use %s and %s to switch decks or %s to toggle the bookmark filter.",
-			keyStyle.Render("["), keyStyle.Render("]"), keyStyle.Render("B"))
+		shortcutGuide := fmt.Sprintf("Use %s and %s to switch decks or %s to toggle the bookmark filter.\nPress %s for Custom Study (Cram Mode).",
+			keyStyle.Render("["), keyStyle.Render("]"), keyStyle.Render("B"), keyStyle.Render("c"))
 
 		emptyBox := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("81")).
 			Padding(1, 2).
-			Width(46).
+			Width(60).
 			Render(message + "\n\n" + shortcutGuide)
 		return title + "\n\n" + emptyBox
 	}

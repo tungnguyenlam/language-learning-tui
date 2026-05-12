@@ -336,6 +336,12 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.status = "Grade with a=again h=hard g=good e=easy"
 			return nil, true
 		}
+	case "c":
+		if len(m.dueCards) == 0 {
+			m.activeView = ViewCram
+			m.status = "Custom Study (Cram Mode)"
+			return m.loadCramCards(), true
+		}
 	case "a":
 		if m.revealState == RevealRevealed {
 			return m.gradeCard(core.GradeAgain), true

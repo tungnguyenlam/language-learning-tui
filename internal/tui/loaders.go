@@ -47,7 +47,7 @@ func (m *Model) loadCramCards() tea.Cmd {
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		cards, err := m.repo.Cards(ctx, "", "", "")
+		cards, err := m.repo.Cards(ctx, m.deck.ID, "", "")
 		if err != nil {
 			return err
 		}
