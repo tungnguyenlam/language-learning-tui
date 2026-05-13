@@ -556,6 +556,46 @@ var grammarTips = []GrammarTip{
 		Tip:     "After ein-words, the adjective takes the missing strong ending in Nom./Akk. neuter and Nom. masculine.",
 		Example: "ein guter Mann, mein schönes Auto",
 	},
+	{
+		Title:   "Modal Verbs Word Order",
+		Tip:     "Modal verbs push the main infinitive to the END of the clause.",
+		Example: "Ich kann heute nicht kommen.",
+	},
+	{
+		Title:   "Genitive Case",
+		Tip:     "The genitive expresses possession. Masc/neut nouns add -s or -es; the article becomes des/eines.",
+		Example: "das Auto des Mannes / der Frau",
+	},
+	{
+		Title:   "Reflexive Verbs (Akkusativ)",
+		Tip:     "Many German verbs require a reflexive pronoun in the accusative: mich, dich, sich, uns, euch, sich.",
+		Example: "Ich wasche mich. Du erinnerst dich.",
+	},
+	{
+		Title:   "Subordinate Clauses (weil, dass, ob)",
+		Tip:     "After subordinating conjunctions, the conjugated verb goes to the END of the clause.",
+		Example: "Ich bleibe zu Hause, weil ich krank bin.",
+	},
+	{
+		Title:   "Future Tense (Futur I)",
+		Tip:     "Form: werden + infinitive. Often the present tense + time word is used instead.",
+		Example: "Ich werde morgen kommen. (or: Ich komme morgen.)",
+	},
+	{
+		Title:   "Passive Voice",
+		Tip:     "Form: werden + past participle. Use 'von + Dativ' for the agent.",
+		Example: "Der Brief wird von mir geschrieben.",
+	},
+	{
+		Title:   "Konjunktiv II for Politeness",
+		Tip:     "Use würde/könnte/hätte to make polite requests or hypothetical statements.",
+		Example: "Könnten Sie mir bitte helfen?",
+	},
+	{
+		Title:   "Relative Clauses",
+		Tip:     "Relative pronouns (der/die/das) match the gender of the antecedent and the case from the relative clause.",
+		Example: "Der Mann, den ich kenne, kommt aus Berlin.",
+	},
 }
 
 func GetDailyGrammarTip() GrammarTip {

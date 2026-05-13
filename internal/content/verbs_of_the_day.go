@@ -503,6 +503,54 @@ var dailyVerbs = []DailyVerb{
 		Wir: "freuen uns", Ihr: "freut euch", SieSie: "freuen sich",
 		Example: "Ich freue mich auf das Wochenende.",
 	},
+	{
+		German: "schlafen", English: "to sleep",
+		Ich: "schlafe", Du: "schläfst", ErSieEs: "schläft",
+		Wir: "schlafen", Ihr: "schlaft", SieSie: "schlafen",
+		Example: "Sie schläft schon seit acht Stunden.",
+	},
+	{
+		German: "tragen", English: "to carry / to wear",
+		Ich: "trage", Du: "trägst", ErSieEs: "trägt",
+		Wir: "tragen", Ihr: "tragt", SieSie: "tragen",
+		Example: "Er trägt heute eine rote Jacke.",
+	},
+	{
+		German: "treffen", English: "to meet",
+		Ich: "treffe", Du: "triffst", ErSieEs: "trifft",
+		Wir: "treffen", Ihr: "trefft", SieSie: "treffen",
+		Example: "Wir treffen uns um sieben Uhr.",
+	},
+	{
+		German: "bleiben", English: "to stay / remain",
+		Ich: "bleibe", Du: "bleibst", ErSieEs: "bleibt",
+		Wir: "bleiben", Ihr: "bleibt", SieSie: "bleiben",
+		Example: "Ich bleibe heute zu Hause.",
+	},
+	{
+		German: "denken", English: "to think",
+		Ich: "denke", Du: "denkst", ErSieEs: "denkt",
+		Wir: "denken", Ihr: "denkt", SieSie: "denken",
+		Example: "Ich denke oft an dich.",
+	},
+	{
+		German: "antworten", English: "to answer",
+		Ich: "antworte", Du: "antwortest", ErSieEs: "antwortet",
+		Wir: "antworten", Ihr: "antwortet", SieSie: "antworten",
+		Example: "Er antwortet mir nicht.",
+	},
+	{
+		German: "helfen", English: "to help",
+		Ich: "helfe", Du: "hilfst", ErSieEs: "hilft",
+		Wir: "helfen", Ihr: "helft", SieSie: "helfen",
+		Example: "Kannst du mir helfen?",
+	},
+	{
+		German: "warten", English: "to wait",
+		Ich: "warte", Du: "wartest", ErSieEs: "wartet",
+		Wir: "warten", Ihr: "wartet", SieSie: "warten",
+		Example: "Ich warte auf den Bus.",
+	},
 }
 
 func GetVerbOfTheDay() DailyVerb {

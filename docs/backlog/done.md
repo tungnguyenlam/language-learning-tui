@@ -1,5 +1,9 @@
 # Done Backlog
 
+## 2026-05-14 (Autonomous Improvement Pass — batch 2)
+
+Second autonomous pass on 2026-05-14. Added 3 new beginner/intermediate decks (A1 Animals, A2 Body & Health, B1 Cooking), 8 new grammar tips covering modal-verb word order through relative clauses, 8 new Verb of the Day entries, and a Dashboard verb-box polish that displays the English meaning inline without adding vertical height. Added 7 new Go unit tests and 8 new E2E tests. `./scripts/verify.sh` passes with 270 E2E tests.
+
 ## 2026-05-14 (Autonomous Improvement Pass)
 
 Completed comprehensive autonomous improvement pass with 3 new German content decks, grammar/verbs expansion, dashboard polish, AI suggestion expansion, and new tests. Total E2E tests: 254 (all passing).

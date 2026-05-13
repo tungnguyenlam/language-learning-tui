@@ -221,9 +221,11 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 			Render(tipLabelStyle.Render("Grammar Tip: "+tip.Title) + "\n" +
 				fmt.Sprintf("  %s", tip.Tip) + exampleText)
 
+		verbHeader := verbLabelStyle.Render("Verb: "+verb.German) +
+			lipgloss.NewStyle().Foreground(colorMuted).Render(" — "+verb.English)
 		verbBox := dashVerbStyle.
 			Width(boxWidth).
-			Render(verbLabelStyle.Render("Verb: "+verb.German) + "\n" +
+			Render(verbHeader + "\n" +
 				fmt.Sprintf("  ich %-8s wir %-8s\n  du  %-8s ihr %-8s", verb.Ich, verb.Wir, verb.Du, verb.Ihr))
 
 		db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, tipBox, " ", verbBox) + "\n")
