@@ -69,7 +69,21 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 		successColor = "226"
 	}
 	successStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(successColor)).Bold(true)
-	col2.WriteString(fmt.Sprintf("%s %s\n\n", labelStyle.Render("Success Rate:"), successStyle.Render(fmt.Sprintf("%.1f%%", m.stats.SuccessRate*100))))
+	col2.WriteString(fmt.Sprintf("%s %s\n", labelStyle.Render("Success Rate:"), successStyle.Render(fmt.Sprintf("%.1f%%", m.stats.SuccessRate*100))))
+
+	retentionColor := "196"
+	totalMature := m.stats.MatureCards + m.stats.YoungCards
+	retentionRate := 0.0
+	if totalMature > 0 {
+		retentionRate = float64(m.stats.MatureCards) / float64(totalMature)
+	}
+	if retentionRate >= 0.80 {
+		retentionColor = "46"
+	} else if retentionRate >= 0.60 {
+		retentionColor = "226"
+	}
+	retentionStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(retentionColor)).Bold(true)
+	col2.WriteString(fmt.Sprintf("%s %s (Mature/Total: %d/%d)\n\n", labelStyle.Render("Retention:"), retentionStyle.Render(fmt.Sprintf("%.1f%%", retentionRate*100)), m.stats.MatureCards, totalMature))
 
 	// Combine columns
 	col1Str := col1.String()

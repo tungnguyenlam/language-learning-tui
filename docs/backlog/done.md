@@ -1,5 +1,29 @@
 # Done Backlog
 
+## 2026-05-13 20:00 +07 (Autonomous Improvement Pass - Additional)
+
+Completed improvement pass with content expansion, AI enhancements, statistics improvements, and test coverage. Total E2E tests: 249 (all passing).
+
+### Content Expansion
+- Added **B2 German Music & Entertainment** vocabulary deck (52 cards) - music, concerts, films, artists, instruments, entertainment industry.
+
+### AI Enhancements
+- Added 8 new AI suggestions: B1 family & friends, B2 science & tech, B1 daily routine, C2 legal German, A1 colors & shapes, B1 sports & fitness, B2 media & news, C1 academic writing.
+- Adjusted suggestion grid from 4 to 5 columns for better screen utilization.
+
+### Statistics Improvements
+- Added **Retention Rate** metric to the Statistics view showing mature/total card ratio with color-coded indicators.
+
+### Testing
+- Added new E2E test file `test_b2_music_entertainment.py` covering new music deck and AI suggestions.
+
+### Verification
+- Total E2E tests: 249 (all passing).
+- All Go unit tests passing.
+- `./scripts/verify.sh` executed successfully with zero errors.
+
+---
+
 ## 2026-05-13 (Autonomous Improvement Pass)
 
 Completed comprehensive improvement pass with 3 new German content decks, UI enhancements, E2E test expansions, and test regression fixes. Total E2E tests: 247 (all passing).

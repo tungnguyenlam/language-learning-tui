@@ -73,6 +73,14 @@ func (m *Model) renderAI(x, y int) string {
 			{"weather small talk", "daily conversation"},
 			{"B1 at the restaurant", "ordering food"},
 			{"B2 complaining politely", "diplomatic German"},
+			{"B1 family & friends", "relationships"},
+			{"B2 science & tech", "technology vocabulary"},
+			{"B1 daily routine", "everyday activities"},
+			{"C2 legal German", "juridical terms"},
+			{"A1 colors & shapes", "descriptive words"},
+			{"B1 sports & fitness", "athletic vocabulary"},
+			{"B2 media & news", "journalism terms"},
+			{"C1 academic writing", "thesis & papers"},
 		}
 
 		suggestionStyle := lipgloss.NewStyle().
@@ -84,7 +92,7 @@ func (m *Model) renderAI(x, y int) string {
 		currentX := layout.X
 
 		for i, s := range suggestions {
-			if i > 0 && i%4 == 0 {
+			if i > 0 && i%5 == 0 {
 				b.WriteString("\n")
 				lineY++
 				currentX = layout.X
