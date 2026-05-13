@@ -29,6 +29,7 @@ func (m *Model) renderReview(x, y int) string {
 			BorderForeground(lipgloss.Color("81")).
 			Padding(1, 2).
 			Width(60).
+			Align(lipgloss.Center).
 			Render(message + "\n\n" + shortcutGuide)
 		return title + "\n\n" + emptyBox
 	}

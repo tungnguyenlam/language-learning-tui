@@ -32,17 +32,22 @@ def test_new_a1_decks_loaded(agent: TUIAgent):
     agent.act("Hobbies")
     agent.act("<Enter>")
     agent.wait_for_text("A1 Hobbies & Free Time")
-    
+
+    agent.act("<Esc>")
+    agent.wait_until_stable()
+
     agent.act("/")
     agent.act("Food")
     agent.act("<Enter>")
     agent.wait_for_text("A1 Food & Drink")
-    
+
+    agent.act("<Esc>")
+    agent.wait_until_stable()
+
     agent.act("/")
     agent.act("Travel")
     agent.act("<Enter>")
     agent.wait_for_text("A1 Travel & Transport")
-
 def test_ai_draft_empty_state(agent: TUIAgent):
     agent.wait_for_text("DASHBOARD")
     

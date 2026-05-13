@@ -37,7 +37,7 @@ def test_new_decks_visibility():
 
             # Check for new decks using search
             for search_term, deck_name_partial in [
-                ("Science", "Science & Technology"),
+                ("Science", "Science & Techn"),
                 ("Proverbs", "German Proverbs"),
                 ("Comprehensive", "German Comprehensive"),
             ]:

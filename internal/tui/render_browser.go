@@ -201,7 +201,7 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 			BorderForeground(lipgloss.Color("240")).
 			Padding(0, 1).
 			Width(previewWidth).
-			Render(fmt.Sprintf("%s\n%s: %s    %s: %s    %s: %s\n%s: %s    %s: %s    %s: %s\n%s: %s\n%s: %s",
+			Render(fmt.Sprintf("%s\n\n%s: %s  |  %s: %s  |  %s: %s\n\n%s: %s\n%s: %s\n\n%s: %s  |  %s: %s  |  %s: %s",
 				lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).Render("Card Preview:"),
 				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Deck"), truncateLine(m.deckNameByID(selected.DeckID), previewWidth/2-10),
 				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Kind"), kind,

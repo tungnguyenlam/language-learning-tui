@@ -1,5 +1,30 @@
 # Done Backlog
 
+## 2026-05-13 (Autonomous Improvement Pass)
+
+Completed comprehensive improvement pass with 3 new German content decks, UI enhancements, E2E test expansions, and test regression fixes. Total E2E tests: 247 (all passing).
+
+### Content Expansion
+- Added **C2 German Literature** vocabulary deck (30 cards) - literature analysis, book types, stylistic devices.
+- Added **C1 German Politics & Society** vocabulary deck (40 cards) - government, elections, diplomacy, societal structures.
+- Added **B1 German Jobs & Professions** vocabulary deck (40 cards) - workplace, career, employment contracts, corporate roles.
+
+### UI/UX Improvements
+- **Review View:** Centered the text and layout inside the empty state box for better visual alignment.
+- **Browser View:** Replaced spacing with pipe separators (`|`) in the Card Preview box for clearer columnar reading.
+- **Statistics View:** Fixed a bug where double-rendered ANSI codes were misapplied to the muted scrollbar footer.
+
+### Testing & Developer Experience
+- Added unit tests for utility functions `stripANSI`, `trimLastRune`, and `singlePrintableInput`.
+- Fixed multiple test regressions caused by search filter state persistence in `test_new_batch3.py` and `test_new_decks_batch_3.py` by pressing Escape between searches.
+- Fixed a truncation bug in `test_new_content_visibility.py` where the test failed because a 30-character deck name was visually truncated by the UI layout.
+- Added new E2E test files: `test_c_level_decks.py`, `test_b1_jobs_deck.py`, and `test_ui_polish_batch_3.py` for comprehensive test coverage.
+
+### Verification
+- Total E2E tests: 247 (all passing).
+- All Go unit tests passing.
+- `./scripts/verify.sh` executed successfully with zero errors.
+
 ## 2026-05-12 16:00 +07 (Autonomous Improvement Pass)
 
 Completed comprehensive improvement pass with content expansion, UX enhancements, bug fixes, and testing expansion. Total E2E tests: 239 (all passing).

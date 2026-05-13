@@ -28,6 +28,10 @@ def test_b1_art_deck():
         try:
             agent.act("2")
             agent.wait_for_text("DECK LIST")
+
+            agent.act("<Esc>")
+            agent.wait_until_stable()
+
             agent.act("/")
             agent.act("art")
             agent.wait_for_text("B1 Art & Literature")
