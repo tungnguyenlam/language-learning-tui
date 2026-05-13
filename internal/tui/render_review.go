@@ -5,10 +5,73 @@ import (
 	"strings"
 	"time"
 
+	"deutsch-tui/internal/content"
 	"deutsch-tui/internal/core"
 
 	"charm.land/lipgloss/v2"
 )
+
+// renderGrammarHint builds a compact 2-4 line "how is this word used?" block
+// shown under the revealed answer. It analyses the card's German side and,
+// based on the detected word kind, surfaces gender + case shape (nouns),
+// conjugations (verbs), or comparison forms (adjectives), plus a curated or
+// auto-generated example sentence.
+func renderGrammarHint(card core.Card) string {
+	info := content.AnalyzeCard(card.Prompt, card.Answer)
+	if info.Kind == content.KindUnknown || info.Display == "" {
+		return ""
+	}
+
+	kindColor := lipgloss.Color("99")
+	switch info.Kind {
+	case content.KindNoun:
+		switch info.Gender {
+		case "masculine":
+			kindColor = lipgloss.Color("39") // blue der
+		case "feminine":
+			kindColor = lipgloss.Color("197") // red die
+		case "neuter":
+			kindColor = lipgloss.Color("46") // green das
+		}
+	case content.KindVerb:
+		kindColor = lipgloss.Color("214")
+	case content.KindAdjective:
+		kindColor = lipgloss.Color("117")
+	case content.KindPhrase:
+		kindColor = lipgloss.Color("141")
+	}
+
+	badge := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("231")).
+		Background(kindColor).
+		Bold(true).
+		Padding(0, 1).
+		Render(info.Kind.String())
+
+	labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
+	formStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("117")).Italic(true)
+	exampleStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("159")).Italic(true)
+	noteStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("245")).Italic(true)
+
+	var lines []string
+	header := badge + " " + lipgloss.NewStyle().Bold(true).Render(info.Display)
+	if info.Gender != "" {
+		header += "  " + labelStyle.Render("("+info.Gender+")")
+	}
+	lines = append(lines, header)
+
+	if len(info.Forms) > 0 {
+		lines = append(lines, labelStyle.Render("Forms:")+"   "+formStyle.Render(strings.Join(info.Forms, " · ")))
+	}
+	if info.Example != "" {
+		lines = append(lines, labelStyle.Render("Example:")+" "+exampleStyle.Render(info.Example))
+	}
+	if info.Note != "" {
+		lines = append(lines, noteStyle.Render(info.Note))
+	}
+
+	return strings.Join(lines, "\n")
+}
 
 func (m *Model) renderReview(x, y int) string {
 	if len(m.dueCards) == 0 {
@@ -187,6 +250,11 @@ func (m *Model) renderReview(x, y int) string {
 			Foreground(lipgloss.Color("159")).
 			Italic(true)
 		extraDisplay = "\n\n" + extraStyle.Render("💡 CONTEXT: "+card.Extra)
+	}
+	if m.revealState == RevealRevealed {
+		if hint := renderGrammarHint(card); hint != "" {
+			extraDisplay = "\n\n" + hint + extraDisplay
+		}
 	}
 
 	// Typing mode display
