@@ -36,6 +36,12 @@ func main() {
 		os.Exit(1)
 	}
 	pCfg := &cfg
+	secrets, err := app.LoadSecrets(dir)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, "load secrets:", err)
+		os.Exit(1)
+	}
+	pSecrets := &secrets
 	logFile, logger, err := app.OpenLog(dir)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
@@ -76,6 +82,7 @@ func main() {
 		AIProvider:          nil,
 		AIProviderName:      cfg.AIProvider,
 		AITemplates:         cfg.AITemplates,
+		AISecrets:           secrets,
 		AutoPlayAudio:       cfg.AutoPlayAudio,
 		StrictNormalization: cfg.StrictNormalization,
 		ImportPath:          filepath.Join(dir, "import.tsv"),
@@ -89,6 +96,12 @@ func main() {
 			pCfg.StrictNormalization = strictNormalization
 			if err := app.SaveConfig(dir, *pCfg); err != nil {
 				leveledLogger.Error("save config: %v", err)
+			}
+		},
+		OnSecretsChange: func(s app.Secrets) {
+			*pSecrets = s
+			if err := app.SaveSecrets(dir, *pSecrets); err != nil {
+				leveledLogger.Error("save secrets: %v", err)
 			}
 		},
 	}))

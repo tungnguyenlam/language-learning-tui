@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"deutsch-tui/internal/app"
+
 	"charm.land/lipgloss/v2"
 )
 
@@ -46,7 +48,7 @@ func (m *Model) renderSettings(x, y int) string {
 		MarginBottom(1)
 	b.WriteString(sectionStyle.Render("AI CONFIGURATION") + "\n")
 	b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Render(fmt.Sprintf("  Template Set: %s", activeSet)) + "\n\n")
-	b.WriteString(mutedStyle.Render("  Provider cycle: disabled -> offline -> template.") + "\n")
+	b.WriteString(mutedStyle.Render("  Provider cycle: disabled -> offline -> template -> openai -> anthropic.") + "\n")
 
 	setMap := m.aiTemplates[activeSet]
 	aiOptions := []string{
@@ -175,13 +177,92 @@ func (m *Model) renderSettings(x, y int) string {
 		Height: 1,
 	})
 
+	b.WriteString("\n" + sectionStyle.Render("API CREDENTIALS") + "\n")
+	credProvider := m.credProviderName()
+	disabledStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true)
+	if credProvider == "" {
+		b.WriteString(disabledStyle.Render("  (select openai or anthropic above to edit credentials)") + "\n")
+	} else {
+		b.WriteString(mutedStyle.Render(fmt.Sprintf("  Provider: %s. Press Enter on a row to edit.", credProvider)) + "\n")
+	}
+
+	creds := m.credsFor(credProvider)
+	credRows := []struct {
+		idx   int
+		label string
+		value string
+	}{
+		{7, "API Key:    ", app.MaskAPIKey(creds.APIKey)},
+		{8, "Model:      ", credValueOrDefault(creds.Model, credProvider)},
+		{9, "Base URL:   ", credValueOrDefault(creds.BaseURL, credProvider+"-url")},
+	}
+	for _, row := range credRows {
+		prefix = "  "
+		itemStyle = lipgloss.NewStyle()
+		if row.idx == m.settingsCursor {
+			prefix = "> "
+			if m.editingSecretKey != "" && credKeyForCursor(row.idx) == m.editingSecretKey {
+				itemStyle = itemStyle.Bold(true).Background(lipgloss.Color("62"))
+			} else if credProvider == "" {
+				itemStyle = itemStyle.Bold(true).Foreground(lipgloss.Color("240"))
+			} else {
+				itemStyle = itemStyle.Bold(true).Foreground(lipgloss.Color("212"))
+			}
+		} else if credProvider == "" {
+			itemStyle = itemStyle.Foreground(lipgloss.Color("240"))
+		}
+		displayValue := row.value
+		if m.editingSecretKey != "" && credKeyForCursor(row.idx) == m.editingSecretKey {
+			// Show what the user is currently typing.
+			raw := m.getCredValue(m.editingSecretProvider, m.editingSecretKey)
+			if m.editingSecretKey == "api_key" {
+				// Mask while typing too — show count of characters.
+				displayValue = fmt.Sprintf("•%d chars (Enter to save, Esc to cancel)", len(raw))
+			} else {
+				displayValue = raw + "▌"
+			}
+		}
+		item := fmt.Sprintf("%s%s%s", prefix, row.label, displayValue)
+		rowY = layout.Y + strings.Count(b.String(), "\n")
+		b.WriteString(itemStyle.Render(item) + "\n")
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     fmt.Sprintf("settings-%d", row.idx),
+			View:   ViewSettings,
+			X:      layout.X,
+			Y:      rowY,
+			Width:  lipgloss.Width(item),
+			Height: 1,
+		})
+	}
+
 	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 	b.WriteString(fmt.Sprintf("\nColor Theme: %s (Press %s to cycle)\n", m.theme, keyStyle.Render("c")))
 
-	if !m.editingTemplate {
+	if !m.editingTemplate && m.editingSecretKey == "" {
 		keyStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 		b.WriteString(fmt.Sprintf("\nUse %s/%s to move, %s goal, %s theme, Enter edit/toggle, %s/%s templates.",
 			keyStyle.Render("j"), keyStyle.Render("k"), keyStyle.Render("+/-"), keyStyle.Render("c"), keyStyle.Render("["), keyStyle.Render("]")))
 	}
 	return b.String()
+}
+
+// credValueOrDefault returns value if non-empty, else a short hint of the
+// provider's default. We avoid hardcoding the actual URLs/models here so
+// the source of truth stays in internal/ai.
+func credValueOrDefault(value, kind string) string {
+	v := strings.TrimSpace(value)
+	if v != "" {
+		return v
+	}
+	switch kind {
+	case "openai":
+		return "(default: gpt-4o-mini)"
+	case "anthropic":
+		return "(default: claude-haiku-4-5)"
+	case "openai-url":
+		return "(default: api.openai.com/v1)"
+	case "anthropic-url":
+		return "(default: api.anthropic.com)"
+	}
+	return "(not set)"
 }

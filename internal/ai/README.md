@@ -15,11 +15,28 @@ AI-powered content generation for German flashcards.
 
 ## Key Symbols
 
-- `AIProvider`: Interface for all AI backends.
-- `DraftNote`: Intermediary structure for unapproved content.
-- `OpenAIProvider`: (Example) implementation for OpenAI's API.
+- `Provider`: Interface for all AI backends.
+- `Draft`: Intermediary structure for unapproved content.
+- `OfflineProvider`: Generates stub flashcards locally — no network.
+- `TemplateProvider`: Substitutes a user-defined template per topic.
+- `OpenAIProvider`: Talks to any OpenAI-compatible Chat Completions endpoint (`/v1/chat/completions`). BaseURL is overridable, so the same code targets Azure OpenAI, OpenRouter, Groq, Ollama, etc.
+- `AnthropicProvider`: Talks to the Anthropic Messages API (`/v1/messages`). Sets `x-api-key` and `anthropic-version` headers.
+
+## Credentials
+
+API keys live in `secrets.json` next to `config.json`, written at file mode `0600` and never logged. The settings UI in the TUI displays the key masked (last 4 chars only). See `internal/app/secrets.go`.
+
+## Prompt / Response Shape
+
+Both providers share a system prompt that asks for strict JSON:
+
+```json
+{"cards": [{"front": "...", "back": "...", "extra": "...", "example": "..."}]}
+```
+
+`parseCardsJSON` tolerates leading prose, markdown fences, and braces inside example strings; it extracts the first balanced JSON object.
 
 ## Testing
 
-- **NO NETWORK**: Unit tests must use a `FakeProvider` to simulate AI responses.
-- **Validation Tests**: Ensure the parser can handle various AI output quirks (extra whitespace, different JSON shapes).
+- **NO NETWORK**: Unit tests must use a `FakeProvider`, `httptest.NewServer`, or a stubbed `http.Client` — never the real APIs.
+- **Validation Tests**: Ensure the parser can handle various AI output quirks (extra whitespace, different JSON shapes, markdown fences).

@@ -109,8 +109,8 @@ def test_navigation_to_new_settings():
         try:
             agent.act('7')
             agent.wait_until_stable()
-            # Test wrap around or limit
-            for _ in range(10):
+            # Stop at Strict Normalization (cursor 6) — 6 j keystrokes from cursor 0.
+            for _ in range(6):
                 agent.act('j')
             agent.assert_text("> Strict Normalization")
         finally:

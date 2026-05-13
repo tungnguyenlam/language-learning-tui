@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -175,6 +176,7 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 func (m *Model) textInputActive() bool {
 	return (m.activeView == ViewImport && m.editingImportPath) ||
 		(m.activeView == ViewSettings && m.editingTemplate) ||
+		(m.activeView == ViewSettings && m.editingSecretKey != "") ||
 		(m.activeView == ViewImport && m.editingExportTag) ||
 		m.taggingCards ||
 		m.searchingBrowser ||
@@ -682,6 +684,9 @@ func (m *Model) updateImportKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 }
 
 func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
+	if m.editingSecretKey != "" {
+		return m.handleSecretEditKey(msg)
+	}
 	if m.editingTemplate {
 		activeSet := m.currentAITemplateSet()
 		if activeSet == "" {
@@ -739,6 +744,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, true
 	}
 
+	// Secret-edit fall-through: handled at the top of updateSettingsKey.
 	switch msg.String() {
 	case "up", "k":
 		if m.settingsCursor > 0 {
@@ -746,7 +752,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "down", "j":
-		if m.settingsCursor < 6 {
+		if m.settingsCursor < 9 {
 			m.settingsCursor++
 		}
 		return nil, true
@@ -1080,4 +1086,58 @@ func (m *Model) updateSessionSummaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	m.sessionReviewed = 0
 	m.sessionCorrect = 0
 	return m.updateView(ViewDashboard), true
+}
+
+// handleSecretEditKey processes keys while the user is typing an API key,
+// model name, or base URL into Settings. Like template editing, Enter
+// commits the value and triggers a save; Esc reverts to the value we
+// stashed in originalSecretValue. Backspace and ctrl+u edit the buffer.
+func (m *Model) handleSecretEditKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
+	provider := m.editingSecretProvider
+	key := m.editingSecretKey
+	if provider == "" || key == "" {
+		m.editingSecretKey = ""
+		m.editingSecretProvider = ""
+		return nil, true
+	}
+
+	commit := func() {
+		// Rebuild the provider so the new credentials take effect immediately.
+		m.aiProvider = buildProvider(m.aiProviderName, m.aiSecrets, m.aiTemplates, m.currentAITemplateSet())
+		if m.onSecretsChange != nil {
+			m.onSecretsChange(m.aiSecrets)
+		}
+	}
+
+	switch msg.String() {
+	case "enter", "\r", "\n":
+		m.editingSecretKey = ""
+		m.editingSecretProvider = ""
+		m.originalSecretValue = ""
+		commit()
+		m.status = fmt.Sprintf("Saved %s %s", provider, key)
+		return nil, true
+	case "esc":
+		m.setCredValue(provider, key, m.originalSecretValue)
+		m.editingSecretKey = ""
+		m.editingSecretProvider = ""
+		m.originalSecretValue = ""
+		commit()
+		m.status = "Edit cancelled"
+		return nil, true
+	case "backspace":
+		val := m.getCredValue(provider, key)
+		if len(val) > 0 {
+			m.setCredValue(provider, key, trimLastRune(val))
+		}
+		return nil, true
+	case "ctrl+u":
+		m.setCredValue(provider, key, "")
+		return nil, true
+	}
+	if ch, ok := singlePrintableInput(msg.String()); ok {
+		m.setCredValue(provider, key, m.getCredValue(provider, key)+ch)
+		return nil, true
+	}
+	return nil, true
 }

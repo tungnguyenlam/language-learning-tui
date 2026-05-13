@@ -87,6 +87,11 @@ type Model struct {
 	aiTemplates           map[string]map[string]string
 	aiTemplateSets        []string
 	aiTemplateIndex       int
+	aiSecrets             app.Secrets
+	editingSecretKey      string // "" or "api_key"/"model"/"base_url"
+	editingSecretProvider string // "openai" or "anthropic"
+	originalSecretValue   string
+	onSecretsChange       func(app.Secrets)
 	autoPlayAudio         bool
 	strictNormalization   bool
 	stats                 core.Statistics
@@ -169,6 +174,32 @@ type Model struct {
 	typingCorrect         bool               // Whether typed answer was correct
 }
 
+// buildProvider returns the ai.Provider for the named choice. Unknown
+// names fall through to OfflineProvider so the app still drafts cards
+// even if the config file gets out of sync.
+func buildProvider(name string, secrets app.Secrets, templates map[string]map[string]string, activeSet string) ai.Provider {
+	switch name {
+	case "disabled":
+		return nil
+	case "template":
+		return ai.TemplateProvider{Templates: templates, ActiveSet: activeSet}
+	case "openai":
+		return ai.OpenAIProvider{
+			APIKey:  secrets.OpenAI.APIKey,
+			Model:   secrets.OpenAI.Model,
+			BaseURL: secrets.OpenAI.BaseURL,
+		}
+	case "anthropic":
+		return ai.AnthropicProvider{
+			APIKey:  secrets.Anthropic.APIKey,
+			Model:   secrets.Anthropic.Model,
+			BaseURL: secrets.Anthropic.BaseURL,
+		}
+	default:
+		return ai.OfflineProvider{}
+	}
+}
+
 func NewModel(repo core.Repository, scheduler core.Scheduler) *Model {
 	return NewModelWithAI(repo, scheduler, ai.OfflineProvider{})
 }
@@ -185,12 +216,14 @@ type ModelOptions struct {
 	AIProvider          ai.Provider
 	AIProviderName      string
 	AITemplates         map[string]map[string]string
+	AISecrets           app.Secrets
 	AutoPlayAudio       bool
 	StrictNormalization bool
 	ImportPath          string
 	ExportPath          string
 	OnConfigChange      func(string, string, map[string]map[string]string, bool, bool)
-	Logger              *app.LeveledLogger // Add logger option
+	OnSecretsChange     func(app.Secrets)
+	Logger              *app.LeveledLogger
 }
 
 func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts ModelOptions) *Model {
@@ -256,21 +289,11 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 	strictNormalization := opts.StrictNormalization
 	provider := opts.AIProvider
 	if provider == nil {
-		switch providerName {
-		case "template":
-			activeSet := ""
-			if len(sets) > 0 {
-				activeSet = sets[aiTemplateIndex]
-			}
-			provider = ai.TemplateProvider{
-				Templates: templates,
-				ActiveSet: activeSet,
-			}
-		case "disabled":
-			provider = nil
-		default:
-			provider = ai.OfflineProvider{}
+		activeSet := ""
+		if len(sets) > 0 {
+			activeSet = sets[aiTemplateIndex]
 		}
+		provider = buildProvider(providerName, opts.AISecrets, templates, activeSet)
 	}
 	importPath := opts.ImportPath
 	if strings.TrimSpace(importPath) == "" {
@@ -310,6 +333,8 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		exportPath:          filepath.Clean(exportPath),
 		exportFilter:        "All",
 		onConfigChange:      opts.OnConfigChange,
+		onSecretsChange:     opts.OnSecretsChange,
+		aiSecrets:           opts.AISecrets,
 		browserSelected:     make(map[string]bool),
 		deckSelected:        make(map[string]bool),
 		logger:              logger, // Set the logger

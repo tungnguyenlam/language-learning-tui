@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"deutsch-tui/internal/ai"
+	"deutsch-tui/internal/app"
 	"deutsch-tui/internal/content"
 	"deutsch-tui/internal/core"
 
@@ -619,22 +620,17 @@ func (m *Model) gradeCramCard(grade core.ReviewGrade) tea.Cmd {
 func (m *Model) handleSettingsEnter() tea.Cmd {
 	switch m.settingsCursor {
 	case 0:
-		switch m.aiProviderName {
-		case "offline":
-			m.aiProviderName = "template"
-			activeSet := ""
-			activeSet = m.currentAITemplateSet()
-			m.aiProvider = ai.TemplateProvider{
-				Templates: m.aiTemplates,
-				ActiveSet: activeSet,
+		// Provider cycle: disabled → offline → template → openai → anthropic → disabled
+		cycle := []string{"disabled", "offline", "template", "openai", "anthropic"}
+		next := "disabled"
+		for i, name := range cycle {
+			if name == m.aiProviderName {
+				next = cycle[(i+1)%len(cycle)]
+				break
 			}
-		case "template":
-			m.aiProviderName = "disabled"
-			m.aiProvider = nil
-		default:
-			m.aiProviderName = "offline"
-			m.aiProvider = ai.OfflineProvider{}
 		}
+		m.aiProviderName = next
+		m.aiProvider = buildProvider(next, m.aiSecrets, m.aiTemplates, m.currentAITemplateSet())
 		m.status = fmt.Sprintf("Switched to %s AI provider", m.aiProviderName)
 		if m.onConfigChange != nil {
 			m.onConfigChange(m.theme, m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
@@ -642,8 +638,7 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 
 	case 1, 2, 3:
 		m.editingTemplate = true
-		activeSet := ""
-		activeSet = m.currentAITemplateSet()
+		activeSet := m.currentAITemplateSet()
 		key := ""
 		switch m.settingsCursor {
 		case 1:
@@ -674,8 +669,83 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		if m.onConfigChange != nil {
 			m.onConfigChange(m.theme, m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
 		}
+	case 7, 8, 9:
+		provider := m.credProviderName()
+		if provider == "" {
+			m.status = "Select OpenAI or Anthropic first (Enter on AI Provider)"
+			return nil
+		}
+		key := credKeyForCursor(m.settingsCursor)
+		m.editingSecretProvider = provider
+		m.editingSecretKey = key
+		m.originalSecretValue = m.getCredValue(provider, key)
+		m.status = fmt.Sprintf("Editing %s %s — Enter to save, Esc to cancel", provider, key)
 	}
 	return nil
+}
+
+// credProviderName returns "openai" or "anthropic" when the active provider
+// is a key-based one, otherwise an empty string. The credential rows in
+// Settings only act on the currently-selected provider.
+func (m *Model) credProviderName() string {
+	switch m.aiProviderName {
+	case "openai", "anthropic":
+		return m.aiProviderName
+	}
+	return ""
+}
+
+func credKeyForCursor(cursor int) string {
+	switch cursor {
+	case 7:
+		return "api_key"
+	case 8:
+		return "model"
+	case 9:
+		return "base_url"
+	}
+	return ""
+}
+
+func (m *Model) getCredValue(provider, key string) string {
+	c := m.credsFor(provider)
+	switch key {
+	case "api_key":
+		return c.APIKey
+	case "model":
+		return c.Model
+	case "base_url":
+		return c.BaseURL
+	}
+	return ""
+}
+
+func (m *Model) credsFor(provider string) app.ProviderCreds {
+	switch provider {
+	case "openai":
+		return m.aiSecrets.OpenAI
+	case "anthropic":
+		return m.aiSecrets.Anthropic
+	}
+	return app.ProviderCreds{}
+}
+
+func (m *Model) setCredValue(provider, key, value string) {
+	c := m.credsFor(provider)
+	switch key {
+	case "api_key":
+		c.APIKey = value
+	case "model":
+		c.Model = value
+	case "base_url":
+		c.BaseURL = value
+	}
+	switch provider {
+	case "openai":
+		m.aiSecrets.OpenAI = c
+	case "anthropic":
+		m.aiSecrets.Anthropic = c
+	}
 }
 
 func (m *Model) cycleTheme() tea.Cmd {

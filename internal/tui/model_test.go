@@ -596,31 +596,44 @@ func TestSettingsProviderSwitching(t *testing.T) {
 		t.Fatalf("initial provider = %q, want offline", model.aiProviderName)
 	}
 
-	// Cycle: offline -> template
-	model.Update(tea.KeyPressMsg{Code: '\r'}) // Enter
-	if model.aiProviderName != "template" {
-		t.Fatalf("provider after toggle 1 = %q, want template", model.aiProviderName)
+	// New cycle: disabled -> offline -> template -> openai -> anthropic -> disabled
+	steps := []struct {
+		want     string
+		wantType string // "nil", "template", "offline", "openai", "anthropic"
+	}{
+		{"template", "template"},
+		{"openai", "openai"},
+		{"anthropic", "anthropic"},
+		{"disabled", "nil"},
+		{"offline", "offline"},
 	}
-	if _, ok := model.aiProvider.(ai.TemplateProvider); !ok {
-		t.Fatal("aiProvider should be TemplateProvider")
-	}
-
-	// Cycle: template -> disabled
-	model.Update(tea.KeyPressMsg{Code: '\r'})
-	if model.aiProviderName != "disabled" {
-		t.Fatalf("provider after toggle 2 = %q, want disabled", model.aiProviderName)
-	}
-	if model.aiProvider != nil {
-		t.Fatal("aiProvider should be nil when disabled")
-	}
-
-	// Cycle: disabled -> offline
-	model.Update(tea.KeyPressMsg{Code: '\r'})
-	if model.aiProviderName != "offline" {
-		t.Fatalf("provider after toggle 3 = %q, want offline", model.aiProviderName)
-	}
-	if _, ok := model.aiProvider.(ai.OfflineProvider); !ok {
-		t.Fatal("aiProvider should be OfflineProvider")
+	for i, step := range steps {
+		model.Update(tea.KeyPressMsg{Code: '\r'})
+		if model.aiProviderName != step.want {
+			t.Fatalf("step %d provider = %q, want %q", i+1, model.aiProviderName, step.want)
+		}
+		switch step.wantType {
+		case "nil":
+			if model.aiProvider != nil {
+				t.Fatalf("step %d provider should be nil", i+1)
+			}
+		case "template":
+			if _, ok := model.aiProvider.(ai.TemplateProvider); !ok {
+				t.Fatalf("step %d provider should be TemplateProvider", i+1)
+			}
+		case "offline":
+			if _, ok := model.aiProvider.(ai.OfflineProvider); !ok {
+				t.Fatalf("step %d provider should be OfflineProvider", i+1)
+			}
+		case "openai":
+			if _, ok := model.aiProvider.(ai.OpenAIProvider); !ok {
+				t.Fatalf("step %d provider should be OpenAIProvider", i+1)
+			}
+		case "anthropic":
+			if _, ok := model.aiProvider.(ai.AnthropicProvider); !ok {
+				t.Fatalf("step %d provider should be AnthropicProvider", i+1)
+			}
+		}
 	}
 }
 

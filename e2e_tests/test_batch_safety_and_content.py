@@ -26,12 +26,10 @@ def test_ai_disabled_warning_and_generate_guard():
         try:
             agent.act("7")
             agent.wait_for_text("Settings")
-            agent.act("<Enter>")
-            agent.wait_for_text("AI Provider:    offline")
-            agent.act("<Enter>")
-            agent.wait_for_text("AI Provider:    template")
-            agent.act("<Enter>")
-            agent.wait_for_text("AI Provider:    disabled")
+            # Cycle through every provider so we land back on disabled.
+            for want in ["offline", "template", "openai", "anthropic", "disabled"]:
+                agent.act("<Enter>")
+                agent.wait_for_text(f"AI Provider:    {want}")
             agent.act("6")
             agent.wait_for_text("AI Drafts")
             agent.assert_text("AI provider is disabled")
