@@ -191,6 +191,7 @@ Switch views with **Tab** / **Shift+Tab**, **←**/**→** (or **w**/**s**), or 
 | `r` | Toggle review history |
 | `p` | Play audio |
 | `d` | Open dictionary for prompt line |
+| `F` / `!` | Report card as wrong — AI proposes a fix (press `y` to apply, `n` to discard) |
 | `delete` / `backspace` | Delete current card |
 
 ### Decks

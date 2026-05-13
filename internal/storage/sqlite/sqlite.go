@@ -237,6 +237,28 @@ func (s *Store) Decks(ctx context.Context) ([]core.Deck, error) {
 	return decks, rows.Err()
 }
 
+func (s *Store) GetNote(ctx context.Context, noteID string) (core.Note, error) {
+	var note core.Note
+	var tags string
+	err := s.db.QueryRowContext(ctx, `
+		SELECT id, deck_id, front, back, extra, audio, tags
+		FROM notes
+		WHERE id = ?
+	`, noteID).Scan(&note.ID, &note.DeckID, &note.Front, &note.Back, &note.Extra, &note.Audio, &tags)
+	if err != nil {
+		return core.Note{}, err
+	}
+	if tags != "" {
+		note.Tags = strings.Fields(tags)
+	}
+	cards, err := s.cardsForNote(ctx, note.ID)
+	if err != nil {
+		return note, err
+	}
+	note.Cards = cards
+	return note, nil
+}
+
 func (s *Store) UpsertNote(ctx context.Context, note core.Note) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {

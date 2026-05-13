@@ -363,6 +363,33 @@ func (m *mockRepo) ReviewHistory(ctx context.Context, cardID string, limit int) 
 	return logs, nil
 }
 
+func (m *mockRepo) GetNote(ctx context.Context, noteID string) (core.Note, error) {
+	for _, card := range m.dueCards {
+		if card.NoteID == noteID {
+			return core.Note{
+				ID:     noteID,
+				DeckID: card.DeckID,
+				Front:  card.Prompt,
+				Back:   card.Answer,
+				Extra:  card.Extra,
+				Tags:   card.Tags,
+			}, nil
+		}
+	}
+	return core.Note{ID: noteID}, nil
+}
+
+func (m *mockRepo) UpsertNote(ctx context.Context, note core.Note) error {
+	for i := range m.dueCards {
+		if m.dueCards[i].NoteID == note.ID {
+			m.dueCards[i].Prompt = note.Front
+			m.dueCards[i].Answer = note.Back
+			m.dueCards[i].Extra = note.Extra
+		}
+	}
+	return nil
+}
+
 func containsIgnoreCase(s, substr string) bool {
 	s = strings.ToLower(s)
 	substr = strings.ToLower(substr)

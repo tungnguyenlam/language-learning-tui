@@ -875,3 +875,120 @@ func (m *Model) exportStatsCSV() tea.Cmd {
 		return statusMsg{text: fmt.Sprintf("Exported deck stats to %s", path)}
 	}
 }
+
+// fixProposalMsg carries the AI's proposed correction back to the model.
+type fixProposalMsg struct {
+	cardID   string
+	oldNote  core.Note
+	proposal ai.FixedNote
+}
+
+// fixErrorMsg carries an error from the fix flow back to the model.
+type fixErrorMsg struct {
+	cardID string
+	err    error
+}
+
+// fixAppliedMsg signals that a fix has been persisted; carries refreshed
+// due cards so the visible card is updated immediately.
+type fixAppliedMsg struct {
+	cardID string
+	cards  []core.Card
+}
+
+// reportCardWrong starts the fix-card flow for the currently focused
+// review card. It fetches the underlying note, then sends it to the
+// active AI provider for correction. The model state is updated via
+// fixProposalMsg / fixErrorMsg.
+func (m *Model) reportCardWrong() tea.Cmd {
+	if m.activeView != ViewReview || len(m.dueCards) == 0 || m.fixingCard {
+		return nil
+	}
+	card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
+	if card.NoteID == "" {
+		m.status = "Cannot fix this card (missing note id)"
+		return nil
+	}
+	provider := m.aiProvider
+	if provider == nil {
+		m.status = "Enable an AI provider in Settings to fix cards"
+		return nil
+	}
+	m.fixingCard = true
+	m.fixCardID = card.ID
+	m.fixOldNote = nil
+	m.fixProposal = nil
+	m.fixError = ""
+	m.status = "Reporting card to AI for review…"
+	noteID := card.NoteID
+	cardID := card.ID
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancel()
+		note, err := m.repo.GetNote(ctx, noteID)
+		if err != nil || note.ID == "" {
+			// Fall back to synthesizing a note from the visible card so
+			// users on older data without notes can still get help.
+			note = core.Note{
+				ID:     noteID,
+				DeckID: card.DeckID,
+				Front:  card.Prompt,
+				Back:   card.Answer,
+				Extra:  card.Extra,
+				Tags:   card.Tags,
+			}
+		}
+		proposal, err := ai.FixCard(ctx, provider, ai.FixRequest{Note: note})
+		if err != nil {
+			return fixErrorMsg{cardID: cardID, err: err}
+		}
+		return fixProposalMsg{cardID: cardID, oldNote: note, proposal: proposal}
+	}
+}
+
+// applyFixProposal persists the AI's proposed correction to the active
+// note. SRS state is preserved because card IDs are deterministic from
+// the note ID and CardsForNote regenerates them with the same IDs.
+func (m *Model) applyFixProposal() tea.Cmd {
+	if m.fixOldNote == nil || m.fixProposal == nil {
+		return nil
+	}
+	old := *m.fixOldNote
+	fix := *m.fixProposal
+	cardID := m.fixCardID
+	m.fixingCard = false
+	m.fixOldNote = nil
+	m.fixProposal = nil
+	m.fixCardID = ""
+	m.status = "Applying fix…"
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		updated := old
+		updated.Front = fix.Front
+		updated.Back = fix.Back
+		updated.Extra = fix.Extra
+		if fix.Example != "" {
+			updated.Examples = []string{fix.Example}
+		}
+		updated.Cards = content.CardsForNote(updated)
+		if err := m.repo.UpsertNote(ctx, updated); err != nil {
+			return fixErrorMsg{cardID: cardID, err: err}
+		}
+		cards, err := m.repo.DueCards(ctx, time.Now(), 500)
+		if err != nil {
+			return fixErrorMsg{cardID: cardID, err: err}
+		}
+		return fixAppliedMsg{cardID: cardID, cards: cards}
+	}
+}
+
+// discardFixProposal cancels the fix preview without persisting anything.
+func (m *Model) discardFixProposal() {
+	m.fixingCard = false
+	m.fixOldNote = nil
+	m.fixProposal = nil
+	m.fixCardID = ""
+	m.fixError = ""
+	m.status = "Fix discarded"
+}

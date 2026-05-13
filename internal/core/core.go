@@ -145,6 +145,8 @@ type Repository interface {
 	DeleteDecks(ctx context.Context, ids []string) error
 	MergeDecks(ctx context.Context, sourceIDs []string, targetID string) error
 	SetCardKind(ctx context.Context, cardID string, kind CardKind) error
+	GetNote(ctx context.Context, noteID string) (Note, error)
+	UpsertNote(ctx context.Context, note Note) error
 	SetCardTags(ctx context.Context, cardID string, tags []string) error
 	SetCardsTags(ctx context.Context, cardIDs []string, tags []string) error
 	CleanupTags(ctx context.Context, deckID string) error

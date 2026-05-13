@@ -385,7 +385,69 @@ func (m *Model) renderReview(x, y int) string {
 	if m.showReviewHistory && m.reviewHistoryCard == card.ID {
 		view += "\n\n" + m.renderReviewHistory(card.Prompt)
 	}
+	if m.fixingCard {
+		spinFrames := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
+		spin := spinFrames[m.spinnerFrame%len(spinFrames)]
+		view += "\n\n" + lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(colorYellow).
+			Padding(0, 1).
+			Render(infoStyle.Bold(true).Render("Reporting card to AI…")+"  "+spin)
+	}
+	if m.fixProposal != nil && m.fixOldNote != nil {
+		view += "\n\n" + m.renderFixProposal()
+	}
 	return view
+}
+
+// renderFixProposal shows the AI's proposed correction next to the
+// current values so the user can decide whether to apply it.
+func (m *Model) renderFixProposal() string {
+	old := *m.fixOldNote
+	fix := *m.fixProposal
+
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(colorYellow)
+	labelStyle := lipgloss.NewStyle().Foreground(colorMuted)
+	oldStyle := lipgloss.NewStyle().Foreground(colorOrange)
+	newStyle := lipgloss.NewStyle().Foreground(colorSuccess).Bold(true)
+	reasonStyle := lipgloss.NewStyle().Foreground(colorCyan).Italic(true)
+
+	row := func(label, oldVal, newVal string) string {
+		if strings.TrimSpace(oldVal) == "" && strings.TrimSpace(newVal) == "" {
+			return ""
+		}
+		changed := strings.TrimSpace(oldVal) != strings.TrimSpace(newVal)
+		newRendered := newStyle.Render(newVal)
+		if !changed {
+			newRendered = labelStyle.Render(newVal + "  (unchanged)")
+		}
+		return labelStyle.Render(label) + "\n" +
+			"  " + labelStyle.Render("old: ") + oldStyle.Render(oldVal) + "\n" +
+			"  " + labelStyle.Render("new: ") + newRendered + "\n"
+	}
+
+	oldExample := ""
+	if len(old.Examples) > 0 {
+		oldExample = old.Examples[0]
+	}
+
+	body := titleStyle.Render("AI-proposed fix") + "\n"
+	if fix.Reason != "" {
+		body += reasonStyle.Render("Reason: "+fix.Reason) + "\n\n"
+	}
+	body += row("Front:", old.Front, fix.Front)
+	body += row("Back:", old.Back, fix.Back)
+	body += row("Extra:", old.Extra, fix.Extra)
+	body += row("Example:", oldExample, fix.Example)
+	body += "\n" + labelStyle.Render("Press ") + keyStyle.Render("y") +
+		labelStyle.Render(" to apply, ") + keyStyle.Render("n") +
+		labelStyle.Render(" to discard.")
+
+	return lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(colorYellow).
+		Padding(0, 1).
+		Render(body)
 }
 
 func renderMCQChoices(choices []string, selected int) string {

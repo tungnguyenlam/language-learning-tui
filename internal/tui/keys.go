@@ -27,6 +27,19 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	// 0.05 Fix-proposal preview trapping: when the AI has returned a
+	// correction, only y/n/esc are meaningful until the user decides.
+	if m.fixProposal != nil {
+		switch key {
+		case "y", "Y", "enter":
+			return m, m.applyFixProposal()
+		case "n", "N", "esc":
+			m.discardFixProposal()
+			return m, nil
+		}
+		return m, nil
+	}
+
 	// 0.1 Deletion confirmation trapping
 	if m.confirmingDelete {
 		switch key {
@@ -396,6 +409,8 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return m.toggleBookmarkFilter(), true
 	case "x":
 		return m.suspendCard(), true
+	case "!", "F":
+		return m.reportCardWrong(), true
 	case "delete", "backspace":
 		if len(m.dueCards) > 0 {
 			card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]

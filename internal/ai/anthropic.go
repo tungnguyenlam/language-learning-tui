@@ -113,6 +113,69 @@ func (p AnthropicProvider) GenerateDrafts(ctx context.Context, request DraftRequ
 	return draftsFromRaw(rawCards, request)
 }
 
+// SendChat performs a single Anthropic Messages turn with system+user
+// content and returns the raw text content. Used by FixCard.
+func (p AnthropicProvider) SendChat(ctx context.Context, system, user string) (string, error) {
+	if strings.TrimSpace(p.APIKey) == "" {
+		return "", errors.New("anthropic: API key is required (set it in Settings)")
+	}
+	model := strings.TrimSpace(p.Model)
+	if model == "" {
+		model = defaultAnthropicModel
+	}
+	baseURL := strings.TrimRight(strings.TrimSpace(p.BaseURL), "/")
+	if baseURL == "" {
+		baseURL = defaultAnthropicBaseURL
+	}
+	body := anthropicRequestBody{
+		Model:       model,
+		MaxTokens:   defaultAnthropicMaxTok,
+		System:      system,
+		Messages:    []anthropicMessage{{Role: "user", Content: user}},
+		Temperature: 0.2,
+	}
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return "", fmt.Errorf("anthropic: encode chat request: %w", err)
+	}
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+"/v1/messages", bytes.NewReader(buf))
+	if err != nil {
+		return "", fmt.Errorf("anthropic: build chat request: %w", err)
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("x-api-key", p.APIKey)
+	req.Header.Set("anthropic-version", defaultAnthropicVersion)
+	client := p.Client
+	if client == nil {
+		timeout := p.Timeout
+		if timeout == 0 {
+			timeout = 60 * time.Second
+		}
+		client = &http.Client{Timeout: timeout}
+	}
+	resp, err := client.Do(req)
+	if err != nil {
+		return "", fmt.Errorf("anthropic: chat request: %w", err)
+	}
+	defer resp.Body.Close()
+	respBytes, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+	if err != nil {
+		return "", fmt.Errorf("anthropic: read chat response: %w", err)
+	}
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return "", fmt.Errorf("anthropic: %s — %s", resp.Status, truncate(string(respBytes), 400))
+	}
+	var parsed anthropicResponse
+	if err := json.Unmarshal(respBytes, &parsed); err != nil {
+		return "", fmt.Errorf("anthropic: decode chat response: %w", err)
+	}
+	text := joinAnthropicText(parsed.Content)
+	if text == "" {
+		return "", errors.New("anthropic: empty chat response")
+	}
+	return text, nil
+}
+
 type anthropicRequestBody struct {
 	Model       string             `json:"model"`
 	MaxTokens   int                `json:"max_tokens"`

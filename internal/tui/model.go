@@ -172,6 +172,14 @@ type Model struct {
 	typedAnswer           string             // Current typed answer
 	typingChecked         bool               // Whether typing answer has been checked
 	typingCorrect         bool               // Whether typed answer was correct
+
+	// Card-fix flow: user reports the current Review card as wrong; AI
+	// proposes a corrected note metadata; the user accepts or discards.
+	fixingCard  bool          // AI request in flight
+	fixCardID   string        // card the fix targets (for UI clarity)
+	fixOldNote  *core.Note    // original note (snapshot before AI)
+	fixProposal *ai.FixedNote // AI's proposed correction (nil until ready)
+	fixError    string        // last fix error, if any
 }
 
 // buildProvider returns the ai.Provider for the named choice. Unknown
@@ -517,6 +525,28 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.logger.Info("Updated tags for %d cards", len(msg.cardIDs))
 		return m, m.setStatus(fmt.Sprintf("Updated tags for %d cards", len(msg.cardIDs)), 3*time.Second)
+	case fixProposalMsg:
+		m.fixingCard = false
+		note := msg.oldNote
+		m.fixOldNote = &note
+		prop := msg.proposal
+		m.fixProposal = &prop
+		m.fixError = ""
+		m.logger.Info("AI returned fix proposal for card %s", msg.cardID)
+		m.status = "Review the proposed fix: y to apply, n to discard"
+		return m, nil
+	case fixErrorMsg:
+		m.fixingCard = false
+		m.fixOldNote = nil
+		m.fixProposal = nil
+		m.fixError = msg.err.Error()
+		m.logger.Error("Fix failed for card %s: %v", msg.cardID, msg.err)
+		return m, m.setStatus("Fix failed: "+msg.err.Error(), 5*time.Second)
+	case fixAppliedMsg:
+		m.allDue = msg.cards
+		m.applyDeckFilter()
+		m.logger.Info("Applied fix for card %s", msg.cardID)
+		return m, m.setStatus("Card updated by AI", 3*time.Second)
 	case deckDeletedMsg:
 		m.logger.Info("Deck deleted")
 		return m, tea.Batch(m.loadDecks, m.loadDueCards)
