@@ -541,9 +541,9 @@ func (m *Model) applyDeckFilter() {
 	if m.activeView == ViewReview {
 		if !m.showHelp {
 			if len(m.dueCards) == 0 {
-				m.status = "All caught up!"
+				m.status = fmt.Sprintf("All caught up in %s", m.deckLabel())
 			} else {
-				m.status = fmt.Sprintf("%d cards due", len(m.dueCards))
+				m.status = fmt.Sprintf("%d cards due in %s", len(m.dueCards), m.deckLabel())
 			}
 		} else {
 			m.status = "Help overlay shown. Press ? to close."

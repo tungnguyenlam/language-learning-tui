@@ -19,6 +19,9 @@ func (m *Model) renderReview(x, y int) string {
 			message = "No bookmarked cards due."
 		}
 
+		deckLabelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
+		deckLine := fmt.Sprintf("Current Deck: %s", deckLabelStyle.Render(m.deckLabel()))
+
 		// Enhanced empty state with keyboard guidance
 		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 		shortcutGuide := fmt.Sprintf("Use %s and %s to switch decks or %s to toggle the bookmark filter.\nPress %s for Custom Study (Cram Mode).",
@@ -30,7 +33,7 @@ func (m *Model) renderReview(x, y int) string {
 			Padding(1, 2).
 			Width(60).
 			Align(lipgloss.Center).
-			Render(message + "\n\n" + shortcutGuide)
+			Render(deckLine + "\n" + message + "\n\n" + shortcutGuide)
 		return title + "\n\n" + emptyBox
 	}
 	cursor := clampInt(m.cursor, 0, len(m.dueCards)-1)
