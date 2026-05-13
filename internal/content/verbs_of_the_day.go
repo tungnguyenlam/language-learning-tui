@@ -455,6 +455,54 @@ var dailyVerbs = []DailyVerb{
 		Wir: "bezahlen", Ihr: "bezahlt", SieSie: "bezahlen",
 		Example: "Wir möchten bitte bezahlen.",
 	},
+	{
+		German: "feiern", English: "to celebrate",
+		Ich: "feiere", Du: "feierst", ErSieEs: "feiert",
+		Wir: "feiern", Ihr: "feiert", SieSie: "feiern",
+		Example: "Wir feiern heute Geburtstag.",
+	},
+	{
+		German: "reisen", English: "to travel",
+		Ich: "reise", Du: "reist", ErSieEs: "reist",
+		Wir: "reisen", Ihr: "reist", SieSie: "reisen",
+		Example: "Im Sommer reisen wir nach Italien.",
+	},
+	{
+		German: "üben", English: "to practise",
+		Ich: "übe", Du: "übst", ErSieEs: "übt",
+		Wir: "üben", Ihr: "übt", SieSie: "üben",
+		Example: "Sie übt jeden Tag Klavier.",
+	},
+	{
+		German: "wiederholen", English: "to repeat / to revise",
+		Ich: "wiederhole", Du: "wiederholst", ErSieEs: "wiederholt",
+		Wir: "wiederholen", Ihr: "wiederholt", SieSie: "wiederholen",
+		Example: "Wir wiederholen die Vokabeln vor dem Test.",
+	},
+	{
+		German: "verstehen", English: "to understand",
+		Ich: "verstehe", Du: "verstehst", ErSieEs: "versteht",
+		Wir: "verstehen", Ihr: "versteht", SieSie: "verstehen",
+		Example: "Ich verstehe das Wort nicht.",
+	},
+	{
+		German: "erklären", English: "to explain",
+		Ich: "erkläre", Du: "erklärst", ErSieEs: "erklärt",
+		Wir: "erklären", Ihr: "erklärt", SieSie: "erklären",
+		Example: "Kannst du mir die Grammatik erklären?",
+	},
+	{
+		German: "sich erinnern", English: "to remember",
+		Ich: "erinnere mich", Du: "erinnerst dich", ErSieEs: "erinnert sich",
+		Wir: "erinnern uns", Ihr: "erinnert euch", SieSie: "erinnern sich",
+		Example: "Ich erinnere mich an meine Kindheit.",
+	},
+	{
+		German: "sich freuen", English: "to be happy / to look forward to",
+		Ich: "freue mich", Du: "freust dich", ErSieEs: "freut sich",
+		Wir: "freuen uns", Ihr: "freut euch", SieSie: "freuen sich",
+		Example: "Ich freue mich auf das Wochenende.",
+	},
 }
 
 func GetVerbOfTheDay() DailyVerb {

@@ -57,8 +57,17 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 	col2.WriteString(fmt.Sprintf("  %s %s\n", bar, valueStyle.Render(fmt.Sprintf("%.0f%%", percentage*100))))
 
 	streakIndicator := ""
-	if m.stats.CurrentStreak > 0 {
+	switch {
+	case m.stats.CurrentStreak >= 100:
+		streakIndicator = " 🏆🔥🔥"
+	case m.stats.CurrentStreak >= 30:
+		streakIndicator = " 🔥🔥"
+	case m.stats.CurrentStreak >= 14:
+		streakIndicator = " 🔥✨"
+	case m.stats.CurrentStreak >= 7:
 		streakIndicator = " 🔥"
+	case m.stats.CurrentStreak > 0:
+		streakIndicator = " ⚡"
 	}
 	col2.WriteString(fmt.Sprintf("%s %s%s\n", labelStyle.Render("Current Streak:"), valueStyle.Render(fmt.Sprintf("%d days", m.stats.CurrentStreak)), streakIndicator))
 

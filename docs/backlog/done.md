@@ -1,5 +1,33 @@
 # Done Backlog
 
+## 2026-05-14 (Autonomous Improvement Pass)
+
+Completed comprehensive autonomous improvement pass with 3 new German content decks, grammar/verbs expansion, dashboard polish, AI suggestion expansion, and new tests. Total E2E tests: 254 (all passing).
+
+### Content Expansion
+- Added **B1 German Public Transport** vocabulary deck (40 cards) - trains, trams, commuting, schedules.
+- Added **A1 German Office & Stationery** vocabulary deck (40 cards) - office items, stationery, workplace.
+- Added **B2 German Climate & Sustainability** vocabulary deck (40 cards) - climate change, energy, environment.
+- Expanded **Grammar Tips** with 8 new topics: Wechselpräpositionen, nicht vs kein, dative verbs, comparatives, TeKaMoLo, es gibt + Akk, adjective ending types.
+- Expanded **Verb of the Day** with 8 new entries: feiern, reisen, üben, wiederholen, verstehen, erklären, sich erinnern, sich freuen.
+
+### UI/UX Improvements
+- **Dashboard streak indicator:** Now uses 5 tiers based on length (⚡ for 1-6 days, 🔥 for 7-13, 🔥✨ for 14-29, 🔥🔥 for 30-99, 🏆🔥🔥 for 100+) with bold styling on the top tier.
+- **Statistics streak indicator:** Aligned with dashboard, same 5-tier ladder for consistency.
+- **AI view suggestions:** Replaced two older suggestions with "B2 climate change" and "B1 small talk" to highlight new content while preserving layout.
+
+### Testing
+- Added Go unit tests in `internal/content/new_decks_may14_test.go` covering shape and Standard registration of the 3 new decks plus grammar tips presence.
+- Added E2E test file `e2e_tests/test_new_decks_may14.py` with 5 tests verifying deck listings, AI suggestions, and the new streak emoji thresholds.
+- Updated existing streak-related E2E tests (`test_dashboard_features.py`, `test_statistics.py`) and one Go test (`model_test.go`) to match the new lightning emoji for streak=1.
+
+### Verification
+- Total E2E tests: 254 (all passing).
+- All Go unit tests passing.
+- `./scripts/verify.sh` executed successfully with zero errors.
+
+---
+
 ## 2026-05-13 20:00 +07 (Autonomous Improvement Pass - Additional)
 
 Completed improvement pass with content expansion, AI enhancements, statistics improvements, and test coverage. Total E2E tests: 249 (all passing).

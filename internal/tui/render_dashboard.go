@@ -12,10 +12,17 @@ import (
 
 func (m *Model) renderDashboard(layout viewportLayout) string {
 	streakIndicator := ""
-	if m.stats.CurrentStreak >= 30 {
+	switch {
+	case m.stats.CurrentStreak >= 100:
+		streakIndicator = lipgloss.NewStyle().Foreground(colorGold).Bold(true).Render(" 🏆🔥🔥")
+	case m.stats.CurrentStreak >= 30:
 		streakIndicator = lipgloss.NewStyle().Foreground(colorGold).Render(" 🔥🔥")
-	} else if m.stats.CurrentStreak > 0 {
+	case m.stats.CurrentStreak >= 14:
+		streakIndicator = lipgloss.NewStyle().Foreground(colorOrange).Render(" 🔥✨")
+	case m.stats.CurrentStreak >= 7:
 		streakIndicator = lipgloss.NewStyle().Foreground(colorOrange).Render(" 🔥")
+	case m.stats.CurrentStreak > 0:
+		streakIndicator = lipgloss.NewStyle().Foreground(colorYellow).Render(" ⚡")
 	}
 
 	reviewQueue := dashReviewStyle.

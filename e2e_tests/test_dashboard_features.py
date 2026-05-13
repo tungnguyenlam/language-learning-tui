@@ -73,7 +73,7 @@ def test_streak_persists_across_sessions():
             # Verify streak updated in session 1
             agent1.act('1')
             agent1.wait_for_text("DASHBOARD")
-            agent1.assert_text("Streak:      1 days 🔥")
+            agent1.assert_text("Streak:      1 days ⚡")
         finally:
             agent1.close()
 
@@ -81,7 +81,7 @@ def test_streak_persists_across_sessions():
         agent2 = start_agent(tmpdir)
         try:
             # Streak should still be 1 day
-            agent2.assert_text("Streak:      1 days 🔥")
+            agent2.assert_text("Streak:      1 days ⚡")
         finally:
             agent2.close()
 

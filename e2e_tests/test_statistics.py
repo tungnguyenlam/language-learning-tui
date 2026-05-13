@@ -108,7 +108,7 @@ def test_streak_indicator_shows_fire_emoji():
             # Go back to Dashboard and check for streak indicator
             agent.act('1')
             agent.wait_for_text("DASHBOARD")
-            agent.assert_text("Streak:      1 days 🔥")
+            agent.assert_text("Streak:      1 days ⚡")
             
         finally:
             agent.close()

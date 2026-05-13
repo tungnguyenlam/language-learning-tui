@@ -79,8 +79,8 @@ func (m *Model) renderAI(x, y int) string {
 			{"C2 legal German", "juridical terms"},
 			{"A1 colors & shapes", "descriptive words"},
 			{"B1 sports & fitness", "athletic vocabulary"},
-			{"B2 media & news", "journalism terms"},
-			{"C1 academic writing", "thesis & papers"},
+			{"B2 climate change", "sustainability"},
+			{"B1 small talk", "casual conversation"},
 		}
 
 		suggestionStyle := lipgloss.NewStyle().

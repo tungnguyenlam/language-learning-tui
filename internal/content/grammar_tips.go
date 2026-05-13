@@ -516,6 +516,46 @@ var grammarTips = []GrammarTip{
 		Tip:     "Adjectives used as nouns follow adjective declension, not n-declension.",
 		Example: "der Beamte, ein Beamter",
 	},
+	{
+		Title:   "Two-Way Prepositions (Wechselpräpositionen)",
+		Tip:     "an, auf, hinter, in, neben, über, unter, vor, zwischen take Akkusativ for movement and Dativ for location.",
+		Example: "Ich gehe in die Schule (Akk). Ich bin in der Schule (Dat).",
+	},
+	{
+		Title:   "Negation: nicht vs kein",
+		Tip:     "Use 'kein' to negate nouns with an indefinite article; use 'nicht' to negate verbs, adjectives, or definite nouns.",
+		Example: "Ich habe kein Auto. Das Auto ist nicht rot.",
+	},
+	{
+		Title:   "Verbs with Dativ",
+		Tip:     "Common dative-only verbs: helfen, danken, gefallen, antworten, gehören, glauben, passen.",
+		Example: "Das Buch gehört mir.",
+	},
+	{
+		Title:   "Comparative & Superlative",
+		Tip:     "Most adjectives add -er for comparative and am ...sten / der ...ste for superlative.",
+		Example: "klein – kleiner – am kleinsten",
+	},
+	{
+		Title:   "Time-Manner-Place (TeKaMoLo)",
+		Tip:     "Temporal, kausal, modal, lokal: state when, why, how, then where.",
+		Example: "Ich fahre morgen wegen der Arbeit mit dem Zug nach Berlin.",
+	},
+	{
+		Title:   "es gibt + Akkusativ",
+		Tip:     "'es gibt' always takes the accusative case.",
+		Example: "Es gibt einen Garten hinter dem Haus.",
+	},
+	{
+		Title:   "Adjective Endings: Type 1 (with der/die/das)",
+		Tip:     "After a definite article, adjective endings are mostly -e or -en.",
+		Example: "der gute Mann, die guten Männer",
+	},
+	{
+		Title:   "Adjective Endings: Type 2 (with ein/kein/mein)",
+		Tip:     "After ein-words, the adjective takes the missing strong ending in Nom./Akk. neuter and Nom. masculine.",
+		Example: "ein guter Mann, mein schönes Auto",
+	},
 }
 
 func GetDailyGrammarTip() GrammarTip {
