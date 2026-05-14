@@ -671,6 +671,78 @@ var dailyVerbs = []DailyVerb{
 		Wir: "spielen", Ihr: "spielt", SieSie: "spielen",
 		Example: "Die Kinder spielen im Park.",
 	},
+	{
+		German: "sagen", English: "to say",
+		Ich: "sage", Du: "sagst", ErSieEs: "sagt",
+		Wir: "sagen", Ihr: "sagt", SieSie: "sagen",
+		Example: "Er sagt die Wahrheit.",
+	},
+	{
+		German: "geben", English: "to give",
+		Ich: "gebe", Du: "gibst", ErSieEs: "gibt",
+		Wir: "geben", Ihr: "gebt", SieSie: "geben",
+		Example: "Ich gebe dir ein Geschenk.",
+	},
+	{
+		German: "nehmen", English: "to take",
+		Ich: "nehme", Du: "nimmst", ErSieEs: "nimmt",
+		Wir: "nehmen", Ihr: "nehmt", SieSie: "nehmen",
+		Example: "Sie nimmt den Zug.",
+	},
+	{
+		German: "kommen", English: "to come",
+		Ich: "komme", Du: "kommst", ErSieEs: "kommt",
+		Wir: "kommen", Ihr: "kommt", SieSie: "kommen",
+		Example: "Wann kommst du nach Hause?",
+	},
+	{
+		German: "werden", English: "to become",
+		Ich: "werde", Du: "wirst", ErSieEs: "wird",
+		Wir: "werden", Ihr: "werdet", SieSie: "werden",
+		Example: "Sie wird Ärztin.",
+	},
+	{
+		German: "finden", English: "to find",
+		Ich: "finde", Du: "findest", ErSieEs: "findet",
+		Wir: "finden", Ihr: "findet", SieSie: "finden",
+		Example: "Ich finde meinen Schlüssel.",
+	},
+	{
+		German: "denken", English: "to think",
+		Ich: "denke", Du: "denkst", ErSieEs: "denkt",
+		Wir: "denken", Ihr: "denkt", SieSie: "denken",
+		Example: "Er denkt an die Zukunft.",
+	},
+	{
+		German: "heißen", English: "to be called",
+		Ich: "heiße", Du: "heißt", ErSieEs: "heißt",
+		Wir: "heißen", Ihr: "heißt", SieSie: "heißen",
+		Example: "Ich heiße Maria.",
+	},
+	{
+		German: "stehen", English: "to stand",
+		Ich: "stehe", Du: "stehst", ErSieEs: "steht",
+		Wir: "stehen", Ihr: "steht", SieSie: "stehen",
+		Example: "Das Buch steht auf dem Tisch.",
+	},
+	{
+		German: "sitzen", English: "to sit",
+		Ich: "sitze", Du: "sitzt", ErSieEs: "sitzt",
+		Wir: "sitzen", Ihr: "sitzt", SieSie: "sitzen",
+		Example: "Sie sitzt im Büro.",
+	},
+	{
+		German: "legen", English: "to lay/put",
+		Ich: "lege", Du: "legst", ErSieEs: "legt",
+		Wir: "legen", Ihr: "legt", SieSie: "legen",
+		Example: "Ich lege das Buch auf den Tisch.",
+	},
+	{
+		German: "stellen", English: "to put/place",
+		Ich: "stelle", Du: "stellst", ErSieEs: "stellt",
+		Wir: "stellen", Ihr: "stellt", SieSie: "stellen",
+		Example: "Er stellt die Vase auf das Regal.",
+	},
 }
 
 func GetVerbOfTheDay() DailyVerb {

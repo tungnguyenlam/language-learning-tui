@@ -1,0 +1,51 @@
+#deck:Legal & Contracts
+legal-1	der Vertrag	contract	Eine rechtliche Vereinbarung zwischen Parteien.	b2 legal noun
+legal-2	die Klausel	clause	Eine einzelne Bestimmung in einem Vertrag.	b2 legal noun
+legal-3	die Unterschrift	signature	Die schriftliche Bestätigung einer Person.	b2 legal noun
+legal-4	der Anwalt	lawyer	Ein Jurist, der rechtlich berät.	b2 legal noun
+legal-5	die Klage	lawsuit	Ein Gerichtsverfahren zur Durchsetzung von Rechten.	b2 legal noun
+legal-6	das Gericht	court	Die Institution, die Recht spricht.	b2 legal noun
+legal-7	der Richter	judge	Der Richter leitet das Verfahren und urteilt.	b2 legal noun
+legal-8	die Zeugenaussage	testimony	Die Aussage eines Zeugen vor Gericht.	b2 legal noun
+legal-9	der Beweis	evidence	Etwas, das eine Behauptung belegt.	b2 legal noun
+legal-10	das Zeugnis	certificate	Ein Dokument, das etwas bestätigt.	b2 legal noun
+legal-11	die Vereinbarung	agreement	Eine mündliche oder schriftliche Absprache.	b2 legal noun
+legal-12	die Frist	deadline	Die festgelegte Zeit für eine Handlung.	b2 legal noun
+legal-13	die Pflicht	obligation	Etwas, das man tun muss.	b2 legal noun
+legal-14	das Recht	right	Ein Anspruch, den man haben kann.	b2 legal noun
+legal-15	die Haftung	liability	Die Verantwortung für etwas.	b2 legal noun
+legal-16	schuldig	guilty	Verantwortlich für eine Straftat.	b2 legal adjective
+legal-17	unschuldig	innocent	Nicht schuldig an einer Straftat.	b2 legal adjective
+legal-18	der Prozess	trial	Die mündliche Verhandlung vor Gericht.	b2 legal noun
+legal-19	die Berufung	appeal	Die Anfechtung eines Urteils.	b2 legal noun
+legal-20	das Urteil	verdict/ruling	Die Entscheidung eines Gerichts.	b2 legal noun
+legal-21	die Strafe	penalty/sentence	Die Konsequenz einer Straftat.	b2 legal noun
+legal-22	die Geldstrafe	fine	Eine finanzielle Sanktion.	b2 legal noun
+legal-23	die Bewährung	probation	Eine bedingte Strafaussetzung.	b2 legal noun
+legal-24	der Haftbefehl	arrest warrant	Ein richterlicher Beschluss zur Festnahme.	c1 legal noun
+legal-25	die Ermittlung	investigation	Die polizeiliche Prüfung eines Falls.	b2 legal noun
+legal-26	verhaften	to arrest	Jemanden festnehmen.	b2 legal verb
+legal-27	anklagen	to accuse	Formal jemanden einer Tat beschuldigen.	b2 legal verb
+legal-28	verurteilen	to convict	Schuldig sprechen und bestrafen.	b2 legal verb
+legal-29	freisprechen	to acquit	Freispruch vom Vorwurf erlangen.	b2 legal verb
+legal-30	beweisen	to prove	Etwas nachweisen.	b2 legal verb
+legal-31	der Zeuge	witness	Eine Person, die etwas beobachtet hat.	b2 legal noun
+legal-32	die Aussage	statement	Eine mündliche oder schriftliche Erklärung.	b2 legal noun
+legal-33	der Eid	oath	Eine feierliche Versicherung vor Gericht.	b2 legal noun
+legal-34	die Beweislast	burden of proof	Die Pflicht, etwas zu beweisen.	c1 legal noun
+legal-35	der Rechtsanwalt	attorney	Ein zugelassener Rechtsvertreter.	b2 legal noun
+legal-36	die Staatsanwaltschaft	prosecution	Die Behörde, die Anklage erhebt.	b2 legal noun
+legal-37	das Verfahren	procedure	Der formelle Ablauf eines Prozesses.	b2 legal noun
+legal-38	die Verhandlung	hearing	Die mündliche Verhandlung vor Gericht.	b2 legal noun
+legal-39	der Beschuldigte	defendant	Die Person, die angeklagt ist.	b2 legal noun
+legal-40	der Kläger	plaintiff	Die Person, die klagt.	b2 legal noun
+legal-41	die Einigung	settlement	Eine gütliche Lösung eines Streits.	b2 legal noun
+legal-42	die Schadensersatz	damages	Finanzielle Entschädigung für einen Schaden.	b2 legal noun
+legal-43	der Verstoß	violation	Eine Regelverletzung.	b2 legal noun
+legal-44	die Sorgfaltspflicht	duty of care	Die Pflicht, sorgfältig zu handeln.	c1 legal noun
+legal-45	die Haftung	liability	Die Verantwortung für Schäden.	b2 legal noun
+legal-46	die Verjährung	statute of limitations	Die Frist zur strafrechtlichen Verfolgung.	c1 legal noun
+legal-47	der Richterbrief	judicial order	Ein Beschluss des Gerichts.	c1 legal noun
+legal-48	die Vollstreckung	enforcement	Die Durchsetzung eines Urteils.	b2 legal noun
+legal-49	das Strafmaß	sentence	Die Höhe der Strafe.	b2 legal noun
+legal-50	dieRevision	appeal	Die Überprüfung eines Urteils.	b2 legal noun

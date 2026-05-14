@@ -661,6 +661,56 @@ var grammarTips = []GrammarTip{
 		Tip:     "Untrennbare prefixes (be-, emp-, ent-, er-, ge-, ver-, zer-) never separate. They add one-syllable to the verb.",
 		Example: "verstehen -> Ich verstehe. verstanden (participle)",
 	},
+	{
+		Title:   "Weglassen des Artikels",
+		Tip:     "After 'ohne' and 'um' use the infinitive with zu without the article.",
+		Example: "ohne zu lesen, um zu verstehen",
+	},
+	{
+		Title:   "Partizip II mit 'zu'",
+		Tip:     "Use 'zu' + Partizip II for passive meaning when something needs to be done.",
+		Example: "Das zu lesende Buch ist interessant.",
+	},
+	{
+		Title:   " lassen as Modal",
+		Tip:     "'lassen' can act like a modal meaning 'to let/allow' or 'to have something done'.",
+		Example: "Ich lasse mich überraschen. Er lässt das Auto reparieren.",
+	},
+	{
+		Title:   "Futur I",
+		Tip:     "Use 'werden' + infinitive to express future. 'werden' is irregular.",
+		Example: "Ich werde morgen kommen. Du wirst es sehen.",
+	},
+	{
+		Title:   "Futur II",
+		Tip:     "Use 'werden' + Partizip II + haben/sein for completed future actions.",
+		Example: "Ich werde gegessen haben. Er wird gegangen sein.",
+	},
+	{
+		Title:   "Plusquamperfekt",
+		Tip:     "Use hatte/war + Partizip II for actions that happened before another past action.",
+		Example: "Als ich kam, hatte er schon gegessen.",
+	},
+	{
+		Title:   "Konjunktiv II Past",
+		Tip:     "Use würde + infinitiv or hätte/wäre + Partizip II for unreal past conditions.",
+		Example: "Ich hätte es gewusst. Er wäre gekommen.",
+	},
+	{
+		Title:   "Finale Nebensätze",
+		Tip:     "Use 'damit' or 'um...zu' to express purpose/goal.",
+		Example: "Ich lerne, damit ich bestehe. Ich lerne um zu bestehen.",
+	},
+	{
+		Title:   "Konzessive Nebensätze",
+		Tip:     "Use 'obwohl', 'obgleich', 'trotzdem' for contrast/concession.",
+		Example: "Obwohl es regnet, gehe ich aus. Er ist krank, trotzdem arbeitet er.",
+	},
+	{
+		Title:   "Relativpronomen",
+		Tip:     "Use 'der, die, das' (and their cases) to introduce relative clauses.",
+		Example: "Der Mann, den ich kenne, kommt morgen.",
+	},
 }
 
 func GetDailyGrammarTip() GrammarTip {

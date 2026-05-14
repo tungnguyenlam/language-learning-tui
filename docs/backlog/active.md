@@ -4,7 +4,7 @@ Last updated: 2026-05-14
 
 ## Current Milestone
 
-Completed autonomous improvement pass on 2026-05-14 (batch 4).
+Autonomous improvement pass on 2026-05-14 (batch 5).
 
 ## Current Work
 
@@ -14,15 +14,15 @@ No active executable work.
 
 User can give new instructions.
 
-## Acceptance Criteria (2026-05-14, batch 4)
+## Acceptance Criteria (2026-05-14, batch 5)
 
-- [x] Added 7 new AI topic suggestions for German learning (B2 media, C1 philosophy, A1 greetings formal, B1 reservations, B2 art discussion).
-- [x] Added new German vocabulary deck (B2 Music & Instruments - 50 cards).
-- [x] Added 8 new grammar tips (Konjunktiv II, Passive, Relative Clauses, Adjective Endings, Genitive, Infinitive with zu, Trennbare/Untrennbare Verbs).
-- [x] Added 11 new Verb of the Day entries (kochen, reisen, arbeiten, wohnen, fahren, wissen, kennen, denken, brauchen, kaufen, spielen).
-- [x] Added 5 new E2E tests for content verification.
-- [x] Updated Go unit tests for grammar tips (128 tips) and verbs (109 verbs) counts.
-- [x] `./scripts/verify.sh` passes with 285 E2E tests (all passing).
+- [x] Added B2 German vocabulary deck (Legal & Contracts - 50 cards).
+- [x] Added 11 new grammar tips (Weglassen des Artikels, Partizip II mit zu, lassen as Modal, Futur I/II, Plusquamperfekt, Konjunktiv II Past, finale/konzessive Nebensätze, Relativpronomen).
+- [x] Added 13 new verbs of the day (sagen, geben, nehmen, kommen, werden, finden, denken, heißen, stehen, sitzen, legen, stellen).
+- [x] Added 8 new AI topic suggestions (B1 emergency, B2 job application, C1 scientific paper, B2 environmental issues, A2 public transport, B1 insurance claims).
+- [x] Added 8 new E2E tests for new content verification.
+- [x] Updated Go unit tests for grammar tips (139 tips) and verbs (124 verbs) counts.
+- [x] `./scripts/verify.sh` passes with 293 E2E tests (all passing).
 
 ## Blockers
 

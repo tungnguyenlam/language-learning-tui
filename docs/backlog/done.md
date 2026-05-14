@@ -1,5 +1,26 @@
 # Done Backlog
 
+## 2026-05-14 (Autonomous Improvement Pass — batch 5)
+
+### Content Expansion
+- Added **B2 Legal & Contracts** vocabulary deck (50 cards) - legal terms, court vocabulary, contracts, proceedings.
+- Added 11 new grammar tips: Weglassen des Artikels, Partizip II mit zu, lassen as Modal, Futur I, Futur II, Plusquamperfekt, Konjunktiv II Past, finale Nebensätze (damit/um...zu), konzessive Nebensätze (obwohl/trotzdem), Relativpronomen.
+- Added 13 new verbs of the day: sagen, geben, nehmen, kommen, werden, finden, denken, heißen, stehen, sitzen, legen, stellen.
+
+### AI Suggestions
+- Added 8 new AI topic suggestions: B1 emergency & safety, B2 job application, C1 scientific paper, B2 environmental issues, A2 public transport, B1 insurance claims.
+
+### Testing
+- Added 8 new E2E tests (`test_new_content_may14c.py`) for Legal deck verification, grammar tip display, verb of the day display, AI suggestions display.
+- Updated Go unit tests for grammar tips (139 tips) and verbs (124 verbs) counts.
+
+### Verification
+- Total E2E tests: 293 (all passing).
+- All Go unit tests passing.
+- `./scripts/verify.sh` passes with 293 E2E tests.
+
+---
+
 ## 2026-05-14 (Autonomous Improvement Pass — batch 4)
 
 ### Content Expansion
