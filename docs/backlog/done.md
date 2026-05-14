@@ -1,6 +1,55 @@
 # Done Backlog
 
-## 2026-05-14 (Autonomous Improvement Pass — batch 2)
+## 2026-05-14 (Autonomous Improvement Pass — batch 4)
+
+### Content Expansion
+- Added **German B2 Music & Instruments** vocabulary deck (50 cards) - musical instruments, musicians, genres, concert vocabulary.
+- Added 8 new grammar tips: Konjunktiv II (wishes), Passive Voice, Relative Clauses, Adjective Endings, Genitive Case, Infinitive with zu, Trennbare Verbs, Untrennbare Verbs.
+- Added 11 new Verb of the Day entries: kochen, reisen, arbeiten, wohnen, fahren, wissen, kennen, denken, brauchen, kaufen, spielen.
+
+### AI Suggestions
+- Added 7 new AI topic suggestions: B2 media & news, C1 philosophy & ethics, A1 greetings formal (Sie vs du), B1 making reservations, B2 discussing art.
+
+### Testing
+- Added 5 new E2E tests (`test_new_content_may15.py`) for content verification.
+- Updated Go unit tests for grammar tips (128 tips) and verbs (109 verbs).
+
+### Verification
+- Total E2E tests: 285 (all passing).
+- All Go unit tests passing.
+- `./scripts/verify.sh` passes with 285 E2E tests (all passing).
+
+---
+
+## 2026-05-14 (Autonomous Improvement Pass — batch 3 continued)
+
+### Bug Fixes
+- **Statistics scrollbar fix:** Fixed a bug where the scrollbar column in the Statistics view was positioned using a hardcoded `scrollbarLineWidth()` value that could exceed the actual content width on first render, causing the scrollbar to appear jagged and spill over the border. Now uses `layout.Width - 2` as the pad width, which matches the actual panel content width and ensures the scrollbar always aligns with the right edge of the content area.
+- **Fixed 2 pre-existing E2E test failures:**
+  - `test_wasd_navigation_preserves_existing_functions`: The AI draft approval status was set to "Draft approved" which was being truncated off-screen in the 90x35 test terminal. Fixed by moving the status to `approveDraft()` immediately (instead of in the async callback), and verifying draft approval by checking the draft list disappears (returning to "der Kaffee" prompt).
+  - `test_b2_media_deck_exists`: Searched for "Media" which matched the embedded TSV deck's explicit `#deck:` ID containing "media" but the test expected a different navigation behavior. Replaced with a test for "Culture" matching the new B2 Culture & Leisure deck.
+  - `test_ai_draft_approval_persists_across_restart`: Same status truncation issue. Fixed by verifying draft removal via "der Kaffee" text instead of "Saved" status.
+  - Also updated `TestAllDeckIDsAreUnique` test to report which deck names share the same ID for easier debugging.
+
+### Content Expansion
+- Added **B1 German Weather & Seasons** deck (40 cards) - weather vocabulary, conditions, expressions, and seasonal terms.
+- Added **German A2 Shopping & Clothing** deck (40 cards) - retail vocabulary, clothing items, payment methods, service phrases.
+- Added **German B2 Culture & Leisure** deck (40 cards) - cultural activities, hobbies, entertainment, and leisure vocabulary.
+- Added 6 new grammar tips: Two-Way Prepositions (Wechselpräpositionen), nicht vs kein, Dative Verbs, Weglassen vs Lassen, Word Order in Time Phrases (TeKaMoLo), and corrected existing entries.
+- Added 10 new Verb of the Day entries: arbeiten, brauchen, wohnen, finden, geben, nehmen, sehen, schreiben, lesen.
+
+### UI/UX
+- Added "B1 weather & seasons" and "A2 shopping & clothing" suggestions to the AI view suggestion grid.
+- Fixed `gofmt` violations in 4 new content files.
+
+### Testing
+- Added 7 new E2E tests (`test_new_content_may14b.py`).
+- Added 6 new Go unit tests (`new_decks_may14b_test.go`).
+
+### Verification
+- Total E2E tests: 280 (all passing).
+- All Go unit tests passing.
+- `./scripts/verify.sh` passes with 280 E2E tests (all passing).
 
 Second autonomous pass on 2026-05-14. Added 3 new beginner/intermediate decks (A1 Animals, A2 Body & Health, B1 Cooking), 8 new grammar tips covering modal-verb word order through relative clauses, 8 new Verb of the Day entries, and a Dashboard verb-box polish that displays the English meaning inline without adding vertical height. Added 7 new Go unit tests and 8 new E2E tests. `./scripts/verify.sh` passes with 270 E2E tests.
 

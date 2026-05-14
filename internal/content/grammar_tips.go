@@ -596,6 +596,71 @@ var grammarTips = []GrammarTip{
 		Tip:     "Relative pronouns (der/die/das) match the gender of the antecedent and the case from the relative clause.",
 		Example: "Der Mann, den ich kenne, kommt aus Berlin.",
 	},
+	{
+		Title:   "Two-Way Prepositions",
+		Tip:     "Wechselpräpositionen (an, auf, hinter, in, neben, über, unter, vor, zwischen) take Akkusativ for movement and Dativ for location.",
+		Example: "Ich lege das Buch auf den Tisch (Akk). Das Buch liegt auf dem Tisch (Dat).",
+	},
+	{
+		Title:   "nicht vs kein",
+		Tip:     "Use 'kein' to negate nouns without articles. Use 'nicht' for verbs, adjectives, and nouns with articles.",
+		Example: "Ich habe kein Geld. Ich spiele nicht Fußball.",
+	},
+	{
+		Title:   "Dative Verbs",
+		Tip:     "Some verbs always need a Dativ object: helfen, danken, glauben, folgen, gefallen, passen.",
+		Example: "Ich helfe meiner Mutter. Das gefällt mir.",
+	},
+	{
+		Title:   "Weglassen vs Lassen",
+		Tip:     "'Lassen' means 'to let/allow' or 'to leave'. As a modal, 'lassen' + sich means 'can be done'.",
+		Example: "Die Tür lässt sich nicht öffnen. (can't be opened)",
+	},
+	{
+		Title:   "Word Order in Time Phrases",
+		Tip:     "TeKaMoLo: Temporal, Kausal, Modal, Lokal — time first, cause, manner, place. Place important nouns close to the verb.",
+		Example: "Gestern hat er im Park schnell gegessen.",
+	},
+	{
+		Title:   "Konjunktiv II (Wishes)",
+		Tip:     "Use 'würde' + infinitive or simple past forms for polite wishes. 'Wäre/Hätte' for subjunctive.",
+		Example: "Ich würde gern kommen. Wenn ich Zeit hätte...",
+	},
+	{
+		Title:   "Passive Voice",
+		Tip:     "Form: werden + past participle. 'werden' is the auxiliary. 'von' + agent shows who performs the action.",
+		Example: "Das Buch wird gelesen. Das Haus wird von Arbeitern gebaut.",
+	},
+	{
+		Title:   "Relative Clauses",
+		Tip:     "Relative clauses are introduced by relative pronouns (der, die, das, welcher). The verb goes to the end.",
+		Example: "Der Mann, der (welcher) dort steht, ist mein Lehrer.",
+	},
+	{
+		Title:   "Adjective Endings",
+		Tip:     "After definite articles: -e (f/n), -en (pl). After indefinite: -er (m), -e (f), -es (n), -en (pl).",
+		Example: "der rote Wagen, die junge Frau, ein gutes Buch",
+	},
+	{
+		Title:   "Genitive Case",
+		Tip:     "Use genitive for possession. Usually 'von' + Dativ if the noun doesn't have an article ending in -s.",
+		Example: "das Auto meines Bruders (Genitiv) vs. das Auto von meinem Bruder (Dativ)",
+	},
+	{
+		Title:   "Infinitive with zu",
+		Tip:     "Use 'zu' + infinitive after certain verbs (planen, hoffen, vergessen, anfangen) and adjectives.",
+		Example: "Ich hoffe zu gewinnen. Es ist wichtig zu lernen.",
+	},
+	{
+		Title:   "Trennbare Verbs",
+		Tip:     "Trennbare prefixes (ab-, an-, auf-, aus-, ein-, mit-, zu-) separate in main clauses. The prefix goes to the end.",
+		Example: "aufmachen -> Ich mache die Tür auf. aufgemacht (participle)",
+	},
+	{
+		Title:   "untrennbare Verbs",
+		Tip:     "Untrennbare prefixes (be-, emp-, ent-, er-, ge-, ver-, zer-) never separate. They add one-syllable to the verb.",
+		Example: "verstehen -> Ich verstehe. verstanden (participle)",
+	},
 }
 
 func GetDailyGrammarTip() GrammarTip {

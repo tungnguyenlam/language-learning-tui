@@ -1,0 +1,51 @@
+#deck:Music & Instruments
+music-1	das Musikinstrument	musical instrument	Ein Gerät, das Töne erzeugt.	b2 music noun
+music-2	die Gitarre	guitar	Ein Saiteninstrument.	b1 music noun
+music-3	das Klavier	piano	Ein Tasteninstrument mit Saiten.	b1 music noun
+music-4	die Geige	violin	Ein Streichinstrument.	b2 music noun
+music-5	das Schlagzeug	drums	Ein Percussioninstrument.	b2 music noun
+music-6	die Trompete	trumpet	Ein Blechblasinstrument.	b2 music noun
+music-7	die Klarinette	clarinet	Ein Holzblasinstrument.	b2 music noun
+music-8	die Violoncello	cello	Ein großes Streichinstrument.	c1 music noun
+music-9	die Querflöte	flute	Ein Holzblasinstrument ohne Mundstück.	b2 music noun
+music-10	der Flügel	grand piano	Ein großes Klavier.	c1 music noun
+music-11	das Saxophon	saxophone	Ein Holzblasinstrument aus Metall.	b2 music noun
+music-12	die Oboe	oboe	Ein Holzblasinstrument mit Doppelrohrblatt.	c1 music noun
+music-13	die Harfe	harp	Ein Saiteninstrument mit Pedalen.	c1 music noun
+music-14	der Kontrabass	double bass	Das größte Streichinstrument.	c1 music noun
+music-15	das Akkordeon	accordion	Ein Tasteninstrument mit Luft.	b2 music noun
+music-16	das Keyboard	keyboard	Ein elektronisches Tasteninstrument.	b1 music noun
+music-17	der Synthesizer	synthesizer	Ein elektronisches Instrument.	b2 music noun
+music-18	der Sänger	singer	Eine Person, die singt.	b1 music noun
+music-19	die Sängerin	singer (f)	Eine weibliche Person, die singt.	b1 music noun
+music-20	der Musiker	musician	Eine Person, die Musik macht.	b1 music noun
+music-21	das Orchester	orchestra	Ein großes Ensemble von Instrumenten.	b1 music noun
+music-22	die Band	band	Eine Gruppe von Musikern.	a2 music noun
+music-23	das Konzert	concert	Eine live Musikaufführung.	a2 music noun
+music-24	die Melodie	melody	Eine Folge von Tönen.	b2 music noun
+music-25	der Rhythmus	rhythm	Das regelmäßige Beatmuster.	b2 music noun
+music-26	die Harmonie	harmony	Das Zusammenspiel von Tönen.	b2 music noun
+music-27	die Note	note	Ein einzelner Ton.	b1 music noun
+music-28	das Lied	song	Eine Musik mit Text.	a1 music noun
+music-29	das Liedchen	little song	Ein kurzes einfaches Lied.	a2 music noun
+music-30	der Refrain	chorus	Der wiederholte Teil eines Liedes.	b2 music noun
+music-31	der Text	lyrics	Die Worte eines Liedes.	b1 music noun
+music-32	komponieren	to compose	Eine Musik schreiben.	b2 music verb
+music-33	 dirigieren	to conduct	Ein Orchester leiten.	b2 music verb
+music-34	proben	to rehearse	Für eine Aufführung üben.	b2 music verb
+music-35	auftreten	to perform	Auf einer Bühne spielen.	b2 music verb
+music-36	stimmen	to tune	Ein Instrument auf die richtige Tonhöhe bringen.	b2 music verb
+music-37	die Tonhöhe	pitch	Die Höhe eines Tons.	b2 music noun
+music-38	die Lautstärke	volume	Die Stärke eines Sounds.	b2 music noun
+music-39	die Klangfarbe	timbre	Der charakteristische Klang eines Instruments.	c1 music noun
+music-40	die Pause	rest	Eine kurze Stille in der Musik.	b2 music noun
+music-41	das Solo	solo	Eine Einzelpräsentation.	b2 music noun
+music-42	das Duett	duet	Eine Musik für zwei Stimmen.	b2 music noun
+music-43	der Chor	choir	Eine Gruppe von Sängern.	b1 music noun
+music-44	das Musical	musical	Theater mit Gesang.	b2 theater noun
+music-45	die Oper	opera	Theater mit klassischem Gesang.	b2 theater noun
+music-46	das Jazzkonzert	jazz concert	Eine Aufführung von Jazzmusik.	b2 music noun
+music-47	der Rockkonzert	rock concert	Eine Aufführung von Rockmusik.	b2 music noun
+music-48	die Klassik	classical music	Traditionelle ernste Musik.	b1 music noun
+music-49	die Popmusik	pop music	Moderne populäre Musik.	b1 music noun
+music-50	die Elektronik	electronic music	Musik mit Synthesizern.	b2 music noun
