@@ -36,10 +36,10 @@ aussteigen	to get off/out	ausgestiegen	transport a2	A2 Transport	Basic
 fahren	to drive/go (by vehicle)	gefahren	transport a2	A2 Transport	Basic
 fliegen	to fly	geflogen	transport a2	A2 Transport	Reverse
 schwimmen	to swim	geschwommen	transport a2	A2 Transport	Basic
-fahren	to ride (bike)	gefahren	transport a2	A2 Transport	Reverse
+Rad fahren	to ride a bike	gefahren	transport a2	A2 Transport	Reverse
 der Fahrschein	ticket (transport)	der Fahrschein, die Fahrscheine	transport a2	A2 Transport	Basic
 die Fahrkarte	ticket	die Fahrkarte, die Fahrkarten	transport a2	A2 Transport	Reverse
-der Fahrschein	boarding pass	der Fahrschein, die Fahrscheine	transport a2	A2 Transport	Reverse
+die Bordkarte	boarding pass	die Bordkarte, die Bordkarten	transport a2	A2 Transport	Reverse
 das Ticket	ticket	das Ticket, die Tickets	transport a2	A2 Transport	Reverse
 der Ausweis	ID card	der Ausweis, die Ausweise	transport a2	A2 Transport	Basic
 die Fahrschule	driving school	die Fahrschule, die Fahrschulen	transport a2	A2 Transport	Reverse

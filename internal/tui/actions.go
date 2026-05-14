@@ -392,11 +392,12 @@ func (m *Model) exportAPKG() tea.Cmd {
 }
 
 func (m *Model) approveDraft() tea.Cmd {
-	if len(m.drafts) == 0 || m.draftCursor >= len(m.drafts) {
+	if len(m.drafts) == 0 || m.draftCursor < 0 || m.draftCursor >= len(m.drafts) {
+		m.status = "No draft selected"
 		return nil
 	}
 	draft := m.drafts[m.draftCursor]
-	m.status = "Approving draft..."
+	m.status = "Draft saved"
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -418,7 +419,7 @@ func (m *Model) approveDraft() tea.Cmd {
 }
 
 func (m *Model) discardDraft() tea.Cmd {
-	if len(m.drafts) == 0 || m.draftCursor >= len(m.drafts) {
+	if len(m.drafts) == 0 || m.draftCursor < 0 || m.draftCursor >= len(m.drafts) {
 		m.status = "No draft selected"
 		return nil
 	}
@@ -436,6 +437,10 @@ func (m *Model) generateDrafts() tea.Cmd {
 
 func (m *Model) startDrafting() tea.Cmd {
 	if m.drafting {
+		return nil
+	}
+	if strings.TrimSpace(m.aiInput) == "" {
+		m.status = "Enter a topic before generating AI drafts"
 		return nil
 	}
 	if m.aiProvider == nil {

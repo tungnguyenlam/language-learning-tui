@@ -92,7 +92,24 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 		retentionColor = "226"
 	}
 	retentionStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(retentionColor)).Bold(true)
-	col2.WriteString(fmt.Sprintf("%s %s (Mature/Total: %d/%d)\n\n", labelStyle.Render("Retention:"), retentionStyle.Render(fmt.Sprintf("%.1f%%", retentionRate*100)), m.stats.MatureCards, totalMature))
+	col2.WriteString(fmt.Sprintf("%s %s (Mature/Total: %d/%d)\n", labelStyle.Render("Retention:"), retentionStyle.Render(fmt.Sprintf("%.1f%%", retentionRate*100)), m.stats.MatureCards, totalMature))
+
+	remainingGoal := maxInt(0, m.stats.DailyGoal-m.stats.ReviewsToday)
+	availableNow := len(m.dueCards)
+	forecastColor := "46"
+	forecastText := "On track"
+	if remainingGoal > 0 && availableNow == 0 {
+		forecastColor = "81"
+		forecastText = "No due cards"
+	} else if remainingGoal > availableNow {
+		forecastColor = "226"
+		forecastText = "Need new cards"
+	}
+	forecastStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(forecastColor)).Bold(true)
+	col2.WriteString(fmt.Sprintf("%s %s (%d left)\n\n",
+		labelStyle.Render("Forecast:"),
+		forecastStyle.Render(forecastText),
+		remainingGoal))
 
 	// Combine columns
 	col1Str := col1.String()
@@ -319,12 +336,12 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 	maxVisible := m.statisticsVisibleLines(layout.Height)
 
 	m.statsScroll = clampInt(m.statsScroll, 0, maxInt(0, totalLines-maxVisible))
-	lineWidth := scrollbarLineWidth(layout.Width)
+	padWidth := layout.Width - 2
 	thumbStart, thumbHeight := scrollbarThumb(totalLines, maxVisible, m.statsScroll)
 
 	var visibleContent strings.Builder
 	for i := m.statsScroll; i < m.statsScroll+maxVisible && i < totalLines; i++ {
-		line := padLine(lines[i], lineWidth)
+		line := padLine(lines[i], padWidth)
 		if totalLines > maxVisible {
 			scrollbarChar := "│"
 			currentPos := i - m.statsScroll
@@ -333,11 +350,10 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 			}
 			line = line + " " + scrollbarChar
 
-			// Register hitbox for this line of the scrollbar
 			m.hitboxes = append(m.hitboxes, Hitbox{
 				ID:     fmt.Sprintf("stats-scroll-%d", currentPos),
 				View:   ViewStatistics,
-				X:      layout.X + lineWidth + 1,
+				X:      layout.X + padWidth + 1,
 				Y:      layout.Y + currentPos,
 				Width:  1,
 				Height: 1,

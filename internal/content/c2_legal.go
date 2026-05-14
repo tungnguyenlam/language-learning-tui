@@ -16,7 +16,7 @@ func C2LegalDeck() core.Deck {
 		{ID: "c2-lgx-verhandlung", DeckID: "c2-legal", Front: "die Verhandlung", Back: "trial / hearing", Tags: []string{"c2", "legal"}},
 		{ID: "c2-lgx-urteil", DeckID: "c2-legal", Front: "das Urteil", Back: "verdict / judgment", Tags: []string{"c2", "legal"}},
 		{ID: "c2-lgx-entscheidung", DeckID: "c2-legal", Front: "die Entscheidung", Back: "decision / ruling", Tags: []string{"c2", "legal"}},
-		{ID: "c2-lgx-urteil", DeckID: "c2-legal", Front: "das Urteil", Back: "judgment", Tags: []string{"c2", "legal"}},
+		{ID: "c2-lgx-richterspruch", DeckID: "c2-legal", Front: "der Richterspruch", Back: "judicial ruling / judgment", Tags: []string{"c2", "legal"}},
 		{ID: "c2-lgx-beweis", DeckID: "c2-legal", Front: "der Beweis", Back: "evidence / proof", Tags: []string{"c2", "legal"}},
 		{ID: "c2-lgx-beweislast", DeckID: "c2-legal", Front: "die Beweislast", Back: "burden of proof", Tags: []string{"c2", "legal"}},
 		{ID: "c2-lgx-anklage", DeckID: "c2-legal", Front: "die Anklage", Back: "indictment / charge", Tags: []string{"c2", "legal"}},

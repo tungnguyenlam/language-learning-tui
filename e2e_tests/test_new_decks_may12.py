@@ -40,19 +40,18 @@ def test_a2_daily_life_deck_exists():
         finally:
             agent.close()
 
-def test_b2_media_deck_exists():
+def test_b2_culture_deck_exists():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
             seed_and_go_decks(agent)
             agent.act("/")
             agent.wait_for_text("Search:", timeout=2.0)
-            agent.act("Media")
+            agent.act("Culture")
             agent.act("<Enter>")
-            agent.wait_for_text("Media", timeout=10.0)
-            agent.act("<Enter>")
-            agent.wait_for_text("DASHBOARD", timeout=5.0)
-            agent.wait_for_text("Media", timeout=5.0)
+            agent.wait_for_text("Culture", timeout=10.0)
+            agent.act("<Esc>")
+            agent.wait_for_text("DECK LIST", timeout=5.0)
         finally:
             agent.close()
 

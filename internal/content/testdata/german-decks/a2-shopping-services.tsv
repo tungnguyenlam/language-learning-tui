@@ -47,7 +47,7 @@ Das ist zu teuer.	That is too expensive.	Complaint	shopping a2	A2 Shopping	Basic
 Kann ich mit Karte zahlen?	Can I pay by card?	Payment question	shopping a2	A2 Shopping	Reverse
 die Bank	bank	die Bank, die Banken	services a2	A2 Shopping	Basic
 die Sparkasse	savings bank	die Sparkasse, die Sparkassen	services a2	A2 Shopping	Reverse
-das Geld	bank	das Geld, die Gelder	services a2	A2 Shopping	Reverse
+das Bargeld	cash	das Bargeld (no plural)	services a2	A2 Shopping	Reverse
 einzahlen	to deposit	eingezahlt	services a2	A2 Shopping	Reverse
 abheben	to withdraw	abgehoben	services a2	A2 Shopping	Basic
 überweisen	to transfer money	überwiesen	services a2	A2 Shopping	Reverse

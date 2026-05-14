@@ -47,6 +47,8 @@ The project is a Go Bubble Tea TUI for German flashcard and MCQ learning. It is 
 - E2E tests often wait for "DASHBOARD" to verify app readiness. When updating the Dashboard header, ensure the word "DASHBOARD" remains visible to maintain test compatibility.
 - Dashboard layouts are height-sensitive. Avoid adding vertical space in top sections (header/boxes) as it can push bottom elements (Grammar Tip, help overlays) off-screen, causing E2E test timeouts on standard terminal sizes.
 - Bubble Tea unit tests that manually call commands often fail if a command is changed to a `tea.Batch`. Use a `executeCmd` helper in tests to flatten batches and prevent `undefined: msg` errors.
+- TSV embedded decks with `#deck:` lines containing `&` characters have different deck IDs than their filename (e.g., `a2-shopping-services.tsv` with `#deck: A2 Shopping & Services` gets ID `a2_shopping_&_services`). Do NOT create Go decks with IDs that would conflict with these. Use `_` underscores in deck IDs (e.g., `a2_purchasing_wear`).
+- When adding scrollbar columns to custom render views, use `layout.Width - 2` for padding width rather than `scrollbarLineWidth(layout.Width)` to avoid the scrollbar exceeding panel bounds on first render.
 
 ## Handoff Rules
 

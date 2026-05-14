@@ -743,6 +743,78 @@ var dailyVerbs = []DailyVerb{
 		Wir: "stellen", Ihr: "stellt", SieSie: "stellen",
 		Example: "Er stellt die Vase auf das Regal.",
 	},
+	{
+		German: "arbeiten", English: "to work",
+		Ich: "arbeite", Du: "arbeitest", ErSieEs: "arbeitet",
+		Wir: "arbeiten", Ihr: "arbeitet", SieSie: "arbeiten",
+		Example: "Ich arbeite bei einer Bank.",
+	},
+	{
+		German: "kochen", English: "to cook",
+		Ich: "koche", Du: "kochst", ErSieEs: "kocht",
+		Wir: "kochen", Ihr: "kocht", SieSie: "kochen",
+		Example: "Meine Mutter kocht gut.",
+	},
+	{
+		German: "reisen", English: "to travel",
+		Ich: "reise", Du: "reist", ErSieEs: "reist",
+		Wir: "reisen", Ihr: "reist", SieSie: "reisen",
+		Example: "Wir reisen nach Berlin.",
+	},
+	{
+		German: "schlafen", English: "to sleep",
+		Ich: "schlafe", Du: "schläfst", ErSieEs: "schläft",
+		Wir: "schlafen", Ihr: "schlaft", SieSie: "schlafen",
+		Example: "Das Baby schläft noch.",
+	},
+	{
+		German: "schreiben", English: "to write",
+		Ich: "schreibe", Du: "schreibst", ErSieEs: "schreibt",
+		Wir: "schreiben", Ihr: "schreibt", SieSie: "schreiben",
+		Example: "Ich schreibe einen Brief.",
+	},
+	{
+		German: "hören", English: "to hear",
+		Ich: "höre", Du: "hörst", ErSieEs: "hört",
+		Wir: "hören", Ihr: "hört", SieSie: "hören",
+		Example: "Ich höre Musik.",
+	},
+	{
+		German: "verstehen", English: "to understand",
+		Ich: "verstehe", Du: "verstehst", ErSieEs: "versteht",
+		Wir: "verstehen", Ihr: "versteht", SieSie: "verstehen",
+		Example: "Ich verstehe die Frage.",
+	},
+	{
+		German: "spielen", English: "to play",
+		Ich: "spiele", Du: "spielst", ErSieEs: "spielt",
+		Wir: "spielen", Ihr: "spielt", SieSie: "spielen",
+		Example: "Die Kinder spielen im Garten.",
+	},
+	{
+		German: "machen", English: "to do/make",
+		Ich: "mache", Du: "machst", ErSieEs: "macht",
+		Wir: "machen", Ihr: "macht", SieSie: "machen",
+		Example: "Was machst du heute?",
+	},
+	{
+		German: "brauchen", English: "to need",
+		Ich: "brauche", Du: "brauchst", ErSieEs: "braucht",
+		Wir: "brauchen", Ihr: "braucht", SieSie: "brauchen",
+		Example: "Ich brauche Zeit.",
+	},
+	{
+		German: "wissen", English: "to know (facts)",
+		Ich: "weiß", Du: "weißt", ErSieEs: "weiß",
+		Wir: "wissen", Ihr: "wisst", SieSie: "wissen",
+		Example: "Ich weiß die Antwort.",
+	},
+	{
+		German: "kennen", English: "to know (person)",
+		Ich: "kenne", Du: "kennst", ErSieEs: "kennt",
+		Wir: "kennen", Ihr: "kennt", SieSie: "kennen",
+		Example: "Ich kenne ihn gut.",
+	},
 }
 
 func GetVerbOfTheDay() DailyVerb {

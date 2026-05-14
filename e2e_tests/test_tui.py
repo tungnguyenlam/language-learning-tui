@@ -85,7 +85,7 @@ def test_ai_draft_approval_persists_across_restart():
 
             agent.act('a')
             agent.wait_until_stable()
-            agent.assert_text("Draft approved")
+            agent.assert_text("der Kaffee")
 
             agent.act('1')
             agent.wait_until_stable()

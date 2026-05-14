@@ -115,12 +115,19 @@ func TestNewVerbsOfTheDay20260514Present(t *testing.T) {
 
 func TestAllDeckIDsAreUnique(t *testing.T) {
 	decks := StandardDecks()
-	seen := map[string]bool{}
+	seen := map[string][]string{}
 	for _, d := range decks {
-		if seen[d.ID] {
-			t.Errorf("duplicate deck ID: %q", d.ID)
+		seen[d.ID] = append(seen[d.ID], d.Name)
+	}
+	hasDupes := false
+	for id, names := range seen {
+		if len(names) > 1 {
+			t.Errorf("duplicate deck ID: %q (%d copies): %v", id, len(names), names)
+			hasDupes = true
 		}
-		seen[d.ID] = true
+	}
+	if hasDupes {
+		t.Fatal("duplicate deck IDs found - fix before committing")
 	}
 }
 

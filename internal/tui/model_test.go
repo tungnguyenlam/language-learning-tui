@@ -365,8 +365,8 @@ func TestAIDraftApprovalPersistsAndReloadsDueCards(t *testing.T) {
 	if len(model.dueCards) == 0 {
 		t.Fatal("approved draft cards should reload into due cards")
 	}
-	if !strings.Contains(model.status, "Draft approved") {
-		t.Fatalf("status = %q, want draft approved", model.status)
+	if !strings.Contains(model.status, "Draft saved") {
+		t.Fatalf("status = %q, want Draft saved", model.status)
 	}
 }
 
@@ -708,6 +708,61 @@ func TestAIGenerateWhenProviderDisabledSetsStatus(t *testing.T) {
 	}
 	if !strings.Contains(model.status, "disabled") {
 		t.Fatalf("status = %q, want disabled guidance", model.status)
+	}
+}
+
+func TestAIGenerateEmptyTopicDoesNotCallProvider(t *testing.T) {
+	model := NewModelWithAI(&mockRepo{}, &mockScheduler{}, ai.FakeProvider{Err: errors.New("provider should not be called")})
+	model.activeView = ViewAI
+	model.aiInput = "   "
+
+	cmd := model.startDrafting()
+	if cmd != nil {
+		t.Fatal("startDrafting should return nil for an empty topic")
+	}
+	if model.drafting {
+		t.Fatal("drafting should remain false for an empty topic")
+	}
+	if !strings.Contains(model.status, "Enter a topic") {
+		t.Fatalf("status = %q, want topic guidance", model.status)
+	}
+}
+
+func TestAIDraftCursorGuardsInvalidSelection(t *testing.T) {
+	model := NewModelWithAI(&mockRepo{}, &mockScheduler{}, ai.OfflineProvider{})
+	model.activeView = ViewAI
+	model.drafts = []ai.Draft{{Note: core.Note{ID: "n1", DeckID: "d1", Front: "eins", Back: "one"}}}
+	model.draftCursor = -1
+
+	if cmd := model.approveDraft(); cmd != nil {
+		t.Fatal("approveDraft should not return a command for a negative cursor")
+	}
+	if !strings.Contains(model.status, "No draft selected") {
+		t.Fatalf("status = %q, want invalid selection guidance", model.status)
+	}
+
+	model.draftCursor = 4
+	if cmd := model.discardDraft(); cmd != nil {
+		t.Fatal("discardDraft should not return a command for an out-of-range cursor")
+	}
+	if len(model.drafts) != 1 {
+		t.Fatalf("drafts length changed for invalid cursor: %d", len(model.drafts))
+	}
+}
+
+func TestDeckLimitEditingClampsFilteredCursor(t *testing.T) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	model.activeView = ViewDecks
+	model.decks = []core.Deck{{ID: "a", Name: "Alpha"}, {ID: "b", Name: "Beta"}}
+	model.deckCursor = 99
+	model.editingDeckLimits = true
+
+	_, handled := model.updateDecksKey(tea.KeyPressMsg{Code: '+'})
+	if !handled {
+		t.Fatal("deck limit edit key should be handled")
+	}
+	if model.deckCursor != 1 {
+		t.Fatalf("deckCursor = %d, want clamped last index", model.deckCursor)
 	}
 }
 

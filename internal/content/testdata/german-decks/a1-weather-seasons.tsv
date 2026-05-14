@@ -38,7 +38,7 @@ a1-weather-mittag	Mittag	noon	Plural: die Mittage	a1 noun
 a1-weather-abend	Abend	evening	Plural: die Abende	a1 noun
 a1-weather-nacht	Nacht	night	Plural: die Nächte	a1 noun
 a1-weather-heute	Heute	today		a1 adverb
-a1-weather-morgen	Morgen	tomorrow		a1 adverb
+a1-weather-morgen-tomorrow	Morgen	tomorrow		a1 adverb
 a1-weather-gestern	Gestern	yesterday		a1 adverb
 a1-weather-jetzt	Jetzt	now		a1 adverb
 a1-weather-später	Später	later		a1 adverb

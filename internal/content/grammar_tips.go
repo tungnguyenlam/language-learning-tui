@@ -711,6 +711,56 @@ var grammarTips = []GrammarTip{
 		Tip:     "Use 'der, die, das' (and their cases) to introduce relative clauses.",
 		Example: "Der Mann, den ich kenne, kommt morgen.",
 	},
+	{
+		Title:   "Präpositionale Verben",
+		Tip:     "Verbs like 'denken an', 'warten auf', 'sich freuen über' require specific prepositions.",
+		Example: "Ich denke an dich. Ich warte auf den Bus.",
+	},
+	{
+		Title:   "Wechselpräpositionen",
+		Tip:     "Prepositions like 'in, auf, an, über, unter' take Dativ for location and Akkusativ for direction.",
+		Example: "Ich bin im (in dem) Büro. Ich gehe in (das) Büro.",
+	},
+	{
+		Title:   "Verben mit Dativ",
+		Tip:     "Verbs like 'helfen', 'danken', 'antworten', 'gehören' take the Dativ case.",
+		Example: "Ich helfe ihm. Sie antwortet mir.",
+	},
+	{
+		Title:   "Verben mit Akkusativ",
+		Tip:     "Most direct objects take Akkusativ. Watch for transitive vs intransitive verbs.",
+		Example: "Ich sehe den Film. Er liest das Buch.",
+	},
+	{
+		Title:   "Reflexive Verben",
+		Tip:     "Some verbs always need a reflexive pronoun: sich waschen, sich anziehen, sich freuen.",
+		Example: "Ich wasche mich. Sie freut sich auf die Reise.",
+	},
+	{
+		Title:   "Perfekt with sein",
+		Tip:     "Movement verbs (sein) and 'werden' form Perfekt with 'sein'.",
+		Example: "Ich bin gegangen. Er ist geworden. Wir sind gefahren.",
+	},
+	{
+		Title:   "Trennbare Verben",
+		Tip:     "Prefixes like 'ab-, auf-, aus-, ein-' separate in main clauses.",
+		Example: "Ich stehe auf. Er macht die Tür auf.",
+	},
+	{
+		Title:   "Untrennbare Verben",
+		Tip:     "Prefixes like 'be-, ge-, er-, ver-, zer-' never separate.",
+		Example: "Ich verstehe dich. Er erreicht das Ziel.",
+	},
+	{
+		Title:   "Modalverben",
+		Tip:     "können (can), müssen (must), wollen (want), sollen (should), dürfen (may), mögen (like).",
+		Example: "Ich kann schwimmen. Du musst lernen.",
+	},
+	{
+		Title:   "Nebensatz Wortstellung",
+		Tip:     "In subordinate clauses, the conjugated verb goes to the end.",
+		Example: "Ich weiß, dass er kommt. Weil ich müde bin, gehe ich nach Hause.",
+	},
 }
 
 func GetDailyGrammarTip() GrammarTip {

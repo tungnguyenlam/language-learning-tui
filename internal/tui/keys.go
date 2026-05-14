@@ -477,6 +477,7 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.editingDeckLimits = false
 			return nil, false
 		}
+		m.deckCursor = clampInt(m.deckCursor, 0, len(filtered)-1)
 		deck := filtered[m.deckCursor]
 		switch msg.String() {
 		case "esc", "enter", "\r", "\n":

@@ -490,7 +490,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case draftsMsg:
 		m.drafting = false
 		m.drafts = []ai.Draft(msg)
-		m.draftCursor = 0
+		m.draftCursor = clampInt(m.draftCursor, 0, maxInt(0, len(m.drafts)-1))
 		if len(m.drafts) == 0 {
 			m.status = "No drafts generated"
 		} else {
@@ -501,7 +501,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.removeDraft(msg.noteID)
 		m.allDue = msg.cards
 		m.applyDeckFilter()
-		m.status = "Draft approved"
+		m.status = "Draft saved"
 		m.logger.Info("Approved AI draft %s", msg.noteID)
 	case importDoneMsg:
 		m.syncDecks(msg.decks)

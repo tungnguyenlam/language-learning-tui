@@ -1,5 +1,25 @@
 # Done Backlog
 
+## 2026-05-14 (Autonomous Improvement Pass — batch 6, checkpoint 1)
+
+### Content Expansion
+- Added **German B1 Bureaucracy & Appointments** deck (32 cards) for public offices, appointments, forms, and document handling.
+- Added **German B2 Digital Privacy & Security** deck (32 cards) for data protection, account security, and online risk vocabulary.
+
+### UI/UX and Interaction Fixes
+- Improved the AI suggestions layout so topics wrap responsively by panel width and added new practical topic suggestions.
+- Added a compact **Forecast** row to Statistics for daily-goal status without increasing fixed dashboard height.
+- Guarded AI generation against empty topics before calling providers.
+- Hardened AI draft approval/discard against invalid cursors and deck limit editing against stale filtered cursors.
+- Fixed duplicate note/card IDs in existing Go and embedded content (`c2_legal`, recipes, weather, shopping, transport, false friends, phrasal verbs, B2 advanced).
+
+### Testing
+- Added Go unit coverage for the new decks, global note/card ID uniqueness, empty AI topics, invalid draft cursors, and deck-limit cursor clamping.
+- Targeted verification passed: `go test ./internal/content ./internal/tui`.
+- Added 8 tui-tester E2E tests in `e2e_tests/test_batch6_end_to_end.py` covering standard-content seeding, deck search, browser search after deck selection, AI empty-topic guard, new AI suggestions, Statistics forecast, and mouse navigation.
+- Targeted E2E verification passed: `tui_tester/venv/bin/python3 -m pytest e2e_tests/test_batch6_end_to_end.py -q`.
+- Full verification passed: `./scripts/verify.sh` with 301 E2E tests.
+
 ## 2026-05-14 (Autonomous Improvement Pass — batch 5)
 
 ### Content Expansion

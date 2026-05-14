@@ -64,10 +64,15 @@ func (m *Model) renderAI(x, y int) string {
 			{"A1 survival", "basic phrases"},
 			{"B1 doctor visit", "medical vocabulary"},
 			{"B1 apartment viewing", "housing search"},
+			{"B1 emergency & safety", "first aid & help"},
+			{"B1 bureaucracy appointment", "forms & offices"},
+			{"B2 digital privacy", "data protection"},
+			{"A2 pharmacy visit", "medicine basics"},
+			{"C1 project retrospective", "work reflection"},
+			{"C1 business email", "formal writing"},
 			{"B2 job interview", "professional talk"},
 			{"B2 urban mobility", "transport & city"},
 			{"B2 news debate", "current topics"},
-			{"C1 business email", "formal writing"},
 			{"C1 academic argument", "university German"},
 			{"travel phrases", "tourist essentials"},
 			{"weather small talk", "daily conversation"},
@@ -88,40 +93,75 @@ func (m *Model) renderAI(x, y int) string {
 			{"A1 greetings formal", "Sie vs du"},
 			{"B1 making reservations", "restaurant & hotel"},
 			{"B2 discussing art", "museum & cinema"},
-			{"B1 emergency & safety", "first aid & help"},
 			{"B2 job application", "cover letter & CV"},
 			{"C1 scientific paper", "research writing"},
 			{"B2 environmental issues", "green topics"},
 			{"A2 public transport", "train & bus tickets"},
 			{"B1 insurance claims", "legal German"},
+			{"C1 psychology terms", "mind & emotions"},
+			{"B2 travel adventure", "trips & flights"},
+			{"B2 hiking & camping", "outdoor German"},
+			{"B1 hotel & accommodation", "booking vocabulary"},
+			{"B2 restaurant phrases", "dining out"},
+			{"C1 philosophical concepts", "abstract thinking"},
+			{"A2 giving directions", "navigation"},
+			{"B2 car & driving", "vehicle vocabulary"},
+			{"B1 phone & internet", "communication tech"},
+		}
+		visibleSuggestions := len(suggestions)
+		if layout.Height < 42 {
+			visibleSuggestions = minInt(24, visibleSuggestions)
+		} else if layout.Height < 55 {
+			visibleSuggestions = minInt(32, visibleSuggestions)
 		}
 
 		suggestionStyle := lipgloss.NewStyle().
 			Foreground(colorCyan).
 			Underline(true).
 			MarginRight(1)
+		descStyle := lipgloss.NewStyle().Foreground(colorMuted)
 
 		lineY := layout.Y + strings.Count(b.String(), "\n")
 		currentX := layout.X
+		maxLineWidth := maxInt(24, layout.Width-2)
 
-		for i, s := range suggestions {
-			if i > 0 && i%5 == 0 {
+		for i, s := range suggestions[:visibleSuggestions] {
+			separator := ""
+			if currentX > layout.X {
+				separator = "  "
+			}
+			label := s.topic
+			labelWidth := lipgloss.Width(separator) + lipgloss.Width(label)
+			if currentX > layout.X && currentX-layout.X+labelWidth > maxLineWidth {
 				b.WriteString("\n")
 				lineY++
 				currentX = layout.X
+				separator = ""
+				labelWidth = lipgloss.Width(label)
 			}
+			b.WriteString(separator)
 			b.WriteString(suggestionStyle.Render(s.topic))
+			if layout.Width >= 118 && i < 8 {
+				desc := descStyle.Render(" (" + s.desc + ")")
+				if currentX-layout.X+labelWidth+lipgloss.Width(desc) <= maxLineWidth {
+					b.WriteString(desc)
+					labelWidth += lipgloss.Width(desc)
+				}
+			}
 			m.hitboxes = append(m.hitboxes, Hitbox{
 				ID:     "ai-topic-" + s.topic,
 				View:   ViewAI,
-				X:      currentX,
+				X:      currentX + lipgloss.Width(separator),
 				Y:      lineY,
-				Width:  len(s.topic),
+				Width:  lipgloss.Width(s.topic),
 				Height: 1,
 			})
-			currentX += len(s.topic) + 1
+			currentX += labelWidth
 		}
 		b.WriteString("\n")
+		if visibleSuggestions < len(suggestions) {
+			b.WriteString(mutedStyle.Render(fmt.Sprintf("Showing %d of %d suggestions. Type any topic for a custom draft.", visibleSuggestions, len(suggestions))) + "\n")
+		}
 		b.WriteString(mutedStyle.Render("Tip: be specific (level, situation, examples) for better results.") + "\n")
 	}
 

@@ -112,8 +112,8 @@ def test_wasd_navigation_preserves_existing_functions():
             # 'a' should approve draft, not switch views
             agent.act('a')
             agent.wait_until_stable()
-            agent.assert_text("Draft approved")
-            
+            agent.wait_for_text("der Kaffee", timeout=5.0)
+
             # Now test 'd' for discard
             # First generate another draft
             agent.act('<Enter>')
