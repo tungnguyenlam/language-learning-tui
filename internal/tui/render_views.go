@@ -95,10 +95,10 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		miniBar := progressBar(5, deckPercentage, "46", "238")
 
 		deckNamePadded := deck.Name
-		if len(deckNamePadded) < 28 {
-			deckNamePadded += strings.Repeat(" ", 28-len(deckNamePadded))
-		} else if len(deckNamePadded) > 28 {
-			deckNamePadded = deckNamePadded[:25] + "..."
+		if len(deckNamePadded) < 40 {
+			deckNamePadded += strings.Repeat(" ", 40-len(deckNamePadded))
+		} else if len(deckNamePadded) > 40 {
+			deckNamePadded = deckNamePadded[:37] + "..."
 		}
 
 		label := fmt.Sprintf("%s%s%s %s  %s | today %d, %.0f%% success",

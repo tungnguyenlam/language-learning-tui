@@ -1,5 +1,31 @@
 # Done Backlog
 
+## 2026-05-15 (Autonomous Improvement Pass — batch 7)
+
+### Content Expansion
+- Added **A2 German Travel & Booking** deck (40 cards) for hotels, bookings, and transportation.
+- Added **B1 German Housing & Apartment** deck (40 cards) for renting, utilities, and living.
+- Added **C1 German Environment & Sustainability** deck (40 cards) for advanced environmental topics.
+
+### UI & UX Improvements
+- **Hint System:** Added support for card hints in Review view. Press 'h' before revealing to see a hint.
+- **Dashboard Forecast:** Added "Next 24h" due count to the Review Queue box.
+- **Statistics Chart:** Added "Cards Added (Last 7 Days)" bar chart to the Statistics view.
+- **Improved Visibility:** Increased deck name display limit from 28 to 40 characters in the Decks view.
+
+### Logic & Scaling
+- **Increased Study Capacity:** Increased the limit of due cards loaded into memory from 500 to 5000 to better support full seeded collections.
+- **Search Fix:** Resolved an issue where spaces were dropped during deck/card searches (Bubble Tea "space" key handling).
+
+### Developer Experience & Testing
+- **Makefile Targets:** Added `test-unit` and `test-e2e` for easier testing workflows.
+- **E2E Coverage:** Added `e2e_tests/test_may15_improvements.py` verifying all new content and features.
+
+### Verification
+- `go test ./...` passed.
+- `DEUTSCH_TUI_BIN=./deutsch-tui-bin pytest e2e_tests/test_may15_improvements.py` passed.
+- Overall E2E suite passes with 301+ tests.
+
 ## 2026-05-14 (Autonomous Improvement Pass — batch 6, checkpoint 1)
 
 ### Content Expansion

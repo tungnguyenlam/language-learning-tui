@@ -253,6 +253,9 @@ func singlePrintableInput(s string) (string, bool) {
 	if s == "" {
 		return "", false
 	}
+	if s == "space" {
+		return " ", true
+	}
 	r, size := utf8.DecodeRuneInString(s)
 	if size <= 0 || size != len(s) || r < ' ' {
 		return "", false

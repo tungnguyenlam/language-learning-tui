@@ -59,6 +59,9 @@ func StandardDecks() []core.Deck {
 		C1PsychologyMindDeck(),
 		B1BureaucracyAppointmentsDeck(),
 		B2DigitalPrivacyDeck(),
+		A2TravelBookingDeck(),
+		B1HousingApartmentDeck(),
+		C1EnvironmentSustainabilityDeck(),
 	}
 
 	// Load all embedded TSV decks

@@ -120,11 +120,11 @@ func (m *Model) renderReview(x, y int) string {
 
 	// Enhanced keyboard shortcut display with visual highlighting
 	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-	keys := fmt.Sprintf("%s toggle | %s suspend | %s filter | %s undo | %s history | %s audio | %s type",
-		keyStyle.Render("b"), keyStyle.Render("x"), keyStyle.Render("B"), keyStyle.Render("u"), keyStyle.Render("r"), keyStyle.Render("p"), keyStyle.Render("t"))
+	keys := fmt.Sprintf("%s toggle | %s suspend | %s hint | %s filter | %s undo | %s history | %s audio | %s type",
+		keyStyle.Render("b"), keyStyle.Render("x"), keyStyle.Render("h"), keyStyle.Render("B"), keyStyle.Render("u"), keyStyle.Render("r"), keyStyle.Render("p"), keyStyle.Render("t"))
 	if m.bookmarkFilter {
-		keys = fmt.Sprintf("%s toggle | %s suspend | %s all cards | %s undo | %s history | %s audio",
-			keyStyle.Render("b"), keyStyle.Render("x"), keyStyle.Render("B"), keyStyle.Render("u"), keyStyle.Render("r"), keyStyle.Render("p"))
+		keys = fmt.Sprintf("%s toggle | %s suspend | %s hint | %s all cards | %s undo | %s history | %s audio",
+			keyStyle.Render("b"), keyStyle.Render("x"), keyStyle.Render("h"), keyStyle.Render("B"), keyStyle.Render("u"), keyStyle.Render("r"), keyStyle.Render("p"))
 	}
 	audioIndicator := ""
 	if card.Audio != "" {
@@ -213,9 +213,19 @@ func (m *Model) renderReview(x, y int) string {
 		promptDisplay = strings.ReplaceAll(promptDisplay, "]", bracketStyle.Render("]"))
 	}
 
+	hintDisplay := ""
+	if m.showHint {
+		hintStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("226")).Italic(true)
+		val := card.Hint
+		if val == "" {
+			val = "(no hint available)"
+		}
+		hintDisplay = "\n\n" + hintStyle.Render("Hint: "+val)
+	}
+
 	// Enhanced prompt styling for better visibility
 	promptStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
-	promptDisplay = promptStyle.Render(promptDisplay)
+	promptDisplay = promptStyle.Render(promptDisplay + hintDisplay)
 
 	width, _ := m.activePanelSize()
 	cardWidth := maxInt(30, width-6)

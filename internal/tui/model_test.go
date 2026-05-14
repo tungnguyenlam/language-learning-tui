@@ -965,6 +965,8 @@ func TestSuspendCardRefreshesQueueAndStats(t *testing.T) {
 func TestSettingsDailyGoalAdjustsAndRenders(t *testing.T) {
 	repo := &mockRepo{dailyGoal: 10}
 	model := NewModel(repo, &mockScheduler{})
+	model.width = 100
+	model.height = 50
 	model.Update(statsMsg(core.Statistics{DailyGoal: 10, Grades: map[core.ReviewGrade]int{}}))
 	model.activeView = ViewSettings
 	model.settingsCursor = 1

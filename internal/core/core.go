@@ -48,11 +48,13 @@ type Note struct {
 	Front    string
 	Back     string
 	Extra    string
+	Hint     string
 	Audio    string
 	Tags     []string
 	Examples []string
 	Choices  []string
 	Cards    []Card
+	CreatedAt time.Time
 }
 
 type Card struct {
@@ -63,6 +65,7 @@ type Card struct {
 	Prompt     string
 	Answer     string
 	Extra      string
+	Hint       string
 	Choices    []string
 	Audio      string
 	Tags       []string
@@ -109,8 +112,10 @@ type Statistics struct {
 	YoungCards      int
 	MatureCards     int
 	BookmarkedCards int
-	BookmarkedDue   int
-	LeechCards      int
+	BookmarkedDue     int
+	Next24hDue        int
+	LeechCards        int
+
 	SuspendedCards  int
 	TotalReviews    int
 	ReviewsToday    int
@@ -119,6 +124,7 @@ type Statistics struct {
 	TotalDecks      int
 	ActiveDecks     int
 	SuccessRate     float64
+	CardsAddedPerDay map[string]int
 	Grades          map[ReviewGrade]int
 }
 

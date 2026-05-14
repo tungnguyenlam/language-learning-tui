@@ -148,7 +148,9 @@ type Model struct {
 	deckSelected          map[string]bool
 	drafting              bool
 	statsScroll           int
+	settingsScroll        int
 	statsTotalLines       int
+	settingsTotalLines    int
 	isDragging            bool
 	focusMode             bool
 	dragView              View
@@ -172,6 +174,7 @@ type Model struct {
 	typedAnswer           string             // Current typed answer
 	typingChecked         bool               // Whether typing answer has been checked
 	typingCorrect         bool               // Whether typed answer was correct
+	showHint              bool               // Whether to show hint for the current card
 
 	// Card-fix flow: user reports the current Review card as wrong; AI
 	// proposes a corrected note metadata; the user accepts or discards.
@@ -454,9 +457,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.logger.Debug("Received %d due cards", len(msg))
 		m.allDue = []core.Card(msg)
 		m.applyDeckFilter()
+		m.showHint = false
 	case bookmarkedDueCardsMsg:
 		m.allDue = []core.Card(msg)
 		m.applyDeckFilter()
+		m.showHint = false
 		if len(m.allDue) == 0 {
 			m.status = "No bookmarked cards due"
 		} else {
@@ -564,6 +569,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.stats = msg.stats
 		m.allDue = msg.cards
 		m.applyDeckFilter()
+		m.showHint = false
 
 		// Only update session stats if a valid grade was provided
 		if msg.grade != "" {
@@ -689,6 +695,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyPressMsg:
 		m.logger.Debug("Key pressed: %s", msg.String())
 		return m.updateKey(msg)
+	case tea.PasteMsg:
+		m.logger.Debug("Pasted text: %s", msg.String())
+		return m, m.handlePaste(msg.String())
 	case tea.MouseMsg:
 		if m.confirmingDelete {
 			return m, nil
@@ -722,6 +731,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						case ViewCram:
 							m.dragVisible = m.listVisibleLines(layout.Height)
 							m.dragTotal = len(m.cramCards)
+						case ViewSettings:
+							m.dragVisible = layout.Height
+							m.dragTotal = m.settingsTotalLines
 						}
 					}
 					cmd := m.activateHitbox(hit.ID)
@@ -747,6 +759,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.moveBrowserCursor(-1)
 				case ViewCram:
 					m.moveCramCursor(-1)
+				case ViewSettings:
+					m.settingsScroll = maxInt(0, m.settingsScroll-1)
 				}
 			} else if mouse.Button == tea.MouseWheelDown {
 				switch m.activeView {
@@ -756,6 +770,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.moveBrowserCursor(1)
 				case ViewCram:
 					m.moveCramCursor(1)
+				case ViewSettings:
+					m.settingsScroll++
 				}
 			}
 		}

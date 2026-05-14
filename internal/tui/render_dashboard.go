@@ -29,6 +29,7 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		Width(maxInt(25, (layout.Width-2)/2)).
 		Render(dashStatsStyle.Render("Review Queue") + "\n" +
 			fmt.Sprintf("  Due cards:   %d\n", len(m.dueCards)) +
+			fmt.Sprintf("  Next 24h:    %d\n", m.stats.Next24hDue) +
 			fmt.Sprintf("  Bookmarked:  %d (%d due)", m.stats.BookmarkedCards, m.stats.BookmarkedDue))
 
 	collectionStats := dashCollectionStyle.

@@ -10,8 +10,13 @@ verify: fmt-check test vet smoke
 fmt-check:
 	@test -z "$$(gofmt -l cmd internal)"
 
-test:
+test: test-unit
+
+test-unit:
 	GOCACHE=$(GOCACHE) go test ./...
+
+test-e2e: build
+	DEUTSCH_TUI_BIN=./deutsch-tui-bin pytest e2e_tests/
 
 vet:
 	GOCACHE=$(GOCACHE) go vet ./...

@@ -57,7 +57,7 @@ func (m *Model) gradeCard(grade core.ReviewGrade) tea.Cmd {
 		if m.bookmarkFilter {
 			cards, err2 = m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
 		} else {
-			cards, err2 = m.repo.DueCards(ctx, time.Now(), 500)
+			cards, err2 = m.repo.DueCards(ctx, time.Now(), 0)
 		}
 		if err2 != nil {
 			return err2
@@ -93,7 +93,7 @@ func (m *Model) undoLastReview() tea.Cmd {
 		if m.bookmarkFilter {
 			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
 		} else {
-			cards, err = m.repo.DueCards(ctx, time.Now(), 500)
+			cards, err = m.repo.DueCards(ctx, time.Now(), 0)
 		}
 		if err != nil {
 			return err
@@ -164,7 +164,7 @@ func (m *Model) seedStandardContent() tea.Cmd {
 		if err != nil {
 			return err
 		}
-		cards, err := m.repo.DueCards(ctx, time.Now(), 500)
+		cards, err := m.repo.DueCards(ctx, time.Now(), 0)
 		if err != nil {
 			return err
 		}
@@ -189,7 +189,7 @@ func (m *Model) executeResetDatabase() tea.Cmd {
 		}
 		// Reset everything
 		decks, _ := m.repo.Decks(ctx)
-		cards, _ := m.repo.DueCards(ctx, time.Now(), 500)
+		cards, _ := m.repo.DueCards(ctx, time.Now(), 0)
 
 		// Create a compound message or just trigger reloads
 		return importDoneMsg{decks: decks, cards: cards, count: 0, path: "Database Reset"}
@@ -235,7 +235,7 @@ func (m *Model) importTSV() tea.Cmd {
 		if err != nil {
 			return fmt.Errorf("failed to load decks: %w", err)
 		}
-		cards, err := m.repo.DueCards(ctx, time.Now(), 500)
+		cards, err := m.repo.DueCards(ctx, time.Now(), 0)
 		if err != nil {
 			return fmt.Errorf("failed to load due cards: %w", err)
 		}
@@ -329,7 +329,7 @@ func (m *Model) importAPKG() tea.Cmd {
 		if err != nil {
 			return fmt.Errorf("failed to load decks: %w", err)
 		}
-		cards, err := m.repo.DueCards(ctx, time.Now(), 500)
+		cards, err := m.repo.DueCards(ctx, time.Now(), 0)
 		if err != nil {
 			return fmt.Errorf("failed to load due cards: %w", err)
 		}
@@ -410,7 +410,7 @@ func (m *Model) approveDraft() tea.Cmd {
 			}
 		}
 
-		cards, err := m.repo.DueCards(ctx, time.Now(), 500)
+		cards, err := m.repo.DueCards(ctx, time.Now(), 0)
 		if err != nil {
 			return err
 		}
@@ -523,7 +523,7 @@ func (m *Model) suspendCard() tea.Cmd {
 		if m.bookmarkFilter {
 			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
 		} else {
-			cards, err = m.repo.DueCards(ctx, time.Now(), 500)
+			cards, err = m.repo.DueCards(ctx, time.Now(), 0)
 		}
 		if err != nil {
 			return err
@@ -807,7 +807,7 @@ func (m *Model) approveAllDrafts() tea.Cmd {
 		}
 		m.drafts = nil
 		m.draftCursor = 0
-		cards, err := m.repo.DueCards(ctx, time.Now(), 500)
+		cards, err := m.repo.DueCards(ctx, time.Now(), 0)
 		if err != nil {
 			return err
 		}
@@ -980,7 +980,7 @@ func (m *Model) applyFixProposal() tea.Cmd {
 		if err := m.repo.UpsertNote(ctx, updated); err != nil {
 			return fixErrorMsg{cardID: cardID, err: err}
 		}
-		cards, err := m.repo.DueCards(ctx, time.Now(), 500)
+		cards, err := m.repo.DueCards(ctx, time.Now(), 0)
 		if err != nil {
 			return fixErrorMsg{cardID: cardID, err: err}
 		}

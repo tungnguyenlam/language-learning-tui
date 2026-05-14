@@ -26,7 +26,7 @@ func (m *Model) loadBrowserCards() tea.Cmd {
 func (m *Model) loadDueCards() tea.Msg {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	cards, err := m.repo.DueCards(ctx, time.Now(), 500)
+	cards, err := m.repo.DueCards(ctx, time.Now(), 0)
 	if err != nil {
 		return err
 	}

@@ -156,4 +156,23 @@ var migrations = []migration{
 			  AND back = 'Literal: all ways lead to Rome';
 		`,
 	},
+	{
+		ID: 21,
+		SQL: `
+			ALTER TABLE notes ADD COLUMN hint TEXT NOT NULL DEFAULT '';
+			ALTER TABLE cards ADD COLUMN hint TEXT NOT NULL DEFAULT '';
+		`,
+	},
+	{
+		ID: 22,
+		SQL: `
+			ALTER TABLE notes ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+		`,
+	},
+	{
+		ID: 23,
+		SQL: `
+			ALTER TABLE cards ADD COLUMN extra TEXT NOT NULL DEFAULT '';
+		`,
+	},
 }

@@ -256,6 +256,45 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 		content.WriteString(fmt.Sprintf("  %s %s %d\n", labelStyle.Render(dayName), bar, d.count))
 	}
 
+	// --- Cards Added Chart ---
+	content.WriteString("\n" + titleStyle.Copy().Underline(true).Render("Cards Added (Last 7 Days)") + "\n")
+	maxAdded := 0
+	last7DaysAdded := make([]struct {
+		date  string
+		count int
+	}, 7)
+
+	for i := 0; i < 7; i++ {
+		date := now.AddDate(0, 0, -6+i).Format("2006-01-02")
+		count := m.stats.CardsAddedPerDay[date]
+		last7DaysAdded[i] = struct {
+			date  string
+			count int
+		}{date, count}
+		if count > maxAdded {
+			maxAdded = count
+		}
+	}
+
+	for i := 0; i < 7; i++ {
+		d := last7DaysAdded[i]
+		dateObj, _ := time.Parse("2006-01-02", d.date)
+		dayName := dateObj.Format("Mon")
+
+		percentage := 0.0
+		if maxAdded > 0 {
+			percentage = float64(d.count) / float64(maxAdded)
+		}
+
+		barColor := "240"
+		if d.count > 0 {
+			barColor = "81" // blueish for added cards
+		}
+
+		bar := progressBar(20, percentage, barColor, "238")
+		content.WriteString(fmt.Sprintf("  %s %s %d\n", labelStyle.Render(dayName), bar, d.count))
+	}
+
 	// --- Maturity Distribution ---
 	content.WriteString("\n" + titleStyle.Copy().Underline(true).Render("Maturity Distribution") + "\n")
 	totalKnown := m.stats.NewCards + m.stats.YoungCards + m.stats.MatureCards

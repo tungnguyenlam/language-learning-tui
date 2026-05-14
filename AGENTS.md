@@ -59,3 +59,6 @@ The project is a Go Bubble Tea TUI for German flashcard and MCQ learning. It is 
 - Do not dump chat history into `AGENTS.md`; write searchable, task-shaped records instead.
 - Use `./scripts/verify.sh` as the full project verification command.
 - When adding UI elements that increase vertical height (e.g. Dashboard boxes), ensure E2E tests using `tui-tester` have sufficient terminal `lines` configured. Elements appended after the main layout (like help overlays) may be clipped and become invisible to `wait_for_text` if the terminal is too short.
+- **Bubble Tea Key Strings:** Space character is often received as `"space"` string in `msg.String()`. Always handle both `" "` and `"space"` in single-character input helpers to avoid dropping spaces in search filters.
+- **Card Loading Limits:** For large seeded collections (Standard Content), ensure `DueCards` limits are high enough (e.g., 5000+). Lower limits can cause some decks to appear empty in the Review view if they are sorted after the limit.
+- **E2E Test Selectors:** Prefer unique tags or specific substrings for E2E `wait_for_text` to avoid collisions between similar decks (e.g., "B1 Environment" vs "C1 Environment").

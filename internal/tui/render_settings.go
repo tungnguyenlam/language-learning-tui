@@ -14,18 +14,29 @@ func (m *Model) renderSettings(x, y int) string {
 	style := panelStyle.Width(width).Height(height)
 	layout := contentLayoutForStyle(style, x, y)
 
-	var b strings.Builder
+	var allLines []string
+	var itemLines = make(map[int]int) // cursor index -> line index
+
+	addLine := func(s string) {
+		lines := strings.Split(s, "\n")
+		for _, l := range lines {
+			allLines = append(allLines, l)
+		}
+	}
+
 	titleStyle := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("205")).
 		Background(lipgloss.Color("236")).
 		Padding(0, 2).
 		MarginBottom(1)
-	b.WriteString(titleStyle.Render("⚙ SETTINGS") + "\n\n")
+	addLine(titleStyle.Render("⚙ SETTINGS"))
+	addLine("")
+
 	if m.editingTemplate {
-		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("EDITING - Enter to save, Esc to cancel.") + "\n")
+		addLine(lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("EDITING - Enter to save, Esc to cancel."))
 	} else if strings.HasPrefix(m.status, "Daily goal set") {
-		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render(m.status) + "\n")
+		addLine(lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render(m.status))
 	}
 
 	autoPlayStatus := lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Render("off")
@@ -46,9 +57,12 @@ func (m *Model) renderSettings(x, y int) string {
 		Padding(0, 1).
 		MarginTop(1).
 		MarginBottom(1)
-	b.WriteString(sectionStyle.Render("AI CONFIGURATION") + "\n")
-	b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Render(fmt.Sprintf("  Template Set: %s", activeSet)) + "\n\n")
-	b.WriteString(mutedStyle.Render("  Provider cycle: disabled -> offline -> template -> openai -> anthropic.") + "\n")
+	
+	addLine("")
+	addLine(sectionStyle.Render("AI CONFIGURATION"))
+	addLine(lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Render(fmt.Sprintf("  Template Set: %s", activeSet)))
+	addLine("")
+	addLine(mutedStyle.Render("  Provider cycle: disabled -> offline -> template -> openai -> anthropic."))
 
 	setMap := m.aiTemplates[activeSet]
 	aiOptions := []string{
@@ -57,10 +71,9 @@ func (m *Model) renderSettings(x, y int) string {
 		fmt.Sprintf("Back Template:  %s", strings.ReplaceAll(setMap["back"], "\n", "\\n")),
 		fmt.Sprintf("Example Tmpl:   %s", strings.ReplaceAll(setMap["example"], "\n", "\\n")),
 	}
-	var rowY int
-	var prefix string
+	
 	for i, opt := range aiOptions {
-		prefix = "  "
+		prefix := "  "
 		itemStyle := lipgloss.NewStyle()
 		if i == m.settingsCursor {
 			prefix = "> "
@@ -71,69 +84,38 @@ func (m *Model) renderSettings(x, y int) string {
 			}
 		}
 		item := prefix + opt
-		rowY = layout.Y + strings.Count(b.String(), "\n")
-		b.WriteString(itemStyle.Render(item) + "\n")
-		m.hitboxes = append(m.hitboxes, Hitbox{
-			ID:     fmt.Sprintf("settings-%d", i),
-			View:   ViewSettings,
-			X:      layout.X,
-			Y:      rowY,
-			Width:  lipgloss.Width(item),
-			Height: 1,
-		})
+		itemLines[i] = len(allLines)
+		addLine(itemStyle.Render(item))
 	}
 
-	b.WriteString("\n" + sectionStyle.Render("STUDY PREFERENCES") + "\n")
+	addLine("")
+	addLine(sectionStyle.Render("STUDY PREFERENCES"))
 
 	goalIdx := 4
-	prefix = "  "
+	prefix := "  "
 	itemStyle := lipgloss.NewStyle()
 	if goalIdx == m.settingsCursor {
 		prefix = "> "
 		itemStyle = itemStyle.Bold(true).Foreground(lipgloss.Color("212"))
 	}
 	goalLabel := fmt.Sprintf("%sDaily Goal: %d cards ", prefix, m.stats.DailyGoal)
-	rowY = layout.Y + strings.Count(b.String(), "\n")
-	b.WriteString(itemStyle.Render(goalLabel))
-
+	
 	btnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 	disabledBtnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Bold(true)
 	minusBtn := "[-] "
 	plusBtn := "[+] "
 
+	var goalLine strings.Builder
+	goalLine.WriteString(itemStyle.Render(goalLabel))
 	if m.stats.DailyGoal <= 1 {
-		b.WriteString(disabledBtnStyle.Render(minusBtn))
+		goalLine.WriteString(disabledBtnStyle.Render(minusBtn))
 	} else {
-		b.WriteString(btnStyle.Render(minusBtn))
+		goalLine.WriteString(btnStyle.Render(minusBtn))
 	}
-
-	b.WriteString(btnStyle.Render(plusBtn))
-	b.WriteString("\n")
-
-	m.hitboxes = append(m.hitboxes, Hitbox{
-		ID:     fmt.Sprintf("settings-%d", goalIdx),
-		View:   ViewSettings,
-		X:      layout.X,
-		Y:      rowY,
-		Width:  lipgloss.Width(goalLabel),
-		Height: 1,
-	})
-	m.hitboxes = append(m.hitboxes, Hitbox{
-		ID:     "settings-goal-minus",
-		View:   ViewSettings,
-		X:      layout.X + lipgloss.Width(goalLabel),
-		Y:      rowY,
-		Width:  lipgloss.Width(minusBtn),
-		Height: 1,
-	})
-	m.hitboxes = append(m.hitboxes, Hitbox{
-		ID:     "settings-goal-plus",
-		View:   ViewSettings,
-		X:      layout.X + lipgloss.Width(goalLabel) + lipgloss.Width(minusBtn),
-		Y:      rowY,
-		Width:  lipgloss.Width(plusBtn),
-		Height: 1,
-	})
+	goalLine.WriteString(btnStyle.Render(plusBtn))
+	
+	itemLines[goalIdx] = len(allLines)
+	addLine(goalLine.String())
 
 	audioIdx := 5
 	prefix = "  "
@@ -143,16 +125,8 @@ func (m *Model) renderSettings(x, y int) string {
 		itemStyle = itemStyle.Bold(true).Foreground(lipgloss.Color("212"))
 	}
 	audioItem := fmt.Sprintf("%sAuto-play audio: %s", prefix, autoPlayStatus)
-	rowY = layout.Y + strings.Count(b.String(), "\n")
-	b.WriteString(itemStyle.Render(audioItem) + "\n")
-	m.hitboxes = append(m.hitboxes, Hitbox{
-		ID:     fmt.Sprintf("settings-%d", audioIdx),
-		View:   ViewSettings,
-		X:      layout.X,
-		Y:      rowY,
-		Width:  lipgloss.Width(audioItem),
-		Height: 1,
-	})
+	itemLines[audioIdx] = len(allLines)
+	addLine(itemStyle.Render(audioItem))
 
 	strictIdx := 6
 	prefix = "  "
@@ -166,24 +140,17 @@ func (m *Model) renderSettings(x, y int) string {
 		strictStatus = lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render("on")
 	}
 	strictItem := fmt.Sprintf("%sStrict Normalization (ss vs ß): %s", prefix, strictStatus)
-	rowY = layout.Y + strings.Count(b.String(), "\n")
-	b.WriteString(itemStyle.Render(strictItem) + "\n")
-	m.hitboxes = append(m.hitboxes, Hitbox{
-		ID:     fmt.Sprintf("settings-%d", strictIdx),
-		View:   ViewSettings,
-		X:      layout.X,
-		Y:      rowY,
-		Width:  lipgloss.Width(strictItem),
-		Height: 1,
-	})
+	itemLines[strictIdx] = len(allLines)
+	addLine(itemStyle.Render(strictItem))
 
-	b.WriteString("\n" + sectionStyle.Render("API CREDENTIALS") + "\n")
+	addLine("")
+	addLine(sectionStyle.Render("API CREDENTIALS"))
 	credProvider := m.credProviderName()
 	disabledStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true)
 	if credProvider == "" {
-		b.WriteString(disabledStyle.Render("  (select openai or anthropic above to edit credentials)") + "\n")
+		addLine(disabledStyle.Render("  (select openai or anthropic above to edit credentials)"))
 	} else {
-		b.WriteString(mutedStyle.Render(fmt.Sprintf("  Provider: %s. Press Enter on a row to edit.", credProvider)) + "\n")
+		addLine(mutedStyle.Render(fmt.Sprintf("  Provider: %s. Press Enter on a row to edit.", credProvider)))
 	}
 
 	creds := m.credsFor(credProvider)
@@ -213,42 +180,127 @@ func (m *Model) renderSettings(x, y int) string {
 		}
 		displayValue := row.value
 		if m.editingSecretKey != "" && credKeyForCursor(row.idx) == m.editingSecretKey {
-			// Show what the user is currently typing.
 			raw := m.getCredValue(m.editingSecretProvider, m.editingSecretKey)
 			if m.editingSecretKey == "api_key" {
-				// Mask while typing too — show count of characters.
 				displayValue = fmt.Sprintf("•%d chars (Enter to save, Esc to cancel)", len(raw))
 			} else {
 				displayValue = raw + "▌"
 			}
 		}
 		item := fmt.Sprintf("%s%s%s", prefix, row.label, displayValue)
-		rowY = layout.Y + strings.Count(b.String(), "\n")
-		b.WriteString(itemStyle.Render(item) + "\n")
-		m.hitboxes = append(m.hitboxes, Hitbox{
-			ID:     fmt.Sprintf("settings-%d", row.idx),
-			View:   ViewSettings,
-			X:      layout.X,
-			Y:      rowY,
-			Width:  lipgloss.Width(item),
-			Height: 1,
-		})
+		itemLines[row.idx] = len(allLines)
+		addLine(itemStyle.Render(item))
 	}
 
 	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-	b.WriteString(fmt.Sprintf("\nColor Theme: %s (Press %s to cycle)\n", m.theme, keyStyle.Render("c")))
+	addLine("")
+	addLine(fmt.Sprintf("Color Theme: %s (Press %s to cycle)", m.theme, keyStyle.Render("c")))
 
 	if !m.editingTemplate && m.editingSecretKey == "" {
 		keyStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-		b.WriteString(fmt.Sprintf("\nUse %s/%s to move, %s goal, %s theme, Enter edit/toggle, %s/%s templates.",
+		addLine("")
+		addLine(fmt.Sprintf("Use %s/%s to move, %s goal, %s theme, Enter edit/toggle, %s/%s templates.",
 			keyStyle.Render("j"), keyStyle.Render("k"), keyStyle.Render("+/-"), keyStyle.Render("c"), keyStyle.Render("["), keyStyle.Render("]")))
 	}
+
+	// Scrolling logic
+	totalLines := len(allLines)
+	m.settingsTotalLines = totalLines
+	maxVisible := layout.Height
+	if totalLines > maxVisible {
+		// Ensure cursor is visible
+		cursorLine := itemLines[m.settingsCursor]
+		if cursorLine < m.settingsScroll {
+			m.settingsScroll = cursorLine
+		} else if cursorLine >= m.settingsScroll+maxVisible {
+			m.settingsScroll = cursorLine - maxVisible + 1
+		}
+	} else {
+		m.settingsScroll = 0
+	}
+	
+	m.settingsScroll = clampInt(m.settingsScroll, 0, maxInt(0, totalLines-maxVisible))
+
+	var b strings.Builder
+	padWidth := layout.Width - 2
+	thumbStart, thumbHeight := scrollbarThumb(totalLines, maxVisible, m.settingsScroll)
+
+	for i := m.settingsScroll; i < m.settingsScroll+maxVisible && i < totalLines; i++ {
+		line := allLines[i]
+		plainLine := stripANSI(line)
+		lineWidth := lipgloss.Width(plainLine)
+		
+		displayLine := line
+		if lineWidth < padWidth {
+			displayLine += strings.Repeat(" ", padWidth-lineWidth)
+		}
+
+		if totalLines > maxVisible {
+			scrollbarChar := "│"
+			currentPos := i - m.settingsScroll
+			if currentPos >= thumbStart && currentPos < thumbStart+thumbHeight {
+				scrollbarChar = "█"
+			}
+			displayLine += " " + scrollbarChar
+
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID:     fmt.Sprintf("settings-scroll-%d", currentPos),
+				View:   ViewSettings,
+				X:      layout.X + padWidth + 1,
+				Y:      layout.Y + currentPos,
+				Width:  1,
+				Height: 1,
+			})
+		}
+		
+		b.WriteString(displayLine + "\n")
+
+		// Re-add hitboxes for selectable items
+		for itemIdx, lineIdx := range itemLines {
+			if i == lineIdx {
+				// Special case for goal buttons
+				if itemIdx == 4 {
+					m.hitboxes = append(m.hitboxes, Hitbox{
+						ID:     fmt.Sprintf("settings-%d", itemIdx),
+						View:   ViewSettings,
+						X:      layout.X,
+						Y:      layout.Y + (i - m.settingsScroll),
+						Width:  lipgloss.Width(goalLabel),
+						Height: 1,
+					})
+					m.hitboxes = append(m.hitboxes, Hitbox{
+						ID:     "settings-goal-minus",
+						View:   ViewSettings,
+						X:      layout.X + lipgloss.Width(goalLabel),
+						Y:      layout.Y + (i - m.settingsScroll),
+						Width:  lipgloss.Width(minusBtn),
+						Height: 1,
+					})
+					m.hitboxes = append(m.hitboxes, Hitbox{
+						ID:     "settings-goal-plus",
+						View:   ViewSettings,
+						X:      layout.X + lipgloss.Width(goalLabel) + lipgloss.Width(minusBtn),
+						Y:      layout.Y + (i - m.settingsScroll),
+						Width:  lipgloss.Width(plusBtn),
+						Height: 1,
+					})
+				} else {
+					m.hitboxes = append(m.hitboxes, Hitbox{
+						ID:     fmt.Sprintf("settings-%d", itemIdx),
+						View:   ViewSettings,
+						X:      layout.X,
+						Y:      layout.Y + (i - m.settingsScroll),
+						Width:  lipgloss.Width(plainLine),
+						Height: 1,
+					})
+				}
+			}
+		}
+	}
+
 	return b.String()
 }
 
-// credValueOrDefault returns value if non-empty, else a short hint of the
-// provider's default. We avoid hardcoding the actual URLs/models here so
-// the source of truth stays in internal/ai.
 func credValueOrDefault(value, kind string) string {
 	v := strings.TrimSpace(value)
 	if v != "" {

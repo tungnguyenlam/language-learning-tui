@@ -41,6 +41,7 @@ func (m *Model) updateView(view View) tea.Cmd {
 	m.hitboxes = nil // Clear hitboxes for new view
 	m.importCursor = 0
 	m.settingsCursor = 0
+	m.settingsScroll = 0
 	m.editingImportPath = false
 	m.editingExportTag = false
 	m.editingTemplate = false
@@ -627,6 +628,9 @@ func (m *Model) handleMouseDrag(mouseY int) {
 		}
 	case ViewCram:
 		m.cramCursor = selectedIndexForTrackRow(m.dragTotal, m.dragVisible, row)
+	case ViewSettings:
+		maxScroll := maxInt(0, m.settingsTotalLines-m.dragVisible)
+		m.settingsScroll = clampInt(scrollOffsetForTrackRow(m.dragTotal, m.dragVisible, row), 0, maxScroll)
 	}
 }
 

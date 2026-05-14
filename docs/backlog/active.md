@@ -1,14 +1,21 @@
 # Active Backlog
 
-Last updated: 2026-05-14 18:45 +07
+Last updated: 2026-05-15 09:00 +07
 
 ## Current Milestone
 
-Autonomous end-to-end improvement pass on 2026-05-14 (batch 6).
+Autonomous end-to-end improvement pass on 2026-05-15 (batch 7).
 
 ## Current Work
 
-No active executable work. Batch 6 is complete and fully verified.
+- [x] Content Expansion: Add **A2 German Travel & Booking** deck (40 cards).
+- [x] Content Expansion: Add **B1 German Housing & Apartment** deck (40 cards).
+- [x] Content Expansion: Add **C1 German Environment & Sustainability** deck (40 cards).
+- [x] UI Improvement: Add "Hint" support in Review view (Shortcut 'h').
+- [x] UI Improvement: Add "Next 24h Forecast" to Dashboard.
+- [x] UI Improvement: Add "Cards Added per Day" chart to Statistics.
+- [x] AI View: Show incremental drafting progress (via status updates).
+- [x] DX/Testing: Add 8+ new E2E tests for these features.
 
 ## Exact Next Action
 
@@ -16,11 +23,10 @@ User can give new instructions.
 
 ## Top Issues / Priorities
 
-1. Preserve the passing launch/test baseline while improving real end-to-end behavior.
-2. Add durable German content that is discoverable through the existing deck/browser flows.
-3. Improve visual hierarchy and status feedback without increasing height-sensitive layouts.
-4. Harden keyboard/mouse edge cases that could leave stale selections or invalid cursors.
-5. Expand E2E coverage with at least 8 new tui-tester tests for new content and core views.
+1. Complete at least 6-8 distinct improvements.
+2. Ensure high-quality German content.
+3. Maintain zero-error launch and passing tests.
+4. Enhance visual feedback across views.
 
 ## Acceptance Criteria (2026-05-14, batch 6)
 

@@ -162,6 +162,7 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 				m.cursor--
 				m.resetMCQState()
 				m.clearReviewHistory()
+				m.showHint = false
 			}
 			return m, nil
 		}
@@ -171,6 +172,7 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 				m.cursor++
 				m.resetMCQState()
 				m.clearReviewHistory()
+				m.showHint = false
 			}
 			return m, nil
 		}
@@ -364,6 +366,15 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	case "h":
 		if m.revealState == RevealRevealed {
 			return m.gradeCard(core.GradeHard), true
+		}
+		if len(m.dueCards) > 0 {
+			m.showHint = !m.showHint
+			if m.showHint {
+				m.status = "Hint shown"
+			} else {
+				m.status = "Hint hidden"
+			}
+			return nil, true
 		}
 	case "g":
 		if m.revealState == RevealRevealed {
@@ -1102,6 +1113,73 @@ func (m *Model) updateSessionSummaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	m.sessionReviewed = 0
 	m.sessionCorrect = 0
 	return m.updateView(ViewDashboard), true
+}
+
+func (m *Model) handlePaste(text string) tea.Cmd {
+	// Clean text: strip newlines/tabs which break single-line inputs
+	text = strings.ReplaceAll(text, "\n", "")
+	text = strings.ReplaceAll(text, "\r", "")
+	text = strings.ReplaceAll(text, "\t", " ")
+
+	if m.activeView == ViewSettings {
+		if m.editingSecretKey != "" {
+			provider := m.editingSecretProvider
+			key := m.editingSecretKey
+			m.setCredValue(provider, key, m.getCredValue(provider, key)+text)
+			return nil
+		}
+		if m.editingTemplate {
+			activeSet := m.currentAITemplateSet()
+			if activeSet != "" {
+				templateKey := m.templateKeyAtCursor()
+				m.aiTemplates[activeSet][templateKey] += text
+				return nil
+			}
+		}
+	}
+
+	if m.activeView == ViewAI && m.searchingAI {
+		m.aiInput += text
+		return nil
+	}
+
+	if m.activeView == ViewBrowser {
+		if m.searchingBrowser {
+			m.browserSearch += text
+			return m.loadBrowserCards()
+		}
+		if m.searchingTags {
+			m.browserTag += text
+			return m.loadBrowserCards()
+		}
+		if m.taggingCards {
+			m.tagInput += text
+			return nil
+		}
+	}
+
+	if m.activeView == ViewImport {
+		if m.editingImportPath {
+			if m.importCursor == 0 {
+				m.importPath += text
+			} else {
+				m.exportPath += text
+			}
+			return nil
+		}
+		if m.editingExportTag {
+			m.exportTag += text
+			return nil
+		}
+	}
+
+	if m.activeView == ViewDecks && m.searchingDecks {
+		m.deckFilter += text
+		m.deckCursor = 0
+		return nil
+	}
+
+	return nil
 }
 
 // handleSecretEditKey processes keys while the user is typing an API key,

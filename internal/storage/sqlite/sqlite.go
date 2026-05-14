@@ -241,10 +241,10 @@ func (s *Store) GetNote(ctx context.Context, noteID string) (core.Note, error) {
 	var note core.Note
 	var tags string
 	err := s.db.QueryRowContext(ctx, `
-		SELECT id, deck_id, front, back, extra, audio, tags
+		SELECT id, deck_id, front, back, extra, hint, audio, tags, created_at
 		FROM notes
 		WHERE id = ?
-	`, noteID).Scan(&note.ID, &note.DeckID, &note.Front, &note.Back, &note.Extra, &note.Audio, &tags)
+	`, noteID).Scan(&note.ID, &note.DeckID, &note.Front, &note.Back, &note.Extra, &note.Hint, &note.Audio, &tags, &note.CreatedAt)
 	if err != nil {
 		return core.Note{}, err
 	}
@@ -276,17 +276,22 @@ func (s *Store) upsertNoteTx(ctx context.Context, tx *sql.Tx, note core.Note) er
 		return errors.New("note id is required")
 	}
 	tags := strings.Join(note.Tags, " ")
+	createdAt := note.CreatedAt
+	if createdAt.IsZero() {
+		createdAt = time.Now().UTC()
+	}
 	_, err := tx.ExecContext(ctx, `
-		INSERT INTO notes (id, deck_id, front, back, extra, audio, tags)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO notes (id, deck_id, front, back, extra, hint, audio, tags, created_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
 			deck_id = excluded.deck_id,
 			front = excluded.front,
 			back = excluded.back,
 			extra = excluded.extra,
+			hint = excluded.hint,
 			audio = excluded.audio,
 			tags = excluded.tags
-	`, note.ID, note.DeckID, note.Front, note.Back, note.Extra, note.Audio, tags)
+	`, note.ID, note.DeckID, note.Front, note.Back, note.Extra, note.Hint, note.Audio, tags, createdAt)
 	if err != nil {
 		return err
 	}
@@ -306,7 +311,7 @@ func (s *Store) upsertNoteTx(ctx context.Context, tx *sql.Tx, note core.Note) er
 
 func (s *Store) notesForDeck(ctx context.Context, deckID string) ([]core.Note, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT id, deck_id, front, back, extra, audio, tags
+		SELECT id, deck_id, front, back, extra, hint, audio, tags, created_at
 		FROM notes
 		WHERE deck_id = ?
 		ORDER BY id
@@ -319,7 +324,7 @@ func (s *Store) notesForDeck(ctx context.Context, deckID string) ([]core.Note, e
 	for rows.Next() {
 		var note core.Note
 		var tags string
-		if err := rows.Scan(&note.ID, &note.DeckID, &note.Front, &note.Back, &note.Extra, &note.Audio, &tags); err != nil {
+		if err := rows.Scan(&note.ID, &note.DeckID, &note.Front, &note.Back, &note.Extra, &note.Hint, &note.Audio, &tags, &note.CreatedAt); err != nil {
 			_ = rows.Close()
 			return nil, err
 		}
@@ -347,7 +352,7 @@ func (s *Store) notesForDeck(ctx context.Context, deckID string) ([]core.Note, e
 
 func (s *Store) cardsForNote(ctx context.Context, noteID string) ([]core.Card, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, c.audio, c.tags, 
+		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.extra, c.hint, c.choices, c.audio, c.tags, 
 		       COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0), 
 		       COALESCE(rs.interval_seconds, 0), COALESCE(rs.reviews, 0)
 		FROM cards c
@@ -367,7 +372,7 @@ func (s *Store) cardsForNote(ctx context.Context, noteID string) ([]core.Card, e
 		var kind string
 		var choicesStr, tags string
 		var bookmarked, leech, suspended, intervalSec, reviews int
-		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &card.Audio, &tags, &bookmarked, &leech, &suspended, &intervalSec, &reviews); err != nil {
+		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &card.Extra, &card.Hint, &choicesStr, &card.Audio, &tags, &bookmarked, &leech, &suspended, &intervalSec, &reviews); err != nil {
 			return nil, err
 		}
 		card.Kind = core.CardKind(kind)
@@ -405,18 +410,20 @@ func (s *Store) upsertCardTx(ctx context.Context, tx *sql.Tx, card core.Card) er
 	choices := strings.Join(card.Choices, "|||")
 	tags := strings.Join(card.Tags, " ")
 	_, err := tx.ExecContext(ctx, `
-		INSERT INTO cards (id, note_id, deck_id, kind, prompt, answer, choices, audio, tags)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO cards (id, note_id, deck_id, kind, prompt, answer, extra, hint, choices, audio, tags)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET
 			note_id = excluded.note_id,
 			deck_id = excluded.deck_id,
 			kind = excluded.kind,
 			prompt = excluded.prompt,
 			answer = excluded.answer,
+			extra = excluded.extra,
+			hint = excluded.hint,
 			choices = excluded.choices,
 			audio = excluded.audio,
 			tags = excluded.tags
-	`, card.ID, card.NoteID, card.DeckID, string(card.Kind), card.Prompt, card.Answer, choices, card.Audio, tags)
+	`, card.ID, card.NoteID, card.DeckID, string(card.Kind), card.Prompt, card.Answer, card.Extra, card.Hint, choices, card.Audio, tags)
 	return err
 }
 
@@ -585,10 +592,10 @@ func (s *Store) UndoLastReview(ctx context.Context, cardID string) error {
 
 func (s *Store) DueCards(ctx context.Context, now time.Time, limit int) ([]core.Card, error) {
 	if limit <= 0 {
-		limit = 500
+		limit = 5000
 	}
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, c.audio, c.tags,
+		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.extra, c.hint, c.choices, c.audio, c.tags,
 		       COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0), 
 		       COALESCE(rs.interval_seconds, 0), COALESCE(rs.reviews, 0)
 		FROM cards c
@@ -610,7 +617,7 @@ func (s *Store) DueCards(ctx context.Context, now time.Time, limit int) ([]core.
 		var kind string
 		var choicesStr, tags string
 		var bookmarked, leech, suspended, intervalSec, reviews int
-		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &card.Audio, &tags, &bookmarked, &leech, &suspended, &intervalSec, &reviews); err != nil {
+		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &card.Extra, &card.Hint, &choicesStr, &card.Audio, &tags, &bookmarked, &leech, &suspended, &intervalSec, &reviews); err != nil {
 			return nil, err
 		}
 		card.Kind = core.CardKind(kind)
@@ -631,10 +638,10 @@ func (s *Store) DueCards(ctx context.Context, now time.Time, limit int) ([]core.
 
 func (s *Store) DueCardsBookmarked(ctx context.Context, now time.Time, limit int) ([]core.Card, error) {
 	if limit <= 0 {
-		limit = 500
+		limit = 5000
 	}
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, c.audio, c.tags,
+		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.extra, c.hint, c.choices, c.audio, c.tags,
 		       COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0), 
 		       COALESCE(rs.interval_seconds, 0), COALESCE(rs.reviews, 0)
 		FROM cards c
@@ -656,7 +663,7 @@ func (s *Store) DueCardsBookmarked(ctx context.Context, now time.Time, limit int
 		var kind string
 		var choicesStr, tags string
 		var bookmarked, leech, suspended, intervalSec, reviews int
-		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &card.Audio, &tags, &bookmarked, &leech, &suspended, &intervalSec, &reviews); err != nil {
+		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &card.Extra, &card.Hint, &choicesStr, &card.Audio, &tags, &bookmarked, &leech, &suspended, &intervalSec, &reviews); err != nil {
 			return nil, err
 		}
 		card.Kind = core.CardKind(kind)
@@ -890,6 +897,22 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 		return stats, err
 	}
 
+	next24hQuery := `
+		SELECT COUNT(*)
+		FROM cards c
+		LEFT JOIN review_states rs ON rs.card_id = c.id
+		WHERE rs.due_at > ? AND rs.due_at <= ?
+	`
+	next24hArgs := []interface{}{now, now.Add(24 * time.Hour)}
+	if deckID != "" {
+		next24hQuery += ` AND c.deck_id = ?`
+		next24hArgs = append(next24hArgs, deckID)
+	}
+	err = s.db.QueryRowContext(ctx, next24hQuery, next24hArgs...).Scan(&stats.Next24hDue)
+	if err != nil {
+		return stats, err
+	}
+
 	leechQuery := `SELECT COUNT(*) FROM card_flags cf`
 	var leechArgs []interface{}
 	if deckID != "" {
@@ -969,6 +992,34 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 		stats.Grades[core.ReviewGrade(grade)] = count
 	}
 
+	// Cards added per day (last 30 days)
+	stats.CardsAddedPerDay = make(map[string]int)
+	addedQuery := `
+		SELECT n.created_at, COUNT(c.id)
+		FROM notes n
+		JOIN cards c ON c.note_id = n.id
+	`
+	var addedArgs []interface{}
+	if deckID != "" {
+		addedQuery += ` WHERE n.deck_id = ?`
+		addedArgs = append(addedArgs, deckID)
+	}
+	addedQuery += ` GROUP BY n.created_at`
+	addedRows, err := s.db.QueryContext(ctx, addedQuery, addedArgs...)
+	if err != nil {
+		return stats, err
+	}
+	defer addedRows.Close()
+
+	for addedRows.Next() {
+		var t time.Time
+		var count int
+		if err := addedRows.Scan(&t, &count); err != nil {
+			return stats, err
+		}
+		dateStr := t.In(time.Local).Format("2006-01-02")
+		stats.CardsAddedPerDay[dateStr] += count
+	}
 	return stats, nil
 }
 
@@ -1287,7 +1338,7 @@ func parseChoices(raw string) []string {
 
 func (s *Store) Cards(ctx context.Context, deckID string, search string, tag string) ([]core.Card, error) {
 	query := `
-		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.choices, c.audio, c.tags, 
+		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.extra, c.hint, c.choices, c.audio, c.tags, 
 		       COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0), 
 		       COALESCE(rs.interval_seconds, 0), COALESCE(rs.reviews, 0)
 		FROM cards c
@@ -1301,9 +1352,9 @@ func (s *Store) Cards(ctx context.Context, deckID string, search string, tag str
 		args = append(args, deckID)
 	}
 	if search != "" {
-		query += ` AND (LOWER(c.prompt) LIKE LOWER(?) OR LOWER(c.answer) LIKE LOWER(?) OR LOWER(c.tags) LIKE LOWER(?))`
+		query += ` AND (LOWER(c.prompt) LIKE LOWER(?) OR LOWER(c.answer) LIKE LOWER(?) OR LOWER(c.tags) LIKE LOWER(?) OR LOWER(c.hint) LIKE LOWER(?))`
 		searchPattern := "%" + search + "%"
-		args = append(args, searchPattern, searchPattern, searchPattern)
+		args = append(args, searchPattern, searchPattern, searchPattern, searchPattern)
 	}
 	if tag != "" {
 		query += ` AND c.tags LIKE ?`
@@ -1325,7 +1376,7 @@ func (s *Store) Cards(ctx context.Context, deckID string, search string, tag str
 		var kind string
 		var choicesStr, tags string
 		var bookmarked, leech, suspended, intervalSec, reviews int
-		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &choicesStr, &card.Audio, &tags, &bookmarked, &leech, &suspended, &intervalSec, &reviews); err != nil {
+		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &card.Extra, &card.Hint, &choicesStr, &card.Audio, &tags, &bookmarked, &leech, &suspended, &intervalSec, &reviews); err != nil {
 			return nil, err
 		}
 		card.Kind = core.CardKind(kind)
