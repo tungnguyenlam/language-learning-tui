@@ -611,3 +611,36 @@ Fixed a review-key regression where pressing Space/Enter after the answer was al
 ### Verification
 - `go test ./internal/tui` passed.
 - `./scripts/verify.sh` passed with 238 E2E tests.
+
+## 2026-05-16 (Due Card Load Cap Regression Fix)
+
+Fixed a Review empty-state regression where large seeded collections could exceed the implicit due-card load cap, causing late-sorting decks such as C1 Social Issues & Society to appear caught up immediately after import.
+
+### Verification
+- `go test ./...` passed.
+- `python -m pytest e2e_tests/test_batch12_improvements.py -q` passed.
+
+## 2026-05-16 (Optional Edge TTS Provider)
+
+Added cached Edge TTS audio generation for cards without existing audio. The app now defaults config to `tts_provider: edge` with `de-DE-KatjaNeural`, initially used the `edge-tts` CLI when available, cached generated MP3s under the data directory, and preserved existing card audio playback. This was superseded later the same day by the direct Go Edge TTS provider entry below.
+
+### Verification
+- `go test ./...` passed.
+- `./deutsch-tui-bin -data-dir /tmp/deutsch-tui-edge-tts-smoke -smoke` passed.
+- Live Edge TTS synthesis was not run because `edge-tts` is not installed in the local environment.
+
+## 2026-05-16 (Direct Go Edge TTS Provider)
+
+Replaced the external Python `edge-tts` CLI dependency with `github.com/lib-x/edgetts` v0.4.0. The app still caches generated MP3s under the data directory, but synthesis now runs through a direct Go library.
+
+### Verification
+- `go test ./...` passed.
+- `./deutsch-tui-bin -data-dir /tmp/deutsch-tui-edgetts-go-smoke -smoke` passed.
+
+## 2026-05-16 (Cross-Platform Audio Playback)
+
+Improved terminal audio playback selection across operating systems. macOS now prefers `afplay` with `mpv`/`ffplay` fallbacks, Linux tries common terminal players, and Windows tries `mpv`/`ffplay` before a PowerShell `MediaPlayer` fallback. Missing players now return an actionable install-one-of error.
+
+### Verification
+- `go test ./...` passed.
+- `./deutsch-tui-bin -data-dir /tmp/deutsch-tui-audio-player-smoke -smoke` passed.

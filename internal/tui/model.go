@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"log"
@@ -15,6 +16,7 @@ import (
 
 	"deutsch-tui/internal/ai"
 	"deutsch-tui/internal/app"
+	"deutsch-tui/internal/audio"
 	"deutsch-tui/internal/core"
 
 	tea "charm.land/bubbletea/v2"
@@ -93,6 +95,7 @@ type Model struct {
 	originalSecretValue   string
 	onSecretsChange       func(app.Secrets)
 	autoPlayAudio         bool
+	speechSynthesizer     audio.Synthesizer
 	strictNormalization   bool
 	stats                 core.Statistics
 	settingsCursor        int
@@ -229,6 +232,9 @@ type ModelOptions struct {
 	AIProviderName      string
 	AITemplates         map[string]map[string]string
 	AISecrets           app.Secrets
+	TTSProvider         string
+	TTSVoice            string
+	TTSCacheDir         string
 	AutoPlayAudio       bool
 	StrictNormalization bool
 	ImportPath          string
@@ -298,6 +304,13 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 	}
 
 	autoPlayAudio := opts.AutoPlayAudio
+	var speechSynthesizer audio.Synthesizer
+	switch strings.TrimSpace(opts.TTSProvider) {
+	case audio.ProviderEdgeTTS:
+		speechSynthesizer = audio.NewEdgeTTS(opts.TTSCacheDir, opts.TTSVoice)
+	default:
+		speechSynthesizer = nil
+	}
 	strictNormalization := opts.StrictNormalization
 	provider := opts.AIProvider
 	if provider == nil {
@@ -334,6 +347,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		aiTemplateSets:      sets,
 		aiTemplateIndex:     aiTemplateIndex,
 		autoPlayAudio:       autoPlayAudio,
+		speechSynthesizer:   speechSynthesizer,
 		strictNormalization: strictNormalization,
 		width:               80,
 		height:              24,
@@ -852,12 +866,27 @@ func (m *Model) View() tea.View {
 	b.WriteString("\n")
 	b.WriteString(statusStyle.Render(truncateLine(footer, maxInt(20, m.width-2))))
 
+	finalContent := b.String()
 	if m.showHelp {
-		b.WriteString("\n\n")
-		b.WriteString(m.renderHelp())
+		helpBox := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("81")).
+			Padding(1, 2).
+			Background(lipgloss.Color("233")).
+			Render(m.renderHelp())
+
+		helpView := lipgloss.Place(m.width, m.height-3, lipgloss.Center, lipgloss.Center, helpBox)
+
+		statusLine := fmt.Sprintf("status: %s", singleLine(m.status))
+		footer := fmt.Sprintf("tab/arrows views | 1-9 views | ? help | q quit")
+
+		return tea.View{
+			Content:   helpView + "\n\n" + statusStyle.Render(truncateLine(statusLine, m.width-2)) + "\n" + statusStyle.Render(truncateLine(footer, m.width-2)),
+			AltScreen: true,
+			MouseMode: tea.MouseModeAllMotion,
+		}
 	}
 
-	finalContent := b.String()
 	if m.confirmingDelete {
 		finalContent = m.applyOverlay(finalContent, m.renderConfirmation())
 	}
@@ -870,6 +899,7 @@ func (m *Model) View() tea.View {
 }
 
 func (m *Model) renderConfirmation() string {
+
 	style := lipgloss.NewStyle().
 		Border(lipgloss.DoubleBorder()).
 		BorderForeground(lipgloss.Color("196")).
@@ -1202,14 +1232,12 @@ func (m *Model) tickSpinner() tea.Cmd {
 type spinnerTickMsg struct{}
 type revealTickMsg struct{}
 
-func (m *Model) startRevealAnimation(audioPath string) tea.Cmd {
+func (m *Model) startRevealAnimation(card core.Card) tea.Cmd {
 	m.revealState = RevealRevealing
 	m.revealProgress = 0
 	cmds := []tea.Cmd{m.tickReveal()}
-	if audioPath != "" && m.autoPlayAudio {
-		m.statusSeq++
-		m.status = "Auto-playing audio..."
-		cmds = append(cmds, m.playAudio(audioPath))
+	if m.autoPlayAudio {
+		cmds = append(cmds, m.playCardAudio(card))
 	}
 	return tea.Batch(cmds...)
 }
@@ -1225,18 +1253,145 @@ func (m *Model) playAudio(audioPath string) tea.Cmd {
 		return nil
 	}
 	return func() tea.Msg {
-		var cmd *exec.Cmd
-		if runtime.GOOS == "darwin" {
-			cmd = exec.Command("afplay", audioPath)
-		} else {
-			cmd = exec.Command("play", audioPath)
-		}
-		if err := cmd.Start(); err != nil {
+		if err := startAudioPlayer(audioPath); err != nil {
 			return err
 		}
-		go cmd.Wait() // Don't block the TUI
 		return nil
 	}
+}
+
+func (m *Model) playCardAudio(card core.Card) tea.Cmd {
+	if card.Audio != "" {
+		m.statusSeq++
+		m.status = "Playing audio..."
+		return m.playAudio(card.Audio)
+	}
+	if m.speechSynthesizer == nil {
+		m.status = "No audio for this card"
+		return nil
+	}
+	text := speechTextForCard(card)
+	if strings.TrimSpace(text) == "" {
+		m.status = "No text available for TTS"
+		return nil
+	}
+	m.statusSeq++
+	m.status = fmt.Sprintf("Generating %s TTS audio...", m.speechSynthesizer.VoiceName())
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
+		defer cancel()
+		path, err := m.speechSynthesizer.Synthesize(ctx, text)
+		if err != nil {
+			return err
+		}
+		if err := startAudioPlayer(path); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
+func startAudioPlayer(audioPath string) error {
+	if audioPath == "" {
+		return nil
+	}
+	spec, err := selectAudioPlayer(audioPath, runtime.GOOS, exec.LookPath)
+	if err != nil {
+		return err
+	}
+	cmd := exec.Command(spec.name, spec.args...)
+	if err := cmd.Start(); err != nil {
+		return err
+	}
+	go cmd.Wait()
+	return nil
+}
+
+type audioPlayerSpec struct {
+	name string
+	args []string
+}
+
+func selectAudioPlayer(audioPath, goos string, lookPath func(string) (string, error)) (audioPlayerSpec, error) {
+	if strings.TrimSpace(audioPath) == "" {
+		return audioPlayerSpec{}, nil
+	}
+	if lookPath == nil {
+		lookPath = exec.LookPath
+	}
+	switch goos {
+	case "darwin":
+		return firstAvailablePlayer(lookPath, []audioPlayerSpec{
+			{name: "afplay", args: []string{audioPath}},
+			{name: "mpv", args: []string{"--no-terminal", "--really-quiet", audioPath}},
+			{name: "ffplay", args: []string{"-nodisp", "-autoexit", "-loglevel", "quiet", audioPath}},
+			{name: "play", args: []string{audioPath}},
+		})
+	case "windows":
+		return firstAvailablePlayer(lookPath, []audioPlayerSpec{
+			{name: "mpv", args: []string{"--no-terminal", "--really-quiet", audioPath}},
+			{name: "ffplay", args: []string{"-nodisp", "-autoexit", "-loglevel", "quiet", audioPath}},
+			windowsPowerShellPlayer("powershell.exe", audioPath),
+			windowsPowerShellPlayer("powershell", audioPath),
+			windowsPowerShellPlayer("pwsh", audioPath),
+		})
+	default:
+		return firstAvailablePlayer(lookPath, []audioPlayerSpec{
+			{name: "mpv", args: []string{"--no-terminal", "--really-quiet", audioPath}},
+			{name: "ffplay", args: []string{"-nodisp", "-autoexit", "-loglevel", "quiet", audioPath}},
+			{name: "play", args: []string{audioPath}},
+			{name: "paplay", args: []string{audioPath}},
+			{name: "aplay", args: []string{audioPath}},
+		})
+	}
+}
+
+func firstAvailablePlayer(lookPath func(string) (string, error), candidates []audioPlayerSpec) (audioPlayerSpec, error) {
+	checked := make([]string, 0, len(candidates))
+	for _, candidate := range candidates {
+		if candidate.name == "" {
+			continue
+		}
+		checked = append(checked, candidate.name)
+		path, err := lookPath(candidate.name)
+		if err == nil {
+			candidate.name = path
+			return candidate, nil
+		}
+	}
+	return audioPlayerSpec{}, fmt.Errorf("no audio player found; install one of: %s", strings.Join(checked, ", "))
+}
+
+func windowsPowerShellPlayer(name, audioPath string) audioPlayerSpec {
+	script := `$ErrorActionPreference = 'Stop'; ` +
+		`Add-Type -AssemblyName PresentationCore; ` +
+		`$resolved = (Resolve-Path -LiteralPath $args[0]).ProviderPath; ` +
+		`$player = New-Object System.Windows.Media.MediaPlayer; ` +
+		`$player.Open([Uri]::new($resolved)); ` +
+		`while (-not $player.NaturalDuration.HasTimeSpan) { Start-Sleep -Milliseconds 50 }; ` +
+		`$player.Play(); ` +
+		`while ($player.Position -lt $player.NaturalDuration.TimeSpan) { Start-Sleep -Milliseconds 100 }`
+	return audioPlayerSpec{
+		name: name,
+		args: []string{"-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", script, audioPath},
+	}
+}
+
+func speechTextForCard(card core.Card) string {
+	if card.Kind == core.CardKindCloze && card.Answer != "" {
+		return card.Answer
+	}
+	if strings.HasSuffix(card.ID, ":back") && card.Answer != "" {
+		return card.Answer
+	}
+	if card.Prompt != "" {
+		return card.Prompt
+	}
+	return card.Answer
+}
+
+func (m *Model) ttsAvailable() bool {
+	return m.speechSynthesizer != nil
 }
 
 func (m *Model) openDictionary(word string) tea.Cmd {

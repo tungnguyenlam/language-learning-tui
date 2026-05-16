@@ -1451,17 +1451,18 @@ func TestHelpOverlayToggle(t *testing.T) {
 		t.Fatal("help should be hidden initially")
 	}
 
-	model.Update(tea.KeyPressMsg{Code: '?'})
+	model.Update(tea.KeyPressMsg{Text: "?"})
 	if !model.showHelp {
 		t.Fatal("help should be shown after pressing ?")
 	}
 
 	view := model.View().Content
-	if !strings.Contains(view, "Keyboard Shortcuts") {
+	stripped := ansi.Strip(view)
+	if !strings.Contains(stripped, "Keyboard Shortcuts") {
 		t.Fatal("help overlay should be visible in view")
 	}
 
-	model.Update(tea.KeyPressMsg{Code: '?'})
+	model.Update(tea.KeyPressMsg{Text: "?"})
 	if model.showHelp {
 		t.Fatal("help should be hidden after pressing ? again")
 	}
@@ -1956,6 +1957,121 @@ func TestDashboardShowsCardMixForTallLayouts(t *testing.T) {
 			t.Fatalf("dashboard missing %q:\n%s", want, view)
 		}
 	}
+}
+
+func TestSpeechTextForCardPrefersGermanSide(t *testing.T) {
+	cases := []struct {
+		name string
+		card core.Card
+		want string
+	}{
+		{
+			name: "front card",
+			card: core.Card{ID: "note-1:front", Prompt: "der Kaffee", Answer: "coffee"},
+			want: "der Kaffee",
+		},
+		{
+			name: "reverse card",
+			card: core.Card{ID: "note-1:back", Prompt: "coffee", Answer: "der Kaffee"},
+			want: "der Kaffee",
+		},
+		{
+			name: "cloze card",
+			card: core.Card{ID: "note-1:cloze-1", Kind: core.CardKindCloze, Prompt: "Der [drink] ist heiß.", Answer: "Der Kaffee ist heiß."},
+			want: "Der Kaffee ist heiß.",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := speechTextForCard(tc.card); got != tc.want {
+				t.Fatalf("speechTextForCard() = %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestSelectAudioPlayerByPlatform(t *testing.T) {
+	lookPath := func(available map[string]bool) func(string) (string, error) {
+		return func(name string) (string, error) {
+			if available[name] {
+				return "/mock/" + name, nil
+			}
+			return "", errors.New("not found")
+		}
+	}
+
+	cases := []struct {
+		name      string
+		goos      string
+		available map[string]bool
+		wantName  string
+		wantArg   string
+	}{
+		{
+			name:      "mac prefers afplay",
+			goos:      "darwin",
+			available: map[string]bool{"afplay": true, "mpv": true},
+			wantName:  "/mock/afplay",
+			wantArg:   "card.mp3",
+		},
+		{
+			name:      "linux prefers mpv",
+			goos:      "linux",
+			available: map[string]bool{"mpv": true, "play": true},
+			wantName:  "/mock/mpv",
+			wantArg:   "--really-quiet",
+		},
+		{
+			name:      "linux falls back to play",
+			goos:      "linux",
+			available: map[string]bool{"play": true},
+			wantName:  "/mock/play",
+			wantArg:   "card.mp3",
+		},
+		{
+			name:      "windows uses powershell fallback",
+			goos:      "windows",
+			available: map[string]bool{"powershell.exe": true},
+			wantName:  "/mock/powershell.exe",
+			wantArg:   "-NoProfile",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			spec, err := selectAudioPlayer("card.mp3", tc.goos, lookPath(tc.available))
+			if err != nil {
+				t.Fatalf("selectAudioPlayer() error: %v", err)
+			}
+			if spec.name != tc.wantName {
+				t.Fatalf("player = %q, want %q", spec.name, tc.wantName)
+			}
+			if !containsString(spec.args, tc.wantArg) {
+				t.Fatalf("args = %#v, want to contain %q", spec.args, tc.wantArg)
+			}
+		})
+	}
+}
+
+func TestSelectAudioPlayerReturnsActionableError(t *testing.T) {
+	_, err := selectAudioPlayer("card.mp3", "linux", func(string) (string, error) {
+		return "", errors.New("not found")
+	})
+	if err == nil {
+		t.Fatal("expected missing-player error")
+	}
+	if got := err.Error(); !strings.Contains(got, "install one of") || !strings.Contains(got, "mpv") {
+		t.Fatalf("error = %q, want actionable player list", got)
+	}
+}
+
+func containsString(items []string, want string) bool {
+	for _, item := range items {
+		if item == want {
+			return true
+		}
+	}
+	return false
 }
 
 func makeCards(count int) []core.Card {

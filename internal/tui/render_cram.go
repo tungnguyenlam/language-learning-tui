@@ -20,6 +20,8 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		audioIndicator := ""
 		if card.Audio != "" {
 			audioIndicator = " [Audio]"
+		} else if m.ttsAvailable() {
+			audioIndicator = " [TTS]"
 		}
 
 		// Session progress bar

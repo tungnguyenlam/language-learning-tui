@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 	"time"
@@ -28,6 +29,49 @@ func TestStoreDeckAndFindDueCards(t *testing.T) {
 	}
 	if len(cards) == 0 {
 		t.Fatal("expected due starter cards")
+	}
+}
+
+func TestDueCardsDefaultLimitCoversLargeCollections(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	const cardCount = 5001
+	deck := core.Deck{
+		ID:          "large-default-limit",
+		Name:        "Large Default Limit",
+		Description: "Regression coverage for implicit due-card loading cap",
+	}
+	for i := 0; i < cardCount; i++ {
+		noteID := fmt.Sprintf("large-%05d", i)
+		deck.Notes = append(deck.Notes, core.Note{
+			ID:     noteID,
+			DeckID: deck.ID,
+			Front:  fmt.Sprintf("front %d", i),
+			Back:   fmt.Sprintf("back %d", i),
+			Cards: []core.Card{{
+				ID:     noteID + ":front",
+				NoteID: noteID,
+				DeckID: deck.ID,
+				Kind:   core.CardKindFlashcard,
+				Prompt: fmt.Sprintf("front %d", i),
+				Answer: fmt.Sprintf("back %d", i),
+			}},
+		})
+	}
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+	cards, err := store.DueCards(ctx, time.Now(), 0)
+	if err != nil {
+		t.Fatalf("due cards: %v", err)
+	}
+	if len(cards) != cardCount {
+		t.Fatalf("due cards with default limit = %d, want %d", len(cards), cardCount)
 	}
 }
 

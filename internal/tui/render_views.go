@@ -8,7 +8,57 @@ import (
 )
 
 func (m *Model) renderHelp() string {
-	return "Keyboard Shortcuts\n\nGlobal:\n  1-9          Switch to view\n  Tab/arrows   Cycle views\n  w/s          Previous/next view\n  ?            Toggle this help\n  q/Ctrl+c     Quit\n\nDashboard/Decks:\n  [ ]          Previous/next deck\n  /            Search decks\n  L            Edit per-deck limits\n  h/l or <-/-> Switch limit field (while editing)\n  +/-          Adjust selected limit (while editing)\n  Enter        Select deck (Decks view)\n\nReview:\n  Space/Enter  Reveal answer\n  a/h/g/e      Grade Again/Hard/Good/Easy\n  b            Toggle bookmark\n  B            Toggle bookmarked-only mode\n  x            Suspend card\n  u            Undo last review\n  r            Toggle card review history\n  p            Play audio\n  1-4          Select MCQ choice\n\nStatistics:\n  j/k          Scroll stats\n  x            Export deck stats to CSV\n\nBrowser:\n  j/k          Navigate cards\n  /            Search cards\n  #            Filter by tag\n  m            Select card\n  b/B          Bookmark (single/bulk)\n  x/X          Suspend (single/bulk)\n  t/T          Toggle kind / edit tags\n  C            Cleanup unused tags\n  Enter        Toggle card review history\n  Backspace    Delete selected card(s)\n\nAI:\n  /            Edit topic\n  Enter        Generate or approve selected draft\n  [ / ]        Previous/next template\n  a / A        Approve one/all drafts\n  d / D        Discard one/all drafts\n\nCram:\n  j/k          Navigate cards\n  Enter        Start cram review\n  p            Play audio (in review)\n  1-5          Filter: bookmarked/suspended/leech/flagged/all\n\nImport:\n  j/k          Select field\n  Enter        Start/stop editing path\n  i/I          Import TSV/APKG\n  x/X          Export TSV/APKG\n  R            Reset database\n\nSettings:\n  j/k          Navigate options\n  [ / ]        Cycle AI template set\n  +/-          Adjust daily goal\n  Enter        Toggle AI provider / edit template"
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).Underline(true)
+	sectionStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("81"))
+	colStyle := lipgloss.NewStyle().PaddingRight(4).Width(35)
+
+	global := sectionStyle.Render("Global:") + "\n" +
+		"  1-9          Switch to view\n" +
+		"  Tab/arrows   Cycle views\n" +
+		"  w/s          Previous/next view\n" +
+		"  ?            Toggle this help\n" +
+		"  q/Ctrl+c     Quit"
+
+	dash := sectionStyle.Render("Dashboard/Decks:") + "\n" +
+		"  [ ]          Previous/next deck\n" +
+		"  /            Search decks\n" +
+		"  L            Edit deck limits\n" +
+		"  +/-          Adjust limits\n" +
+		"  Enter        Select deck"
+
+	review := sectionStyle.Render("Review:") + "\n" +
+		"  Space/Enter  Reveal answer\n" +
+		"  a/h/g/e      Again/Hard/Good/Easy\n" +
+		"  1-4          Grade or MCQ choice\n" +
+		"  b / B        Bookmark / Filter\n" +
+		"  u / r        Undo / History\n" +
+		"  f / i        Focus / Info\n" +
+		"  p            Play audio"
+
+	browser := sectionStyle.Render("Browser:") + "\n" +
+		"  j/k          Navigate\n" +
+		"  / / #        Search / Tag filter\n" +
+		"  m            Select card\n" +
+		"  b / x        Bookmark / Suspend\n" +
+		"  t / T        Toggle kind / Tags\n" +
+		"  C            Cleanup tags\n" +
+		"  Backspace    Delete card"
+
+	other := sectionStyle.Render("Other:") + "\n" +
+		"  Statistics   j/k scroll, x export\n" +
+		"  AI           / topic, a/d drafts\n" +
+		"  Cram         Enter start, 1-5 filter\n" +
+		"  Import       i/I import, x/X export\n" +
+		"  Settings     j/k nav, +/- goal"
+
+	col1 := colStyle.Render(global + "\n\n" + dash)
+	col2 := colStyle.Render(review)
+	col3 := colStyle.Render(browser)
+	col4 := colStyle.Render(other)
+
+	helpContent := lipgloss.JoinHorizontal(lipgloss.Top, col1, col2, col3, col4)
+
+	return titleStyle.Render("Keyboard Shortcuts") + "\n\n" + helpContent
 }
 
 func (m *Model) renderDecks(layout viewportLayout) string {

@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -136,13 +137,11 @@ func (m *Model) renderReview(x, y int) string {
 
 	// Enhanced keyboard shortcut display with visual highlighting
 	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-	keys := fmt.Sprintf("b:tog x:susp h hint B:src u:undo p audio")
-	if m.bookmarkFilter {
-		keys = fmt.Sprintf("b:tog x:susp h hint B:all u:undo p audio")
-	}
 	audioIndicator := ""
 	if card.Audio != "" {
 		audioIndicator = " [Audio]"
+	} else if m.ttsAvailable() {
+		audioIndicator = " [TTS]"
 	}
 	deckMeta := fmt.Sprintf("Deck: %s", m.deckNameByID(card.DeckID))
 	if len(card.Tags) > 0 {
@@ -213,7 +212,7 @@ func (m *Model) renderReview(x, y int) string {
 		cardBorderColor = "208"
 	}
 
-	headerSection := fmt.Sprintf("%s%s %s%s\n%s | Type: %s\n%s | %s\n%s%s", header, sessionProgress, stateBadge.Render(), leechBadge, deckMeta, cardTypeLabel, bookmark, keys, suspended, audioIndicator)
+	headerSection := fmt.Sprintf("%s%s %s%s\n%s | Type: %s\n%s%s%s", header, sessionProgress, stateBadge.Render(), leechBadge, deckMeta, cardTypeLabel, bookmark, suspended, audioIndicator)
 	if m.focusMode {
 		headerSection = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true).Render("Focus Mode Active (f to exit)")
 	}
@@ -221,10 +220,16 @@ func (m *Model) renderReview(x, y int) string {
 
 	promptDisplay := card.Prompt
 	if card.Kind == core.CardKindCloze {
-		// Highlight all [...] or [hint] in cloze prompt
-		bracketStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-		promptDisplay = strings.ReplaceAll(promptDisplay, "[", bracketStyle.Render("["))
-		promptDisplay = strings.ReplaceAll(promptDisplay, "]", bracketStyle.Render("]"))
+		// Highlight the entire [...] or [hint] block
+		bracketStyle := lipgloss.NewStyle().
+			Foreground(lipgloss.Color("0")).
+			Background(lipgloss.Color("81")).
+			Bold(true)
+
+		re := regexp.MustCompile(`\[[^\]]+\]`)
+		promptDisplay = re.ReplaceAllStringFunc(promptDisplay, func(s string) string {
+			return bracketStyle.Render(s)
+		})
 	}
 
 	hintDisplay := ""
@@ -425,6 +430,22 @@ func (m *Model) renderReview(x, y int) string {
 	if m.fixProposal != nil && m.fixOldNote != nil {
 		view += "\n\n" + m.renderFixProposal()
 	}
+
+	// Add Interactive Footer
+	footerActions := fmt.Sprintf("%s hint | %s bookmark | %s suspend | %s undo | %s history | %s info | %s focus | %s audio",
+		keyStyle.Render("h"), keyStyle.Render("b"), keyStyle.Render("x"),
+		keyStyle.Render("u"), keyStyle.Render("r"), keyStyle.Render("i"),
+		keyStyle.Render("f"), keyStyle.Render("p"))
+	if m.bookmarkFilter {
+		footerActions += " | " + keyStyle.Render("B") + " all"
+	} else {
+		footerActions += " | " + keyStyle.Render("B") + " bookmarked"
+	}
+
+	view += "\n\n" + lipgloss.NewStyle().
+		Foreground(colorMuted).
+		Render(footerActions)
+
 	return view
 }
 

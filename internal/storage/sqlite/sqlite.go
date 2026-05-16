@@ -18,6 +18,8 @@ type Store struct {
 	db *sql.DB
 }
 
+const defaultDueCardsLimit = 20000
+
 func Open(path string) (*Store, error) {
 	if !strings.Contains(path, "?") {
 		path += "?_pragma=foreign_keys(1)"
@@ -604,7 +606,7 @@ func (s *Store) UndoLastReview(ctx context.Context, cardID string) error {
 
 func (s *Store) DueCards(ctx context.Context, now time.Time, limit int) ([]core.Card, error) {
 	if limit <= 0 {
-		limit = 5000
+		limit = defaultDueCardsLimit
 	}
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.extra, c.hint, c.choices, c.audio, c.tags,
@@ -661,7 +663,7 @@ func (s *Store) DueCards(ctx context.Context, now time.Time, limit int) ([]core.
 
 func (s *Store) DueCardsBookmarked(ctx context.Context, now time.Time, limit int) ([]core.Card, error) {
 	if limit <= 0 {
-		limit = 5000
+		limit = defaultDueCardsLimit
 	}
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.extra, c.hint, c.choices, c.audio, c.tags,

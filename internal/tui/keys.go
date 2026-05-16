@@ -178,10 +178,10 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		}
 	case "p":
 		if m.activeView == ViewReview && len(m.dueCards) > 0 {
-			return m, m.playAudio(m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)].Audio)
+			return m, m.playCardAudio(m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)])
 		}
 		if m.activeView == ViewCram && m.cramActive && len(m.cramCards) > 0 {
-			return m, m.playAudio(m.cramCards[clampInt(m.cramCursor, 0, len(m.cramCards)-1)].Audio)
+			return m, m.playCardAudio(m.cramCards[clampInt(m.cramCursor, 0, len(m.cramCards)-1)])
 		}
 	}
 
@@ -372,7 +372,7 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
 		switch m.revealState {
 		case RevealIdle:
-			return tea.Batch(m.startRevealAnimation(card.Audio), m.loadReviewPredictions(card.ID)), true
+			return tea.Batch(m.startRevealAnimation(card), m.loadReviewPredictions(card.ID)), true
 		case RevealRevealing:
 			m.revealProgress += 15
 			if m.revealProgress >= 100 {
@@ -439,7 +439,7 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, true
 	case "p":
 		if len(m.dueCards) > 0 {
-			return m.playAudio(m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)].Audio), true
+			return m.playCardAudio(m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]), true
 		}
 	case "t":
 		if !m.typingMode && m.revealState == RevealIdle {
@@ -1027,7 +1027,7 @@ func (m *Model) updateCramKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 
 		case "p":
 			if len(m.cramCards) > 0 {
-				return m.playAudio(m.cramCards[clampInt(m.cramCursor, 0, len(m.cramCards)-1)].Audio), true
+				return m.playCardAudio(m.cramCards[clampInt(m.cramCursor, 0, len(m.cramCards)-1)]), true
 			}
 		case "a":
 			return m.gradeCramCard(core.GradeAgain), true

@@ -1,10 +1,10 @@
 # Active Backlog
 
-Last updated: 2026-05-16 12:00 +07
+Last updated: 2026-05-16 13:45 +07
 
 ## Current Milestone
 
-Autonomous end-to-end improvement pass on 2026-05-16 (batch 11) - COMPLETED.
+Improve cross-platform audio playback - COMPLETED.
 
 ## Completed Work
 
@@ -27,7 +27,7 @@ Autonomous end-to-end improvement pass on 2026-05-16 (batch 11) - COMPLETED.
 
 ## Exact Next Action
 
-None - milestone complete. All vision and prompt strategy work committed and pushed.
+None - terminal audio playback now selects platform-appropriate players.
 
 ## Top Issues / Priorities
 
@@ -35,24 +35,17 @@ None.
 
 ## Acceptance Criteria
 
-- [x] Baseline `./scripts/tui_smoke.sh` passes (`deutsch-tui smoke ok`).
-- [x] Baseline `go test ./...` passes.
-- [x] App starts with zero errors after changes.
-- [x] Core screens render via E2E coverage.
-- [x] Keyboard and mouse navigation have targeted coverage.
-- [x] SQLite persistence remains covered by tests.
-- [x] At least 8 new tui-tester E2E tests are added and passing.
-- [x] At least 2 new content/features are implemented.
-- [x] At least 2 UI/UX improvements across different views are implemented.
-- [x] At least 2 bugs or potential bugs are fixed.
-- [x] `./scripts/verify.sh` passes with zero errors or warnings.
-- [x] Completed work is summarized in `docs/backlog/done.md`.
+- [x] macOS playback prefers `afplay` with `mpv`/`ffplay` fallbacks.
+- [x] Linux playback tries common terminal players (`mpv`, `ffplay`, `play`, etc.).
+- [x] Windows playback tries `mpv`/`ffplay` and PowerShell fallback.
+- [x] Missing players return a clear actionable error.
+- [x] `go test ./...` passes.
+- [x] App smoke check passes.
 
 ## Last Verified
 
 - `go test ./...` passed.
-- `./scripts/verify.sh` passed.
-- 315 E2E tests passing.
+- `./deutsch-tui-bin -data-dir /tmp/deutsch-tui-audio-player-smoke -smoke` passed.
 
 ## Blockers
 

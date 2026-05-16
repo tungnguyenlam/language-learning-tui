@@ -29,7 +29,9 @@ def test_review_history_empty_state_toggles_in_review():
 
             agent.act("r")
             agent.wait_for_text("Review history hidden")
+            time.sleep(1.0)
             agent.assert_not_text("Review History: blau")
+
         finally:
             agent.close()
 

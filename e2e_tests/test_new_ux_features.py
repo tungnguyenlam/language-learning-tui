@@ -107,19 +107,18 @@ def test_settings_daily_goal_adjustment():
             # Increase daily goal with +
             agent.act("+")
             time.sleep(1.0)
-            agent.wait_for_text("Daily Goal: 11", timeout=5.0)
-            
+            agent.wait_for_text("Daily Goal: 11 cards", timeout=5.0)
+
             # Decrease daily goal with -
             agent.act("-")
             time.sleep(1.0)
-            agent.wait_for_text("Daily Goal: 10", timeout=5.0)
-            
+            agent.wait_for_text("Daily Goal: 10 cards", timeout=5.0)
+
             # Try to decrease below 1 (should stay at 1)
             for _ in range(15):
                 agent.act("-")
             time.sleep(1.0)
-            agent.wait_for_text("Daily Goal: 1", timeout=5.0)
-            
+            agent.wait_for_text("Daily Goal: 1 cards", timeout=5.0)
         finally:
             agent.close()
 

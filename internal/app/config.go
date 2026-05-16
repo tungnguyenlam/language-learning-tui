@@ -16,6 +16,8 @@ type Config struct {
 	Theme               string                       `json:"theme"`
 	Keymap              string                       `json:"keymap"`
 	AIProvider          string                       `json:"ai_provider"`
+	TTSProvider         string                       `json:"tts_provider"`
+	TTSVoice            string                       `json:"tts_voice"`
 	LogLevel            string                       `json:"log_level"`
 	AutoPlayAudio       bool                         `json:"autoplay_audio"`
 	StrictNormalization bool                         `json:"strict_normalization"`
@@ -27,6 +29,8 @@ func DefaultConfig() Config {
 		Theme:         "system",
 		Keymap:        "default",
 		AIProvider:    "disabled",
+		TTSProvider:   "edge",
+		TTSVoice:      "de-DE-KatjaNeural",
 		LogLevel:      "info",
 		AutoPlayAudio: false,
 		AITemplates: map[string]map[string]string{
@@ -124,6 +128,12 @@ func (c Config) withDefaults() Config {
 	if c.AIProvider == "" {
 		c.AIProvider = defaults.AIProvider
 	}
+	if c.TTSProvider == "" {
+		c.TTSProvider = defaults.TTSProvider
+	}
+	if c.TTSVoice == "" {
+		c.TTSVoice = defaults.TTSVoice
+	}
 	if c.LogLevel == "" {
 		c.LogLevel = defaults.LogLevel
 	}
@@ -144,6 +154,8 @@ func unmarshalConfig(raw []byte, cfg *Config) error {
 		Theme               string          `json:"theme"`
 		Keymap              string          `json:"keymap"`
 		AIProvider          string          `json:"ai_provider"`
+		TTSProvider         string          `json:"tts_provider"`
+		TTSVoice            string          `json:"tts_voice"`
 		LogLevel            string          `json:"log_level"`
 		AutoPlayAudio       bool            `json:"autoplay_audio"`
 		StrictNormalization bool            `json:"strict_normalization"`
@@ -157,6 +169,8 @@ func unmarshalConfig(raw []byte, cfg *Config) error {
 	cfg.Theme = file.Theme
 	cfg.Keymap = file.Keymap
 	cfg.AIProvider = file.AIProvider
+	cfg.TTSProvider = file.TTSProvider
+	cfg.TTSVoice = file.TTSVoice
 	cfg.LogLevel = file.LogLevel
 	cfg.AutoPlayAudio = file.AutoPlayAudio
 	cfg.StrictNormalization = file.StrictNormalization

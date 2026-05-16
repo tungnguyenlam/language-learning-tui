@@ -19,6 +19,12 @@ func TestLoadOrCreateConfig(t *testing.T) {
 	if cfg.AIProvider != "disabled" {
 		t.Fatalf("AIProvider = %q, want disabled", cfg.AIProvider)
 	}
+	if cfg.TTSProvider != "edge" {
+		t.Fatalf("TTSProvider = %q, want edge", cfg.TTSProvider)
+	}
+	if cfg.TTSVoice != "de-DE-KatjaNeural" {
+		t.Fatalf("TTSVoice = %q, want de-DE-KatjaNeural", cfg.TTSVoice)
+	}
 	if _, err := os.Stat(filepath.Join(dir, ConfigFileName)); err != nil {
 		t.Fatalf("config file was not created: %v", err)
 	}

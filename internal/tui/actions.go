@@ -164,7 +164,8 @@ func (m *Model) seedStandardContent() tea.Cmd {
 		if err != nil {
 			return err
 		}
-		cards, err := m.repo.DueCards(ctx, time.Now(), 0)
+		// Use a small buffer to ensure we catch newly created cards
+		cards, err := m.repo.DueCards(ctx, time.Now().Add(time.Minute), 0)
 		if err != nil {
 			return err
 		}
