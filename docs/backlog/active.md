@@ -4,11 +4,15 @@ Last updated: 2026-05-16 12:00 +07
 
 ## Current Milestone
 
-Autonomous end-to-end improvement pass on 2026-05-16 (batch 9) - COMPLETED.
+Autonomous end-to-end improvement pass on 2026-05-16 (batch 10) - COMPLETED.
 
 ## Completed Work
 
-- [x] Fixed 10 failing E2E tests (Settings timing, reveal guard, batch8, bulk deletion, review empty state)
+- [x] UX Improvement: Added 1-4 grading shortcuts in Review view (verified with E2E test).
+- [x] UX Improvement: Added Mouse Wheel support for Decks view scrolling.
+- [x] Content Expansion: Added "B2 Programming & Software Engineering" deck (30 technical notes).
+- [x] Fixed E2E regression in `test_mcq_navigation_bug.py` caused by new grading shortcuts.
+- [x] Fixed 10 failing E2E tests (Batch 9)
 - [x] Verified B2 Job Application, C1 Philosophy & Ethics, A1 City & Directions decks exist (40 cards each)
 - [x] UI Improvement: Enhanced session summary with efficiency stat (cards/min)
 - [x] UI Improvement: Added motivational tips in Review empty state
@@ -17,7 +21,7 @@ Autonomous end-to-end improvement pass on 2026-05-16 (batch 9) - COMPLETED.
 
 ## Exact Next Action
 
-None - milestone complete.
+None - milestone complete. All vision and prompt strategy work committed and pushed.
 
 ## Top Issues / Priorities
 
@@ -41,8 +45,8 @@ None.
 ## Last Verified
 
 - `go test ./...` passed.
-- `./scripts/verify.sh` pending.
-- 311 E2E tests passing.
+- `./scripts/verify.sh` passed.
+- 312 E2E tests passing.
 
 ## Blockers
 

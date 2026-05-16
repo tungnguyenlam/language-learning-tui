@@ -57,16 +57,20 @@ def test_mcq_no_view_switch_after_answer():
             agent.act("1")
             
             # If it switched, we'd see "DASHBOARD"
-            # Since we fixed it, it should stay in Review and say "Grade: Again" (as '1' is Again)
+            # Since we fixed it, it should stay in Review (or go to Session Summary if last card)
             time.sleep(1.0)
             screen = agent.observe()
             if "DASHBOARD" in screen:
                  print("BUG REPRODUCED: '1' switched view after MCQ answer")
+                 pytest.fail("BUG: '1' switched to dashboard")
             else:
-                 print("SUCCESS: '1' did not switch view")
-                 agent.assert_text("Review")
-                 agent.assert_text("Again")
-                 
+                 print("SUCCESS: '1' did not switch to dashboard")
+                 # It might go to Session Summary if it was the last card
+                 if "SESSION SUMMARY" not in screen:
+                     agent.assert_text("Review")
+                     agent.assert_text("Again")
+                 else:
+                     agent.assert_text("SESSION SUMMARY")
         finally:
             agent.close()
 

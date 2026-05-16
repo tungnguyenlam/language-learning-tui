@@ -754,6 +754,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.logger.Debug("Mouse wheel event: button=%v", mouse.Button)
 			if mouse.Button == tea.MouseWheelUp {
 				switch m.activeView {
+				case ViewDecks:
+					m.moveDeckCursor(-1)
 				case ViewStatistics:
 					m.scrollStats(-1)
 				case ViewBrowser:
@@ -765,6 +767,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			} else if mouse.Button == tea.MouseWheelDown {
 				switch m.activeView {
+				case ViewDecks:
+					m.moveDeckCursor(1)
 				case ViewStatistics:
 					m.scrollStats(1)
 				case ViewBrowser:

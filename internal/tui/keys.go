@@ -330,6 +330,20 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 				return m.loadReviewPredictions(card.ID), true
 			}
 		}
+
+		// Allow 1-4 for grading when revealed
+		if m.revealState == RevealRevealed {
+			switch key {
+			case "1":
+				return m.gradeCard(core.GradeAgain), true
+			case "2":
+				return m.gradeCard(core.GradeHard), true
+			case "3":
+				return m.gradeCard(core.GradeGood), true
+			case "4":
+				return m.gradeCard(core.GradeEasy), true
+			}
+		}
 	}
 
 	switch key {
@@ -542,14 +556,10 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		return nil, false
 	case "up", "k":
-		if m.deckCursor > 0 {
-			m.deckCursor--
-		}
+		m.moveDeckCursor(-1)
 		return nil, true
 	case "down", "j":
-		if m.deckCursor < len(filtered)-1 {
-			m.deckCursor++
-		}
+		m.moveDeckCursor(1)
 		return nil, true
 	case " ":
 		if len(filtered) > 0 {

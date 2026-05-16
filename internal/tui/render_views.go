@@ -204,7 +204,7 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 	}
 
 	if len(filteredDecks) > maxVisible {
-		b.WriteString(fmt.Sprintf(" (Showing %d-%d of %d)", start+1, end, len(filteredDecks)))
+		b.WriteString(fmt.Sprintf(" (Showing %d-%d of %d, Use Mouse Wheel to scroll)", start+1, end, len(filteredDecks)))
 	}
 	return b.String()
 }

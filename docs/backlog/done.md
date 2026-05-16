@@ -1,5 +1,26 @@
 # Done Backlog
 
+## 2026-05-16 (Autonomous Improvement Pass — batch 10)
+
+### UX Improvements
+- **1-4 Grading Shortcuts:** Added support for `1`, `2`, `3`, `4` keys for grading (`Again`, `Hard`, `Good`, `Easy`) in the Review view. Updated UI hints to `a Again (1)`, etc. to maintain E2E test compatibility.
+- **Decks Mouse Scroll:** Added mouse wheel support for scrolling through the Decks view list. Added UI hint for discoverability.
+
+### Content Expansion
+- **B2 Programming & Software Engineering:** Added a new deck with 30 notes covering technical German vocabulary for developers (e.g., *die Schnittstelle*, *der Quellcode*, *bereitstellen*).
+
+### Testing & Verification
+- Added `e2e_tests/test_grading_shortcuts.py` to verify the new grading keys.
+- Fixed `test_mcq_navigation_bug.py` which was incompatible with the new `1` key behavior.
+- Total E2E tests: 312 (all passing).
+- `./scripts/verify.sh` passed.
+
+## 2026-05-16 (Vision & Prompt Strategy)
+
+- **Guiding Vision:** Created `GOAL.md` to define the project's north-star state.
+- **Prompt Strategy:** Added `prompt/improve.md` for standard autonomous improvement sessions.
+- **Integration:** Updated `AGENTS.md`, `GEMINI.md`, and `docs/agent/index.md` to reference the new vision and prompt files.
+
 ## 2026-05-16 (Autonomous Improvement Pass — batch 9)
 
 ### Bug Fixes (10 E2E tests fixed)
@@ -270,11 +291,14 @@ Completed comprehensive improvement pass with content expansion, grading UX impr
 ### Verification
 - Total E2E tests: 238 (all passing)
 - All Go unit tests passing
-- `./scripts/verify.sh` executed successfully with zero errors
+- `./scripts/verify.sh` executed successfully with zero errors.
 
 ---
 
 ## 2026-05-12 12:00 +07 (Autonomous Improvement Pass - New Content & UI)
+
+### Exact Next Action
+None - milestone complete.
 
 Completed comprehensive improvement pass with 3 new German content decks, UI enhancements for Cram mode and Decks view, and 15 new verbs. Total E2E tests: 233 (all passing).
 

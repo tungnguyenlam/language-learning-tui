@@ -575,6 +575,14 @@ func (m *Model) deckLabel() string {
 	return "No deck"
 }
 
+func (m *Model) moveDeckCursor(delta int) {
+	filtered := m.filteredDecks()
+	if len(filtered) == 0 {
+		return
+	}
+	m.deckCursor = clampInt(m.deckCursor+delta, 0, len(filtered)-1)
+}
+
 func (m *Model) moveBrowserCursor(delta int) {
 	if len(m.browserCards) == 0 {
 		return

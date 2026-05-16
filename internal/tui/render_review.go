@@ -304,14 +304,14 @@ func (m *Model) renderReview(x, y int) string {
 			}
 			typingContent := fmt.Sprintf("Your answer: %s\nCorrect: %s%s\n\nGrade: %s %s | %s %s | %s %s | %s %s",
 				inputDisplay, answerStyle.Render(targetAnswer), extraDisplay,
-				keyStyle.Render("a"), gradeAgain, keyStyle.Render("h"), gradeHard, keyStyle.Render("g"), gradeGood, keyStyle.Render("e"), gradeEasy)
+				keyStyle.Render("a"), gradeAgain+" "+keyStyle.Render("(1)"), keyStyle.Render("h"), gradeHard+" "+keyStyle.Render("(2)"), keyStyle.Render("g"), gradeGood+" "+keyStyle.Render("(3)"), keyStyle.Render("e"), gradeEasy+" "+keyStyle.Render("(4)"))
 			answer = typingBoxStyle.Render(typingContent)
 			answerYOffset = cardY + strings.Count(fmt.Sprintf("%s%s\n\nYour answer:", promptDisplay, mature), "\n") + 2
 
 			labelAgain := fmt.Sprintf("Grade: %s ", keyStyle.Render("a"))
-			labelHard := fmt.Sprintf("Grade: %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"))
-			labelGood := fmt.Sprintf("Grade: %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"), gradeHardText, keyStyle.Render("g"))
-			labelEasy := fmt.Sprintf("Grade: %s %s | %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"), gradeHardText, keyStyle.Render("g"), gradeGoodText, keyStyle.Render("e"))
+			labelHard := fmt.Sprintf("Grade: %s %s | %s ", keyStyle.Render("a"), gradeAgain+" (1)", keyStyle.Render("h"))
+			labelGood := fmt.Sprintf("Grade: %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgain+" (1)", keyStyle.Render("h"), gradeHard+" (2)", keyStyle.Render("g"))
+			labelEasy := fmt.Sprintf("Grade: %s %s | %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgain+" (1)", keyStyle.Render("h"), gradeHard+" (2)", keyStyle.Render("g"), gradeGood+" (3)", keyStyle.Render("e"))
 
 			m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: cardX + lipgloss.Width(labelAgain), Y: answerYOffset, Width: gaW, Height: 1})
 			m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: cardX + lipgloss.Width(labelHard), Y: answerYOffset, Width: ghW, Height: 1})
@@ -332,13 +332,13 @@ func (m *Model) renderReview(x, y int) string {
 					feedbackStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Bold(true)
 				}
 				answer = fmt.Sprintf("%s: %s%s\n\n%s\n\nGrade: %s %s | %s %s | %s %s | %s %s", feedbackStyle.Render(feedback), answerStyle.Render(card.Answer), extraDisplay, mcqChoices,
-					keyStyle.Render("a"), gradeAgain, keyStyle.Render("h"), gradeHard, keyStyle.Render("g"), gradeGood, keyStyle.Render("e"), gradeEasy)
+					keyStyle.Render("a"), gradeAgain+" "+keyStyle.Render("(1)"), keyStyle.Render("h"), gradeHard+" "+keyStyle.Render("(2)"), keyStyle.Render("g"), gradeGood+" "+keyStyle.Render("(3)"), keyStyle.Render("e"), gradeEasy+" "+keyStyle.Render("(4)"))
 				answerYOffset = cardY + strings.Count(fmt.Sprintf("%s%s\n\n%s: %s\n\n%s\n\nGrade: ", promptDisplay, mature, feedback, card.Answer, mcqChoices), "\n")
 
 				labelAgain := fmt.Sprintf("Grade: %s ", keyStyle.Render("a"))
-				labelHard := fmt.Sprintf("Grade: %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"))
-				labelGood := fmt.Sprintf("Grade: %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"), gradeHardText, keyStyle.Render("g"))
-				labelEasy := fmt.Sprintf("Grade: %s %s | %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"), gradeHardText, keyStyle.Render("g"), gradeGoodText, keyStyle.Render("e"))
+				labelHard := fmt.Sprintf("Grade: %s %s | %s ", keyStyle.Render("a"), gradeAgain+" (1)", keyStyle.Render("h"))
+				labelGood := fmt.Sprintf("Grade: %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgain+" (1)", keyStyle.Render("h"), gradeHard+" (2)", keyStyle.Render("g"))
+				labelEasy := fmt.Sprintf("Grade: %s %s | %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgain+" (1)", keyStyle.Render("h"), gradeHard+" (2)", keyStyle.Render("g"), gradeGood+" (3)", keyStyle.Render("e"))
 
 				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: cardX + lipgloss.Width(labelAgain), Y: answerYOffset, Width: gaW, Height: 1})
 				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: cardX + lipgloss.Width(labelHard), Y: answerYOffset, Width: ghW, Height: 1})
@@ -366,13 +366,13 @@ func (m *Model) renderReview(x, y int) string {
 		}
 	} else if m.revealState == RevealRevealed {
 		answer = fmt.Sprintf("%s%s\n\nGrade: %s %s | %s %s | %s %s | %s %s", answerStyle.Render(card.Answer), extraDisplay,
-			keyStyle.Render("a"), gradeAgain, keyStyle.Render("h"), gradeHard, keyStyle.Render("g"), gradeGood, keyStyle.Render("e"), gradeEasy)
+			keyStyle.Render("a"), gradeAgain+" "+keyStyle.Render("(1)"), keyStyle.Render("h"), gradeHard+" "+keyStyle.Render("(2)"), keyStyle.Render("g"), gradeGood+" "+keyStyle.Render("(3)"), keyStyle.Render("e"), gradeEasy+" "+keyStyle.Render("(4)"))
 		answerYOffset = cardY + strings.Count(fmt.Sprintf("%s%s\n\n%s\n\nGrade: ", promptDisplay, mature, card.Answer), "\n")
 
 		labelAgain := fmt.Sprintf("Grade: %s ", keyStyle.Render("a"))
-		labelHard := fmt.Sprintf("Grade: %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"))
-		labelGood := fmt.Sprintf("Grade: %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"), gradeHardText, keyStyle.Render("g"))
-		labelEasy := fmt.Sprintf("Grade: %s %s | %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgainText, keyStyle.Render("h"), gradeHardText, keyStyle.Render("g"), gradeGoodText, keyStyle.Render("e"))
+		labelHard := fmt.Sprintf("Grade: %s %s | %s ", keyStyle.Render("a"), gradeAgain+" (1)", keyStyle.Render("h"))
+		labelGood := fmt.Sprintf("Grade: %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgain+" (1)", keyStyle.Render("h"), gradeHard+" (2)", keyStyle.Render("g"))
+		labelEasy := fmt.Sprintf("Grade: %s %s | %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgain+" (1)", keyStyle.Render("h"), gradeHard+" (2)", keyStyle.Render("g"), gradeGood+" (3)", keyStyle.Render("e"))
 
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: cardX + lipgloss.Width(labelAgain), Y: answerYOffset, Width: gaW, Height: 1})
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: cardX + lipgloss.Width(labelHard), Y: answerYOffset, Width: ghW, Height: 1})
