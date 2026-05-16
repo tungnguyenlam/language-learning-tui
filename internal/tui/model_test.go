@@ -1105,7 +1105,7 @@ func TestStatisticsShowsLeechAndBookmarkedDue(t *testing.T) {
 		Grades:          map[core.ReviewGrade]int{core.GradeGood: 40, core.GradeAgain: 10},
 	}
 
-	view := ansi.Strip(model.renderStatistics(0, 0))
+	view := ansi.Strip(model.renderStatistics(viewportLayout{Width: 100, Height: 40}))
 	if !strings.Contains(view, "Bookmarked:") || !strings.Contains(view, "3 (2 due)") {
 		t.Fatalf("statistics should show bookmarked due: %s", view)
 	}

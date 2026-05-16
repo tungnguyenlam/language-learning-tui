@@ -28,8 +28,7 @@ func (m *Model) renderSettings(x, y int) string {
 		Bold(true).
 		Foreground(lipgloss.Color("205")).
 		Background(lipgloss.Color("236")).
-		Padding(0, 2).
-		MarginBottom(1)
+		Padding(0, 2)
 	addLine(titleStyle.Render("⚙ SETTINGS"))
 	addLine("")
 
@@ -54,14 +53,10 @@ func (m *Model) renderSettings(x, y int) string {
 		Foreground(lipgloss.Color("255")).
 		Background(lipgloss.Color("62")).
 		Bold(true).
-		Padding(0, 1).
-		MarginTop(1).
-		MarginBottom(1)
-	
-	addLine("")
+		Padding(0, 1)
+
 	addLine(sectionStyle.Render("AI CONFIGURATION"))
 	addLine(lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Render(fmt.Sprintf("  Template Set: %s", activeSet)))
-	addLine("")
 	addLine(mutedStyle.Render("  Provider cycle: disabled -> offline -> template -> openai -> anthropic."))
 
 	setMap := m.aiTemplates[activeSet]
@@ -71,7 +66,7 @@ func (m *Model) renderSettings(x, y int) string {
 		fmt.Sprintf("Back Template:  %s", strings.ReplaceAll(setMap["back"], "\n", "\\n")),
 		fmt.Sprintf("Example Tmpl:   %s", strings.ReplaceAll(setMap["example"], "\n", "\\n")),
 	}
-	
+
 	for i, opt := range aiOptions {
 		prefix := "  "
 		itemStyle := lipgloss.NewStyle()
@@ -88,7 +83,6 @@ func (m *Model) renderSettings(x, y int) string {
 		addLine(itemStyle.Render(item))
 	}
 
-	addLine("")
 	addLine(sectionStyle.Render("STUDY PREFERENCES"))
 
 	goalIdx := 4
@@ -99,7 +93,7 @@ func (m *Model) renderSettings(x, y int) string {
 		itemStyle = itemStyle.Bold(true).Foreground(lipgloss.Color("212"))
 	}
 	goalLabel := fmt.Sprintf("%sDaily Goal: %d cards ", prefix, m.stats.DailyGoal)
-	
+
 	btnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 	disabledBtnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Bold(true)
 	minusBtn := "[-] "
@@ -113,7 +107,7 @@ func (m *Model) renderSettings(x, y int) string {
 		goalLine.WriteString(btnStyle.Render(minusBtn))
 	}
 	goalLine.WriteString(btnStyle.Render(plusBtn))
-	
+
 	itemLines[goalIdx] = len(allLines)
 	addLine(goalLine.String())
 
@@ -218,7 +212,7 @@ func (m *Model) renderSettings(x, y int) string {
 	} else {
 		m.settingsScroll = 0
 	}
-	
+
 	m.settingsScroll = clampInt(m.settingsScroll, 0, maxInt(0, totalLines-maxVisible))
 
 	var b strings.Builder
@@ -229,7 +223,7 @@ func (m *Model) renderSettings(x, y int) string {
 		line := allLines[i]
 		plainLine := stripANSI(line)
 		lineWidth := lipgloss.Width(plainLine)
-		
+
 		displayLine := line
 		if lineWidth < padWidth {
 			displayLine += strings.Repeat(" ", padWidth-lineWidth)
@@ -252,7 +246,7 @@ func (m *Model) renderSettings(x, y int) string {
 				Height: 1,
 			})
 		}
-		
+
 		b.WriteString(displayLine + "\n")
 
 		// Re-add hitboxes for selectable items

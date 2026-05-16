@@ -20,34 +20,41 @@ def test_bulk_deck_deletion():
     """Verify that multiple decks can be selected and deleted at once."""
     with tempfile.TemporaryDirectory() as tmpdir:
         # Create two extra decks via import.tsv
+        # Format: id\tfront\tback\textra\ttags\tdeck
         import_path = os.path.join(tmpdir, "import.tsv")
         with open(import_path, 'w') as f:
             f.write("#separator:tab\n")
             f.write("t1\tT1\tB1\t\t\tTrash1\n")
             f.write("t2\tT2\tB2\t\t\tTrash2\n")
 
-        agent = start_agent(tmpdir)
+        agent = start_agent(tmpdir, columns=110, lines=40)
         try:
             # Import
             agent.act('5')
+            agent.wait_for_text("Import / Export")
             agent.act('i')
-            agent.wait_for_text("Imported")
+            agent.wait_for_text("Imported", timeout=10.0)
+            agent.wait_until_stable()
+            time.sleep(1.0)
             
             # Go to Decks view
             agent.act('2')
-            agent.wait_for_text("Decks")
+            agent.wait_for_text("DECK LIST", timeout=10.0)
+            # Clear any existing search filter
+            agent.act('<Esc>')
+            time.sleep(0.5)
+            agent.wait_until_stable()
+            
+            # Verify Trash decks exist
+            agent.wait_for_text("Trash1", timeout=5.0)
+            agent.wait_for_text("Trash2", timeout=5.0)
             
             # Select Trash1 using search
             agent.act('/')
-            agent.act('T')
-            agent.act('r')
-            agent.act('a')
-            agent.act('s')
-            agent.act('h')
-            agent.act('1')
-            agent.act('<Esc>')
-            time.sleep(1.0)
-            agent.wait_for_text("multi-select")
+            for ch in "Trash1":
+                agent.act(ch)
+            agent.act('<Enter>')
+            time.sleep(0.5)
             agent.wait_until_stable()
             
             agent.act('x') # Select Trash1
@@ -55,28 +62,26 @@ def test_bulk_deck_deletion():
             
             # Select Trash2 using search
             agent.act('/')
-            agent.act('T')
-            agent.act('r')
-            agent.act('a')
-            agent.act('s')
-            agent.act('h')
-            agent.act('2')
-            agent.act('<Esc>')
-            time.sleep(1.0)
-            agent.wait_for_text("decks selected") # Text changes when one is selected
+            for ch in "Trash2":
+                agent.act(ch)
+            agent.act('<Enter>')
+            time.sleep(0.5)
             agent.wait_until_stable()
             
             agent.act('x') # Select Trash2
-            agent.wait_for_text("[x] Trash2")
+            agent.wait_for_text("2 decks selected")
             
             # Delete both
             agent.act('<Backspace>')
             agent.wait_for_text("CONFIRM DELETION")
             agent.act('y')
             agent.wait_until_stable()
-            # Verify they are gone (need to clear filter first or wait for list refresh)
+            time.sleep(0.5)
+            
+            # Verify they are gone
             agent.act('<Esc>')
             agent.wait_until_stable()
+            time.sleep(0.5)
             screen = agent.observe()
             assert "Trash1" not in screen
             assert "Trash2" not in screen

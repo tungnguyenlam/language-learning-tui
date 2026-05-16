@@ -11,7 +11,7 @@ from tui_tester import TUIAgent
 def agent():
     tmpdir = tempfile.mkdtemp()
     app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
-    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir}')
+    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir}', columns=110, lines=40)
     agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()
     yield agent

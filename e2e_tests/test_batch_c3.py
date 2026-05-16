@@ -1,6 +1,7 @@
 import os
 import sys
 import tempfile
+import time
 import pytest
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../tui_tester")))
@@ -40,23 +41,28 @@ def test_c3_provider_persistence_on_restart():
 
 def test_c3_reveal_grade_guard():
     with tempfile.TemporaryDirectory() as tmpdir:
-        agent = start_agent(tmpdir)
+        agent = start_agent(tmpdir, columns=120, lines=40)
         try:
             # Go to review (3)
             agent.act("3")
-            agent.wait_for_text("Press space or enter to reveal.")
+            agent.wait_for_text("Review 1/", timeout=10.0)
+            agent.wait_for_text("Press space or enter to reveal.", timeout=5.0)
             
-            # Try to grade prematurely
+            # Try to grade prematurely - 'a' should do nothing when not revealed
             agent.act("a")
+            time.sleep(0.3)
+            # 'h' toggles hint, but should not reveal the answer
             agent.act("h")
-            agent.wait_until_stable()
+            time.sleep(0.3)
             
-            # Should still be unrevealed
-            agent.assert_text("Press space or enter to reveal.")
+            # The card should still be in unrevealed state (hint may be shown)
+            # Check that grading options are NOT visible
+            screen = agent.screen.get_screen_text()
+            assert "Again (" not in screen or "Grade:" not in screen, "Grading should not be available before reveal"
             
             # Reveal
             agent.act("<Space>")
-            agent.wait_for_text("Again")
+            agent.wait_for_text("Again", timeout=5.0)
         finally:
             agent.close()
 

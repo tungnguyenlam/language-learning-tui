@@ -30,10 +30,11 @@ Output ONLY a single JSON object with this exact shape — no prose, no markdown
 Rules:
 - front: the German word or phrase. For nouns include the article (der/die/das).
 - back: the English translation.
-- extra: 1 short line about grammar/usage (gender, tense, case, register).
+- extra: 1 short line about grammar/usage (gender, plural for nouns; infinitive and principal parts for verbs).
 - example: ONE natural German sentence using the word.
-- Generate between 3 and 6 cards for the user's topic.
-- If a level (A1/A2/B1/B2/C1/C2) is mentioned, calibrate vocabulary to that level.`
+- Generate between 5 and 10 cards for the user's topic.
+- If a level (A1/A2/B1/B2/C1/C2) is mentioned, calibrate vocabulary to that level.
+- Ensure high-quality, practical vocabulary.`
 
 // userPromptFor produces the per-request user message. We embed the topic
 // and any tags so the model can specialise the cards.

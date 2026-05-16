@@ -166,13 +166,19 @@ var migrations = []migration{
 	{
 		ID: 22,
 		SQL: `
-			ALTER TABLE notes ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+			ALTER TABLE notes ADD COLUMN created_at TIMESTAMP NOT NULL DEFAULT '1970-01-01 00:00:00';
 		`,
 	},
 	{
 		ID: 23,
 		SQL: `
 			ALTER TABLE cards ADD COLUMN extra TEXT NOT NULL DEFAULT '';
+		`,
+	},
+	{
+		ID: 24,
+		SQL: `
+			ALTER TABLE review_states ADD COLUMN last_review_at TIMESTAMP;
 		`,
 	},
 }

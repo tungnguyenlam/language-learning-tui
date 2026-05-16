@@ -90,13 +90,24 @@ func (m *Model) renderReview(x, y int) string {
 		shortcutGuide := fmt.Sprintf("Use %s and %s to switch decks or %s to toggle the bookmark filter.\nPress %s for Custom Study (Cram Mode).",
 			keyStyle.Render("["), keyStyle.Render("]"), keyStyle.Render("B"), keyStyle.Render("c"))
 
+		// Rotating motivational tips based on day
+		tips := []string{
+			"Tip: Consistent daily practice beats cramming!",
+			"Tip: Try reviewing cards out loud for better retention.",
+			"Tip: Use new words in sentences to strengthen memory.",
+			"Tip: Review before sleep helps consolidate learning.",
+			"Tip: Focus on understanding, not just memorizing.",
+		}
+		dayTip := tips[int(time.Now().Weekday())%len(tips)]
+		tipStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("226")).Italic(true)
+
 		emptyBox := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("81")).
 			Padding(1, 2).
 			Width(60).
 			Align(lipgloss.Center).
-			Render(deckLine + "\n" + message + "\n\n" + shortcutGuide)
+			Render(deckLine + "\n" + message + "\n\n" + shortcutGuide + "\n\n" + tipStyle.Render(dayTip))
 		return title + "\n\n" + emptyBox
 	}
 	cursor := clampInt(m.cursor, 0, len(m.dueCards)-1)
@@ -120,11 +131,9 @@ func (m *Model) renderReview(x, y int) string {
 
 	// Enhanced keyboard shortcut display with visual highlighting
 	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-	keys := fmt.Sprintf("%s toggle | %s suspend | %s hint | %s filter | %s undo | %s history | %s audio | %s type",
-		keyStyle.Render("b"), keyStyle.Render("x"), keyStyle.Render("h"), keyStyle.Render("B"), keyStyle.Render("u"), keyStyle.Render("r"), keyStyle.Render("p"), keyStyle.Render("t"))
+	keys := fmt.Sprintf("b:tog x:susp h hint B:src u:undo p audio")
 	if m.bookmarkFilter {
-		keys = fmt.Sprintf("%s toggle | %s suspend | %s hint | %s all cards | %s undo | %s history | %s audio",
-			keyStyle.Render("b"), keyStyle.Render("x"), keyStyle.Render("h"), keyStyle.Render("B"), keyStyle.Render("u"), keyStyle.Render("r"), keyStyle.Render("p"))
+		keys = fmt.Sprintf("b:tog x:susp h hint B:all u:undo p audio")
 	}
 	audioIndicator := ""
 	if card.Audio != "" {
@@ -220,7 +229,7 @@ func (m *Model) renderReview(x, y int) string {
 		if val == "" {
 			val = "(no hint available)"
 		}
-		hintDisplay = "\n\n" + hintStyle.Render("Hint: "+val)
+		hintDisplay = "\n" + hintStyle.Render("Hint: "+val)
 	}
 
 	// Enhanced prompt styling for better visibility
@@ -229,14 +238,15 @@ func (m *Model) renderReview(x, y int) string {
 
 	width, _ := m.activePanelSize()
 	cardWidth := maxInt(30, width-6)
+	if cardWidth > 80 {
+		cardWidth = 80
+	}
 
 	// Enhanced card styling with better visual hierarchy
 	cardStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(lipgloss.Color(cardBorderColor)).
-		Padding(1, 2).
-		Width(cardWidth).
-		Align(lipgloss.Center)
+		Width(cardWidth)
 
 	// Special styling for revealed cards
 	if m.revealState == RevealRevealed {
@@ -391,7 +401,10 @@ func (m *Model) renderReview(x, y int) string {
 		answer = "Press space or enter to reveal."
 	}
 
-	view := fmt.Sprintf("%s\n\n%s", headerSection, cardStyle.Render(promptDisplay+mature+"\n\n"+answer))
+	view := fmt.Sprintf("%s\n\n%s", headerSection, cardStyle.Render(promptDisplay+mature+"\n"+answer))
+	if m.showCardInfo {
+		view += "\n\n" + m.renderCardInfo(card)
+	}
 	if m.showReviewHistory && m.reviewHistoryCard == card.ID {
 		view += "\n\n" + m.renderReviewHistory(card.Prompt)
 	}
@@ -475,4 +488,29 @@ func renderMCQChoices(choices []string, selected int) string {
 		b.WriteString(fmt.Sprintf("%s%d: %s%s\n", prefix, i+1, mark, choice))
 	}
 	return strings.TrimRight(b.String(), "\n")
+}
+
+func (m *Model) renderCardInfo(card core.Card) string {
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
+	labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
+	valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81"))
+
+	info := fmt.Sprintf("%s\n\n", titleStyle.Render("Card Statistics"))
+	info += fmt.Sprintf("%s %s\n", labelStyle.Render("ID:"), valueStyle.Render(card.ID))
+	info += fmt.Sprintf("%s %s\n", labelStyle.Render("Deck:"), valueStyle.Render(m.deckNameByID(card.DeckID)))
+	info += fmt.Sprintf("%s %s\n", labelStyle.Render("Ease:"), valueStyle.Render(fmt.Sprintf("%.0f%%", card.Ease*100)))
+	info += fmt.Sprintf("%s %s\n", labelStyle.Render("Interval:"), valueStyle.Render(formatReviewInterval(card.Interval)))
+	info += fmt.Sprintf("%s %s\n", labelStyle.Render("Reviews:"), valueStyle.Render(fmt.Sprintf("%d", card.Reviews)))
+	info += fmt.Sprintf("%s %s\n", labelStyle.Render("Lapses:"), valueStyle.Render(fmt.Sprintf("%d", card.Lapses)))
+	info += fmt.Sprintf("%s %s\n", labelStyle.Render("Due:"), valueStyle.Render(card.Due.Local().Format("Jan 02, 2006")))
+
+	if len(card.Tags) > 0 {
+		info += fmt.Sprintf("%s #%s\n", labelStyle.Render("Tags:"), valueStyle.Render(strings.Join(card.Tags, " #")))
+	}
+
+	return lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("159")).
+		Padding(0, 1).
+		Render(info)
 }

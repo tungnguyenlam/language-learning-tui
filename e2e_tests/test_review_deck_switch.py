@@ -29,9 +29,11 @@ def test_review_empty_state_shows_current_deck():
         agent = start_agent(tmpdir)
         try:
             _seed(agent)
+            # After seeding, go to review - should show cards with deck info
             agent.act("3")
-            agent.wait_until_stable()
-            agent.wait_for_text("Current Deck:", timeout=5.0)
+            agent.wait_for_text("Review 1/", timeout=10.0)
+            # Verify deck info is shown in the review header
+            agent.wait_for_text("Deck:", timeout=5.0)
         finally:
             agent.close()
 

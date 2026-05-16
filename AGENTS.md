@@ -43,12 +43,16 @@ The project is a Go Bubble Tea TUI for German flashcard and MCQ learning. It is 
 
 - macOS shells used in this repo may not provide `timeout`; use a TTY session or `./scripts/tui_smoke.sh` for launch checks.
 - Embedded TSV decks are parsed by Go's TSV reader; avoid unescaped quote characters inside fields because they can merge following rows.
-- Settings screens are height-sensitive in E2E tests; keep durable guidance short enough that `status:` and editing prompts remain visible on 90x28 terminals.
+- Settings screens are height-sensitive in E2E tests; use 110x40+ terminals for Settings tests to ensure Daily Goal section is visible without scrolling.
 - E2E tests often wait for "DASHBOARD" to verify app readiness. When updating the Dashboard header, ensure the word "DASHBOARD" remains visible to maintain test compatibility.
 - Dashboard layouts are height-sensitive. Avoid adding vertical space in top sections (header/boxes) as it can push bottom elements (Grammar Tip, help overlays) off-screen, causing E2E test timeouts on standard terminal sizes.
 - Bubble Tea unit tests that manually call commands often fail if a command is changed to a `tea.Batch`. Use a `executeCmd` helper in tests to flatten batches and prevent `undefined: msg` errors.
 - TSV embedded decks with `#deck:` lines containing `&` characters have different deck IDs than their filename (e.g., `a2-shopping-services.tsv` with `#deck: A2 Shopping & Services` gets ID `a2_shopping_&_services`). Do NOT create Go decks with IDs that would conflict with these. Use `_` underscores in deck IDs (e.g., `a2_purchasing_wear`).
 - When adding scrollbar columns to custom render views, use `layout.Width - 2` for padding width rather than `scrollbarLineWidth(layout.Width)` to avoid the scrollbar exceeding panel bounds on first render.
+- **E2E Settings Tests:** The Settings view requires scrolling to reach Daily Goal on smaller terminals. Use `columns=110, lines=40+` and navigate with 'j' keys to reach the Daily Goal row before testing +/- adjustments.
+- **E2E Decks View Search:** After searching in Decks view, press `<Esc>` to clear the filter before starting a new search. Search state persists across navigation.
+- **E2E Review Empty State:** The starter deck has 52 cards due by default. Tests expecting "No cards due" must grade through all cards first or use a fresh database without seeded content.
+- **TSV Import Format:** When creating TSV files for E2E tests, use 6-column format: `id\tfront\tback\textra\ttags\tdeck`. The 6th column sets the deck name.
 
 ## Handoff Rules
 

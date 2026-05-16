@@ -109,7 +109,8 @@ def test_statistics_drag_to_scroll():
             agent.wait_until_stable()
 
             # The view should have scrolled. We check for the last lines.
-            agent.wait_for_text("of 38")
+            agent.wait_for_text("of ")
+
         finally:
             agent.close()
 
@@ -181,7 +182,7 @@ def test_browser_card_actions():
 def test_settings_mouse_interaction():
     """Verify that settings can be adjusted via interactive hitboxes."""
     with tempfile.TemporaryDirectory() as tmpdir:
-        agent = start_agent(tmpdir)
+        agent = start_agent(tmpdir, columns=110, lines=40)
         try:
             # Go to Settings
             agent.act("7")

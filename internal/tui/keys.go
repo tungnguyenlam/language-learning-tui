@@ -388,6 +388,16 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return m.undoLastReview(), true
 	case "r":
 		return m.toggleReviewHistory(), true
+	case "i":
+		if len(m.dueCards) > 0 {
+			m.showCardInfo = !m.showCardInfo
+			if m.showCardInfo {
+				m.status = "Card info shown"
+			} else {
+				m.status = "Card info hidden"
+			}
+			return nil, true
+		}
 	case "f":
 		m.focusMode = !m.focusMode
 		if m.focusMode {

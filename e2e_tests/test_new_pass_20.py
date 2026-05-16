@@ -70,7 +70,7 @@ def test_robust_deck_search():
 def test_settings_daily_goal_increase():
     """Verify that increasing the daily goal in Settings view works."""
     with tempfile.TemporaryDirectory() as tmpdir:
-        agent = start_agent(tmpdir)
+        agent = start_agent(tmpdir, columns=110, lines=40)
         try:
             # Go to Settings view (Tab 7)
             agent.act('7')

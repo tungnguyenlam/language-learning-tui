@@ -10,35 +10,29 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-func (m *Model) renderStatistics(x, y int) string {
-	width, height := m.activePanelSize()
-	layout := contentLayoutForStyle(panelStyle.Width(width).Height(height), x, y)
-	return m.renderStatisticsAt(layout)
-}
-
-func (m *Model) renderStatisticsAt(layout viewportLayout) string {
+func (m *Model) renderStatistics(layout viewportLayout) string {
 	var content strings.Builder
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
-	title := "Statistics: " + m.deckLabel()
-	content.WriteString(titleStyle.Render(title) + "\n\n")
+	labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
+	valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81"))
 
-	labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("246"))
-	valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("255")).Bold(true)
+	content.WriteString(titleStyle.Render("Statistics:") + " " + m.deckLabel() + "\n\n")
 
-	// --- Column 1: Collection & Review Stats ---
+	// Two-column layout for top stats
 	col1 := strings.Builder{}
+	col2 := strings.Builder{}
+
 	col1.WriteString(titleStyle.Copy().Underline(true).Render("Collection") + "\n")
 	col1.WriteString(fmt.Sprintf("%s %d\n", labelStyle.Render("Total Cards:"), m.stats.TotalCards))
-	col1.WriteString(fmt.Sprintf("%s %d (%d active)\n", labelStyle.Render("Total Decks:"), m.stats.TotalDecks, m.stats.ActiveDecks))
+	col1.WriteString(fmt.Sprintf("%s %d (%d active)\n\n", labelStyle.Render("Total Decks:"), m.stats.TotalDecks, m.stats.ActiveDecks))
+
 	col1.WriteString(fmt.Sprintf("  %s %s\n", labelStyle.Render("New:"), valueStyle.Render(fmt.Sprintf("%d", m.stats.NewCards))))
 	col1.WriteString(fmt.Sprintf("  %s %s\n", labelStyle.Render("Young:"), valueStyle.Render(fmt.Sprintf("%d", m.stats.YoungCards))))
 	col1.WriteString(fmt.Sprintf("  %s %s\n", labelStyle.Render("Mature:"), valueStyle.Render(fmt.Sprintf("%d", m.stats.MatureCards))))
-	col1.WriteString(fmt.Sprintf("  %s %d (%d due)\n", labelStyle.Render("Bookmarked:"), m.stats.BookmarkedCards, m.stats.BookmarkedDue))
-	col1.WriteString(fmt.Sprintf("  %s %d\n", labelStyle.Render("Leech:"), m.stats.LeechCards))
-	col1.WriteString(fmt.Sprintf("  %s %d\n", labelStyle.Render("Suspended:"), m.stats.SuspendedCards))
+	col1.WriteString(fmt.Sprintf("  %s %s (%d due)\n", labelStyle.Render("Bookmarked:"), valueStyle.Render(fmt.Sprintf("%d", m.stats.BookmarkedCards)), m.stats.BookmarkedDue))
+	col1.WriteString(fmt.Sprintf("  %s %s\n", labelStyle.Render("Leech:"), valueStyle.Render(fmt.Sprintf("%d", m.stats.LeechCards))))
+	col1.WriteString(fmt.Sprintf("  %s %s\n", labelStyle.Render("Suspended:"), valueStyle.Render(fmt.Sprintf("%d", m.stats.SuspendedCards))))
 
-	// --- Column 2: Today & Performance ---
-	col2 := strings.Builder{}
 	col2.WriteString(titleStyle.Copy().Underline(true).Render("Today's Performance") + "\n")
 	col2.WriteString(fmt.Sprintf("%s %d\n", labelStyle.Render("Total Reviews:"), m.stats.TotalReviews))
 	col2.WriteString(fmt.Sprintf("%s %d/%d\n", labelStyle.Render("Reviews Today:"), m.stats.ReviewsToday, m.stats.DailyGoal))
@@ -122,6 +116,21 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 		lipgloss.NewStyle().PaddingLeft(4).Render(col2Str),
 	)
 	content.WriteString(joinedCols + "\n")
+
+	// --- Maturity Distribution ---
+	content.WriteString("\n" + titleStyle.Copy().Underline(true).Render("Maturity Distribution") + "\n")
+	totalKnown := m.stats.NewCards + m.stats.YoungCards + m.stats.MatureCards
+	if totalKnown > 0 {
+		newPct := float64(m.stats.NewCards) / float64(totalKnown)
+		youngPct := float64(m.stats.YoungCards) / float64(totalKnown)
+		maturePct := float64(m.stats.MatureCards) / float64(totalKnown)
+
+		content.WriteString(fmt.Sprintf("  %-8s %s %d (%.1f%%)\n", labelStyle.Render("New:"), progressBar(20, newPct, "212", "238"), m.stats.NewCards, newPct*100))
+		content.WriteString(fmt.Sprintf("  %-8s %s %d (%.1f%%)\n", labelStyle.Render("Young:"), progressBar(20, youngPct, "220", "238"), m.stats.YoungCards, youngPct*100))
+		content.WriteString(fmt.Sprintf("  %-8s %s %d (%.1f%%)\n", labelStyle.Render("Mature:"), progressBar(20, maturePct, "46", "238"), m.stats.MatureCards, maturePct*100))
+	} else {
+		content.WriteString("  (no cards in collection)\n")
+	}
 
 	// --- Success Rate per Deck ---
 	if len(m.decks) > 1 {
@@ -295,21 +304,6 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 		content.WriteString(fmt.Sprintf("  %s %s %d\n", labelStyle.Render(dayName), bar, d.count))
 	}
 
-	// --- Maturity Distribution ---
-	content.WriteString("\n" + titleStyle.Copy().Underline(true).Render("Maturity Distribution") + "\n")
-	totalKnown := m.stats.NewCards + m.stats.YoungCards + m.stats.MatureCards
-	if totalKnown > 0 {
-		newPct := float64(m.stats.NewCards) / float64(totalKnown)
-		youngPct := float64(m.stats.YoungCards) / float64(totalKnown)
-		maturePct := float64(m.stats.MatureCards) / float64(totalKnown)
-
-		content.WriteString(fmt.Sprintf("  %-8s %s %d (%.1f%%)\n", labelStyle.Render("New:"), progressBar(20, newPct, "81", "238"), m.stats.NewCards, newPct*100))
-		content.WriteString(fmt.Sprintf("  %-8s %s %d (%.1f%%)\n", labelStyle.Render("Young:"), progressBar(20, youngPct, "220", "238"), m.stats.YoungCards, youngPct*100))
-		content.WriteString(fmt.Sprintf("  %-8s %s %d (%.1f%%)\n", labelStyle.Render("Mature:"), progressBar(20, maturePct, "46", "238"), m.stats.MatureCards, maturePct*100))
-	} else {
-		content.WriteString("  (no cards in collection)\n")
-	}
-
 	// Review Heatmap (last 3 months)
 	content.WriteString("\n" + titleStyle.Copy().Underline(true).Render("Review Heatmap (last 3 months)") + "\n")
 	if len(m.reviewsPerDay) == 0 {
@@ -369,6 +363,26 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 		content.WriteString("\n")
 	}
 
+	// --- Card Type Distribution ---
+	if len(m.stats.CardTypes) > 0 {
+		content.WriteString("\n" + titleStyle.Copy().Underline(true).Render("Card Type Distribution") + "\n")
+		types := []core.CardKind{core.CardKindFlashcard, core.CardKindMCQ, core.CardKindCloze}
+		typeLabels := map[core.CardKind]string{
+			core.CardKindFlashcard: "Flashcard:",
+			core.CardKindMCQ:       "MCQ:",
+			core.CardKindCloze:     "Cloze:",
+		}
+		for _, t := range types {
+			count := m.stats.CardTypes[t]
+			if count == 0 && t != core.CardKindFlashcard {
+				continue
+			}
+			percentage := float64(count) / float64(m.stats.TotalCards)
+			bar := progressBar(20, percentage, "81", "238")
+			content.WriteString(fmt.Sprintf("  %-11s %s %d (%.1f%%)\n", labelStyle.Render(typeLabels[t]), bar, count, percentage*100))
+		}
+	}
+
 	lines := strings.Split(content.String(), "\n")
 	totalLines := len(lines)
 	m.statsTotalLines = totalLines
@@ -410,4 +424,8 @@ func (m *Model) renderStatisticsAt(layout viewportLayout) string {
 	}
 
 	return visibleContent.String() + footer
+}
+
+func (m *Model) renderStatisticsAt(layout viewportLayout) string {
+	return m.renderStatistics(layout)
 }

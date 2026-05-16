@@ -98,6 +98,8 @@ func (m *Model) renderAI(x, y int) string {
 			{"B2 environmental issues", "green topics"},
 			{"A2 public transport", "train & bus tickets"},
 			{"B1 insurance claims", "legal German"},
+			{"grammar breakdown", "explain German grammar"},
+			{"A1 city directions", "navigating German cities"},
 			{"C1 psychology terms", "mind & emotions"},
 			{"B2 travel adventure", "trips & flights"},
 			{"B2 hiking & camping", "outdoor German"},
@@ -107,6 +109,8 @@ func (m *Model) renderAI(x, y int) string {
 			{"A2 giving directions", "navigation"},
 			{"B2 car & driving", "vehicle vocabulary"},
 			{"B1 phone & internet", "communication tech"},
+			{"grammar breakdown", "detailed analysis"},
+			{"sentence analysis", "structure & grammar"},
 		}
 		visibleSuggestions := len(suggestions)
 		if layout.Height < 42 {

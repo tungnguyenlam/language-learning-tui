@@ -42,39 +42,43 @@ type Deck struct {
 }
 
 type Note struct {
-	ID       string
-	DeckID   string
-	Type     string
-	Front    string
-	Back     string
-	Extra    string
-	Hint     string
-	Audio    string
-	Tags     []string
-	Examples []string
-	Choices  []string
-	Cards    []Card
+	ID        string
+	DeckID    string
+	Type      string
+	Front     string
+	Back      string
+	Extra     string
+	Hint      string
+	Audio     string
+	Tags      []string
+	Examples  []string
+	Choices   []string
+	Cards     []Card
 	CreatedAt time.Time
 }
 
 type Card struct {
-	ID         string
-	NoteID     string
-	DeckID     string
-	Kind       CardKind
-	Prompt     string
-	Answer     string
-	Extra      string
-	Hint       string
-	Choices    []string
-	Audio      string
-	Tags       []string
-	Bookmarked bool
-	Leech      bool
-	Suspended  bool
-	Mature     bool
-	Interval   time.Duration
-	Reviews    int
+	ID           string
+	NoteID       string
+	DeckID       string
+	Kind         CardKind
+	Prompt       string
+	Answer       string
+	Extra        string
+	Hint         string
+	Choices      []string
+	Audio        string
+	Tags         []string
+	Bookmarked   bool
+	Leech        bool
+	Suspended    bool
+	Mature       bool
+	Interval     time.Duration
+	Reviews      int
+	Lapses       int
+	Ease         float64
+	Due          time.Time
+	LastReviewed time.Time
 }
 
 type ReviewState struct {
@@ -112,20 +116,21 @@ type Statistics struct {
 	YoungCards      int
 	MatureCards     int
 	BookmarkedCards int
-	BookmarkedDue     int
-	Next24hDue        int
-	LeechCards        int
+	BookmarkedDue   int
+	Next24hDue      int
+	LeechCards      int
 
-	SuspendedCards  int
-	TotalReviews    int
-	ReviewsToday    int
-	DailyGoal       int
-	CurrentStreak   int
-	TotalDecks      int
-	ActiveDecks     int
-	SuccessRate     float64
+	SuspendedCards   int
+	TotalReviews     int
+	ReviewsToday     int
+	DailyGoal        int
+	CurrentStreak    int
+	TotalDecks       int
+	ActiveDecks      int
+	SuccessRate      float64
 	CardsAddedPerDay map[string]int
-	Grades          map[ReviewGrade]int
+	Grades           map[ReviewGrade]int
+	CardTypes        map[CardKind]int
 }
 
 type Repository interface {

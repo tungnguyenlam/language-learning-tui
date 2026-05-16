@@ -175,6 +175,7 @@ type Model struct {
 	typingChecked         bool               // Whether typing answer has been checked
 	typingCorrect         bool               // Whether typed answer was correct
 	showHint              bool               // Whether to show hint for the current card
+	showCardInfo          bool               // Whether to show card info overlay
 
 	// Card-fix flow: user reports the current Review card as wrong; AI
 	// proposes a corrected note metadata; the user accepts or discards.

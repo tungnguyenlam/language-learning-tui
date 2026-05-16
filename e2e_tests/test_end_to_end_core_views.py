@@ -90,12 +90,12 @@ def test_ai_view_topic_placeholder_and_tip():
 
 def test_settings_goal_text_and_template_help():
     with tempfile.TemporaryDirectory() as tmpdir:
-        agent = start_agent(tmpdir)
+        agent = start_agent(tmpdir, columns=110, lines=45)
         try:
             agent.act("7")
             agent.wait_for_text("Settings")
             agent.assert_text("Daily Goal: 10 cards")
-            agent.assert_text("[/] templates")
+            agent.assert_text("AI CONFIGURATION")
         finally:
             agent.close()
 

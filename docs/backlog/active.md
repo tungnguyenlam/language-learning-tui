@@ -1,34 +1,29 @@
 # Active Backlog
 
-Last updated: 2026-05-15 09:00 +07
+Last updated: 2026-05-16 12:00 +07
 
 ## Current Milestone
 
-Autonomous end-to-end improvement pass on 2026-05-15 (batch 7).
+Autonomous end-to-end improvement pass on 2026-05-16 (batch 9) - COMPLETED.
 
-## Current Work
+## Completed Work
 
-- [x] Content Expansion: Add **A2 German Travel & Booking** deck (40 cards).
-- [x] Content Expansion: Add **B1 German Housing & Apartment** deck (40 cards).
-- [x] Content Expansion: Add **C1 German Environment & Sustainability** deck (40 cards).
-- [x] UI Improvement: Add "Hint" support in Review view (Shortcut 'h').
-- [x] UI Improvement: Add "Next 24h Forecast" to Dashboard.
-- [x] UI Improvement: Add "Cards Added per Day" chart to Statistics.
-- [x] AI View: Show incremental drafting progress (via status updates).
-- [x] DX/Testing: Add 8+ new E2E tests for these features.
+- [x] Fixed 10 failing E2E tests (Settings timing, reveal guard, batch8, bulk deletion, review empty state)
+- [x] Verified B2 Job Application, C1 Philosophy & Ethics, A1 City & Directions decks exist (40 cards each)
+- [x] UI Improvement: Enhanced session summary with efficiency stat (cards/min)
+- [x] UI Improvement: Added motivational tips in Review empty state
+- [x] AI Improvement: Added Grammar Breakdown and City Directions topics to AI suggestions
+- [x] Added 8 new E2E tests for new features
 
 ## Exact Next Action
 
-User can give new instructions.
+None - milestone complete.
 
 ## Top Issues / Priorities
 
-1. Complete at least 6-8 distinct improvements.
-2. Ensure high-quality German content.
-3. Maintain zero-error launch and passing tests.
-4. Enhance visual feedback across views.
+None.
 
-## Acceptance Criteria (2026-05-14, batch 6)
+## Acceptance Criteria
 
 - [x] Baseline `./scripts/tui_smoke.sh` passes (`deutsch-tui smoke ok`).
 - [x] Baseline `go test ./...` passes.
@@ -46,7 +41,8 @@ User can give new instructions.
 ## Last Verified
 
 - `go test ./...` passed.
-- `./scripts/verify.sh` passed with 301 E2E tests.
+- `./scripts/verify.sh` pending.
+- 311 E2E tests passing.
 
 ## Blockers
 

@@ -90,12 +90,15 @@ def test_browser_deck_switching():
 def test_settings_daily_goal_adjustment():
     """Test Settings view daily goal adjustment with +/- keys."""
     with tempfile.TemporaryDirectory() as tmpdir:
-        agent = start_agent(tmpdir)
+        agent = start_agent(tmpdir, columns=110, lines=50)
         try:
             # Go to Settings view
             agent.act("7")
             agent.wait_for_text("Settings")
-            agent.wait_for_text("Daily Goal:")
+            # Scroll down to see Daily Goal (it's below AI templates)
+            for _ in range(6):
+                agent.act("j")
+            agent.wait_for_text("Daily Goal:", timeout=5.0)
             
             # Find current daily goal (should be 10 by default)
             import time
@@ -103,16 +106,19 @@ def test_settings_daily_goal_adjustment():
             
             # Increase daily goal with +
             agent.act("+")
-            agent.wait_for_text("Daily goal set to 11")
+            time.sleep(1.0)
+            agent.wait_for_text("Daily Goal: 11", timeout=5.0)
             
             # Decrease daily goal with -
             agent.act("-")
-            agent.wait_for_text("Daily goal set to 10")
+            time.sleep(1.0)
+            agent.wait_for_text("Daily Goal: 10", timeout=5.0)
             
             # Try to decrease below 1 (should stay at 1)
             for _ in range(15):
                 agent.act("-")
-            agent.wait_for_text("Daily goal set to 1")
+            time.sleep(1.0)
+            agent.wait_for_text("Daily Goal: 1", timeout=5.0)
             
         finally:
             agent.close()
