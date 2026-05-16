@@ -66,6 +66,14 @@ func (m *Model) activateHitbox(id string) tea.Cmd {
 		m.draftCursor = 0
 		return m.startDrafting()
 	case strings.HasPrefix(id, "dash-"):
+		if strings.HasPrefix(id, "dash-recent-") {
+			idx, err := strconv.Atoi(strings.TrimPrefix(id, "dash-recent-"))
+			if err == nil && idx >= 0 && idx < len(m.recentDecks) {
+				m.selectDeckByID(m.recentDecks[idx])
+				return m.updateView(ViewReview)
+			}
+			return nil
+		}
 		switch id {
 		case "dash-review":
 			return m.updateView(ViewReview)

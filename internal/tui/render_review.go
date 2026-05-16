@@ -116,9 +116,14 @@ func (m *Model) renderReview(x, y int) string {
 	if card.Bookmarked {
 		bookmark = "Bookmark: on"
 	}
-	leech := ""
+	leechBadge := ""
 	if card.Leech {
-		leech = " | LEECH"
+		leechBadge = " " + lipgloss.NewStyle().
+			Foreground(lipgloss.Color("231")).
+			Background(lipgloss.Color("196")).
+			Bold(true).
+			Padding(0, 1).
+			Render("LEECH")
 	}
 	suspended := ""
 	if card.Suspended {
@@ -195,7 +200,7 @@ func (m *Model) renderReview(x, y int) string {
 	}
 
 	// Determine card state/difficulty for badge
-	stateBadge := lipgloss.NewStyle().Foreground(lipgloss.Color("255")).Padding(0, 1)
+	stateBadge := lipgloss.NewStyle().Foreground(lipgloss.Color("255")).Padding(0, 1).Bold(true)
 	cardBorderColor := "62"
 	if card.Mature {
 		stateBadge = stateBadge.Background(lipgloss.Color("34")).SetString("MATURE")
@@ -208,7 +213,7 @@ func (m *Model) renderReview(x, y int) string {
 		cardBorderColor = "208"
 	}
 
-	headerSection := fmt.Sprintf("%s%s %s\n%s | Type: %s\n%s | %s\n%s%s%s", header, sessionProgress, stateBadge.Render(), deckMeta, cardTypeLabel, bookmark, keys, leech, suspended, audioIndicator)
+	headerSection := fmt.Sprintf("%s%s %s%s\n%s | Type: %s\n%s | %s\n%s%s", header, sessionProgress, stateBadge.Render(), leechBadge, deckMeta, cardTypeLabel, bookmark, keys, suspended, audioIndicator)
 	if m.focusMode {
 		headerSection = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true).Render("Focus Mode Active (f to exit)")
 	}

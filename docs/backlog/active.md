@@ -4,10 +4,16 @@ Last updated: 2026-05-16 12:00 +07
 
 ## Current Milestone
 
-Autonomous end-to-end improvement pass on 2026-05-16 (batch 10) - COMPLETED.
+Autonomous end-to-end improvement pass on 2026-05-16 (batch 11) - COMPLETED.
 
 ## Completed Work
 
+- [x] UX Improvement: Added interactive "Recently Studied" decks on Dashboard (Clickable + `!/@/#` shortcuts).
+- [x] UX Improvement: Enhanced Review view with prominent red "LEECH" badges and bolder state badges.
+- [x] UI Improvement: Added celebratory "GOAL MET 🏆" badge on Dashboard when daily goal is reached.
+- [x] Content Expansion: Added "B2 Business German: Meetings & Negotiations" deck (30 notes).
+- [x] Logic Fix: Ensured statistics reload immediately after recording a review (fixed `0/X` reviews bug).
+- [x] Added 3 new E2E tests in `test_batch11_improvements.py`.
 - [x] UX Improvement: Added 1-4 grading shortcuts in Review view (verified with E2E test).
 - [x] UX Improvement: Added Mouse Wheel support for Decks view scrolling.
 - [x] Content Expansion: Added "B2 Programming & Software Engineering" deck (30 technical notes).
@@ -46,7 +52,7 @@ None.
 
 - `go test ./...` passed.
 - `./scripts/verify.sh` passed.
-- 312 E2E tests passing.
+- 315 E2E tests passing.
 
 ## Blockers
 

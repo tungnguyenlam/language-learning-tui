@@ -123,10 +123,18 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 	now = time.Now()
 	dateStr := now.Format("Monday, 02. January 2006")
 	progressText := fmt.Sprintf("Daily Goal: %d/%d reviews", m.stats.ReviewsToday, m.stats.DailyGoal)
+	goalMetBadge := ""
 	if m.stats.DailyGoal > 0 && m.stats.ReviewsToday >= m.stats.DailyGoal {
 		progressText += " (Goal Met! ✅)"
+		goalMetBadge = lipgloss.NewStyle().
+			Foreground(lipgloss.Color("231")).
+			Background(lipgloss.Color("220")). // Gold
+			Bold(true).
+			Padding(0, 1).
+			MarginLeft(1).
+			Render("GOAL MET 🏆")
 	}
-	db.WriteString(dashTitleStyle.Render("DASHBOARD - WILLKOMMEN!") + " | " + lipgloss.NewStyle().Foreground(colorGreen).Render(progressText) + " | " + mutedStyle.Render(dateStr) + "\n")
+	db.WriteString(dashTitleStyle.Render("DASHBOARD - WILLKOMMEN!") + goalMetBadge + " | " + lipgloss.NewStyle().Foreground(colorGreen).Render(progressText) + " | " + mutedStyle.Render(dateStr) + "\n")
 
 	if m.lastSessionReviewed > 0 {
 		accuracy := 0.0
@@ -150,6 +158,7 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 	m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-digest", View: ViewDashboard, X: layout.X + lipgloss.Width(progressBox) + 1, Y: layout.Y + progressY, Width: lipgloss.Width(dailyDigestBox), Height: lipgloss.Height(dailyDigestBox)})
 	db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, progressBox, " ", dailyDigestBox) + "\n")
 
+	activityY := strings.Count(db.String(), "\n")
 	recentDecksBox := ""
 	if layout.Height > 22 && len(m.recentDecks) > 0 {
 		recentDecksContent := lipgloss.NewStyle().Foreground(colorPurple).Bold(true).Render("Recently Studied") + "\n"
@@ -164,14 +173,36 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 					break
 				}
 			}
-			recentDecksContent += fmt.Sprintf("  • %s\n", truncateLine(name, maxInt(20, (layout.Width-2)/2-4)))
+
+			hint := ""
+			switch i {
+			case 0:
+				hint = keyStyle.Render("!") + " "
+			case 1:
+				hint = keyStyle.Render("@") + " "
+			case 2:
+				hint = keyStyle.Render("#") + " "
+			}
+
+			rowY := activityY + i + 1
+			deckName := truncateLine(name, maxInt(20, (layout.Width-2)/2-6))
+			recentDecksContent += fmt.Sprintf("  %s• %s\n", hint, deckName)
+
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID:     fmt.Sprintf("dash-recent-%d", i),
+				View:   ViewDashboard,
+				X:      layout.X + (layout.Width-2)/2 + 3,
+				Y:      layout.Y + rowY,
+				Width:  lipgloss.Width(deckName),
+				Height: 1,
+			})
 		}
 		recentDecksBox = dashRecentStyle.
 			Width(maxInt(25, (layout.Width-2)/2)).
 			Render(recentDecksContent)
 	}
 
-	activityY := strings.Count(db.String(), "\n")
+	activityY = strings.Count(db.String(), "\n")
 	if recentDecksBox != "" {
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-activity", View: ViewDashboard, X: layout.X, Y: layout.Y + activityY, Width: lipgloss.Width(activityBox), Height: lipgloss.Height(activityBox)})
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-recent-decks", View: ViewDashboard, X: layout.X + lipgloss.Width(activityBox) + 1, Y: layout.Y + activityY, Width: lipgloss.Width(recentDecksBox), Height: lipgloss.Height(recentDecksBox)})

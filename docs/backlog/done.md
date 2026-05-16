@@ -1,5 +1,23 @@
 # Done Backlog
 
+## 2026-05-16 (Autonomous Improvement Pass — batch 11)
+
+### UX Improvements
+- **Interactive Recent Decks:** Decks in the "Recently Studied" dashboard box are now clickable and accessible via `!`, `@`, `#` shortcuts (`Shift+1/2/3`).
+- **Leech & Difficulty Visuals:** Added prominent red "LEECH" badges in the Review view for difficult cards. State badges ("NEW", "LEARNING", "MATURE") are now bolder and more distinct.
+- **Goal Celebration:** Added a celebratory "GOAL MET 🏆" badge on the Dashboard when the daily review target is achieved.
+
+### Content Expansion
+- **B2 Business German:** Added a new deck with 30 notes covering professional communication, meetings, and negotiations (e.g., *die Tagesordnung*, *der Wortbeitrag*, *zustimmen*).
+
+### Logic Fixes
+- **Live Statistics Update:** Fixed a bug where `m.stats` (and thus `ReviewsToday`) was not reloaded immediately after recording a review. Dashboard now reflects progress instantly.
+
+### Testing & Verification
+- Added `e2e_tests/test_batch11_improvements.py` (3 tests).
+- Total E2E tests: 315 (all passing).
+- `./scripts/verify.sh` passed.
+
 ## 2026-05-16 (Autonomous Improvement Pass — batch 10)
 
 ### UX Improvements

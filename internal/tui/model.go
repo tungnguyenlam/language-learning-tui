@@ -612,7 +612,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if len(m.dueCards) == 0 && m.sessionReviewed > 0 {
 			m.activeView = ViewSessionSummary
 		}
-		return m, tea.Batch(m.loadReviewsPerDay(), m.loadRecentDecks())
+		return m, tea.Batch(m.loadReviewsPerDay(), m.loadRecentDecks(), m.loadStatistics())
 	case bookmarkToggledMsg:
 		m.setCardBookmarkLocal(msg.cardID, msg.bookmarked)
 		if msg.bookmarked {

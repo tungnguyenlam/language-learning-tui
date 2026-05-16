@@ -245,6 +245,8 @@ func (m *Model) updateNumberKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 
 func (m *Model) updateActiveViewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	switch m.activeView {
+	case ViewDashboard:
+		return m.updateDashboardKey(msg)
 	case ViewReview:
 		return m.updateReviewKey(msg)
 	case ViewAI:
@@ -266,6 +268,21 @@ func (m *Model) updateActiveViewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	default:
 		return nil, false
 	}
+}
+
+func (m *Model) updateDashboardKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
+	key := msg.String()
+	switch key {
+	case "!", "@", "#":
+		indices := map[string]int{"!": 0, "@": 1, "#": 2}
+		idx := indices[key]
+		if idx < len(m.recentDecks) {
+			m.selectDeckByID(m.recentDecks[idx])
+			return m.updateView(ViewReview), true
+		}
+		return nil, true
+	}
+	return nil, false
 }
 
 func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {

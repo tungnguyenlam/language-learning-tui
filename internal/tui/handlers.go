@@ -71,6 +71,9 @@ func (m *Model) updateView(view View) tea.Cmd {
 
 	if view == ViewDashboard || view == ViewReview {
 		m.applyDeckFilter()
+		if view == ViewDashboard {
+			return tea.Batch(m.loadStatistics(), m.loadRecentDecks(), m.loadReviewsPerDay())
+		}
 	}
 
 	return nil
