@@ -1,5 +1,35 @@
 # Done Backlog
 
+## 2026-05-17 (Help Overlay & Code Cleanup)
+
+### UX Improvements
+- **Session Summary Greeting:** "No cards due" → "Session complete!" for a more encouraging post-review experience.
+- **Help Overlay Keybindings:** Added missing shortcuts to the help overlay (Review: `d` dictionary, `t` typing, `x` suspend, `h`/`F` hint/fix; Browser: `d` dict, `Enter` history, `b`/`B`/`x`/`X` bulk; Dashboard: `!`/`@`/`#` recent decks).
+
+### Developer Experience
+- **pytest e2e Mark:** Registered `@pytest.mark.e2e` in `pytest.ini`, eliminating ~30 warning messages across E2E test files.
+- **Code Cleanup:** Removed empty `var ()` block from `utils.go`.
+
+### Verification
+- `go build ./...` passed.
+- `go test ./...` passed.
+- `gofmt` and `go vet` passed.
+- Smoke test passed.
+- Targeted E2E tests passed.
+
+## 2026-05-16 (Verb Conjugation & Grammar Dedup)
+
+### UX/Content Improvements
+- **Verb of the Day Dashboard:** Now displays all 6 German conjugations (`Ich`, `Du`, `Er/Sie/Es`, `Wir`, `Ihr`, `Sie/Sie`) instead of only 3.
+- **Grammar Hint Enrichment:** `enrichVerb` in `wordinfo.go` shows all 6 conjugation forms in grammar hints.
+- **Grammar Tip Deduplication:** Removed 6 duplicate entries (identical titles or explanations). Restored 2 entries with distinct titles/examples. Final count: 131.
+- **Test Updates:** Updated 3 Go test files to match new tip count and removed expectations for permanently removed titles.
+
+### Verification
+- `go build ./...` passed.
+- `go test ./...` passed.
+- `gofmt` and `go vet` passed.
+
 ## 2026-05-16 (Autonomous Improvement Pass — batch 11)
 
 ### UX Improvements

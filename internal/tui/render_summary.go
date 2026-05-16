@@ -28,7 +28,7 @@ func (m *Model) renderSessionSummary(layout viewportLayout) string {
 
 	var b strings.Builder
 	b.WriteString(titleStyle.Render("SESSION SUMMARY") + "\n")
-	b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("No cards due") + "\n\n")
+	b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("Session complete!") + "\n\n")
 
 	mainBox := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).

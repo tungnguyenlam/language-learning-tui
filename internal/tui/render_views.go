@@ -24,6 +24,7 @@ func (m *Model) renderHelp() string {
 		"  /            Search decks\n" +
 		"  L            Edit deck limits\n" +
 		"  +/-          Adjust limits\n" +
+		"  !/@/#        Recent decks\n" +
 		"  Enter        Select deck"
 
 	review := sectionStyle.Render("Review:") + "\n" +
@@ -33,16 +34,20 @@ func (m *Model) renderHelp() string {
 		"  b / B        Bookmark / Filter\n" +
 		"  u / r        Undo / History\n" +
 		"  f / i        Focus / Info\n" +
-		"  p            Play audio"
+		"  p            Play audio\n" +
+		"  d            Dictionary\n" +
+		"  t / x        Type / Suspend\n" +
+		"  h / F        Hint / Fix card"
 
 	browser := sectionStyle.Render("Browser:") + "\n" +
 		"  j/k          Navigate\n" +
 		"  / / #        Search / Tag filter\n" +
 		"  m            Select card\n" +
-		"  b / x        Bookmark / Suspend\n" +
+		"  b / B        Bookmark / Unmark\n" +
+		"  x / X        Suspend / Unsuspend\n" +
 		"  t / T        Toggle kind / Tags\n" +
-		"  C            Cleanup tags\n" +
-		"  Backspace    Delete card"
+		"  d / Enter    Dict / History\n" +
+		"  C / Del      Cleanup tags / Delete"
 
 	other := sectionStyle.Render("Other:") + "\n" +
 		"  Statistics   j/k scroll, x export\n" +

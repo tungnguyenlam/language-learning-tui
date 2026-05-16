@@ -171,8 +171,6 @@ func sparkline(data []int, width int) string {
 	return res.String()
 }
 
-var ()
-
 func padLine(line string, width int) string {
 	padding := width - lipgloss.Width(line)
 	if padding <= 0 {
