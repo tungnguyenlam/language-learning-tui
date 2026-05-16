@@ -6,6 +6,8 @@ Use this file at the start of every new chat session.
 
 The project is a Go Bubble Tea TUI for German flashcard and MCQ learning. It is local-first, uses SQLite for progress, uses editable deck files for content, and targets Anki-friendly TSV import/export before `.apkg`.
 
+See `GOAL.md` for the intended final state of the app. All work should move toward that vision.
+
 ## Startup Routine
 
 1. Read `docs/backlog/active.md` for the current milestone and next action.
