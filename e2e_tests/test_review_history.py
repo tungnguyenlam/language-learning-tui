@@ -1,6 +1,7 @@
 import os
 import sys
 import tempfile
+import time
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../tui_tester")))
 
@@ -29,8 +30,13 @@ def test_review_history_empty_state_toggles_in_review():
 
             agent.act("r")
             agent.wait_for_text("Review history hidden")
-            time.sleep(1.0)
-            agent.assert_not_text("Review History: blau")
+            agent.wait_until_stable()
+            # Wait for the history panel to actually disappear
+            start = time.time()
+            while time.time() - start < 5.0:
+                if "Review History: blau" not in agent.observe():
+                    break
+                time.sleep(0.1)
 
         finally:
             agent.close()

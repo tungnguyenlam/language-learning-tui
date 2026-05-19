@@ -25,7 +25,7 @@ def test_grading_shortcuts_1_to_4():
             agent.act("3")
             agent.wait_for_text("Review")
             
-            if "No cards due" in agent.observe():
+            if "Session complete!" in agent.observe():
                 # Seed standard content if no cards due
                 agent.act("5") # Import
                 agent.wait_for_text("IMPORT")
@@ -36,29 +36,36 @@ def test_grading_shortcuts_1_to_4():
 
             # Reveal card
             agent.act(" ")
-            agent.wait_for_text("Grade:")
+            agent.wait_for_text("a Again")
+            agent.wait_until_stable()
             
             # Test grading with '3' (Good) -> ✓ Good
             agent.act("3")
             agent.wait_for_text("✓ Good")
+            agent.wait_until_stable()
             
             # Reveal again (next card)
             agent.act(" ")
-            agent.wait_for_text("Grade:")
+            agent.wait_for_text("a Again")
+            agent.wait_until_stable()
             
             # Test grading with '1' (Again) -> ✗ Again
             agent.act("1")
             agent.wait_for_text("✗ Again")
+            agent.wait_until_stable()
             
             # Test grading with '2' (Hard) -> ~ Hard
             agent.act(" ")
-            agent.wait_for_text("Grade:")
+            agent.wait_for_text("a Again")
+            agent.wait_until_stable()
             agent.act("2")
             agent.wait_for_text("~ Hard")
+            agent.wait_until_stable()
 
             # Test grading with '4' (Easy) -> ★ Easy
             agent.act(" ")
-            agent.wait_for_text("Grade:")
+            agent.wait_for_text("a Again")
+            agent.wait_until_stable()
             agent.act("4")
             agent.wait_for_text("★ Easy")
             

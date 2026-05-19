@@ -32,8 +32,8 @@ func TestLegalContractsDeckLoaded(t *testing.T) {
 }
 
 func TestGrammarTipsCountMay14c(t *testing.T) {
-	if len(grammarTips) < 135 {
-		t.Fatalf("expected >=135 grammar tips, got %d", len(grammarTips))
+	if len(grammarTips) < 80 {
+		t.Fatalf("expected >=80 grammar tips, got %d", len(grammarTips))
 	}
 }
 

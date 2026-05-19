@@ -23,6 +23,7 @@ func StandardDecks() []core.Deck {
 		A1FamilyDeck(),
 		A1GreetingsDeck(),
 		A1HobbiesDeck(),
+		A1ColorsShapesDeck(),
 		A1FoodDrinkDeck(),
 		A1TravelDeck(),
 		B1TechnologyDeck(),

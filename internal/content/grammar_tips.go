@@ -52,11 +52,6 @@ var grammarTips = []GrammarTip{
 		Example: "Lerne! (instead of du lernst)",
 	},
 	{
-		Title:   "Reflexive Verbs",
-		Tip:     "Reflexive pronouns: mich, dich, sich, uns, euch, sich.",
-		Example: "Ich wasche mich.",
-	},
-	{
 		Title:   "Separable Verbs",
 		Tip:     "The prefix of a separable verb moves to the very end in simple sentences.",
 		Example: "Ich stehe um 7 Uhr auf. (aufstehen)",
@@ -317,11 +312,6 @@ var grammarTips = []GrammarTip{
 		Example: "Der singende Mann (aktive Handlung). Das gekochte Essen.",
 	},
 	{
-		Title:   "Modal Particles",
-		Tip:     "Particles like 'doch', 'mal', 'schon' add nuance.",
-		Example: "Kommst du mit? -> Kommst du doch mit? (encouragement)",
-	},
-	{
 		Title:   "Depersonal Phrases",
 		Tip:     "Start sentences with 'Es' or 'Man' for impersonal expressions.",
 		Example: "Es regnet. Man sagt, dass...",
@@ -492,16 +482,6 @@ var grammarTips = []GrammarTip{
 		Example: "Ich wasche mich. Sie kämmen sich.",
 	},
 	{
-		Title:   "Modal Particles",
-		Tip:     "Particles like 'doch', 'ja', 'bloß' add emotional nuance.",
-		Example: "Das ist doch klar!",
-	},
-	{
-		Title:   "Word Order in Subordinates",
-		Tip:     "In subordinate clauses, the verb goes to the end.",
-		Example: "Ich weiß, dass er kommt.",
-	},
-	{
 		Title:   "Compound Nouns",
 		Tip:     "Combine nouns to create new words: Haus + Tür = Haustür.",
 		Example: "Das Schlafzimmer hat ein großes Fenster.",
@@ -577,69 +557,14 @@ var grammarTips = []GrammarTip{
 		Example: "Ich bleibe zu Hause, weil ich krank bin.",
 	},
 	{
-		Title:   "Future Tense (Futur I)",
-		Tip:     "Form: werden + infinitive. Often the present tense + time word is used instead.",
-		Example: "Ich werde morgen kommen. (or: Ich komme morgen.)",
-	},
-	{
 		Title:   "Passive Voice",
 		Tip:     "Form: werden + past participle. Use 'von + Dativ' for the agent.",
 		Example: "Der Brief wird von mir geschrieben.",
 	},
 	{
-		Title:   "Konjunktiv II for Politeness",
-		Tip:     "Use würde/könnte/hätte to make polite requests or hypothetical statements.",
-		Example: "Könnten Sie mir bitte helfen?",
-	},
-	{
-		Title:   "Relative Clauses",
-		Tip:     "Relative pronouns (der/die/das) match the gender of the antecedent and the case from the relative clause.",
-		Example: "Der Mann, den ich kenne, kommt aus Berlin.",
-	},
-	{
-		Title:   "Two-Way Prepositions",
-		Tip:     "Wechselpräpositionen (an, auf, hinter, in, neben, über, unter, vor, zwischen) take Akkusativ for movement and Dativ for location.",
-		Example: "Ich lege das Buch auf den Tisch (Akk). Das Buch liegt auf dem Tisch (Dat).",
-	},
-	{
-		Title:   "nicht vs kein",
-		Tip:     "Use 'kein' to negate nouns without articles. Use 'nicht' for verbs, adjectives, and nouns with articles.",
-		Example: "Ich habe kein Geld. Ich spiele nicht Fußball.",
-	},
-	{
-		Title:   "Dative Verbs",
-		Tip:     "Some verbs always need a Dativ object: helfen, danken, glauben, folgen, gefallen, passen.",
-		Example: "Ich helfe meiner Mutter. Das gefällt mir.",
-	},
-	{
-		Title:   "Weglassen vs Lassen",
-		Tip:     "'Lassen' means 'to let/allow' or 'to leave'. As a modal, 'lassen' + sich means 'can be done'.",
-		Example: "Die Tür lässt sich nicht öffnen. (can't be opened)",
-	},
-	{
-		Title:   "Word Order in Time Phrases",
-		Tip:     "TeKaMoLo: Temporal, Kausal, Modal, Lokal — time first, cause, manner, place. Place important nouns close to the verb.",
-		Example: "Gestern hat er im Park schnell gegessen.",
-	},
-	{
-		Title:   "Konjunktiv II (Wishes)",
-		Tip:     "Use 'würde' + infinitive or simple past forms for polite wishes. 'Wäre/Hätte' for subjunctive.",
-		Example: "Ich würde gern kommen. Wenn ich Zeit hätte...",
-	},
-	{
-		Title:   "Passive Voice",
-		Tip:     "Form: werden + past participle. 'werden' is the auxiliary. 'von' + agent shows who performs the action.",
-		Example: "Das Buch wird gelesen. Das Haus wird von Arbeitern gebaut.",
-	},
-	{
-		Title:   "Relative Clauses",
-		Tip:     "Relative clauses are introduced by relative pronouns (der, die, das, welcher). The verb goes to the end.",
-		Example: "Der Mann, der (welcher) dort steht, ist mein Lehrer.",
-	},
-	{
-		Title:   "Adjective Endings",
-		Tip:     "After definite articles: -e (f/n), -en (pl). After indefinite: -er (m), -e (f), -es (n), -en (pl).",
-		Example: "der rote Wagen, die junge Frau, ein gutes Buch",
+		Title:   "Future Tense (Futur I)",
+		Tip:     "Form: werden + infinitive. Often the present tense + time word is used instead.",
+		Example: "Ich werde morgen kommen. (or: Ich komme morgen.)",
 	},
 	{
 		Title:   "Genitive Case",
@@ -652,9 +577,19 @@ var grammarTips = []GrammarTip{
 		Example: "Ich hoffe zu gewinnen. Es ist wichtig zu lernen.",
 	},
 	{
-		Title:   "Trennbare Verbs",
-		Tip:     "Trennbare prefixes (ab-, an-, auf-, aus-, ein-, mit-, zu-) separate in main clauses. The prefix goes to the end.",
-		Example: "aufmachen -> Ich mache die Tür auf. aufgemacht (participle)",
+		Title:   "Weglassen vs Lassen",
+		Tip:     "'Lassen' means 'to let/allow' or 'to leave'. As a modal, 'lassen' + sich means 'can be done'.",
+		Example: "Die Tür lässt sich nicht öffnen. (can't be opened)",
+	},
+	{
+		Title:   "Word Order in Time Phrases",
+		Tip:     "TeKaMoLo: Temporal, Kausal, Modal, Lokal — time first, cause, manner, place. Place important nouns close to the verb.",
+		Example: "Gestern hat er im Park schnell gegessen.",
+	},
+	{
+		Title:   "Adjective Endings",
+		Tip:     "After definite articles: -e (f/n), -en (pl). After indefinite: -er (m), -e (f), -es (n), -en (pl).",
+		Example: "der rote Wagen, die junge Frau, ein gutes Buch",
 	},
 	{
 		Title:   "untrennbare Verbs",
@@ -732,34 +667,14 @@ var grammarTips = []GrammarTip{
 		Example: "Ich sehe den Film. Er liest das Buch.",
 	},
 	{
-		Title:   "Reflexive Verben",
-		Tip:     "Some verbs always need a reflexive pronoun: sich waschen, sich anziehen, sich freuen.",
-		Example: "Ich wasche mich. Sie freut sich auf die Reise.",
-	},
-	{
 		Title:   "Perfekt with sein",
 		Tip:     "Movement verbs (sein) and 'werden' form Perfekt with 'sein'.",
 		Example: "Ich bin gegangen. Er ist geworden. Wir sind gefahren.",
 	},
 	{
-		Title:   "Trennbare Verben",
-		Tip:     "Prefixes like 'ab-, auf-, aus-, ein-' separate in main clauses.",
-		Example: "Ich stehe auf. Er macht die Tür auf.",
-	},
-	{
-		Title:   "Untrennbare Verben",
-		Tip:     "Prefixes like 'be-, ge-, er-, ver-, zer-' never separate.",
-		Example: "Ich verstehe dich. Er erreicht das Ziel.",
-	},
-	{
 		Title:   "Modalverben",
 		Tip:     "können (can), müssen (must), wollen (want), sollen (should), dürfen (may), mögen (like).",
 		Example: "Ich kann schwimmen. Du musst lernen.",
-	},
-	{
-		Title:   "Nebensatz Wortstellung",
-		Tip:     "In subordinate clauses, the conjugated verb goes to the end.",
-		Example: "Ich weiß, dass er kommt. Weil ich müde bin, gehe ich nach Hause.",
 	},
 }
 

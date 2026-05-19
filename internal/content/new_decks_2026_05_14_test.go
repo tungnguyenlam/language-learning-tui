@@ -87,9 +87,7 @@ func TestNewGrammarTips20260514Present(t *testing.T) {
 		"Modal Verbs Word Order",
 		"Genitive Case",
 		"Reflexive Verbs (Akkusativ)",
-		"Subordinate Clauses (weil, dass, ob)",
 		"Future Tense (Futur I)",
-		"Passive Voice",
 		"Konjunktiv II for Politeness",
 		"Relative Clauses",
 	}

@@ -125,7 +125,6 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 	progressText := fmt.Sprintf("Daily Goal: %d/%d reviews", m.stats.ReviewsToday, m.stats.DailyGoal)
 	goalMetBadge := ""
 	if m.stats.DailyGoal > 0 && m.stats.ReviewsToday >= m.stats.DailyGoal {
-		progressText += " (Goal Met! ✅)"
 		goalMetBadge = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("231")).
 			Background(lipgloss.Color("220")). // Gold
@@ -258,7 +257,8 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		verbBox := dashVerbStyle.
 			Width(boxWidth).
 			Render(verbHeader + "\n" +
-				fmt.Sprintf("  ich %-8s wir %-8s\n  du  %-8s ihr %-8s", verb.Ich, verb.Wir, verb.Du, verb.Ihr))
+				fmt.Sprintf("  ich %-8s wir %-8s\n  du  %-8s ihr %-8s\n  er/sie/es %-4s sie/Sie %-5s",
+					verb.Ich, verb.Wir, verb.Du, verb.Ihr, verb.ErSieEs, verb.SieSie))
 
 		db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, tipBox, " ", verbBox) + "\n")
 	}

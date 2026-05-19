@@ -1,5 +1,37 @@
 # Done Backlog
 
+## 2026-05-20 (Autonomous Improvement Pass)
+
+### UI Polish & Rendering Bug Fixes
+- **Browser Card Preview Rendering:** Fixed a severe layout rendering bug in the Browser view's Card Preview pane. Shorter lines inside the preview box were not properly space-padded to the container width, causing overlapping ghost characters ("Geas Datenleck") during search updates and terminal rerenders. Added manual `padLine` logic for each preview line.
+- **Dashboard Progress Redundancy:** Removed redundant text ("Goal Met! ✅") from the dashboard's progress line to declutter the UI, relying exclusively on the bold "GOAL MET 🏆" badge.
+
+### Content Expansion
+- Added **A1 Colors and Shapes** vocabulary deck (23 cards) - foundational adjectives (rot, blau, hell, dunkel) and geometric shapes (der Kreis, das Quadrat, rund, eckig).
+
+### Testing & Robustness
+- **Daily Goal Race Condition:** Fixed a race condition in `test_settings_daily_goal_adjustment` where rapidly spamming the decrease key (`-`) overshot the UI state. Refactored `setDailyGoal` to optimistically update `m.stats.DailyGoal` synchronously before returning the async save command.
+- Updated existing E2E tests to match the new UI changes (badge assertion logic and browser card rendering).
+
+### Verification
+- Total E2E tests: 317 (all passing).
+- `go build ./...` passed.
+- `./scripts/verify.sh` executed successfully with zero errors.
+
+## 2026-05-17 (Autonomous Improvement Pass)
+
+### Bug Fixes
+- **E2E Test Robustness:** Fixed 5 E2E tests that were failing due to the recent "Session Summary Greeting" update, updating assertions from "No cards due" to "Session complete!".
+- **Search Collision Fix:** Adjusted deck search query in `test_new_decks_batch_3.py` from "art" to "literature" to prevent clipping issues caused by multiple "art" matches (e.g., "Body Parts", "Apartment").
+
+### Content Expansion
+- Added **A2 Prepositions with Cases** deck (15 cards) - Grammar cloze exercises focusing on common prepositions and their required cases (mit + Dativ, durch + Akkusativ, two-way prepositions).
+
+### Verification
+- Total E2E tests: 317 (all passing).
+- All Go unit tests passing.
+- `./scripts/verify.sh` executed successfully with zero errors.
+
 ## 2026-05-17 (Help Overlay & Code Cleanup)
 
 ### UX Improvements

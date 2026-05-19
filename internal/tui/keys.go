@@ -209,7 +209,6 @@ func (m *Model) updateNumberKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	if m.textInputActive() {
 		return nil, false
 	}
-
 	switch key {
 	case "0", "1":
 		m.activeView = ViewDashboard

@@ -38,7 +38,7 @@ def test_session_summary_renders():
 
 
 def test_review_empty_state_renders():
-    """Verify that review empty state renders when no cards due."""
+    """Verify that review empty state renders when Session complete!."""
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:

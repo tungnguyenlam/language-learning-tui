@@ -122,7 +122,7 @@ def test_goal_met_badge():
             # Check Dashboard for badge
             agent.act("1")
             agent.wait_for_text("GOAL MET 🏆")
-            agent.assert_text("Goal Met! ✅")
+            agent.assert_text("GOAL MET 🏆")
             
         finally:
             agent.close()

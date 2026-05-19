@@ -167,8 +167,11 @@ func enrichVerb(info *WordInfo) {
 		if strings.EqualFold(v.German, info.Base) {
 			info.Forms = []string{
 				fmt.Sprintf("ich %s", v.Ich),
+				fmt.Sprintf("du %s", v.Du),
 				fmt.Sprintf("er/sie/es %s", v.ErSieEs),
 				fmt.Sprintf("wir %s", v.Wir),
+				fmt.Sprintf("ihr %s", v.Ihr),
+				fmt.Sprintf("sie/Sie %s", v.SieSie),
 			}
 			if info.Example == "" {
 				info.Example = v.Example

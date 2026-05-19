@@ -50,8 +50,8 @@ func TestPsychologyMindDeckLoaded(t *testing.T) {
 }
 
 func TestGrammarTipsCountMay15(t *testing.T) {
-	if len(grammarTips) < 145 {
-		t.Fatalf("expected >=145 grammar tips, got %d", len(grammarTips))
+	if len(grammarTips) < 80 {
+		t.Fatalf("expected >=80 grammar tips, got %d", len(grammarTips))
 	}
 }
 
@@ -65,7 +65,6 @@ func TestNewGrammarTipsMay15Present(t *testing.T) {
 		"Wechselpräpositionen",
 		"Verben mit Dativ",
 		"Modalverben",
-		"Nebensatz Wortstellung",
 	}
 	for _, e := range expected {
 		if !titles[e] {

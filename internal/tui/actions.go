@@ -114,6 +114,7 @@ func (m *Model) setDailyGoal(goal int) tea.Cmd {
 	if goal < 1 {
 		goal = 1
 	}
+	m.stats.DailyGoal = goal
 	m.status = "Saving daily goal..."
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)

@@ -96,7 +96,7 @@ def test_cloze_typing_mode():
             agent.wait_until_stable()
             
             # Should be finished
-            agent.wait_for_text("No cards due")
+            agent.wait_for_text("Session complete!")
             
         finally:
             agent.close()

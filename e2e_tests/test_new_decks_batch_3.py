@@ -33,7 +33,7 @@ def test_b1_art_deck():
             agent.wait_until_stable()
 
             agent.act("/")
-            agent.act("art")
+            agent.act("literature")
             agent.wait_for_text("B1 Art & Literature")
         finally:
             agent.close()

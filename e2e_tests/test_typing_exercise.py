@@ -34,7 +34,7 @@ def test_typing_exercise_mode():
             agent.wait_for_text("Review")
             
             # Should have cards now
-            assert "No cards due" not in agent.observe()
+            assert "Session complete!" not in agent.observe()
             
             # Type a wrong answer
             agent.act('t')  # Toggle typing mode

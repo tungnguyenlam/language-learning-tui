@@ -93,12 +93,11 @@ def test_audio_autoplay_in_review():
             # Reveal card - should trigger auto-play
             agent.act(" ") # Reveal
             agent.wait_for_text("answer-1")
-            # Status should show auto-playing or error if player missing
-            # Our new message is "Auto-playing audio..."
-            # Then it might become "Error: ..."
+            # Status shows "Playing audio..." when attempting playback
             try:
-                agent.wait_for_text("Auto-playing")
+                agent.wait_for_text("Playing audio")
             except Exception:
+                # Could also show "Error:" if no player is available
                 agent.wait_for_text("Error")
         finally:
             agent.close()

@@ -201,22 +201,30 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		}
 
 		previewWidth := maxInt(35, layout.Width-10)
+		rawStr := fmt.Sprintf("%s\n\n%s: %s  |  %s: %s  |  %s: %s\n\n%s: %s\n%s: %s\n\n%s: %s  |  %s: %s  |  %s: %s\n%s: %s",
+			lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).Render("Card Preview:"),
+			lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Deck"), truncateLine(m.deckNameByID(selected.DeckID), previewWidth/2-10),
+			lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Kind"), kind,
+			stateStyle.Render("State"), state,
+			lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Front"), truncateLine(selected.Prompt, previewWidth/2-6),
+			lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Back"), truncateLine(selected.Answer, previewWidth/2-6),
+			lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Reviews"), fmt.Sprintf("%d", selected.Reviews),
+			lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Interval"), intervalStr,
+			lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Tags"), tags,
+			lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Last Reviewed"), lastReviewedStr)
+
+		lines := strings.Split(rawStr, "\n")
+		for i, l := range lines {
+			lines[i] = padLine(l, previewWidth-2)
+		}
+		paddedStr := strings.Join(lines, "\n")
+
 		previewBox := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("240")).
 			Padding(0, 1).
 			Width(previewWidth).
-			Render(fmt.Sprintf("%s\n\n%s: %s  |  %s: %s  |  %s: %s\n\n%s: %s\n%s: %s\n\n%s: %s  |  %s: %s  |  %s: %s\n%s: %s",
-				lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).Render("Card Preview:"),
-				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Deck"), truncateLine(m.deckNameByID(selected.DeckID), previewWidth/2-10),
-				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Kind"), kind,
-				stateStyle.Render("State"), state,
-				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Front"), truncateLine(selected.Prompt, previewWidth/2-6),
-				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Back"), truncateLine(selected.Answer, previewWidth/2-6),
-				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Reviews"), fmt.Sprintf("%d", selected.Reviews),
-				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Interval"), intervalStr,
-				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Tags"), tags,
-				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Last Reviewed"), lastReviewedStr))
+			Render(paddedStr)
 		b.WriteString("\n" + previewBox + "\n")
 	}
 

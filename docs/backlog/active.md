@@ -1,17 +1,16 @@
 # Active Backlog
 
-Last updated: 2026-05-17
+Last updated: 2026-05-20
 
 ## Current Milestone
 
-Help overlay & code cleanup - COMPLETED.
+Autonomous Improvement Pass - COMPLETED.
 
 ## Completed Work
 
-- [x] **Session Summary Greeting:** Changed "No cards due" to "Session complete!" for a more encouraging tone.
-- [x] **Help Overlay Keybindings:** Added missing shortcuts (`d` dictionary, `t` typing, `x` suspend, `h` hint, `F` fix, `!`/`@`/`#` recent decks, `B`/`X` bulk actions) to the help overlay.
-- [x] **pytest e2e Mark:** Registered `@pytest.mark.e2e` in `pytest.ini` to eliminate warnings across all E2E test files.
-- [x] **Code Cleanup:** Removed empty `var ()` block from `utils.go`.
+- [x] **E2E Test Race Condition Fix:** Made Daily Goal settings adjustments update UI state optimistically to prevent overlapping asynchronous commands from dropping keypresses during rapid test execution.
+- [x] **Content Expansion:** Added new **A1 Colors and Shapes** vocabulary deck (23 cards) focusing on foundational adjectives and geometric shapes.
+- [x] **UI Polish & Rendering Bug Fix:** Removed redundant "Goal Met" text from the Dashboard progress line, and fixed a severe rendering bug in the Browser Card Preview where shorter lines would not properly pad out their backgrounds, causing overlapping ghost characters on terminal rerenders.
 
 ## Exact Next Action
 
@@ -24,10 +23,7 @@ None.
 ## Last Verified
 
 - `go build ./...` passed.
-- `go test ./...` passed.
-- `gofmt` and `go vet` passed.
-- Smoke test passed.
-- Targeted E2E tests passed (14/14, 2/2).
+- `./scripts/verify.sh` passed (317 E2E tests passing).
 
 ## Blockers
 
