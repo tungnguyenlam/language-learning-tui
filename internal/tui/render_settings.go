@@ -221,10 +221,9 @@ func (m *Model) renderSettings(x, y int) string {
 
 	for i := m.settingsScroll; i < m.settingsScroll+maxVisible && i < totalLines; i++ {
 		line := allLines[i]
-		plainLine := stripANSI(line)
-		lineWidth := lipgloss.Width(plainLine)
+		displayLine := truncateLine(line, padWidth)
+		lineWidth := lipgloss.Width(displayLine)
 
-		displayLine := line
 		if lineWidth < padWidth {
 			displayLine += strings.Repeat(" ", padWidth-lineWidth)
 		}
@@ -284,7 +283,7 @@ func (m *Model) renderSettings(x, y int) string {
 						View:   ViewSettings,
 						X:      layout.X,
 						Y:      layout.Y + (i - m.settingsScroll),
-						Width:  lipgloss.Width(plainLine),
+						Width:  padWidth,
 						Height: 1,
 					})
 				}

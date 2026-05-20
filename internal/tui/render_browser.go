@@ -91,7 +91,7 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		}
 	}
 	listStartY := strings.Count(b.String(), "\n")
-	lineWidth := scrollbarLineWidth(layout.Width)
+	lineWidth := layout.Width - 2
 	thumbStart, thumbHeight := scrollbarThumb(len(m.browserCards), maxVisible, start)
 	for i := start; i < end; i++ {
 		card := m.browserCards[i]
@@ -134,11 +134,44 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		if card.Mature {
 			mature = " ✨"
 		}
-		tags := ""
+		plainTags := ""
 		if len(card.Tags) > 0 {
-			tags = " " + mutedStyle.Render("#"+strings.Join(card.Tags, " #"))
+			plainTags = " #" + strings.Join(card.Tags, " #")
 		}
-		label := fmt.Sprintf("%s%s[%s] %s%s%s%s%s%s%s", prefix, selected, kind, card.Prompt, interval, mature, bookmark, leech, suspended, tags)
+
+		otherWidth := lipgloss.Width(prefix + selected + "[" + kind + "] " + interval + mature + bookmark + leech + suspended)
+		availWidth := lineWidth - otherWidth
+		if availWidth < 10 {
+			availWidth = 10
+		}
+
+		// Allocate at most 30% of available width to tags, up to a max of 25 characters
+		maxTagsWidth := availWidth * 3 / 10
+		if maxTagsWidth > 25 {
+			maxTagsWidth = 25
+		}
+		if maxTagsWidth < 5 && len(card.Tags) > 0 {
+			maxTagsWidth = 5
+		}
+
+		truncatedTags := ""
+		if plainTags != "" {
+			truncatedTags = truncateLine(plainTags, maxTagsWidth)
+		}
+
+		// The rest goes to the prompt
+		promptWidth := availWidth - lipgloss.Width(truncatedTags)
+		if promptWidth < 5 {
+			promptWidth = 5
+		}
+		truncatedPrompt := truncateLine(card.Prompt, promptWidth)
+
+		styledTags := ""
+		if truncatedTags != "" {
+			styledTags = " " + mutedStyle.Render(strings.TrimSpace(truncatedTags))
+		}
+
+		label := fmt.Sprintf("%s%s[%s] %s%s%s%s%s%s%s", prefix, selected, kind, truncatedPrompt, interval, mature, bookmark, leech, suspended, styledTags)
 		line := padLine(style.Render(label), lineWidth)
 		if len(m.browserCards) > maxVisible {
 			currentPos := i - start
@@ -201,30 +234,22 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		}
 
 		previewWidth := maxInt(35, layout.Width-10)
-		rawStr := fmt.Sprintf("%s\n\n%s: %s  |  %s: %s  |  %s: %s\n\n%s: %s\n%s: %s\n\n%s: %s  |  %s: %s  |  %s: %s\n%s: %s",
-			lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).Render("Card Preview:"),
-			lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Deck"), truncateLine(m.deckNameByID(selected.DeckID), previewWidth/2-10),
-			lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Kind"), kind,
-			stateStyle.Render("State"), state,
-			lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Front"), truncateLine(selected.Prompt, previewWidth/2-6),
-			lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Back"), truncateLine(selected.Answer, previewWidth/2-6),
-			lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Reviews"), fmt.Sprintf("%d", selected.Reviews),
-			lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Interval"), intervalStr,
-			lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Tags"), tags,
-			lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Last Reviewed"), lastReviewedStr)
-
-		lines := strings.Split(rawStr, "\n")
-		for i, l := range lines {
-			lines[i] = padLine(l, previewWidth-2)
-		}
-		paddedStr := strings.Join(lines, "\n")
-
 		previewBox := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("240")).
 			Padding(0, 1).
 			Width(previewWidth).
-			Render(paddedStr)
+			Render(fmt.Sprintf("%s\n\n%s: %s  |  %s: %s  |  %s: %s\n\n%s: %s\n%s: %s\n\n%s: %s  |  %s: %s  |  %s: %s\n%s: %s",
+				lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).Render("Card Preview:"),
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Deck"), truncateLine(m.deckNameByID(selected.DeckID), previewWidth/2-10),
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Kind"), kind,
+				stateStyle.Render("State"), state,
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Front"), truncateLine(selected.Prompt, previewWidth/2-6),
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Back"), truncateLine(selected.Answer, previewWidth/2-6),
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Reviews"), fmt.Sprintf("%d", selected.Reviews),
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Interval"), intervalStr,
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Tags"), tags,
+				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Last Reviewed"), lastReviewedStr))
 		b.WriteString("\n" + previewBox + "\n")
 	}
 
@@ -275,6 +300,34 @@ func formatReviewInterval(interval time.Duration) string {
 	days := hours / 24
 	if days == 1 {
 		return "1 day"
+	}
+	if days >= 365 {
+		years := days / 365
+		remainMonths := (days % 365) / 30
+		if remainMonths > 0 {
+			if years == 1 {
+				return fmt.Sprintf("1 year %d mo", remainMonths)
+			}
+			return fmt.Sprintf("%d years %d mo", years, remainMonths)
+		}
+		if years == 1 {
+			return "1 year"
+		}
+		return fmt.Sprintf("%d years", years)
+	}
+	if days >= 30 {
+		months := days / 30
+		remainDays := days % 30
+		if remainDays > 0 {
+			if months == 1 {
+				return fmt.Sprintf("1 month %dd", remainDays)
+			}
+			return fmt.Sprintf("%d months %dd", months, remainDays)
+		}
+		if months == 1 {
+			return "1 month"
+		}
+		return fmt.Sprintf("%d months", months)
 	}
 	return fmt.Sprintf("%d days", days)
 }

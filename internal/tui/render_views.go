@@ -119,9 +119,39 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		}
 	}
 
-	listStartY := strings.Count(b.String(), "\n")
-	lineWidth := scrollbarLineWidth(layout.Width)
+	lineWidth := layout.Width - 2
 	thumbStart, thumbHeight := scrollbarThumb(len(filteredDecks), maxVisible, start)
+
+	studyBtnWidth := 0
+	cramBtnWidth := 0
+	if layout.Width >= 100 {
+		studyBtnWidth = 8
+		cramBtnWidth = 7
+	} else if layout.Width >= 90 {
+		studyBtnWidth = 8
+	}
+
+	countsWidth := 16
+	if layout.Width >= 100 {
+		countsWidth = 32
+	}
+
+	statsWidth := 0
+	if layout.Width >= 85 {
+		statsWidth = 26
+	} else if layout.Width > 60 {
+		statsWidth = 12
+	}
+
+	prefixWidth := 2
+	selectMarkWidth := 4
+	miniBarWidth := 5
+
+	otherWidth := prefixWidth + selectMarkWidth + 1 + miniBarWidth + 2 + countsWidth + statsWidth + studyBtnWidth + cramBtnWidth
+	nameWidth := lineWidth - otherWidth
+	if nameWidth < 12 {
+		nameWidth = 12
+	}
 
 	for i := start; i < end; i++ {
 		deck := filteredDecks[i]
@@ -140,7 +170,6 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		newStyled := lipgloss.NewStyle().Foreground(lipgloss.Color("208")).Render(fmt.Sprintf("%d", deck.NewCards))
 		dueStyled := lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render(fmt.Sprintf("%d", deck.DueCards))
 		totalStyled := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render(fmt.Sprintf("%d", deck.TotalCards))
-		counts := fmt.Sprintf("%s new, %s due, %s total", newStyled, dueStyled, totalStyled)
 
 		// Add a mini progress bar for deck completion
 		deckPercentage := 0.0
@@ -149,45 +178,43 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		}
 		miniBar := progressBar(5, deckPercentage, "46", "238")
 
-		deckNamePadded := deck.Name
-		if len(deckNamePadded) < 40 {
-			deckNamePadded += strings.Repeat(" ", 40-len(deckNamePadded))
-		} else if len(deckNamePadded) > 40 {
-			deckNamePadded = deckNamePadded[:37] + "..."
+		studyBtn := ""
+		cramBtn := ""
+		if layout.Width >= 100 {
+			studyBtn = " [Study]"
+			cramBtn = " [Cram]"
+		} else if layout.Width >= 90 {
+			studyBtn = " [Study]"
 		}
 
-		label := fmt.Sprintf("%s%s%s %s  %s | today %d, %.0f%% success",
-			prefix, selectMark, deckNamePadded, miniBar, counts, deck.ReviewsToday, deck.SuccessRate*100)
+		var counts string
+		if layout.Width >= 100 {
+			counts = fmt.Sprintf("%s new, %s due, %s total", newStyled, dueStyled, totalStyled)
+		} else {
+			counts = fmt.Sprintf("%sN %sD %sT", newStyled, dueStyled, totalStyled)
+		}
+		counts = padLine(counts, countsWidth)
 
-		studyBtn := " [Study]"
-		cramBtn := " [Cram]"
+		statsStr := ""
+		if layout.Width >= 85 {
+			statsStr = fmt.Sprintf(" | today %d, %.0f%% success", deck.ReviewsToday, deck.SuccessRate*100)
+		} else if layout.Width > 60 {
+			statsStr = fmt.Sprintf(" | today %d", deck.ReviewsToday)
+		}
+		statsStr = padLine(statsStr, statsWidth)
+
+		deckNamePadded := truncateLine(deck.Name, nameWidth)
+		deckNamePadded = padLine(deckNamePadded, nameWidth)
+
+		label := fmt.Sprintf("%s%s%s %s  %s%s",
+			prefix, selectMark, deckNamePadded, miniBar, counts, statsStr)
+
 		currBtnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
 		if i == m.deckCursor {
 			currBtnStyle = currBtnStyle.Foreground(colorBlue)
 		}
 
 		rowY := layout.Y + strings.Count(b.String(), "\n")
-		line := padLine(style.Render(label)+currBtnStyle.Render(studyBtn)+currBtnStyle.Render(cramBtn), lineWidth)
-
-		if len(filteredDecks) > maxVisible {
-			currentPos := i - start
-			scrollbarChar := "│"
-			if currentPos >= thumbStart && currentPos < thumbStart+thumbHeight {
-				scrollbarChar = "█"
-			}
-			line += " " + scrollbarChar
-
-			m.hitboxes = append(m.hitboxes, Hitbox{
-				ID:     fmt.Sprintf("deck-scroll-%d", currentPos),
-				View:   ViewDecks,
-				X:      layout.X + lineWidth + 1,
-				Y:      layout.Y + listStartY + currentPos,
-				Width:  1,
-				Height: 1,
-			})
-		}
-		b.WriteString(line + "\n")
-
 		m.hitboxes = append(m.hitboxes, Hitbox{
 			ID:     fmt.Sprintf("deck-select-%d", i),
 			View:   ViewDecks,
@@ -213,6 +240,31 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 			Height: 1,
 		})
 
+		currentPos := i - start
+		scrollbarChar := "│"
+		if currentPos >= thumbStart && currentPos < thumbStart+thumbHeight {
+			scrollbarChar = "█"
+		}
+
+		writeLine := func(lineContent string) {
+			rY := layout.Y + strings.Count(b.String(), "\n")
+			line := padLine(lineContent, lineWidth)
+			if len(filteredDecks) > maxVisible {
+				line += " " + scrollbarChar
+				m.hitboxes = append(m.hitboxes, Hitbox{
+					ID:     fmt.Sprintf("deck-scroll-%d", currentPos),
+					View:   ViewDecks,
+					X:      layout.X + lineWidth + 1,
+					Y:      rY,
+					Width:  1,
+					Height: 1,
+				})
+			}
+			b.WriteString(line + "\n")
+		}
+
+		writeLine(style.Render(label) + currBtnStyle.Render(studyBtn) + currBtnStyle.Render(cramBtn))
+
 		// Show limits only when editing this deck
 		if i == m.deckCursor && m.editingDeckLimits {
 			newStyle := lipgloss.NewStyle().Foreground(colorBlue)
@@ -225,16 +277,18 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 			limitsLabel := fmt.Sprintf("     Limits: New %s, Review %s (h/l switch, +/- adjust)",
 				newStyle.Render(fmt.Sprintf("%d", deck.NewCardsPerDay)),
 				reviewStyle.Render(fmt.Sprintf("%d", deck.ReviewLimitPerDay)))
-			b.WriteString(limitsLabel + "\n")
+			writeLine(limitsLabel)
 		}
 
 		if deck.Description != "" {
-			b.WriteString(fmt.Sprintf("     %s\n", mutedStyle.Render(deck.Description)))
+			descTrunc := truncateLine(deck.Description, maxInt(0, lineWidth-5))
+			writeLine(fmt.Sprintf("     %s", mutedStyle.Render(descTrunc)))
 		}
 		// Show tags if they exist
 		if len(deck.Tags) > 0 {
 			tags := strings.Join(deck.Tags, ", ")
-			b.WriteString(fmt.Sprintf("     Tags: %s\n", mutedStyle.Render(tags)))
+			tagsTrunc := truncateLine(tags, maxInt(0, lineWidth-11))
+			writeLine(fmt.Sprintf("     Tags: %s", mutedStyle.Render(tagsTrunc)))
 		}
 	}
 

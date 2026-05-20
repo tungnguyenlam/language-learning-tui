@@ -62,7 +62,7 @@ def test_digital_privacy_deck_searchable_in_decks_view():
             agent.wait_for_text("DECK LIST")
             agent.act("/")
             type_text(agent, "privacy")
-            agent.wait_for_text("German B2 Digital Privacy")
+            agent.wait_for_text("German B2 Digital Priva")
             agent.assert_text("Data protection")
         finally:
             agent.close()
@@ -89,7 +89,7 @@ def test_browser_finds_digital_privacy_vocabulary():
         agent = start_agent(tmpdir)
         try:
             seed_standard(agent)
-            select_deck(agent, "privacy", "German B2 Digital Privacy")
+            select_deck(agent, "privacy", "German B2 Digital Priva")
             agent.act("8")
             agent.wait_for_text("Card Browser")
             agent.act("/")

@@ -174,7 +174,7 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		}
 	}
 	listStartY := strings.Count(b.String(), "\n")
-	lineWidth := scrollbarLineWidth(layout.Width)
+	lineWidth := layout.Width - 2
 	thumbStart, thumbHeight := scrollbarThumb(len(m.cramCards), maxVisible, start)
 	for i := start; i < end; i++ {
 		card := m.cramCards[i]
@@ -204,11 +204,25 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		if card.Mature {
 			mature = " ⭐"
 		}
-		deckName := ""
+		plainDeckName := ""
 		if m.deck.ID == "" {
-			deckName = " " + mutedStyle.Render("("+truncateLine(m.deckNameByID(card.DeckID), 18)+")")
+			plainDeckName = " (" + truncateLine(m.deckNameByID(card.DeckID), 18) + ")"
 		}
-		label := fmt.Sprintf("%s[%s] %s%s%s%s%s%s", prefix, kind, card.Prompt, deckName, mature, bookmark, leech, suspended)
+
+		otherWidth := lipgloss.Width(prefix + "[" + kind + "] " + plainDeckName + mature + bookmark + leech + suspended)
+		availWidth := lineWidth - otherWidth
+		if availWidth < 10 {
+			availWidth = 10
+		}
+
+		truncatedPrompt := truncateLine(card.Prompt, availWidth)
+
+		styledDeckName := ""
+		if plainDeckName != "" {
+			styledDeckName = " " + mutedStyle.Render(strings.TrimSpace(plainDeckName))
+		}
+
+		label := fmt.Sprintf("%s[%s] %s%s%s%s%s%s", prefix, kind, truncatedPrompt, styledDeckName, mature, bookmark, leech, suspended)
 		line := padLine(style.Render(label), lineWidth)
 		if len(m.cramCards) > maxVisible {
 			currentPos := i - start

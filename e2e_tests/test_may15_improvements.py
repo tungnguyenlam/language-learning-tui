@@ -45,7 +45,7 @@ def test_may15_improvements():
             agent.act("/")
             agent.act("C1 Environment")
             agent.act("<Enter>")
-            agent.wait_for_text("C1 Environment & Sustainability")
+            agent.wait_for_text("C1 Environment & Sustai")
             
             # 2. Verify Hint Feature in Review
             # Navigate to Review

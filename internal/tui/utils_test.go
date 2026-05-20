@@ -2,6 +2,7 @@ package tui
 
 import (
 	"testing"
+	"time"
 )
 
 func TestStripANSI(t *testing.T) {
@@ -62,6 +63,39 @@ func TestSinglePrintableInput(t *testing.T) {
 		result, ok := singlePrintableInput(test.input)
 		if result != test.expected || ok != test.ok {
 			t.Errorf("singlePrintableInput(%q) = (%q, %t), expected (%q, %t)", test.input, result, ok, test.expected, test.ok)
+		}
+	}
+}
+
+func TestFormatReviewInterval(t *testing.T) {
+	tests := []struct {
+		interval time.Duration
+		expected string
+	}{
+		{0, "same day"},
+		{-1 * time.Hour, "same day"},
+		{30 * time.Minute, "1 hour"},
+		{1 * time.Hour, "1 hour"},
+		{5 * time.Hour, "5 hours"},
+		{23 * time.Hour, "23 hours"},
+		{24 * time.Hour, "1 day"},
+		{7 * 24 * time.Hour, "7 days"},
+		{29 * 24 * time.Hour, "29 days"},
+		{30 * 24 * time.Hour, "1 month"},
+		{45 * 24 * time.Hour, "1 month 15d"},
+		{60 * 24 * time.Hour, "2 months"},
+		{90 * 24 * time.Hour, "3 months"},
+		{120 * 24 * time.Hour, "4 months"},
+		{365 * 24 * time.Hour, "1 year"},
+		{400 * 24 * time.Hour, "1 year 1 mo"},
+		{730 * 24 * time.Hour, "2 years"},
+		{800 * 24 * time.Hour, "2 years 2 mo"},
+	}
+
+	for _, test := range tests {
+		result := formatReviewInterval(test.interval)
+		if result != test.expected {
+			t.Errorf("formatReviewInterval(%v) = %q, expected %q", test.interval, result, test.expected)
 		}
 	}
 }

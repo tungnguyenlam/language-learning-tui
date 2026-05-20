@@ -561,9 +561,9 @@ func TestDecksViewNavigationAndSelection(t *testing.T) {
 	if model.deckCursor != 0 {
 		t.Fatalf("deckCursor = %d, want 0", model.deckCursor)
 	}
-	layout := viewportLayout{Width: 80, Height: 24, X: 0, Y: 0}
+	layout := viewportLayout{Width: 82, Height: 24, X: 0, Y: 0}
 	view := ansi.Strip(model.renderDecks(layout))
-	if !strings.Contains(view, "5 due") || !strings.Contains(view, "10 total") {
+	if !strings.Contains(view, "5D") || !strings.Contains(view, "10T") {
 		t.Fatalf("deck view missing progress metrics: %s", view)
 	}
 
@@ -584,7 +584,7 @@ func TestDecksViewNavigationAndSelection(t *testing.T) {
 
 	// Check rendering contains stats
 	view = ansi.Strip(model.renderDecks(layout))
-	if !strings.Contains(view, "Deck Two") || !strings.Contains(view, "due") || !strings.Contains(view, "total") {
+	if !strings.Contains(view, "Deck Two") || !strings.Contains(view, "D") || !strings.Contains(view, "T") {
 		t.Fatalf("decks view rendering missing stats: %s", view)
 	}
 }
@@ -1232,6 +1232,31 @@ func TestBrowserAndCramScrollbarHitboxesAlignAndClick(t *testing.T) {
 	if cram.cramCursor != len(cards)-1 {
 		t.Fatalf("cram bottom click cursor = %d, want last card", cram.cramCursor)
 	}
+}
+
+func TestDecksScrollbarHitboxesAlignWithRenderedTrack(t *testing.T) {
+	decks := make([]core.Deck, 15)
+	for i := 0; i < 15; i++ {
+		decks[i] = core.Deck{
+			ID:          fmt.Sprintf("deck-%d", i),
+			Name:        fmt.Sprintf("Deck Name %d", i),
+			Description: fmt.Sprintf("Description for deck %d that might be long", i),
+			Tags:        []string{"tag1", "tag2"},
+			TotalCards:  10,
+			DueCards:    5,
+		}
+	}
+
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	model.activeView = ViewDecks
+	model.width = 90
+	model.height = 30
+	model.breakpoint = BreakpointMedium
+	model.decks = decks
+	model.deckSelected = map[string]bool{}
+
+	view := model.View().Content
+	assertScrollbarHitboxesAlign(t, view, model.hitboxes, "deck-scroll-")
 }
 
 func TestMCQCardRendersChoicesAfterReveal(t *testing.T) {

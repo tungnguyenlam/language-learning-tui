@@ -1,5 +1,21 @@
 # Done Backlog
 
+## 2026-05-20 (Scrollbar Alignment & Rendering Stability)
+
+### UI Polish & Rendering Bug Fixes
+- **Settings & Statistics Scrollbar Alignment:** Fixed a bug where long lines (e.g., AI templates, long deck names) would cause scrollbars to misalign or spill out of the panel. Added dynamic `truncateLine` logic and uniform `padLine` to ensure all lines in scrollable views have a consistent visual width.
+- **Rendering Stability Fix:** Identified and reverted a buggy global padding implementation in `renderActiveView` that was causing severe line-merging glitches and character offsets in E2E tests. Restored per-view rendering which now correctly handles its own padding and truncation.
+- **Scrollbar Visual Consistency:** Ensured all scrollable views (Decks, Browser, Cram, Settings, Statistics) use a consistent `layout.Width` based padding and truncation strategy.
+
+### Testing & Verification
+- **Unit Testing:** Added `TestRenderSettingsScrollbarAlignment` and `TestRenderStatisticsScrollbarAlignment` to `internal/tui/render_test.go` to prevent future regressions in scrollbar visual alignment.
+- **E2E Stability:** Restored all 317 E2E tests to passing state.
+
+### Verification
+- Total E2E tests: 317 (all passing).
+- All Go unit tests passing.
+- `./scripts/verify.sh` executed successfully with zero errors.
+
 ## 2026-05-20 (Autonomous Improvement Pass)
 
 ### UI Polish & Rendering Bug Fixes

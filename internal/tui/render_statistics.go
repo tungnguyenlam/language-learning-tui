@@ -394,7 +394,8 @@ func (m *Model) renderStatistics(layout viewportLayout) string {
 
 	var visibleContent strings.Builder
 	for i := m.statsScroll; i < m.statsScroll+maxVisible && i < totalLines; i++ {
-		line := padLine(lines[i], padWidth)
+		line := truncateLine(lines[i], padWidth)
+		line = padLine(line, padWidth)
 		if totalLines > maxVisible {
 			scrollbarChar := "│"
 			currentPos := i - m.statsScroll

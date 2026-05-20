@@ -107,10 +107,11 @@ def test_deck_view_visuals():
         try:
             agent.act("2")
             agent.wait_for_text("DECK LIST")
-            # Should have the new counts text (strip ansi test)
-            agent.wait_for_text("new,")
-            agent.wait_for_text("due,")
-            agent.wait_for_text("total")
+            # The counts are abbreviated to N D T on terminal widths < 100
+            agent.wait_for_text("N ")
+            agent.wait_for_text("D ")
+            agent.wait_for_text("T ")
+            agent.wait_for_text("| today")
         finally:
             agent.close()
 

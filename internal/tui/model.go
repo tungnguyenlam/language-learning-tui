@@ -132,6 +132,7 @@ type Model struct {
 	lastSessionReviewed   int
 	lastSessionCorrect    int
 	sessionStartTime      time.Time
+	sessionGrades         map[core.ReviewGrade]int
 	showHelp              bool
 	cramCards             []core.Card
 	cramCursor            int
