@@ -33,7 +33,7 @@ def test_may15_improvements():
             agent.act("/")
             agent.act("Travel")
             agent.act("<Enter>")
-            agent.wait_for_text("A2 Travel & Booking")
+            agent.wait_for_text("A2 Travel")
             
             # Verify B1 Housing & Apartment
             agent.act("/")

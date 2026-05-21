@@ -876,8 +876,12 @@ func (m *Model) View() tea.View {
 			BorderForeground(lipgloss.Color("81")).
 			Padding(1, 2).
 			Background(lipgloss.Color("233")).
-			Render(m.renderHelp())
-
+			Render(m.renderHelp(viewportLayout{
+				X:      m.width / 4,
+				Y:      m.height / 4,
+				Width:  m.width / 2,
+				Height: m.height / 2,
+			}))
 		helpView := lipgloss.Place(m.width, m.height-3, lipgloss.Center, lipgloss.Center, helpBox)
 
 		statusLine := fmt.Sprintf("status: %s", singleLine(m.status))

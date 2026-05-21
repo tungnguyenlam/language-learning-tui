@@ -9,6 +9,7 @@ Polish and Reliability - IN PROGRESS.
 ## Completed Work
 
 - [x] **Search Highlights:** Implemented visual feedback for search queries in Browser and Decks views.
+- [x] **UI Corruption Fix:** Resolved terminal wrapping and "ghost" character glitches in Decks view on narrow terminals.
 - [x] **Native TTS Fallback:** Added support for system-native TTS engines (macOS 'say', Linux 'espeak') as a fallback for Edge TTS.
 - [x] **A2 Medical Appointment Deck:** Added a new practical deck for medical situations.
 - [x] **Audio Reliability & UX Fix:** Implemented process tracking to prevent overlapping audio playback, fixed hanging "Generating..." status messages, and added support for stripping Anki sound markers.

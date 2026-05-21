@@ -62,7 +62,7 @@ def test_digital_privacy_deck_searchable_in_decks_view():
             agent.wait_for_text("DECK LIST")
             agent.act("/")
             type_text(agent, "privacy")
-            agent.wait_for_text("German B2 Digital Priva")
+            agent.wait_for_text("B2 Digital Priva")
             agent.assert_text("Data protection")
         finally:
             agent.close()
