@@ -383,48 +383,21 @@ func (m *Model) renderStatistics(layout viewportLayout) string {
 		}
 	}
 
-	lines := strings.Split(content.String(), "\n")
-	totalLines := len(lines)
-	m.statsTotalLines = totalLines
+	m.statsTotalLines = len(strings.Split(content.String(), "\n"))
 	maxVisible := m.statisticsVisibleLines(layout.Height)
 
-	m.statsScroll = clampInt(m.statsScroll, 0, maxInt(0, totalLines-maxVisible))
-	padWidth := layout.Width - 2
-	thumbStart, thumbHeight := scrollbarThumb(totalLines, maxVisible, m.statsScroll)
-
-	var visibleContent strings.Builder
-	for i := m.statsScroll; i < m.statsScroll+maxVisible && i < totalLines; i++ {
-		line := truncateLine(lines[i], padWidth)
-		line = padLine(line, padWidth)
-		if totalLines > maxVisible {
-			scrollbarChar := "│"
-			currentPos := i - m.statsScroll
-			if currentPos >= thumbStart && currentPos < thumbStart+thumbHeight {
-				scrollbarChar = "█"
-			}
-			line = line + " " + scrollbarChar
-
-			m.hitboxes = append(m.hitboxes, Hitbox{
-				ID:     fmt.Sprintf("stats-scroll-%d", currentPos),
-				View:   ViewStatistics,
-				X:      layout.X + padWidth + 1,
-				Y:      layout.Y + currentPos,
-				Width:  1,
-				Height: 1,
-			})
-		}
-		visibleContent.WriteString(line + "\n")
-	}
-
 	footer := ""
-	if totalLines > maxVisible {
+	if m.statsTotalLines > maxVisible {
 		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-		footerText := fmt.Sprintf("\nUse %s/%s or Mouse Wheel to scroll. Lines %d-%d of %d.",
-			keyStyle.Render("j"), keyStyle.Render("k"), m.statsScroll+1, minInt(m.statsScroll+maxVisible, totalLines), totalLines)
-		footer = lipgloss.NewStyle().Foreground(colorMuted).Render(footerText)
+		footer = fmt.Sprintf("Use %s/%s or Mouse Wheel to scroll. Lines %d-%d of %d.",
+			keyStyle.Render("j"), keyStyle.Render("k"), m.statsScroll+1, minInt(m.statsScroll+maxVisible, m.statsTotalLines), m.statsTotalLines)
 	}
 
-	return visibleContent.String() + footer
+	return m.renderScrollable(layout.WithHeight(maxVisible), content.String(), m.statsScroll, scrollableOptions{
+		hitboxPrefix: "stats",
+		view:         ViewStatistics,
+		footer:       footer,
+	})
 }
 
 func (m *Model) renderStatisticsAt(layout viewportLayout) string {

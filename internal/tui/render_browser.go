@@ -73,28 +73,11 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		}
 		return b.String()
 	}
-	start := 0
-	end := len(m.browserCards)
-	maxVisible := m.listVisibleLines(layout.Height)
-	if end > maxVisible {
-		start = m.browserCursor - maxVisible/2
-		if start < 0 {
-			start = 0
-		}
-		end = start + maxVisible
-		if end > len(m.browserCards) {
-			end = len(m.browserCards)
-			start = end - maxVisible
-			if start < 0 {
-				start = 0
-			}
-		}
-	}
-	listStartY := strings.Count(b.String(), "\n")
+
+	var content strings.Builder
 	lineWidth := layout.Width - 2
-	thumbStart, thumbHeight := scrollbarThumb(len(m.browserCards), maxVisible, start)
-	for i := start; i < end; i++ {
-		card := m.browserCards[i]
+
+	for i, card := range m.browserCards {
 		prefix := "  "
 		style := lipgloss.NewStyle()
 		if i == m.browserCursor {
@@ -145,7 +128,6 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 			availWidth = 10
 		}
 
-		// Allocate at most 30% of available width to tags, up to a max of 25 characters
 		maxTagsWidth := availWidth * 3 / 10
 		if maxTagsWidth > 25 {
 			maxTagsWidth = 25
@@ -159,7 +141,6 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 			truncatedTags = truncateLine(plainTags, maxTagsWidth)
 		}
 
-		// The rest goes to the prompt
 		promptWidth := availWidth - lipgloss.Width(truncatedTags)
 		if promptWidth < 5 {
 			promptWidth = 5
@@ -174,26 +155,35 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		}
 
 		label := fmt.Sprintf("%s%s[%s] %s%s%s%s%s%s%s", prefix, selected, kind, highlightedPrompt, interval, mature, bookmark, leech, suspended, styledTags)
-		line := padLine(style.Render(label), lineWidth)
-		if len(m.browserCards) > maxVisible {
-			currentPos := i - start
-			scrollbarChar := "│"
-			if currentPos >= thumbStart && currentPos < thumbStart+thumbHeight {
-				scrollbarChar = "█"
-			}
-			line += " " + scrollbarChar
-			m.hitboxes = append(m.hitboxes, Hitbox{
-				ID:     fmt.Sprintf("browser-scroll-%d", currentPos),
-				View:   ViewBrowser,
-				X:      layout.X + lineWidth + 1,
-				Y:      layout.Y + listStartY + currentPos,
-				Width:  1,
-				Height: 1,
-			})
-		}
-		b.WriteString(line)
-		b.WriteString("\n")
+		content.WriteString(style.Render(label) + "\n")
 	}
+
+	contentStr := content.String()
+	totalLines := len(m.browserCards)
+
+	headerLines := strings.Count(b.String(), "\n")
+	availableHeight := m.listVisibleLines(layout.Height) - headerLines
+	if availableHeight < 5 {
+		availableHeight = 5
+	}
+
+	// Auto-scroll to cursor
+	if m.browserCursor < m.browserScroll {
+		m.browserScroll = m.browserCursor
+	} else if m.browserCursor >= m.browserScroll+availableHeight {
+		m.browserScroll = m.browserCursor - availableHeight + 1
+	}
+	m.browserScroll = clampInt(m.browserScroll, 0, maxInt(0, totalLines-availableHeight))
+
+	listView := m.renderScrollable(layout.WithHeight(availableHeight), contentStr, m.browserScroll, scrollableOptions{
+		hitboxPrefix: "browser",
+		view:         ViewBrowser,
+		onLine: func(lineIndex int, rY int, content string) {
+			// No special content hitboxes needed for browser rows yet (they use key nav)
+		},
+	})
+	b.WriteString(listView)
+
 	if m.showReviewHistory && m.browserCursor < len(m.browserCards) && m.reviewHistoryCard == m.browserCards[m.browserCursor].ID {
 		b.WriteString("\n")
 		b.WriteString(m.renderReviewHistory(m.browserCards[m.browserCursor].Prompt))

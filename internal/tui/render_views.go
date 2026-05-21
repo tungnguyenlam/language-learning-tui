@@ -94,34 +94,8 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		return b.String()
 	}
 
-	start := 0
-	end := len(filteredDecks)
-	maxVisible := 10
-	if layout.Height > 25 {
-		maxVisible = (layout.Height - 10) / 2
-	}
-	if maxVisible < 5 {
-		maxVisible = 5
-	}
-
-	if end > maxVisible {
-		start = m.deckCursor - maxVisible/2
-		if start < 0 {
-			start = 0
-		}
-		end = start + maxVisible
-		if end > len(filteredDecks) {
-			end = len(filteredDecks)
-			start = end - maxVisible
-			if start < 0 {
-				start = 0
-			}
-		}
-	}
-
+	// Constants for width calculation
 	lineWidth := layout.Width - 2
-	thumbStart, thumbHeight := scrollbarThumb(len(filteredDecks), maxVisible, start)
-
 	studyBtnWidth := 0
 	cramBtnWidth := 0
 	if layout.Width >= 100 {
@@ -150,7 +124,6 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 	otherWidth := prefixWidth + selectMarkWidth + 1 + miniBarWidth + 2 + countsWidth + statsWidth + studyBtnWidth + cramBtnWidth
 	nameWidth := lineWidth - otherWidth
 
-	// If we're overflowing or have too little space for name, shrink fields
 	if nameWidth < 15 {
 		if statsWidth > 0 {
 			statsWidth = 0
@@ -167,8 +140,18 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		}
 	}
 
-	for i := start; i < end; i++ {
-		deck := filteredDecks[i]
+	type lineInfo struct {
+		deckIdx int
+		kind    string // "main", "limits", "desc", "tags"
+		label   string // raw label before buttons
+		study   string
+		cram    string
+	}
+
+	var content strings.Builder
+	var lines []lineInfo
+
+	for i, deck := range filteredDecks {
 		prefix := "  "
 		style := lipgloss.NewStyle()
 		if i == m.deckCursor {
@@ -233,72 +216,21 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 			currBtnStyle = currBtnStyle.Foreground(colorBlue)
 		}
 
-		rowY := layout.Y + strings.Count(b.String(), "\n")
-
-		// Setup hitboxes
-		m.hitboxes = append(m.hitboxes, Hitbox{
-			ID:     fmt.Sprintf("deck-select-%d", i),
-			View:   ViewDecks,
-			X:      layout.X,
-			Y:      rowY,
-			Width:  lipgloss.Width(label),
-			Height: 1,
-		})
-		if studyBtn != "" {
-			m.hitboxes = append(m.hitboxes, Hitbox{
-				ID:     fmt.Sprintf("deck-study-%d", i),
-				View:   ViewDecks,
-				X:      layout.X + lipgloss.Width(label),
-				Y:      rowY,
-				Width:  lipgloss.Width(studyBtn),
-				Height: 1,
-			})
-		}
-		if cramBtn != "" {
-			m.hitboxes = append(m.hitboxes, Hitbox{
-				ID:     fmt.Sprintf("deck-cram-%d", i),
-				View:   ViewDecks,
-				X:      layout.X + lipgloss.Width(label) + lipgloss.Width(studyBtn),
-				Y:      rowY,
-				Width:  lipgloss.Width(cramBtn),
-				Height: 1,
-			})
-		}
-
-		lineContent := label + currBtnStyle.Render(studyBtn) + currBtnStyle.Render(cramBtn)
-
-		// Force absolute padding to viewport width using simple logic
-		line := padLine(lineContent, layout.Width)
-		if len(filteredDecks) > maxVisible {
-			currentPos := i - start
-			scrollbarChar := "│"
-			if currentPos >= thumbStart && currentPos < thumbStart+thumbHeight {
-				scrollbarChar = "█"
-			}
-			// Re-pad to reserve 2 cols for scrollbar
-			line = padLine(lineContent, layout.Width-2) + " " + scrollbarChar
-
-			m.hitboxes = append(m.hitboxes, Hitbox{
-				ID:     fmt.Sprintf("deck-scroll-%d", currentPos),
-				View:   ViewDecks,
-				X:      layout.X + layout.Width - 1,
-				Y:      rowY,
-				Width:  1,
-				Height: 1,
-			})
-		}
-
-		b.WriteString(line + "\n")
+		// Main line
+		lines = append(lines, lineInfo{deckIdx: i, kind: "main", label: label, study: currBtnStyle.Render(studyBtn), cram: currBtnStyle.Render(cramBtn)})
+		content.WriteString(label + currBtnStyle.Render(studyBtn) + currBtnStyle.Render(cramBtn) + "\n")
 
 		if i == m.deckCursor && m.editingDeckLimits {
 			limitsLabel := fmt.Sprintf("     Limits: New %d, Review %d (h/l switch, +/- adjust)",
 				deck.NewCardsPerDay, deck.ReviewLimitPerDay)
-			b.WriteString(padLine(limitsLabel, layout.Width) + "\n")
+			lines = append(lines, lineInfo{deckIdx: i, kind: "limits"})
+			content.WriteString(limitsLabel + "\n")
 		}
 
 		if deck.Description != "" {
 			desc := truncateLine(deck.Description, layout.Width-10)
-			b.WriteString(padLine(fmt.Sprintf("     %s", mutedStyle.Render(desc)), layout.Width) + "\n")
+			lines = append(lines, lineInfo{deckIdx: i, kind: "desc"})
+			content.WriteString(fmt.Sprintf("     %s\n", mutedStyle.Render(desc)))
 		}
 		if len(deck.Tags) > 0 {
 			tags := strings.Join(deck.Tags, ", ")
@@ -306,18 +238,87 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 			if m.deckFilter != "" {
 				resTags = highlightMatch(resTags, m.deckFilter, highlightStyle)
 			}
-			b.WriteString(padLine(fmt.Sprintf("     Tags: %s", resTags), layout.Width) + "\n")
+			lines = append(lines, lineInfo{deckIdx: i, kind: "tags"})
+			content.WriteString(fmt.Sprintf("     Tags: %s\n", resTags))
+		}
+		lines = append(lines, lineInfo{deckIdx: i, kind: "spacer"})
+		content.WriteString("\n")
+	}
+
+	availableHeight := layout.Height - strings.Count(b.String(), "\n") - 3
+	if availableHeight < 5 {
+		availableHeight = 5
+	}
+
+	// Auto-scroll to cursor
+	firstLineOfCursor := -1
+	for idx, li := range lines {
+		if li.deckIdx == m.deckCursor {
+			firstLineOfCursor = idx
+			break
 		}
 	}
+	if firstLineOfCursor != -1 {
+		if firstLineOfCursor < m.deckScroll {
+			m.deckScroll = firstLineOfCursor
+		} else if firstLineOfCursor >= m.deckScroll+availableHeight-2 {
+			m.deckScroll = firstLineOfCursor - availableHeight + 3
+		}
+	}
+	m.deckTotalLines = len(lines)
+	m.deckScroll = clampInt(m.deckScroll, 0, maxInt(0, m.deckTotalLines-availableHeight))
 
+	footer := ""
 	if m.searchingDecks {
-		b.WriteString("\nPress Enter or Esc to finish searching.")
+		footer = "Press Enter or Esc to finish searching."
 	} else {
-		b.WriteString(fmt.Sprintf("\n%s select | %s search | %s stats | %s multi-select | %s clear\n",
-			keyStyle.Render("enter"), keyStyle.Render("/"), keyStyle.Render("v"), keyStyle.Render("x"), keyStyle.Render("Esc")))
-		b.WriteString(mutedStyle.Render("Press enter to select deck."))
+		footer = fmt.Sprintf("%s select | %s search | %s stats | %s multi-select | %s clear",
+			keyStyle.Render("enter"), keyStyle.Render("/"), keyStyle.Render("v"), keyStyle.Render("x"), keyStyle.Render("Esc"))
 	}
 
+	listView := m.renderScrollable(layout.WithHeight(availableHeight), content.String(), m.deckScroll, scrollableOptions{
+		hitboxPrefix: "deck",
+		view:         ViewDecks,
+		footer:       footer,
+		onLine: func(lineIndex int, rY int, content string) {
+			if lineIndex < 0 || lineIndex >= len(lines) {
+				return
+			}
+			li := lines[lineIndex]
+			if li.kind == "main" {
+				m.hitboxes = append(m.hitboxes, Hitbox{
+					ID:     fmt.Sprintf("deck-select-%d", li.deckIdx),
+					View:   ViewDecks,
+					X:      layout.X,
+					Y:      rY,
+					Width:  lipgloss.Width(li.label),
+					Height: 1,
+				})
+				if li.study != "" {
+					m.hitboxes = append(m.hitboxes, Hitbox{
+						ID:     fmt.Sprintf("deck-study-%d", li.deckIdx),
+						View:   ViewDecks,
+						X:      layout.X + lipgloss.Width(li.label),
+						Y:      rY,
+						Width:  lipgloss.Width(li.study),
+						Height: 1,
+					})
+				}
+				if li.cram != "" {
+					m.hitboxes = append(m.hitboxes, Hitbox{
+						ID:     fmt.Sprintf("deck-cram-%d", li.deckIdx),
+						View:   ViewDecks,
+						X:      layout.X + lipgloss.Width(li.label) + lipgloss.Width(li.study),
+						Y:      rY,
+						Width:  lipgloss.Width(li.cram),
+						Height: 1,
+					})
+				}
+			}
+		},
+	})
+
+	b.WriteString(listView)
 	return b.String()
 }
 

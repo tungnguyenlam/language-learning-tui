@@ -98,11 +98,9 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 		b.WriteString(fmt.Sprintf("\n\n%s play audio | %s to exit cram review.", keyStyle.Render("p"), keyStyle.Render("q")))
 
-		// Remove the hidden cramRevealed text from string builder if not revealed, or just format cleanly
 		res := b.String()
-		// Make sure cramRevealed text is purely hidden using terminal escapes or just at the end
 		if m.cramRevealed {
-			res += "\x1b[8mcramRevealed\x1b[0m" // truly hidden
+			res += "\x1b[8mcramRevealed\x1b[0m"
 		}
 		return res
 	}
@@ -156,28 +154,9 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		b.WriteString("Press enter to start cramming.\n")
 	}
 
-	start := 0
-	end := len(m.cramCards)
-	maxVisible := m.listVisibleLines(layout.Height)
-	if end > maxVisible {
-		start = m.cramCursor - maxVisible/2
-		if start < 0 {
-			start = 0
-		}
-		end = start + maxVisible
-		if end > len(m.cramCards) {
-			end = len(m.cramCards)
-			start = end - maxVisible
-			if start < 0 {
-				start = 0
-			}
-		}
-	}
-	listStartY := strings.Count(b.String(), "\n")
+	var content strings.Builder
 	lineWidth := layout.Width - 2
-	thumbStart, thumbHeight := scrollbarThumb(len(m.cramCards), maxVisible, start)
-	for i := start; i < end; i++ {
-		card := m.cramCards[i]
+	for i, card := range m.cramCards {
 		prefix := "  "
 		style := lipgloss.NewStyle()
 		if i == m.cramCursor {
@@ -223,26 +202,32 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		}
 
 		label := fmt.Sprintf("%s[%s] %s%s%s%s%s%s", prefix, kind, truncatedPrompt, styledDeckName, mature, bookmark, leech, suspended)
-		line := padLine(style.Render(label), lineWidth)
-		if len(m.cramCards) > maxVisible {
-			currentPos := i - start
-			scrollbarChar := "│"
-			if currentPos >= thumbStart && currentPos < thumbStart+thumbHeight {
-				scrollbarChar = "█"
-			}
-			line += " " + scrollbarChar
-			m.hitboxes = append(m.hitboxes, Hitbox{
-				ID:     fmt.Sprintf("cram-scroll-%d", currentPos),
-				View:   ViewCram,
-				X:      layout.X + lineWidth + 1,
-				Y:      layout.Y + listStartY + currentPos,
-				Width:  1,
-				Height: 1,
-			})
-		}
-		b.WriteString(line)
-		b.WriteString("\n")
+		content.WriteString(style.Render(label) + "\n")
 	}
+
+	contentStr := content.String()
+	totalLines := len(m.cramCards)
+
+	headerLines := strings.Count(b.String(), "\n")
+	availableHeight := m.listVisibleLines(layout.Height) - headerLines
+	if availableHeight < 5 {
+		availableHeight = 5
+	}
+
+	// Auto-scroll
+	if m.cramCursor < m.cramScroll {
+		m.cramScroll = m.cramCursor
+	} else if m.cramCursor >= m.cramScroll+availableHeight {
+		m.cramScroll = m.cramCursor - availableHeight + 1
+	}
+	m.cramScroll = clampInt(m.cramScroll, 0, maxInt(0, totalLines-availableHeight))
+
+	listView := m.renderScrollable(layout.WithHeight(availableHeight), contentStr, m.cramScroll, scrollableOptions{
+		hitboxPrefix: "cram",
+		view:         ViewCram,
+	})
+	b.WriteString(listView)
+
 	if m.cramReviewed > 0 {
 		accuracy := 0.0
 		if m.cramReviewed > 0 {

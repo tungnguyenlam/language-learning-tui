@@ -62,6 +62,11 @@ type viewportLayout struct {
 	Height int
 }
 
+func (l viewportLayout) WithHeight(h int) viewportLayout {
+	l.Height = h
+	return l
+}
+
 type Model struct {
 	repo                  core.Repository
 	scheduler             core.Scheduler
@@ -73,6 +78,10 @@ type Model struct {
 	deckIndex             int
 	deck                  core.Deck
 	deckCursor            int
+	deckScroll            int
+	deckTotalLines        int
+	browserScroll         int
+	cramScroll            int
 	allDue                []core.Card
 	dueCards              []core.Card
 	cursor                int
