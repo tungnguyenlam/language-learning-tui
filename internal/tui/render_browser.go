@@ -165,13 +165,15 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 			promptWidth = 5
 		}
 		truncatedPrompt := truncateLine(card.Prompt, promptWidth)
+		highlightStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true)
+		highlightedPrompt := highlightMatch(truncatedPrompt, m.browserSearch, highlightStyle)
 
 		styledTags := ""
 		if truncatedTags != "" {
 			styledTags = " " + mutedStyle.Render(strings.TrimSpace(truncatedTags))
 		}
 
-		label := fmt.Sprintf("%s%s[%s] %s%s%s%s%s%s%s", prefix, selected, kind, truncatedPrompt, interval, mature, bookmark, leech, suspended, styledTags)
+		label := fmt.Sprintf("%s%s[%s] %s%s%s%s%s%s%s", prefix, selected, kind, highlightedPrompt, interval, mature, bookmark, leech, suspended, styledTags)
 		line := padLine(style.Render(label), lineWidth)
 		if len(m.browserCards) > maxVisible {
 			currentPos := i - start

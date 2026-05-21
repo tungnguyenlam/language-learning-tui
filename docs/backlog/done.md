@@ -1,5 +1,40 @@
 # Done Backlog
 
+## 2026-05-21 (UI Polish, Audio Fallback & New Content)
+
+### UI Enhancements
+- **Search Highlights:** Added a `highlightMatch` utility that provides visual feedback for search queries in the Decks and Browser views using a bold hot-pink color.
+
+### Audio & Reliability
+- **Native TTS Fallback:** Implemented `NativeTTS` support using `say` (macOS) and `espeak` (Linux).
+- **Multi-Synthesizer:** Introduced `MultiTTS` which automatically falls back to native system TTS if the primary Edge TTS service fails or is offline.
+- **TTS Refactoring:** Consolidated common TTS utilities (HTML/Cloze stripping, normalization) into a shared `internal/audio/tts.go`.
+
+### Content
+- **A2 Medical Appointment:** Added a new deck focusing on practical phrases and vocabulary for visiting a doctor in Germany (30 notes).
+
+### Verification
+- `go test ./internal/audio ./internal/content` passed.
+- `pytest e2e_tests/test_may21_improvements.py` passed.
+- `go build ./cmd/deutsch-tui` passed.
+
+## 2026-05-21 (Audio Process Management & TTS UX Polish)
+
+### Audio Reliability & Process Control
+- **Concurrent Playback Prevention:** Implemented `sync.Mutex` protected process tracking for audio. The app now explicitly kills any existing audio process before starting a new one, preventing overlapping audio "echoes" when spamming playback keys.
+- **Persistent Status during Playback:** Updated `startAudioPlayer` to block the command goroutine until playback finishes. This ensures the "Playing audio..." or "Generating..." status message remains visible for the entire duration of the audio, improving user feedback.
+- **Anki Marker Compatibility:** Added automatic stripping of `[sound:...]` markers from audio fields during import and playback, enabling seamless use of Anki-exported TSV decks.
+
+### TTS Improvements & UX Polish
+- **Edge TTS Resilience:** Improved error handling for the Edge TTS provider, specifically adding user-friendly instructions for "bad handshake" errors.
+- **Content Normalization:** Enhanced TTS text normalization to strip HTML tags and Cloze markers before synthesis, preventing the voice engine from reading literal code or brackets.
+- **Status Clearing:** Fixed a UX bug where "Generating..." or "Playing audio..." status messages would hang indefinitely. Commands now return a `statusMsg` to reset the status to "Ready" once audio finishes or fails gracefully.
+
+### Verification
+- **Unit Tests:** Updated and passed `internal/audio` and `internal/tui` test suites.
+- **E2E Tests:** Fixed and passed `e2e_tests/test_audio.py` and `e2e_tests/test_audio_autoplay.py`.
+- **Manual Verification:** Verified that rapid 'p' keypresses correctly restart audio rather than layering it.
+
 ## 2026-05-20 (Scrollbar Alignment & Rendering Stability)
 
 ### UI Polish & Rendering Bug Fixes

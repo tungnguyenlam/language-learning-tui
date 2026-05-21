@@ -308,7 +308,9 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 	var speechSynthesizer audio.Synthesizer
 	switch strings.TrimSpace(opts.TTSProvider) {
 	case audio.ProviderEdgeTTS:
-		speechSynthesizer = audio.NewEdgeTTS(opts.TTSCacheDir, opts.TTSVoice)
+		primary := audio.NewEdgeTTS(opts.TTSCacheDir, opts.TTSVoice)
+		secondary := audio.NewNativeTTS(opts.TTSCacheDir)
+		speechSynthesizer = audio.NewMultiTTS(primary, secondary)
 	default:
 		speechSynthesizer = nil
 	}

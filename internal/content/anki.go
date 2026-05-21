@@ -111,13 +111,22 @@ func ImportAnkiTSV(r io.Reader, opts ImportOptions) ([]core.Note, error) {
 			applyNoteType(&note, strings.TrimSpace(record[6]))
 		}
 		if len(record) > 7 {
-			note.Audio = strings.TrimSpace(record[7])
+			note.Audio = cleanAudioField(record[7])
 		}
 		note.Cards = CardsForNote(note)
 		notes = append(notes, note)
 	}
 
 	return notes, nil
+}
+
+func cleanAudioField(s string) string {
+	s = strings.TrimSpace(s)
+	// Handle [sound:file.mp3]
+	if strings.HasPrefix(s, "[sound:") && strings.HasSuffix(s, "]") {
+		return s[7 : len(s)-1]
+	}
+	return s
 }
 
 func noteFromHeaderedRecord(record []string, header []string, defaultDeck string, deckExplicit bool, row int) (core.Note, error) {
@@ -165,7 +174,7 @@ func noteFromHeaderedRecord(record []string, header []string, defaultDeck string
 		Extra:  field("extra"),
 		Tags:   splitTags(field("tags")),
 		Type:   "Basic",
-		Audio:  strings.TrimSpace(field("audio")),
+		Audio:  cleanAudioField(field("audio")),
 	}
 
 	applyNoteType(&note, noteType)

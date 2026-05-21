@@ -21,12 +21,6 @@ const (
 	DefaultEdgeVoice = "de-DE-KatjaNeural"
 )
 
-type Synthesizer interface {
-	Synthesize(ctx context.Context, text string) (string, error)
-	ProviderName() string
-	VoiceName() string
-}
-
 type EdgeTTS struct {
 	client  edgeTTSClient
 	voice   string
@@ -101,12 +95,6 @@ func (e *EdgeTTS) Synthesize(ctx context.Context, text string) (string, error) {
 func (e *EdgeTTS) cacheFilename(text string) string {
 	sum := sha256.Sum256([]byte(e.voice + "\x00" + text))
 	return hex.EncodeToString(sum[:]) + ".mp3"
-}
-
-func normalizeSpeechText(text string) string {
-	text = strings.ReplaceAll(text, "\n", " ")
-	text = strings.ReplaceAll(text, "\r", " ")
-	return strings.Join(strings.Fields(text), " ")
 }
 
 func singleLine(text string) string {

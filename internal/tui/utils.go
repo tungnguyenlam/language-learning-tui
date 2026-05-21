@@ -274,3 +274,22 @@ func (m *Model) normalizeAnswer(s string) string {
 	s = strings.TrimRight(s, ".!?,;:")
 	return s
 }
+
+func highlightMatch(text, query string, style lipgloss.Style) string {
+	if query == "" {
+		return text
+	}
+	lowerText := strings.ToLower(text)
+	lowerQuery := strings.ToLower(query)
+	start := strings.Index(lowerText, lowerQuery)
+	if start == -1 {
+		return text
+	}
+
+	// Found a match
+	before := text[:start]
+	match := text[start : start+len(query)]
+	after := text[start+len(query):]
+
+	return before + style.Render(match) + highlightMatch(after, query, style)
+}

@@ -68,6 +68,7 @@ func StandardDecks() []core.Deck {
 		A1CityDirectionsDeck(),
 		B2ProgrammingDeck(),
 		B2BusinessMeetingsDeck(),
+		A2MedicalAppointmentDeck(),
 		C1SocialIssuesDeck(),
 	}
 
