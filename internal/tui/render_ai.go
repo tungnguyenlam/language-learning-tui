@@ -39,7 +39,12 @@ func (m *Model) renderAI(x, y int) string {
 	if m.drafting {
 		currTitleStyle = currTitleStyle.Foreground(colorBlue)
 	}
-	b.WriteString(currTitleStyle.Render("AI Drafts") + spinner + "\n\n")
+	b.WriteString(currTitleStyle.Render("AI Drafts") + spinner)
+	if len(m.drafts) > 0 {
+		countStyle := lipgloss.NewStyle().Foreground(colorPink).Bold(true)
+		b.WriteString(" " + countStyle.Render(fmt.Sprintf("[%d pending]", len(m.drafts))))
+	}
+	b.WriteString("\n\n")
 	b.WriteString(fmt.Sprintf("Deck: %s\nTemplate: %s (use [ / ])\n", m.deckLabel(), templateName))
 	displayText := m.aiInput + "_"
 	if m.aiInput == "" && !m.searchingAI {
