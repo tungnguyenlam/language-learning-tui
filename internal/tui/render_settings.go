@@ -6,6 +6,7 @@ import (
 
 	"deutsch-tui/internal/app"
 
+	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
 
@@ -14,18 +15,19 @@ func (m *Model) renderSettings(x, y int) string {
 	style := panelStyle.Width(width).Height(height)
 	layout := contentLayoutForStyle(style, x, y)
 
-	var b strings.Builder
+	ctx := NewRenderContext(m, layout, ViewSettings)
 	titleStyle := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color("205")).
 		Background(lipgloss.Color("236")).
 		Padding(0, 2)
-	b.WriteString(titleStyle.Render("⚙ SETTINGS") + "\n\n")
+	ctx.WriteLine(titleStyle.Render("⚙ SETTINGS"))
+	ctx.NewLine()
 
 	if m.editingTemplate {
-		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("EDITING - Enter to save, Esc to cancel.") + "\n")
+		ctx.WriteLine(lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("EDITING - Enter to save, Esc to cancel."))
 	} else if strings.HasPrefix(m.status, "Daily goal set") {
-		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render(m.status) + "\n")
+		ctx.WriteLine(lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render(m.status))
 	}
 
 	autoPlayStatus := lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Render("off")
@@ -198,8 +200,7 @@ func (m *Model) renderSettings(x, y int) string {
 	allLines := strings.Split(strings.TrimRight(contentStr, "\n"), "\n")
 	m.settingsTotalLines = len(allLines)
 
-	headerLines := strings.Count(b.String(), "\n")
-	availableHeight := layout.Height - headerLines
+	availableHeight := layout.Height - (ctx.currY - layout.Y)
 	if availableHeight < 5 {
 		availableHeight = 5
 	}
@@ -213,61 +214,40 @@ func (m *Model) renderSettings(x, y int) string {
 			break
 		}
 	}
-	if cursorLine < m.settingsScroll {
-		m.settingsScroll = cursorLine
-	} else if cursorLine >= m.settingsScroll+availableHeight {
-		m.settingsScroll = cursorLine - availableHeight + 1
-	}
-	m.settingsScroll = clampInt(m.settingsScroll, 0, maxInt(0, m.settingsTotalLines-availableHeight))
+	m.settingsScroll = AutoScroll(cursorLine, m.settingsScroll, availableHeight, m.settingsTotalLines)
 
-	listView := m.renderScrollable(layout.WithHeight(availableHeight), contentStr, m.settingsScroll, scrollableOptions{
-		hitboxPrefix: "settings",
-		view:         ViewSettings,
-		onLine: func(lineIndex int, rY int, content string) {
+	listView := m.RenderList(layout.WithHeight(availableHeight).WithY(ctx.currY), contentStr, ListOptions{
+		HitboxPrefix: "settings",
+		View:         ViewSettings,
+		ScrollOffset: &m.settingsScroll,
+		TotalLines:   &m.settingsTotalLines,
+		OnLine: func(lineIndex int, lineCtx *RenderContext, content string) {
 			info, ok := lineMeta[lineIndex]
 			if !ok {
 				return
 			}
 			if info.kind == "goal" {
-				m.hitboxes = append(m.hitboxes, Hitbox{
-					ID:     fmt.Sprintf("settings-%d", info.itemIdx),
-					View:   ViewSettings,
-					X:      layout.X,
-					Y:      rY,
-					Width:  lipgloss.Width(goalLabel),
-					Height: 1,
+				lineCtx.RegisterHitboxWithAction(fmt.Sprintf("settings-%d", info.itemIdx), lipgloss.Width(goalLabel), 1, func() tea.Cmd {
+					m.settingsCursor = info.itemIdx
+					return m.handleSettingsEnter()
 				})
-				m.hitboxes = append(m.hitboxes, Hitbox{
-					ID:     "settings-goal-minus",
-					View:   ViewSettings,
-					X:      layout.X + lipgloss.Width(goalLabel),
-					Y:      rY,
-					Width:  lipgloss.Width(minusBtn),
-					Height: 1,
+				lineCtx.RegisterHitboxAtWithAction("settings-goal-minus", lipgloss.Width(goalLabel), 0, lipgloss.Width(minusBtn), 1, func() tea.Cmd {
+					return m.setDailyGoal(m.stats.DailyGoal - 1)
 				})
-				m.hitboxes = append(m.hitboxes, Hitbox{
-					ID:     "settings-goal-plus",
-					View:   ViewSettings,
-					X:      layout.X + lipgloss.Width(goalLabel) + lipgloss.Width(minusBtn),
-					Y:      rY,
-					Width:  lipgloss.Width(plusBtn),
-					Height: 1,
+				lineCtx.RegisterHitboxAtWithAction("settings-goal-plus", lipgloss.Width(goalLabel)+lipgloss.Width(minusBtn), 0, lipgloss.Width(plusBtn), 1, func() tea.Cmd {
+					return m.setDailyGoal(m.stats.DailyGoal + 1)
 				})
 			} else if info.kind == "item" {
-				m.hitboxes = append(m.hitboxes, Hitbox{
-					ID:     fmt.Sprintf("settings-%d", info.itemIdx),
-					View:   ViewSettings,
-					X:      layout.X,
-					Y:      rY,
-					Width:  layout.Width - 2,
-					Height: 1,
+				lineCtx.RegisterHitboxWithAction(fmt.Sprintf("settings-%d", info.itemIdx), layout.Width-2, 1, func() tea.Cmd {
+					m.settingsCursor = info.itemIdx
+					return m.handleSettingsEnter()
 				})
 			}
 		},
 	})
 
-	b.WriteString(listView)
-	return b.String()
+	ctx.Write(listView)
+	return ctx.String()
 }
 
 func credValueOrDefault(value, kind string) string {

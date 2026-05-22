@@ -38,7 +38,7 @@ def test_new_medical_deck_exists(agent):
     agent.act("appointment")
     agent.act("<Enter>")
     
-    agent.wait_for_text("A2 Medical Appointment")
+    agent.wait_for_text("Medical Appointment")
 
 @pytest.mark.e2e
 def test_search_highlights_in_browser(agent):

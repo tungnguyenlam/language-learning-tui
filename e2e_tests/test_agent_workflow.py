@@ -26,4 +26,4 @@ def test_ai_placeholder(agent):
     agent.act("6") # 6 is AI view
         
     agent.wait_for_text("AI Drafts")
-    agent.wait_for_text("business email")
+    agent.wait_for_text("A1 survival")

@@ -11,12 +11,13 @@ import (
 )
 
 func (m *Model) renderStatistics(layout viewportLayout) string {
-	var content strings.Builder
+	ctx := NewRenderContext(m, layout, ViewStatistics)
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
 	labelStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
 	valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81"))
 
-	content.WriteString(titleStyle.Render("Statistics:") + " " + m.deckLabel() + "\n\n")
+	ctx.WriteLine(titleStyle.Render("Statistics:") + " " + m.deckLabel())
+	ctx.NewLine()
 
 	// Two-column layout for top stats
 	col1 := strings.Builder{}
@@ -115,6 +116,8 @@ func (m *Model) renderStatistics(layout viewportLayout) string {
 		lipgloss.NewStyle().Width(colWidth).Render(col1Str),
 		lipgloss.NewStyle().PaddingLeft(4).Render(col2Str),
 	)
+
+	var content strings.Builder
 	content.WriteString(joinedCols + "\n")
 
 	// --- Maturity Distribution ---
@@ -393,11 +396,16 @@ func (m *Model) renderStatistics(layout viewportLayout) string {
 			keyStyle.Render("j"), keyStyle.Render("k"), m.statsScroll+1, minInt(m.statsScroll+maxVisible, m.statsTotalLines), m.statsTotalLines)
 	}
 
-	return m.renderScrollable(layout.WithHeight(maxVisible), content.String(), m.statsScroll, scrollableOptions{
-		hitboxPrefix: "stats",
-		view:         ViewStatistics,
-		footer:       footer,
+	listView := m.RenderList(layout.WithHeight(maxVisible).WithY(ctx.currY), content.String(), ListOptions{
+		HitboxPrefix: "stats",
+		View:         ViewStatistics,
+		Footer:       footer,
+		ScrollOffset: &m.statsScroll,
+		TotalLines:   &m.statsTotalLines,
 	})
+
+	ctx.Write(listView)
+	return ctx.String()
 }
 
 func (m *Model) renderStatisticsAt(layout viewportLayout) string {

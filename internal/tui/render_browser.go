@@ -15,7 +15,8 @@ func (m *Model) renderBrowser() string {
 }
 
 func (m *Model) renderBrowserAt(layout viewportLayout) string {
-	var b strings.Builder
+	ctx := NewRenderContext(m, layout, ViewBrowser)
+
 	numSelected := 0
 	for _, s := range m.browserSelected {
 		if s {
@@ -29,7 +30,7 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 	}
 
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).MarginBottom(1)
-	b.WriteString(titleStyle.Render(titleText) + "\n")
+	ctx.WriteLine(titleStyle.Render(titleText))
 
 	searchBorderColor := "62"
 	searchLabel := "Search"
@@ -46,32 +47,32 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 	if m.taggingCards {
 		searchStyle = searchStyle.BorderForeground(lipgloss.Color("212"))
 		searchLabel = "TAGS"
-		b.WriteString(searchStyle.Render(fmt.Sprintf("%s: %s_", searchLabel, m.tagInput)) + "\n\n")
+		ctx.WriteLine(searchStyle.Render(fmt.Sprintf("%s: %s_", searchLabel, m.tagInput)) + "\n")
 	} else if m.searchingTags {
 		searchStyle = searchStyle.BorderForeground(lipgloss.Color("46"))
 		searchLabel = "FILTER BY TAG"
-		b.WriteString(searchStyle.Render(fmt.Sprintf("%s: %s_", searchLabel, m.browserTag)) + "\n\n")
+		ctx.WriteLine(searchStyle.Render(fmt.Sprintf("%s: %s_", searchLabel, m.browserTag)) + "\n")
 	} else {
 		if m.searchingBrowser && len(m.browserSearchHistory) > 0 {
 			historyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true)
 			historyStr := "History: " + strings.Join(m.browserSearchHistory, " | ")
-			b.WriteString(historyStyle.Render(historyStr) + "\n")
+			ctx.WriteLine(historyStyle.Render(historyStr))
 		}
 		filterText := ""
 		if m.browserTag != "" {
 			filterText = lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render(" [Tag: " + m.browserTag + "]")
 		}
-		b.WriteString(searchStyle.Render(fmt.Sprintf("%s: %s_", searchLabel, m.browserSearch)) + filterText + "\n\n")
+		ctx.WriteLine(searchStyle.Render(fmt.Sprintf("%s: %s_", searchLabel, m.browserSearch)) + filterText + "\n")
 	}
 
 	if len(m.browserCards) == 0 {
-		b.WriteString(fmt.Sprintf("No cards found in %s.\n\n", m.deckLabel()))
+		ctx.WriteLine(fmt.Sprintf("No cards found in %s.\n", m.deckLabel()))
 		if m.browserSearch != "" || m.browserTag != "" {
-			b.WriteString(mutedStyle.Render("Press Esc to clear search/tag filters, or use [ / ] to change deck filter.\n"))
+			ctx.WriteLine(mutedStyle.Render("Press Esc to clear search/tag filters, or use [ / ] to change deck filter."))
 		} else {
-			b.WriteString(mutedStyle.Render("Press / to search, # to filter by tag, or use [ / ] to change deck filter.\n"))
+			ctx.WriteLine(mutedStyle.Render("Press / to search, # to filter by tag, or use [ / ] to change deck filter."))
 		}
-		return b.String()
+		return ctx.String()
 	}
 
 	var content strings.Builder
@@ -161,33 +162,25 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 	contentStr := content.String()
 	totalLines := len(m.browserCards)
 
-	headerLines := strings.Count(b.String(), "\n")
-	availableHeight := m.listVisibleLines(layout.Height) - headerLines
+	availableHeight := m.listVisibleLines(layout.Height) - (ctx.currY - layout.Y)
 	if availableHeight < 5 {
 		availableHeight = 5
 	}
 
 	// Auto-scroll to cursor
-	if m.browserCursor < m.browserScroll {
-		m.browserScroll = m.browserCursor
-	} else if m.browserCursor >= m.browserScroll+availableHeight {
-		m.browserScroll = m.browserCursor - availableHeight + 1
-	}
-	m.browserScroll = clampInt(m.browserScroll, 0, maxInt(0, totalLines-availableHeight))
+	m.browserScroll = AutoScroll(m.browserCursor, m.browserScroll, availableHeight, totalLines)
 
-	listView := m.renderScrollable(layout.WithHeight(availableHeight), contentStr, m.browserScroll, scrollableOptions{
-		hitboxPrefix: "browser",
-		view:         ViewBrowser,
-		onLine: func(lineIndex int, rY int, content string) {
-			// No special content hitboxes needed for browser rows yet (they use key nav)
-		},
+	listView := m.RenderList(layout.WithHeight(availableHeight).WithY(ctx.currY), contentStr, ListOptions{
+		HitboxPrefix: "browser",
+		View:         ViewBrowser,
+		ScrollOffset: &m.browserScroll,
 	})
-	b.WriteString(listView)
+	ctx.Write(listView)
 
 	if m.showReviewHistory && m.browserCursor < len(m.browserCards) && m.reviewHistoryCard == m.browserCards[m.browserCursor].ID {
-		b.WriteString("\n")
-		b.WriteString(m.renderReviewHistory(m.browserCards[m.browserCursor].Prompt))
-		b.WriteString("\n")
+		ctx.NewLine()
+		ctx.WriteLine(m.renderReviewHistory(m.browserCards[m.browserCursor].Prompt))
+		ctx.NewLine()
 	} else if layout.Height > 25 && len(m.browserCards) > 0 && m.browserCursor < len(m.browserCards) {
 		selected := m.browserCards[m.browserCursor]
 		extra := selected.Extra
@@ -242,19 +235,21 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Interval"), intervalStr,
 				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Tags"), tags,
 				lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Last Reviewed"), lastReviewedStr))
-		b.WriteString("\n" + previewBox + "\n")
+		ctx.NewLine()
+		ctx.WriteLine(previewBox)
+		ctx.NewLine()
 	}
 
 	if numSelected > 0 {
 		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-		b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true).Render(fmt.Sprintf("\n%d cards selected. Bulk actions: %s (bookmark/un) | %s (suspend/un) | %s (type) | %s (tags) | %s (delete) | %s (clear selection)\n", numSelected,
+		ctx.WriteLine(lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true).Render(fmt.Sprintf("\n%d cards selected. Bulk actions: %s (bookmark/un) | %s (suspend/un) | %s (type) | %s (tags) | %s (delete) | %s (clear selection)", numSelected,
 			keyStyle.Render("b/B"), keyStyle.Render("x/X"), keyStyle.Render("t"), keyStyle.Render("T"), keyStyle.Render("Del"), keyStyle.Render("esc"))))
 	} else {
 		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-		b.WriteString(fmt.Sprintf("\nUse %s/%s to navigate, %s to select, %s to toggle kind, %s for tags, %s to cleanup tags, %s to search, %s for history, %s to delete.\n",
+		ctx.WriteLine(fmt.Sprintf("\nUse %s/%s to navigate, %s to select, %s to toggle kind, %s for tags, %s to cleanup tags, %s to search, %s for history, %s to delete.",
 			keyStyle.Render("j"), keyStyle.Render("k"), keyStyle.Render("m"), keyStyle.Render("t"), keyStyle.Render("T"), keyStyle.Render("C"), keyStyle.Render("/"), keyStyle.Render("Enter"), keyStyle.Render("Backspace")))
 	}
-	return b.String()
+	return ctx.String()
 }
 
 func (m *Model) renderReviewHistory(label string) string {

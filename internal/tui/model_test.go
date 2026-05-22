@@ -124,7 +124,7 @@ func TestWindowResizeChangesViewShape(t *testing.T) {
 func TestHitboxActivation(t *testing.T) {
 	model := NewModel(&mockRepo{}, &mockScheduler{})
 	model.View()
-	model.activateHitbox("tab-review")
+	model.activateHitboxByID("tab-review")
 	if model.activeView != ViewReview {
 		t.Fatalf("active view = %s, want review", model.activeView)
 	}
@@ -392,7 +392,7 @@ func TestAIDraftMouseApproval(t *testing.T) {
 	model.Update(draftsMsg([]ai.Draft{{Note: note}}))
 	model.View()
 
-	cmd := model.activateHitbox("draft-approve-0")
+	cmd := model.activateHitboxByID("draft-approve-0")
 	if cmd == nil {
 		t.Fatal("draft approval hitbox should return command")
 	}
@@ -1177,7 +1177,7 @@ func TestStatisticsScrollClickAndWheelClampToViewport(t *testing.T) {
 	if maxScroll <= 0 {
 		t.Fatalf("statsMaxScroll = %d, want scrollable content", maxScroll)
 	}
-	model.activateHitbox(fmt.Sprintf("stats-scroll-%d", model.statisticsVisibleLines(model.activeViewContentLayout().Height)-1))
+	model.activateHitboxByID(fmt.Sprintf("stats-scroll-%d", model.statisticsVisibleLines(model.activeViewContentLayout().Height)-1))
 	if model.statsScroll != maxScroll {
 		t.Fatalf("statsScroll after bottom click = %d, want %d", model.statsScroll, maxScroll)
 	}
@@ -1186,7 +1186,7 @@ func TestStatisticsScrollClickAndWheelClampToViewport(t *testing.T) {
 	if model.statsScroll != maxScroll {
 		t.Fatalf("statsScroll after wheel past bottom = %d, want %d", model.statsScroll, maxScroll)
 	}
-	model.activateHitbox("stats-scroll-0")
+	model.activateHitboxByID("stats-scroll-0")
 	if model.statsScroll != 0 {
 		t.Fatalf("statsScroll after top click = %d, want 0", model.statsScroll)
 	}
@@ -1207,11 +1207,11 @@ func TestBrowserAndCramScrollbarHitboxesAlignAndClick(t *testing.T) {
 	browser.browserCards = cards
 	browser.View()
 	assertScrollbarHitboxesAlign(t, browser.View().Content, browser.hitboxes, "browser-scroll-")
-	browser.activateHitbox("browser-scroll-0")
+	browser.activateHitboxByID("browser-scroll-0")
 	if browser.browserCursor != 0 {
 		t.Fatalf("browser top click cursor = %d, want 0", browser.browserCursor)
 	}
-	browser.activateHitbox(fmt.Sprintf("browser-scroll-%d", browser.listVisibleLines(browser.activeViewContentLayout().Height)-1))
+	browser.activateHitboxByID(fmt.Sprintf("browser-scroll-%d", browser.listVisibleLines(browser.activeViewContentLayout().Height)-1))
 	if browser.browserCursor != len(cards)-1 {
 		t.Fatalf("browser bottom click cursor = %d, want last card", browser.browserCursor)
 	}
@@ -1224,11 +1224,11 @@ func TestBrowserAndCramScrollbarHitboxesAlignAndClick(t *testing.T) {
 	cram.cramCards = cards
 	cram.View()
 	assertScrollbarHitboxesAlign(t, cram.View().Content, cram.hitboxes, "cram-scroll-")
-	cram.activateHitbox("cram-scroll-0")
+	cram.activateHitboxByID("cram-scroll-0")
 	if cram.cramCursor != 0 {
 		t.Fatalf("cram top click cursor = %d, want 0", cram.cramCursor)
 	}
-	cram.activateHitbox(fmt.Sprintf("cram-scroll-%d", cram.listVisibleLines(cram.activeViewContentLayout().Height)-1))
+	cram.activateHitboxByID(fmt.Sprintf("cram-scroll-%d", cram.listVisibleLines(cram.activeViewContentLayout().Height)-1))
 	if cram.cramCursor != len(cards)-1 {
 		t.Fatalf("cram bottom click cursor = %d, want last card", cram.cramCursor)
 	}

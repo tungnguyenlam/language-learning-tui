@@ -56,8 +56,8 @@ def test_ai_draft_empty_state(agent: TUIAgent):
     agent.wait_for_text("AI Drafts")
     
     # Verify the new empty state box is there
-    agent.wait_for_text("Ready to create new flashcards")
-    agent.wait_for_text("Type a topic and press Enter to generate.")
+    agent.wait_for_text("Click a topic or type your own")
+    agent.wait_for_text("Tip: be specific")
 
 def test_dashboard_verb_of_the_day(agent: TUIAgent):
     agent.wait_for_text("DASHBOARD")

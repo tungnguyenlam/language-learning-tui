@@ -1,6 +1,6 @@
 # Active Backlog
 
-Last updated: 2026-05-21
+Last updated: 2026-05-22
 
 ## Current Milestone
 
@@ -8,6 +8,7 @@ Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
 
+- [x] **E2E Test Suite Stabilization:** Resolved 18 test failures caused by recent UI refactoring, fixing responsive breakpoints, help overlay clipping, and missing UI elements.
 - [x] **Search Highlights:** Implemented visual feedback for search queries in Browser and Decks views.
 - [x] **UI Corruption Fix:** Resolved terminal wrapping and "ghost" character glitches in Decks view on narrow terminals.
 - [x] **Native TTS Fallback:** Added support for system-native TTS engines (macOS 'say', Linux 'espeak') as a fallback for Edge TTS.
@@ -16,7 +17,7 @@ Polish and Reliability - IN PROGRESS.
 
 ## Exact Next Action
 
-Monitor search highlight performance in very large lists (though currently optimized).
+Look for further codebase improvements (refactoring, new features, or content).
 
 ## Top Issues / Priorities
 
@@ -24,9 +25,7 @@ None.
 
 ## Last Verified
 
-- `go build ./...` passed.
-- `go test ./internal/audio ./internal/content` passed.
-- `pytest e2e_tests/test_may21_improvements.py` passed.
+- `./scripts/verify.sh` passed with 0 test failures (320 passed).
 
 ## Blockers
 

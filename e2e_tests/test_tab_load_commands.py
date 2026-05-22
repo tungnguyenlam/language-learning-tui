@@ -51,7 +51,7 @@ def test_tab_to_cram_loads_bookmarked_cards():
             agent.wait_until_stable()
             agent.wait_for_text("Filter: bookmarked")
             agent.assert_text("> [FC] blau")
-            agent.assert_text("1 cards in cram mode")
+            agent.assert_text("1 cards loaded.")
         finally:
             agent.close()
 

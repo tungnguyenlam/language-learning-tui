@@ -4,57 +4,58 @@ import (
 	"fmt"
 	"strings"
 
+	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
 
 func (m *Model) renderHelp(layout viewportLayout) string {
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).Underline(true)
 	sectionStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("81"))
-	colStyle := lipgloss.NewStyle().PaddingRight(4).Width(layout.Width / 4)
+	colStyle := lipgloss.NewStyle().PaddingRight(4).Width(maxInt(32, layout.Width/4))
 
 	global := sectionStyle.Render("Global:") + "\n" +
-		"  1-9          Switch to view\n" +
-		"  Tab/arrows   Cycle views\n" +
-		"  w/s          Previous/next view\n" +
-		"  ?            Toggle this help\n" +
-		"  q/Ctrl+c     Quit"
+		"  1-9      Switch to view\n" +
+		"  Tab/arr  Cycle views\n" +
+		"  w/s      Prev/next view\n" +
+		"  ?        Toggle help\n" +
+		"  q/Ctrl+c Quit"
 
 	dash := sectionStyle.Render("Dashboard/Decks:") + "\n" +
-		"  [ ]          Previous/next deck\n" +
-		"  /            Search decks\n" +
-		"  L            Edit deck limits\n" +
-		"  +/-          Adjust limits\n" +
-		"  !/@/#        Recent decks\n" +
-		"  Enter        Select deck"
+		"  [ ]      Prev/next deck\n" +
+		"  /        Search decks\n" +
+		"  L        Edit deck limits\n" +
+		"  +/-      Adjust limits\n" +
+		"  !/@/#    Recent decks\n" +
+		"  Enter    Select deck"
 
 	review := sectionStyle.Render("Review:") + "\n" +
-		"  Space/Enter  Reveal answer\n" +
-		"  a/h/g/e      Again/Hard/Good/Easy\n" +
-		"  1-4          Grade or MCQ choice\n" +
-		"  b / B        Bookmark / Filter\n" +
-		"  u / r        Undo / History\n" +
-		"  f / i        Focus / Info\n" +
-		"  p            Play audio\n" +
-		"  d            Dictionary\n" +
-		"  t / x        Type / Suspend\n" +
-		"  h / F        Hint / Fix card"
+		"  Spc/Ent  Reveal answer\n" +
+		"  a/h/g/e  Again/Hard/Good/Easy\n" +
+		"  1-4      Grade/MCQ choice\n" +
+		"  b / B    Bookmark / Filter\n" +
+		"  u / r    Undo / History\n" +
+		"  f / i    Focus / Info\n" +
+		"  p        Play audio\n" +
+		"  d        Dictionary\n" +
+		"  t / x    Type / Suspend\n" +
+		"  h / F    Hint / Fix card"
 
 	browser := sectionStyle.Render("Browser:") + "\n" +
-		"  j/k          Navigate\n" +
-		"  / / #        Search / Tag filter\n" +
-		"  m            Select card\n" +
-		"  b / B        Bookmark / Unmark\n" +
-		"  x / X        Suspend / Unsuspend\n" +
-		"  t / T        Toggle kind / Tags\n" +
-		"  d / Enter    Dict / History\n" +
-		"  C / Del      Cleanup tags / Delete"
+		"  j/k      Navigate\n" +
+		"  / / #    Search/Tag filter\n" +
+		"  m        Select card\n" +
+		"  b / B    Bookmark / Unmark\n" +
+		"  x / X    Suspend / Unsuspend\n" +
+		"  t / T    Toggle kind/Tags\n" +
+		"  d / Ent  Dict / History\n" +
+		"  C / Del  Cleanup tags/Delete"
 
 	other := sectionStyle.Render("Other:") + "\n" +
-		"  Statistics   j/k scroll, x export\n" +
-		"  AI           / topic, a/d drafts\n" +
-		"  Cram         Enter start, 1-5 filter\n" +
-		"  Import       i/I import, x/X export\n" +
-		"  Settings     j/k nav, +/- goal"
+		"  Stats    j/k scroll, x exp\n" +
+		"  AI       / topic, a/d draft\n" +
+		"  Cram     Ent start, 1-5 filter\n" +
+		"  Import   i/I import, x/X exp\n" +
+		"  Settings j/k nav, +/- goal"
 
 	col1 := colStyle.Render(global + "\n\n" + dash)
 	col2 := colStyle.Render(review)
@@ -113,7 +114,7 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 	statsWidth := 0
 	if layout.Width >= 85 {
 		statsWidth = 26
-	} else if layout.Width > 75 {
+	} else if layout.Width >= 70 {
 		statsWidth = 12
 	}
 
@@ -184,7 +185,7 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		}
 
 		var counts string
-		if layout.Width >= 100 {
+		if layout.Width >= 115 {
 			counts = fmt.Sprintf("%s new, %s due, %s total", newStyled, dueStyled, totalStyled)
 		} else {
 			counts = fmt.Sprintf("%sN %sD %sT", newStyled, dueStyled, totalStyled)
@@ -194,7 +195,7 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		statsStr := ""
 		if layout.Width >= 85 {
 			statsStr = fmt.Sprintf(" | today %d, %.0f%% success", deck.ReviewsToday, deck.SuccessRate*100)
-		} else if layout.Width > 75 {
+		} else if layout.Width >= 70 {
 			statsStr = fmt.Sprintf(" | today %d", deck.ReviewsToday)
 		}
 		statsStr = padLine(statsStr, statsWidth)
@@ -272,46 +273,52 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 	if m.searchingDecks {
 		footer = "Press Enter or Esc to finish searching."
 	} else {
-		footer = fmt.Sprintf("%s select | %s search | %s stats | %s multi-select | %s clear",
-			keyStyle.Render("enter"), keyStyle.Render("/"), keyStyle.Render("v"), keyStyle.Render("x"), keyStyle.Render("Esc"))
+		selectedCount := 0
+		for _, s := range m.deckSelected {
+			if s {
+				selectedCount++
+			}
+		}
+		if selectedCount > 0 {
+			footer = fmt.Sprintf("%d decks selected. Press %s to delete, %s to merge into current.", selectedCount,
+				keyStyle.Render("Backspace"), keyStyle.Render("M"))
+		} else {
+			footer = fmt.Sprintf("%s select | %s search | %s stats | %s multi-select | %s clear\nPress enter to select deck.",
+				keyStyle.Render("enter"), keyStyle.Render("/"), keyStyle.Render("v"), keyStyle.Render("x"), keyStyle.Render("Esc"))
+		}
 	}
 
-	listView := m.renderScrollable(layout.WithHeight(availableHeight), content.String(), m.deckScroll, scrollableOptions{
-		hitboxPrefix: "deck",
-		view:         ViewDecks,
-		footer:       footer,
-		onLine: func(lineIndex int, rY int, content string) {
+	listView := m.RenderList(layout.WithHeight(availableHeight).WithY(layout.Y+strings.Count(b.String(), "\n")), content.String(), ListOptions{
+		HitboxPrefix: "deck",
+		View:         ViewDecks,
+		Footer:       footer,
+		ScrollOffset: &m.deckScroll,
+		TotalLines:   &m.deckTotalLines,
+		OnLine: func(lineIndex int, lineCtx *RenderContext, content string) {
 			if lineIndex < 0 || lineIndex >= len(lines) {
 				return
 			}
 			li := lines[lineIndex]
 			if li.kind == "main" {
-				m.hitboxes = append(m.hitboxes, Hitbox{
-					ID:     fmt.Sprintf("deck-select-%d", li.deckIdx),
-					View:   ViewDecks,
-					X:      layout.X,
-					Y:      rY,
-					Width:  lipgloss.Width(li.label),
-					Height: 1,
+				deck := filteredDecks[li.deckIdx]
+				lineCtx.RegisterHitboxWithAction(fmt.Sprintf("deck-select-%d", li.deckIdx), lipgloss.Width(li.label), 1, func() tea.Cmd {
+					m.selectDeckByID(deck.ID)
+					return m.updateView(ViewDashboard)
 				})
 				if li.study != "" {
-					m.hitboxes = append(m.hitboxes, Hitbox{
-						ID:     fmt.Sprintf("deck-study-%d", li.deckIdx),
-						View:   ViewDecks,
-						X:      layout.X + lipgloss.Width(li.label),
-						Y:      rY,
-						Width:  lipgloss.Width(li.study),
-						Height: 1,
+					lineCtx.RegisterHitboxAtWithAction(fmt.Sprintf("deck-study-%d", li.deckIdx), lipgloss.Width(li.label), 0, lipgloss.Width(li.study), 1, func() tea.Cmd {
+						m.selectDeckByID(deck.ID)
+						return m.updateView(ViewReview)
 					})
 				}
 				if li.cram != "" {
-					m.hitboxes = append(m.hitboxes, Hitbox{
-						ID:     fmt.Sprintf("deck-cram-%d", li.deckIdx),
-						View:   ViewDecks,
-						X:      layout.X + lipgloss.Width(li.label) + lipgloss.Width(li.study),
-						Y:      rY,
-						Width:  lipgloss.Width(li.cram),
-						Height: 1,
+					lineCtx.RegisterHitboxAtWithAction(fmt.Sprintf("deck-cram-%d", li.deckIdx), lipgloss.Width(li.label)+lipgloss.Width(li.study), 0, lipgloss.Width(li.cram), 1, func() tea.Cmd {
+						m.selectDeckByID(deck.ID)
+						m.cramType = "flagged"
+						return tea.Sequence(
+							m.updateView(ViewCram),
+							m.loadCramCards(),
+						)
 					})
 				}
 			}

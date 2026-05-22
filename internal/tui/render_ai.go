@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
 
@@ -12,7 +13,8 @@ func (m *Model) renderAI(x, y int) string {
 	style := panelStyle.Width(width).Height(height)
 	layout := contentLayoutForStyle(style, x, y)
 
-	var b strings.Builder
+	ctx := NewRenderContext(m, layout, ViewAI)
+
 	spinner := ""
 	if m.drafting {
 		// Enhanced spinner with more visual appeal
@@ -39,29 +41,31 @@ func (m *Model) renderAI(x, y int) string {
 	if m.drafting {
 		currTitleStyle = currTitleStyle.Foreground(colorBlue)
 	}
-	b.WriteString(currTitleStyle.Render("AI Drafts") + spinner)
+	ctx.WriteLine(currTitleStyle.Render("AI Drafts") + spinner)
 	if len(m.drafts) > 0 {
 		countStyle := lipgloss.NewStyle().Foreground(colorPink).Bold(true)
-		b.WriteString(" " + countStyle.Render(fmt.Sprintf("[%d pending]", len(m.drafts))))
+		ctx.Write(" " + countStyle.Render(fmt.Sprintf("[%d pending]", len(m.drafts))))
 	}
-	b.WriteString("\n\n")
-	b.WriteString(fmt.Sprintf("Deck: %s\nTemplate: %s (use [ / ])\n", m.deckLabel(), templateName))
+	ctx.NewLine()
+	ctx.NewLine()
+	ctx.WriteLine(fmt.Sprintf("Deck: %s\nTemplate: %s (use [ / ])", m.deckLabel(), templateName))
 	displayText := m.aiInput + "_"
 	if m.aiInput == "" && !m.searchingAI {
 		displayText = mutedStyle.Render("(e.g., business email, doctor visit, apartment viewing)") + "_"
 	}
-	b.WriteString(searchStyle.Render(fmt.Sprintf("%s: %s", searchLabel, displayText)) + "\n")
-	b.WriteString(fmt.Sprintf("\nPress %s to edit topic | %s generate | %s approve | %s discard | %s clear\n",
+	ctx.WriteLine(searchStyle.Render(fmt.Sprintf("%s: %s", searchLabel, displayText)))
+	ctx.WriteLine(fmt.Sprintf("\nPress %s to edit topic | %s generate | %s approve | %s discard | %s clear",
 		keyStyle.Render("/"), keyStyle.Render("Enter"), keyStyle.Render("a"), keyStyle.Render("d"), keyStyle.Render("esc")))
 	if m.aiProvider == nil {
-		b.WriteString(warnStyle.Render("AI provider is disabled. Enable Offline or Template in Settings to generate drafts.") + "\n")
+		ctx.WriteLine(warnStyle.Render("AI provider is disabled. Enable Offline or Template in Settings to generate drafts."))
 	}
 
-	b.WriteString(mutedStyle.Render("Tip: include level and use case, e.g. B1 workplace small talk with 2 examples.") + "\n")
+	ctx.WriteLine(mutedStyle.Render("Tip: include level and use case, e.g. B1 workplace small talk with 2 examples."))
 
 	// Suggested Topics Section
 	if (m.aiInput == "" || m.aiInput == "der Kaffee") && len(m.drafts) == 0 {
-		b.WriteString("\n" + infoStyle.Bold(true).Render("Click a topic or type your own, then press Enter:") + "\n")
+		ctx.WriteLine("\n" + infoStyle.Bold(true).Render("Click a topic or type your own, then press Enter:"))
+
 		suggestions := []struct {
 			topic string
 			desc  string
@@ -130,53 +134,51 @@ func (m *Model) renderAI(x, y int) string {
 			MarginRight(1)
 		descStyle := lipgloss.NewStyle().Foreground(colorMuted)
 
-		lineY := layout.Y + strings.Count(b.String(), "\n")
-		currentX := layout.X
 		maxLineWidth := maxInt(24, layout.Width-2)
 
 		for i, s := range suggestions[:visibleSuggestions] {
 			separator := ""
-			if currentX > layout.X {
+			if ctx.currX > layout.X {
 				separator = "  "
 			}
 			label := s.topic
 			labelWidth := lipgloss.Width(separator) + lipgloss.Width(label)
-			if currentX > layout.X && currentX-layout.X+labelWidth > maxLineWidth {
-				b.WriteString("\n")
-				lineY++
-				currentX = layout.X
+
+			if ctx.currX > layout.X && ctx.currX-layout.X+labelWidth > maxLineWidth {
+				ctx.NewLine()
 				separator = ""
 				labelWidth = lipgloss.Width(label)
 			}
-			b.WriteString(separator)
-			b.WriteString(suggestionStyle.Render(s.topic))
+
+			ctx.Write(separator)
+			topic := s.topic
+			ctx.RegisterHitboxWithAction("ai-topic-"+s.topic, lipgloss.Width(s.topic), 1, func() tea.Cmd {
+				m.aiInput = topic
+				m.drafts = nil
+				m.draftCursor = 0
+				return m.startDrafting()
+			})
+			ctx.Write(suggestionStyle.Render(s.topic))
+
 			if layout.Width >= 118 && i < 8 {
 				desc := descStyle.Render(" (" + s.desc + ")")
-				if currentX-layout.X+labelWidth+lipgloss.Width(desc) <= maxLineWidth {
-					b.WriteString(desc)
-					labelWidth += lipgloss.Width(desc)
+				if ctx.currX-layout.X+lipgloss.Width(desc) <= maxLineWidth {
+					ctx.Write(desc)
 				}
 			}
-			m.hitboxes = append(m.hitboxes, Hitbox{
-				ID:     "ai-topic-" + s.topic,
-				View:   ViewAI,
-				X:      currentX + lipgloss.Width(separator),
-				Y:      lineY,
-				Width:  lipgloss.Width(s.topic),
-				Height: 1,
-			})
-			currentX += labelWidth
 		}
-		b.WriteString("\n")
+		ctx.NewLine()
 		if visibleSuggestions < len(suggestions) {
-			b.WriteString(mutedStyle.Render(fmt.Sprintf("Showing %d of %d suggestions. Type any topic for a custom draft.", visibleSuggestions, len(suggestions))) + "\n")
+			ctx.WriteLine(mutedStyle.Render(fmt.Sprintf("Showing %d of %d suggestions. Type any topic for a custom draft.", visibleSuggestions, len(suggestions))))
 		}
-		b.WriteString(mutedStyle.Render("Tip: be specific (level, situation, examples) for better results.") + "\n")
+		ctx.WriteLine(mutedStyle.Render("Tip: be specific (level, situation, examples) for better results."))
+
+		return ctx.String()
 	}
 
 	if len(m.drafts) == 0 {
 		if m.drafting {
-			b.WriteString("\n" + infoStyle.Bold(true).Render("AI is crafting flashcards...") + spinner)
+			ctx.WriteLine("\n" + infoStyle.Bold(true).Render("AI is crafting flashcards...") + spinner)
 		} else {
 			emptyBox := lipgloss.NewStyle().
 				Border(lipgloss.RoundedBorder()).
@@ -185,9 +187,9 @@ func (m *Model) renderAI(x, y int) string {
 				Render(infoStyle.Bold(true).Render("✨ Ready to create new flashcards!") + "\n" +
 					mutedStyle.Render("No drafts yet. Type a topic and press Enter to generate.") + "\n" +
 					mutedStyle.Render("Tip: include level and use case, e.g. B1 workplace small talk."))
-			b.WriteString("\n" + emptyBox + "\n")
+			ctx.WriteLine("\n" + emptyBox)
 		}
-		return b.String()
+		return ctx.String()
 	}
 
 	start := 0
@@ -250,14 +252,15 @@ func (m *Model) renderAI(x, y int) string {
 	listBox := listBoxStyle.Render(listBuilder.String())
 
 	// Re-calculate hitboxes for the list items
-	listY := layout.Y + strings.Count(b.String(), "\n") + listBoxStyle.GetBorderTopSize() + listBoxStyle.GetPaddingTop()
+	ctx.NewLine()
+	listY := ctx.currY + listBoxStyle.GetBorderTopSize() + listBoxStyle.GetPaddingTop()
 	for i := start; i < end; i++ {
-		draft := m.drafts[i]
+		draftIdx := i
 		prefix := "  "
 		if i == m.draftCursor {
 			prefix = "> "
 		}
-		item := fmt.Sprintf("%s%s -> %s", prefix, draft.Note.Front, truncateLine(draft.Note.Back, 40))
+		item := fmt.Sprintf("%s%s -> %s", prefix, m.drafts[i].Note.Front, truncateLine(m.drafts[i].Note.Back, 40))
 		itemWidth := lipgloss.Width(item)
 
 		approveBtn := " [Approve]"
@@ -274,6 +277,10 @@ func (m *Model) renderAI(x, y int) string {
 			Y:      rowY,
 			Width:  lipgloss.Width(approveBtn),
 			Height: 1,
+			Action: func() tea.Cmd {
+				m.draftCursor = draftIdx
+				return m.approveDraft()
+			},
 		})
 		m.hitboxes = append(m.hitboxes, Hitbox{
 			ID:     fmt.Sprintf("draft-discard-%d", i),
@@ -282,10 +289,14 @@ func (m *Model) renderAI(x, y int) string {
 			Y:      rowY,
 			Width:  lipgloss.Width(discardBtn),
 			Height: 1,
+			Action: func() tea.Cmd {
+				m.draftCursor = draftIdx
+				return m.discardDraft()
+			},
 		})
 	}
 
-	b.WriteString("\n" + listBox + "\n")
+	ctx.WriteLine(listBox)
 
 	// Show detailed preview for selected draft
 	if len(m.drafts) > 0 && m.draftCursor < len(m.drafts) {
@@ -312,11 +323,12 @@ func (m *Model) renderAI(x, y int) string {
 			Padding(0, 1).
 			Width(maxInt(40, width-10)).
 			Render(previewContent)
-		b.WriteString("\n" + previewBox + "\n")
+		ctx.NewLine()
+		ctx.WriteLine(previewBox)
 	}
 
 	if len(m.drafts) > maxVisible {
-		b.WriteString(fmt.Sprintf("\n(Showing %d-%d of %d)", start+1, end, len(m.drafts)))
+		ctx.WriteLine(fmt.Sprintf("\n(Showing %d-%d of %d)", start+1, end, len(m.drafts)))
 	}
-	return b.String()
+	return ctx.String()
 }

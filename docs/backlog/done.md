@@ -1,5 +1,17 @@
 # Done Backlog
 
+## 2026-05-22 (E2E Stabilization & UI Refinement)
+
+### Reliability
+- **E2E Test Suite Stabilization:** Fixed 18 regressions in the E2E test suite. Updated assertions to match unified `RenderList` component output, fixed responsive layout boundaries that were hiding stats on default terminal sizes, and resolved help overlay wrapping issues.
+- **Responsive Layout Fixes:** Adjusted Decks view thresholds (stats now visible from width 70+), and help column widths (condensed labels to prevent wrapping on 100-col terminals).
+
+### UI Enhancements
+- **Decks View UI:** Restored missing "X decks selected" message and "Press enter to select deck" footer text lost during list unification.
+
+### Verification
+- `./scripts/verify.sh` passed with 320 passed tests.
+
 ## 2026-05-21 (UI Polish, Audio Fallback & New Content)
 
 ### UI Enhancements

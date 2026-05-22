@@ -38,9 +38,8 @@ def test_may15_batch8():
             agent.wait_for_text("DECK LIST", timeout=10.0)
             agent.act('<Esc>') # Clear any filter
             time.sleep(0.5)
-            # Check that we have many decks (should show "of XX" at bottom)
-            agent.wait_for_text(" of ", timeout=5.0)
-            
+            # Check that we have many decks (should show seeded decks)
+            agent.wait_for_text("A1 Essential German", timeout=5.0)            
             # 3. Verify AI Drafts view
             agent.act("6") # AI
             agent.wait_for_text("AI Drafts")

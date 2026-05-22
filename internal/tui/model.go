@@ -67,6 +67,11 @@ func (l viewportLayout) WithHeight(h int) viewportLayout {
 	return l
 }
 
+func (l viewportLayout) WithY(y int) viewportLayout {
+	l.Y = y
+	return l
+}
+
 type Model struct {
 	repo                  core.Repository
 	scheduler             core.Scheduler
@@ -763,7 +768,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.dragTotal = m.settingsTotalLines
 						}
 					}
-					cmd := m.activateHitbox(hit.ID)
+					cmd := m.activateHitbox(hit)
 					return m, cmd
 				}
 			}

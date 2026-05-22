@@ -6,6 +6,7 @@ import (
 
 	"deutsch-tui/internal/core"
 
+	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
 
@@ -14,8 +15,9 @@ func (m *Model) renderCram() string {
 }
 
 func (m *Model) renderCramAt(layout viewportLayout) string {
+	ctx := NewRenderContext(m, layout, ViewCram)
+
 	if m.cramActive && len(m.cramCards) > 0 && m.cramCursor < len(m.cramCards) {
-		var b strings.Builder
 		card := m.cramCards[m.cramCursor]
 		audioIndicator := ""
 		if card.Audio != "" {
@@ -32,14 +34,15 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		cramBar := progressBar(15, cramPercentage, "81", "238")
 
 		titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
-		header := fmt.Sprintf("%s | %s %d/%d\n", titleStyle.Render("Cram Review"), cramBar, m.cramCursor+1, len(m.cramCards))
-		b.WriteString(header)
+		header := fmt.Sprintf("%s | %s %d/%d", titleStyle.Render("Cram Review"), cramBar, m.cramCursor+1, len(m.cramCards))
+		ctx.WriteLine(header)
 
 		deckMeta := fmt.Sprintf("Deck: %s | Type: %s", m.deckNameByID(card.DeckID), card.Kind)
 		if len(card.Tags) > 0 {
 			deckMeta += " | Tags: #" + strings.Join(card.Tags, " #")
 		}
-		b.WriteString(deckMeta + "\n\n")
+		ctx.WriteLine(deckMeta)
+		ctx.NewLine()
 
 		width := layout.Width
 		cardWidth := maxInt(30, width-6)
@@ -93,29 +96,27 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 			answer = "Press Space or Enter to reveal."
 		}
 
-		b.WriteString(cardStyle.Render(promptDisplay + "\n\n" + answer))
+		ctx.WriteLine(cardStyle.Render(promptDisplay + "\n\n" + answer))
 
 		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-		b.WriteString(fmt.Sprintf("\n\n%s play audio | %s to exit cram review.", keyStyle.Render("p"), keyStyle.Render("q")))
+		ctx.WriteLine(fmt.Sprintf("\n%s play audio | %s to exit cram review.", keyStyle.Render("p"), keyStyle.Render("q")))
 
-		res := b.String()
+		res := ctx.String()
 		if m.cramRevealed {
 			res += "\x1b[8mcramRevealed\x1b[0m"
 		}
 		return res
 	}
 
-	var b strings.Builder
 	filterTitleStyle := lipgloss.NewStyle().Bold(true).Foreground(colorCyan)
-	b.WriteString(filterTitleStyle.Render("Cram Mode") + "\n")
-	b.WriteString(fmt.Sprintf("Deck: %s | ", m.deckLabel()))
-	b.WriteString(fmt.Sprintf("Filter: %s", successStyle.Render(m.cramType)))
-	b.WriteString("\n\n")
+	ctx.WriteLine(filterTitleStyle.Render("Cram Mode"))
+	ctx.WriteLine(fmt.Sprintf("Deck: %s | Filter: %s", m.deckLabel(), successStyle.Render(m.cramType)))
+	ctx.NewLine()
 	if len(m.cramCards) == 0 {
-		b.WriteString("No cards found for this filter.\n\n")
+		ctx.WriteLine("No cards found for this filter.\n")
 	}
 
-	b.WriteString("Click a filter to load cards:\n")
+	ctx.WriteLine("Click a filter to load cards:")
 	filters := []struct {
 		id    string
 		label string
@@ -136,22 +137,15 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 	for i, f := range filters {
 		idx := i + 1
 		item := fmt.Sprintf("  %d: %s", idx, f.label)
-		rowY := layout.Y + strings.Count(b.String(), "\n")
-		b.WriteString(filterStyle.Render(item) + "\n")
-
-		m.hitboxes = append(m.hitboxes, Hitbox{
-			ID:     f.id,
-			View:   ViewCram,
-			X:      layout.X,
-			Y:      rowY,
-			Width:  lipgloss.Width(item) + 2,
-			Height: 1,
+		ctx.RegisterHitboxWithAction(f.id, lipgloss.Width(item)+2, 1, func() tea.Cmd {
+			return m.setCramFilter(idx)
 		})
+		ctx.WriteLine(filterStyle.Render(item))
 	}
 
 	if len(m.cramCards) > 0 {
-		b.WriteString(fmt.Sprintf("\n%d cards loaded.\n", len(m.cramCards)))
-		b.WriteString("Press enter to start cramming.\n")
+		ctx.WriteLine(fmt.Sprintf("\n%d cards loaded.", len(m.cramCards)))
+		ctx.WriteLine("Press enter to start cramming.")
 	}
 
 	var content strings.Builder
@@ -208,37 +202,34 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 	contentStr := content.String()
 	totalLines := len(m.cramCards)
 
-	headerLines := strings.Count(b.String(), "\n")
-	availableHeight := m.listVisibleLines(layout.Height) - headerLines
+	availableHeight := m.listVisibleLines(layout.Height) - (ctx.currY - layout.Y)
 	if availableHeight < 5 {
 		availableHeight = 5
 	}
 
 	// Auto-scroll
-	if m.cramCursor < m.cramScroll {
-		m.cramScroll = m.cramCursor
-	} else if m.cramCursor >= m.cramScroll+availableHeight {
-		m.cramScroll = m.cramCursor - availableHeight + 1
-	}
-	m.cramScroll = clampInt(m.cramScroll, 0, maxInt(0, totalLines-availableHeight))
+	m.cramScroll = AutoScroll(m.cramCursor, m.cramScroll, availableHeight, totalLines)
 
-	listView := m.renderScrollable(layout.WithHeight(availableHeight), contentStr, m.cramScroll, scrollableOptions{
-		hitboxPrefix: "cram",
-		view:         ViewCram,
+	listView := m.RenderList(layout.WithHeight(availableHeight).WithY(ctx.currY), contentStr, ListOptions{
+		HitboxPrefix: "cram",
+		View:         ViewCram,
+		ScrollOffset: &m.cramScroll,
 	})
-	b.WriteString(listView)
+
+	ctx.Write(listView)
 
 	if m.cramReviewed > 0 {
 		accuracy := 0.0
 		if m.cramReviewed > 0 {
 			accuracy = float64(m.cramCorrect) / float64(m.cramReviewed) * 100
 		}
-		b.WriteString(fmt.Sprintf("\nCram Stats: %d reviewed, %d correct (%.1f%%)\n", m.cramReviewed, m.cramCorrect, accuracy))
+		ctx.WriteLine(fmt.Sprintf("\nCram Stats: %d reviewed, %d correct (%.1f%%)", m.cramReviewed, m.cramCorrect, accuracy))
 	}
-	b.WriteString(fmt.Sprintf("\nUse %s/%s to navigate. Type %s for filter. %s to quit.\n",
+	ctx.WriteLine(fmt.Sprintf("\nUse %s/%s to navigate. Type %s for filter. %s to quit.",
 		lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("j"),
 		lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("k"),
 		lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("1-5"),
 		lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("q")))
-	return b.String()
+
+	return ctx.String()
 }

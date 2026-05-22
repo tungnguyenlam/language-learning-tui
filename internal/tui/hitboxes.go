@@ -16,6 +16,7 @@ type Hitbox struct {
 	Y      int
 	Width  int
 	Height int
+	Action func() tea.Cmd
 }
 
 func (h Hitbox) Contains(x, y int) bool {
@@ -31,7 +32,14 @@ func (m *Model) hitboxAt(x, y int) (Hitbox, bool) {
 	return Hitbox{}, false
 }
 
-func (m *Model) activateHitbox(id string) tea.Cmd {
+func (m *Model) activateHitbox(h Hitbox) tea.Cmd {
+	if h.Action != nil {
+		return h.Action()
+	}
+	return m.activateHitboxByID(h.ID)
+}
+
+func (m *Model) activateHitboxByID(id string) tea.Cmd {
 	switch {
 	case strings.HasPrefix(id, "nav-"):
 		return m.updateView(View(strings.TrimPrefix(id, "nav-")))
