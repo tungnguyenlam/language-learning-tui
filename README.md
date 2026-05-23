@@ -117,19 +117,36 @@ For full repo verification (optional): Python 3 with `pytest` / `pytest-xdist` f
 
 ### 🚀 Installation
 
-**One-liner (macOS/Linux):**
+**macOS / Linux (Homebrew):**
+```bash
+brew install tungnguyenlam/tap/deutsch-tui
+```
 
+**Windows (WinGet):**
+```powershell
+winget install tungnguyenlam.deutsch-tui
+```
+
+**Debian / Ubuntu (APT):**
+```bash
+echo "deb [trusted=yes] https://apt.fury.io/tungnguyenlam/ /" | sudo tee /etc/apt/sources.list.d/fury.list
+sudo apt update
+sudo apt install deutsch-tui
+```
+
+**Direct Script Install:**
+
+One-liner (macOS/Linux):
 ```bash
 curl -sSL https://raw.githubusercontent.com/tungnguyenlam/language-learning-tui/refs/heads/main/scripts/install.sh | bash
 ```
 
-**One-liner (Windows PowerShell):**
-
+One-liner (Windows PowerShell):
 ```powershell
 irm https://raw.githubusercontent.com/tungnguyenlam/language-learning-tui/refs/heads/main/scripts/install.ps1 | iex
 ```
 
-> **Note:** This installs the `deutsch-tui` binary to `~/.local/bin` (or `%USERPROFILE%\.local\bin` on Windows). Ensure this directory is in your system `$PATH`. Once installed, you can start the app by simply running `deutsch-tui` in your terminal.
+> **Note:** Script installs place the `deutsch-tui` binary in `~/.local/bin` (or `%USERPROFILE%\.local\bin` on Windows). Ensure this directory is in your system `$PATH`. Once installed, you can start the app by simply running `deutsch-tui` in your terminal.
 
 **From source:**
 
@@ -286,9 +303,9 @@ Issues and PRs are welcome. Run `./scripts/verify.sh` before submitting (Go test
 
 ## 📦 Releases
 
-Binaries are available for macOS, Linux, and Windows on the [Releases](https://github.com/tungnguyenlam/language-learning-tui/releases) page.
+Binaries are automatically built and published for macOS, Linux, and Windows on the [Releases](https://github.com/tungnguyenlam/language-learning-tui/releases) page via GoReleaser.
 
-We are working on bringing **deutsch-tui** to Homebrew, WinGet, and APT. If you'd like to help, please see the [Distribution Strategy](docs/ops/distribution.md) (coming soon).
+Packages are also automatically distributed to Homebrew, WinGet, and our APT repository upon every new release.
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
