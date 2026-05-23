@@ -120,7 +120,7 @@ For full repo verification (optional): Python 3 with `pytest` / `pytest-xdist` f
 **One-liner (macOS/Linux):**
 
 ```bash
-curl -sSL https://raw.githubusercontent.com/tungnguyenlam/language-learning-tui/main/scripts/install.sh | bash
+curl -sSL https://raw.githubusercontent.com/tungnguyenlam/language-learning-tui/refs/heads/main/scripts/install.sh | bash
 ```
 
 **From source:**
