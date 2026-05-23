@@ -1,0 +1,78 @@
+version: 2
+
+project_name: deutsch-tui
+
+builds:
+  - main: ./cmd/deutsch-tui
+    binary: deutsch-tui
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w
+
+# We use the 'binary' format to upload raw executables instead of zip/tar.gz
+# This ensures our curl and PowerShell install scripts continue to work seamlessly.
+archives:
+  - format: binary
+    name_template: "{{ .ProjectName }}-{{ if eq .Os \"darwin\" }}macos{{ else }}{{ .Os }}{{ end }}-{{ .Arch }}"
+
+checksum:
+  name_template: "SHA256SUMS"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+
+# Package for Debian/Ubuntu (APT) and RedHat (RPM)
+nfpms:
+  - file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    vendor: tungnguyenlam
+    homepage: https://github.com/tungnguyenlam/language-learning-tui
+    maintainer: tungnguyenlam
+    description: A terminal-native German flashcard and quiz app.
+    license: MIT
+    formats:
+      - deb
+      - rpm
+
+# Prepare for WinGet
+# Currently this generates the manifest locally. 
+# See comments below to automate publishing to microsoft/winget-pkgs.
+winget:
+  - name: deutsch-tui
+    publisher: tungnguyenlam
+    title: deutsch-tui
+    short_description: Terminal-native German flashcard app.
+    description: A terminal-native German flashcard and quiz app with FSRS scheduling.
+    tags:
+      - flashcards
+      - german
+      - terminal
+      - tui
+    license: MIT
+    publisher_support_url: https://github.com/tungnguyenlam/language-learning-tui/issues
+    package_identifier: tungnguyenlam.deutsch-tui
+    # To automatically open a PR on the official Microsoft WinGet repo:
+    # 1. Generate a GitHub PAT with repo permissions
+    # 2. Add it to your repository secrets as WINGET_GITHUB_TOKEN
+    # 3. Uncomment the section below:
+    # repository:
+    #   github:
+    #     owner: microsoft
+    #     name: winget-pkgs
+    #     branch: "deutsch-tui-{{ .Version }}"
+    #     pull_request:
+    #       base: master
+    #     token: "{{ .Env.WINGET_GITHUB_TOKEN }}"

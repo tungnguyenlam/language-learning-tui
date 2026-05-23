@@ -8,81 +8,27 @@ on:
 permissions:
   contents: write
 
-concurrency:
-  group: release-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - runner: ubuntu-latest
-            goos: linux
-            goarch: amd64
-            binary: deutsch-tui-linux-amd64
-          - runner: macos-latest
-            goos: darwin
-            goarch: arm64
-            binary: deutsch-tui-macos-arm64
-          - runner: windows-latest
-            goos: windows
-            goarch: amd64
-            binary: deutsch-tui-windows-amd64.exe
-
-    runs-on: ${{ matrix.runner }}
-    defaults:
-      run:
-        shell: bash
-
-    env:
-      GOOS: ${{ matrix.goos }}
-      GOARCH: ${{ matrix.goarch }}
-      CGO_ENABLED: "0"
-
+  goreleaser:
+    runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Fetch all history so GoReleaser can generate an accurate changelog
+          fetch-depth: 0
 
-      - uses: actions/setup-go@v5
+      - name: Set up Go
+        uses: actions/setup-go@v5
         with:
           go-version-file: go.mod
           cache: true
 
-      - name: Build
-        run: go build -trimpath -ldflags="-s -w" -o "${{ matrix.binary }}" ./cmd/deutsch-tui
-
-      - uses: actions/upload-artifact@v4
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
         with:
-          name: ${{ matrix.binary }}
-          path: ${{ matrix.binary }}
-          if-no-files-found: error
-
-  release:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          path: dist
-          pattern: deutsch-tui-*
-          merge-multiple: true
-
-      - name: SHA256 checksums
-        working-directory: dist
-        run: |
-          sha256sum deutsch-tui-linux-amd64 \
-            deutsch-tui-macos-arm64 \
-            deutsch-tui-windows-amd64.exe \
-            > SHA256SUMS
-          cat SHA256SUMS
-
-      - uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ github.ref_name }}
-          generate_release_notes: true
-          files: |
-            dist/deutsch-tui-linux-amd64
-            dist/deutsch-tui-macos-arm64
-            dist/deutsch-tui-windows-amd64.exe
-            dist/SHA256SUMS
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
