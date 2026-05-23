@@ -110,12 +110,22 @@ func (m *Model) renderStatistics(layout viewportLayout) string {
 	col1Str := col1.String()
 	col2Str := col2.String()
 	maxWidth := layout.Width
-	colWidth := (maxWidth - 4) / 2
+	isNarrow := maxWidth < 70
 
-	joinedCols := lipgloss.JoinHorizontal(lipgloss.Top,
-		lipgloss.NewStyle().Width(colWidth).Render(col1Str),
-		lipgloss.NewStyle().PaddingLeft(4).Render(col2Str),
-	)
+	var joinedCols string
+	if isNarrow {
+		joinedCols = lipgloss.JoinVertical(lipgloss.Left,
+			lipgloss.NewStyle().Width(maxWidth-2).Render(col1Str),
+			"\n",
+			lipgloss.NewStyle().Width(maxWidth-2).Render(col2Str),
+		)
+	} else {
+		colWidth := (maxWidth - 4) / 2
+		joinedCols = lipgloss.JoinHorizontal(lipgloss.Top,
+			lipgloss.NewStyle().Width(colWidth).Render(col1Str),
+			lipgloss.NewStyle().PaddingLeft(4).Render(col2Str),
+		)
+	}
 
 	var content strings.Builder
 	content.WriteString(joinedCols + "\n")

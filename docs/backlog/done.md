@@ -1,5 +1,25 @@
 # Done Backlog
 
+## 2026-05-23 (Dashboard, Deduplication & UX)
+
+### Code Maintenance & Deduplication
+- **Browser Action Consolidation:** Introduced `executeBulkAction` and `executeSingleAction` in `handlers.go`. These helpers significantly reduced boilerplate for deck/card operations (bookmarking, suspending, kind-toggling) by centralizing context management and state refreshes.
+- **Shared Utilities:** Moved `formatReviewInterval` and `renderReviewHistory` to common files (`utils.go` and `render_views.go`). This ensures that card metadata and review logs are formatted identically whether viewed in the Review screen or the Browser.
+- **RenderContext API:** Enhanced `RenderContext` with `WriteAction` and `RegisterAction`. These methods simplify the creation of interactive, clickable UI components by linking visual labels with their mouse hitboxes in a single call.
+
+### UI & Interactivity
+- **Dashboard Mouse Support:** Added precise hitboxes for recently studied decks, allowing users to jump straight to review for those decks with a mouse click.
+- **Interactive Quick Actions:** Made the "Quick Actions" row on the Dashboard interactive via mouse hitboxes, consistent with the keyboard shortcuts.
+- **Dashboard Layout Polish:** Refined the spacing and alignment of Dashboard elements for better visual hierarchy.
+
+### Content
+- **False Friends Mastery Deck:** Added a new specialized deck focusing on "Falsche Freunde" (words that look like English but have different meanings).
+- **Registry Integration:** Properly registered the new deck in the standard content source.
+
+### Testing & Verification
+- **New E2E Test Suite:** Added `e2e_tests/test_may23_improvements.py` verifying the full flow of seeding content, searching for the new deck, and using dashboard shortcuts.
+- **All Tests Passing:** `go test ./...` and `pytest e2e_tests/` passed with 332 tests.
+
 ## 2026-05-22 (E2E Stabilization & UI Refinement)
 
 ### Reliability

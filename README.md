@@ -117,7 +117,13 @@ For full repo verification (optional): Python 3 with `pytest` / `pytest-xdist` f
 
 ### 🚀 Installation
 
-**From source** (clone, run):
+**One-liner (macOS/Linux):**
+
+```bash
+curl -sSL https://raw.githubusercontent.com/tungnguyenlam/language-learning-tui/main/scripts/install.sh | bash
+```
+
+**From source:**
 
 ```bash
 git clone https://github.com/tungnguyenlam/language-learning-tui.git
@@ -272,7 +278,9 @@ Issues and PRs are welcome. Run `./scripts/verify.sh` before submitting (Go test
 
 ## 📦 Releases
 
-There are **no GitHub Releases** yet. Use **`make build`** to produce **`./deutsch-tui-bin`** at the repo root (same artifact E2E tests expect via `DEUTSCH_TUI_BIN`), or run from source as in [Installation](#-installation).
+Binaries are available for macOS, Linux, and Windows on the [Releases](https://github.com/tungnguyenlam/language-learning-tui/releases) page.
+
+We are working on bringing **deutsch-tui** to Homebrew, WinGet, and APT. If you'd like to help, please see the [Distribution Strategy](docs/ops/distribution.md) (coming soon).
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 

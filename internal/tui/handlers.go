@@ -106,39 +106,15 @@ func (m *Model) toggleBrowserBookmark() tea.Cmd {
 }
 
 func (m *Model) bulkBrowserBookmark(bookmarked bool) tea.Cmd {
-	selectedIDs := m.getSelectedCardIDs()
-	if len(selectedIDs) == 0 {
-		return nil
-	}
-	m.status = "Bulk bookmarking..."
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		for _, id := range selectedIDs {
-			if err := m.repo.SetCardBookmark(ctx, id, bookmarked); err != nil {
-				return err
-			}
-		}
-		return m.loadBrowserCards()()
-	}
+	return m.executeBulkAction("Bulk bookmarking...", func(ctx context.Context, id string) error {
+		return m.repo.SetCardBookmark(ctx, id, bookmarked)
+	})
 }
 
 func (m *Model) bulkBrowserSuspend(suspended bool) tea.Cmd {
-	selectedIDs := m.getSelectedCardIDs()
-	if len(selectedIDs) == 0 {
-		return nil
-	}
-	m.status = "Bulk suspending..."
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		for _, id := range selectedIDs {
-			if err := m.repo.SetCardSuspended(ctx, id, suspended); err != nil {
-				return err
-			}
-		}
-		return m.loadBrowserCards()()
-	}
+	return m.executeBulkAction("Bulk suspending...", func(ctx context.Context, id string) error {
+		return m.repo.SetCardSuspended(ctx, id, suspended)
+	})
 }
 
 func (m *Model) handleTagInput() tea.Cmd {
@@ -201,22 +177,10 @@ func (m *Model) bulkBrowserDelete() tea.Cmd {
 }
 
 func (m *Model) executeBulkBrowserDelete() tea.Cmd {
-	selectedIDs := m.getSelectedCardIDs()
-	if len(selectedIDs) == 0 {
-		return nil
-	}
-	m.status = "Bulk deleting..."
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		for _, id := range selectedIDs {
-			if err := m.repo.DeleteCard(ctx, id); err != nil {
-				return err
-			}
-		}
-		m.browserSelected = make(map[string]bool)
-		return m.loadBrowserCards()()
-	}
+	m.browserSelected = make(map[string]bool)
+	return m.executeBulkAction("Bulk deleting...", func(ctx context.Context, id string) error {
+		return m.repo.DeleteCard(ctx, id)
+	})
 }
 
 func (m *Model) getSelectedCardIDs() []string {
@@ -229,6 +193,36 @@ func (m *Model) getSelectedCardIDs() []string {
 	return ids
 }
 
+func (m *Model) executeBulkAction(status string, action func(ctx context.Context, id string) error) tea.Cmd {
+	selectedIDs := m.getSelectedCardIDs()
+	if len(selectedIDs) == 0 {
+		return nil
+	}
+	m.status = status
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		for _, id := range selectedIDs {
+			if err := action(ctx, id); err != nil {
+				return err
+			}
+		}
+		return m.loadBrowserCards()()
+	}
+}
+
+func (m *Model) executeSingleAction(status string, id string, action func(ctx context.Context, id string) error) tea.Cmd {
+	m.status = status
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		if err := action(ctx, id); err != nil {
+			return err
+		}
+		return m.loadBrowserCards()()
+	}
+}
+
 func (m *Model) toggleCardKind() tea.Cmd {
 	if len(m.browserCards) == 0 {
 		return nil
@@ -238,15 +232,9 @@ func (m *Model) toggleCardKind() tea.Cmd {
 	if card.Kind == core.CardKindFlashcard {
 		next = core.CardKindMCQ
 	}
-	m.status = fmt.Sprintf("Converting to %s...", next)
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-		if err := m.repo.SetCardKind(ctx, card.ID, next); err != nil {
-			return err
-		}
-		return m.loadBrowserCards()()
-	}
+	return m.executeSingleAction(fmt.Sprintf("Converting to %s...", next), card.ID, func(ctx context.Context, id string) error {
+		return m.repo.SetCardKind(ctx, id, next)
+	})
 }
 
 func (m *Model) bulkBrowserToggleKind() tea.Cmd {

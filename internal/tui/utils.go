@@ -28,6 +28,52 @@ func formatDuration(d time.Duration) string {
 	return "now"
 }
 
+func formatReviewInterval(interval time.Duration) string {
+	if interval <= 0 {
+		return "same day"
+	}
+	hours := int(interval.Hours())
+	if hours < 24 {
+		if hours <= 1 {
+			return "1 hour"
+		}
+		return fmt.Sprintf("%d hours", hours)
+	}
+	days := hours / 24
+	if days == 1 {
+		return "1 day"
+	}
+	if days >= 365 {
+		years := days / 365
+		remainMonths := (days % 365) / 30
+		if remainMonths > 0 {
+			if years == 1 {
+				return fmt.Sprintf("1 year %d mo", remainMonths)
+			}
+			return fmt.Sprintf("%d years %d mo", years, remainMonths)
+		}
+		if years == 1 {
+			return "1 year"
+		}
+		return fmt.Sprintf("%d years", years)
+	}
+	if days >= 30 {
+		months := days / 30
+		remainDays := days % 30
+		if remainDays > 0 {
+			if months == 1 {
+				return fmt.Sprintf("1 month %dd", remainDays)
+			}
+			return fmt.Sprintf("%d months %dd", months, remainDays)
+		}
+		if months == 1 {
+			return "1 month"
+		}
+		return fmt.Sprintf("%d months", months)
+	}
+	return fmt.Sprintf("%d days", days)
+}
+
 func maxInt(a, b int) int {
 	if a > b {
 		return a

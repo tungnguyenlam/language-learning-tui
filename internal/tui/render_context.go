@@ -110,6 +110,18 @@ func (c *RenderContext) RegisterHitboxAtWithAction(id string, offsetX, offsetY, 
 	})
 }
 
+// RegisterAction registers a hitbox for the text about to be written.
+func (c *RenderContext) RegisterAction(id string, w, h int, action func() tea.Cmd) {
+	c.RegisterHitboxWithAction(id, w, h, action)
+}
+
+// WriteAction writes a styled action label and registers its hitbox.
+func (c *RenderContext) WriteAction(id string, label string, style lipgloss.Style, action func() tea.Cmd) {
+	width := lipgloss.Width(label)
+	c.RegisterAction(id, width, 1, action)
+	c.Write(style.Render(label))
+}
+
 // String returns the accumulated rendered content.
 func (c *RenderContext) String() string {
 	return c.buffer.String()

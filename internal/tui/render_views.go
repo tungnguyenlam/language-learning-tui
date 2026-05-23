@@ -9,10 +9,15 @@ import (
 )
 
 func (m *Model) renderHelp(layout viewportLayout) string {
+	ctx := NewRenderContext(m, layout, m.activeView)
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).Underline(true)
 	sectionStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("81"))
 	colStyle := lipgloss.NewStyle().PaddingRight(4).Width(maxInt(32, layout.Width/4))
 
+	ctx.WriteLine(titleStyle.Render("Keyboard Shortcuts"))
+	ctx.NewLine()
+
+	// Simplified: just render it as before, but maybe we can make some headers clickable to switch views
 	global := sectionStyle.Render("Global:") + "\n" +
 		"  1-9      Switch to view\n" +
 		"  Tab/arr  Cycle views\n" +
@@ -126,16 +131,41 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 	nameWidth := lineWidth - otherWidth
 
 	if nameWidth < 15 {
+		// Drop stats first
 		if statsWidth > 0 {
 			statsWidth = 0
-			otherWidth = prefixWidth + selectMarkWidth + 1 + miniBarWidth + 2 + countsWidth + studyBtnWidth + cramBtnWidth
-			nameWidth = lineWidth - otherWidth
 		}
+		// Drop buttons
+		if studyBtnWidth > 0 {
+			studyBtnWidth = 0
+		}
+		if cramBtnWidth > 0 {
+			cramBtnWidth = 0
+		}
+
+		otherWidth = prefixWidth + selectMarkWidth + 1 + miniBarWidth + 2 + countsWidth + statsWidth + studyBtnWidth + cramBtnWidth
+		nameWidth = lineWidth - otherWidth
+
 		if nameWidth < 15 && countsWidth > 12 {
 			countsWidth = 12
-			otherWidth = prefixWidth + selectMarkWidth + 1 + miniBarWidth + 2 + countsWidth + studyBtnWidth + cramBtnWidth
+			otherWidth = prefixWidth + selectMarkWidth + 1 + miniBarWidth + 2 + countsWidth + statsWidth + studyBtnWidth + cramBtnWidth
 			nameWidth = lineWidth - otherWidth
 		}
+
+		// If still too narrow, drop counts
+		if nameWidth < 15 && countsWidth > 0 {
+			countsWidth = 0
+			otherWidth = prefixWidth + selectMarkWidth + 1 + miniBarWidth + 2 + countsWidth + statsWidth + studyBtnWidth + cramBtnWidth
+			nameWidth = lineWidth - otherWidth
+		}
+
+		// If still too narrow, drop miniBar
+		if nameWidth < 15 && miniBarWidth > 0 {
+			miniBarWidth = 0
+			otherWidth = prefixWidth + selectMarkWidth + 1 + miniBarWidth + 2 + countsWidth + statsWidth + studyBtnWidth + cramBtnWidth
+			nameWidth = lineWidth - otherWidth
+		}
+
 		if nameWidth < 10 {
 			nameWidth = 10
 		}
@@ -173,32 +203,40 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		if deck.TotalCards > 0 {
 			deckPercentage = float64(deck.TotalCards-deck.DueCards) / float64(deck.TotalCards)
 		}
-		miniBar := progressBar(5, deckPercentage, "46", "238")
+
+		miniBar := ""
+		if miniBarWidth > 0 {
+			miniBar = progressBar(5, deckPercentage, "46", "238") + " "
+		}
 
 		studyBtn := ""
 		cramBtn := ""
-		if layout.Width >= 100 {
+		if studyBtnWidth > 0 {
 			studyBtn = " [Study]"
+		}
+		if cramBtnWidth > 0 {
 			cramBtn = " [Cram]"
-		} else if layout.Width >= 90 {
-			studyBtn = " [Study]"
 		}
 
 		var counts string
-		if layout.Width >= 115 {
-			counts = fmt.Sprintf("%s new, %s due, %s total", newStyled, dueStyled, totalStyled)
-		} else {
-			counts = fmt.Sprintf("%sN %sD %sT", newStyled, dueStyled, totalStyled)
+		if countsWidth > 0 {
+			if layout.Width >= 115 {
+				counts = fmt.Sprintf("%s new, %s due, %s total", newStyled, dueStyled, totalStyled)
+			} else {
+				counts = fmt.Sprintf("%sN %sD %sT", newStyled, dueStyled, totalStyled)
+			}
+			counts = padLine(counts, countsWidth) + " "
 		}
-		counts = padLine(counts, countsWidth)
 
 		statsStr := ""
-		if layout.Width >= 85 {
-			statsStr = fmt.Sprintf(" | today %d, %.0f%% success", deck.ReviewsToday, deck.SuccessRate*100)
-		} else if layout.Width >= 70 {
-			statsStr = fmt.Sprintf(" | today %d", deck.ReviewsToday)
+		if statsWidth > 0 {
+			if layout.Width >= 85 {
+				statsStr = fmt.Sprintf(" | today %d, %.0f%% success", deck.ReviewsToday, deck.SuccessRate*100)
+			} else if layout.Width >= 70 {
+				statsStr = fmt.Sprintf(" | today %d", deck.ReviewsToday)
+			}
+			statsStr = padLine(statsStr, statsWidth)
 		}
-		statsStr = padLine(statsStr, statsWidth)
 
 		highlightStyle := lipgloss.NewStyle().Foreground(colorPink).Bold(true)
 		nameText := truncateLine(deck.Name, nameWidth)
@@ -209,7 +247,7 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 			resDeckName = highlightMatch(resDeckName, m.deckFilter, highlightStyle)
 		}
 
-		label := fmt.Sprintf("%s%s%s %s  %s%s",
+		label := fmt.Sprintf("%s%s%s %s%s%s",
 			prefix, selectMark, resDeckName, miniBar, counts, statsStr)
 
 		currBtnStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240"))
@@ -511,4 +549,25 @@ func (m *Model) renderImport(x, y int) string {
 	}
 
 	return b.String()
+}
+
+func (m *Model) renderReviewHistory(label string) string {
+	var b strings.Builder
+	b.WriteString(fmt.Sprintf("Review History: %s\n", label))
+	if len(m.reviewHistory) == 0 {
+		b.WriteString("  No reviews yet.")
+		return b.String()
+	}
+	for i, log := range m.reviewHistory {
+		fmt.Fprintf(&b, "  %d. %s at %s -> next %s (%s, reviews %d, lapses %d)\n",
+			i+1,
+			log.Grade,
+			log.Reviewed.Local().Format("Jan 02 15:04"),
+			log.Due.Local().Format("Jan 02"),
+			formatReviewInterval(log.Interval),
+			log.Reviews,
+			log.Lapses,
+		)
+	}
+	return strings.TrimRight(b.String(), "\n")
 }

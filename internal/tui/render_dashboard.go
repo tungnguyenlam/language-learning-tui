@@ -11,6 +11,12 @@ import (
 )
 
 func (m *Model) renderDashboard(layout viewportLayout) string {
+	isNarrow := layout.Width < 55
+	boxWidth := maxInt(25, (layout.Width-2)/2)
+	if isNarrow {
+		boxWidth = layout.Width - 2
+	}
+
 	streakIndicator := ""
 	switch {
 	case m.stats.CurrentStreak >= 100:
@@ -26,14 +32,14 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 	}
 
 	reviewQueue := dashReviewStyle.
-		Width(maxInt(25, (layout.Width-2)/2)).
+		Width(boxWidth).
 		Render(dashStatsStyle.Render("Review Queue") + "\n" +
 			fmt.Sprintf("  Due cards:   %d\n", len(m.dueCards)) +
 			fmt.Sprintf("  Next 24h:    %d\n", m.stats.Next24hDue) +
 			fmt.Sprintf("  Bookmarked:  %d (%d due)", m.stats.BookmarkedCards, m.stats.BookmarkedDue))
 
 	collectionStats := dashCollectionStyle.
-		Width(maxInt(25, (layout.Width-2)/2)).
+		Width(boxWidth).
 		Render(dashStatsStyle.Render("Collection") + "\n" +
 			fmt.Sprintf("  Decks:       %d (%d active)\n", m.stats.TotalDecks, m.stats.ActiveDecks) +
 			fmt.Sprintf("  Leech:       %d\n", m.stats.LeechCards) +
@@ -41,6 +47,9 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 
 	totalKnown := m.stats.NewCards + m.stats.YoungCards + m.stats.MatureCards
 	mixWidth := maxInt(10, layout.Width/2-16)
+	if isNarrow {
+		mixWidth = maxInt(10, layout.Width-20)
+	}
 	newPct, youngPct, maturePct := 0.0, 0.0, 0.0
 	if totalKnown > 0 {
 		newPct = float64(m.stats.NewCards) / float64(totalKnown)
@@ -48,7 +57,7 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		maturePct = float64(m.stats.MatureCards) / float64(totalKnown)
 	}
 	dueMixBox := dashMixStyle.
-		Width(maxInt(25, (layout.Width-2)/2)).
+		Width(boxWidth).
 		Render(lipgloss.NewStyle().Foreground(colorSecondary).Bold(true).Render("Card Mix") + "\n" +
 			fmt.Sprintf("  New    %3d %s\n", m.stats.NewCards, progressBar(mixWidth, newPct, "81", "238")) +
 			fmt.Sprintf("  Young  %3d %s\n", m.stats.YoungCards, progressBar(mixWidth, youngPct, "220", "238")) +
@@ -64,10 +73,13 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 	}
 	goalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(barColor)).Bold(true)
 	bar := progressBar(maxInt(10, layout.Width/2-10), percentage, barColor, "238")
+	if isNarrow {
+		bar = progressBar(maxInt(10, layout.Width-14), percentage, barColor, "238")
+	}
 
 	progressBox := dashProgressStyle.
 		BorderForeground(lipgloss.Color(barColor)).
-		Width(maxInt(25, (layout.Width-2)/2)).
+		Width(boxWidth).
 		Render(goalStyle.Render("Today's Progress") + "\n" +
 			fmt.Sprintf("  Reviews:     %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal) +
 			"  " + bar + "\n" +
@@ -80,9 +92,13 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		date := now.AddDate(0, 0, -(13 - i)).Format("2006-01-02")
 		recentData[i] = m.reviewsPerDay[date]
 	}
-	spark := sparkline(recentData, maxInt(10, layout.Width/2-10))
+	sparkWidth := maxInt(10, layout.Width/2-10)
+	if isNarrow {
+		sparkWidth = maxInt(10, layout.Width-10)
+	}
+	spark := sparkline(recentData, sparkWidth)
 	activityBox := dashActivityStyle.
-		Width(maxInt(25, (layout.Width-2)/2)).
+		Width(boxWidth).
 		Render(lipgloss.NewStyle().Foreground(colorAITitle).Bold(true).Render("Recent Activity") + "\n" +
 			"  " + spark + "\n" +
 			"  Last 14 days review trend")
@@ -113,7 +129,7 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 	}
 
 	dailyDigestBox := dashDigestStyle.
-		Width(maxInt(25, (layout.Width-2)/2)).
+		Width(boxWidth).
 		Render(digestStyle.Render("Daily Digest") + "\n" +
 			fmt.Sprintf("  %s", message) + nextPreview + "\n" +
 			fmt.Sprintf("  M:%d Y:%d N:%d", m.stats.MatureCards, m.stats.YoungCards, m.stats.NewCards) +
@@ -148,14 +164,30 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 	db.WriteString(activeDeckText + "\n")
 
 	queueY := strings.Count(db.String(), "\n")
-	m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-review", View: ViewDashboard, X: layout.X, Y: layout.Y + queueY, Width: lipgloss.Width(reviewQueue), Height: lipgloss.Height(reviewQueue)})
-	m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-collection", View: ViewDashboard, X: layout.X + lipgloss.Width(reviewQueue) + 1, Y: layout.Y + queueY, Width: lipgloss.Width(collectionStats), Height: lipgloss.Height(collectionStats)})
-	db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, reviewQueue, " ", collectionStats) + "\n")
+	if isNarrow {
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-review", View: ViewDashboard, X: layout.X, Y: layout.Y + queueY, Width: lipgloss.Width(reviewQueue), Height: lipgloss.Height(reviewQueue)})
+		db.WriteString(reviewQueue + "\n")
+		queueY = strings.Count(db.String(), "\n")
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-collection", View: ViewDashboard, X: layout.X, Y: layout.Y + queueY, Width: lipgloss.Width(collectionStats), Height: lipgloss.Height(collectionStats)})
+		db.WriteString(collectionStats + "\n")
+	} else {
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-review", View: ViewDashboard, X: layout.X, Y: layout.Y + queueY, Width: lipgloss.Width(reviewQueue), Height: lipgloss.Height(reviewQueue)})
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-collection", View: ViewDashboard, X: layout.X + lipgloss.Width(reviewQueue) + 1, Y: layout.Y + queueY, Width: lipgloss.Width(collectionStats), Height: lipgloss.Height(collectionStats)})
+		db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, reviewQueue, " ", collectionStats) + "\n")
+	}
 
 	progressY := strings.Count(db.String(), "\n")
-	m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-progress", View: ViewDashboard, X: layout.X, Y: layout.Y + progressY, Width: lipgloss.Width(progressBox), Height: lipgloss.Height(progressBox)})
-	m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-digest", View: ViewDashboard, X: layout.X + lipgloss.Width(progressBox) + 1, Y: layout.Y + progressY, Width: lipgloss.Width(dailyDigestBox), Height: lipgloss.Height(dailyDigestBox)})
-	db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, progressBox, " ", dailyDigestBox) + "\n")
+	if isNarrow {
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-progress", View: ViewDashboard, X: layout.X, Y: layout.Y + progressY, Width: lipgloss.Width(progressBox), Height: lipgloss.Height(progressBox)})
+		db.WriteString(progressBox + "\n")
+		progressY = strings.Count(db.String(), "\n")
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-digest", View: ViewDashboard, X: layout.X, Y: layout.Y + progressY, Width: lipgloss.Width(dailyDigestBox), Height: lipgloss.Height(dailyDigestBox)})
+		db.WriteString(dailyDigestBox + "\n")
+	} else {
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-progress", View: ViewDashboard, X: layout.X, Y: layout.Y + progressY, Width: lipgloss.Width(progressBox), Height: lipgloss.Height(progressBox)})
+		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-digest", View: ViewDashboard, X: layout.X + lipgloss.Width(progressBox) + 1, Y: layout.Y + progressY, Width: lipgloss.Width(dailyDigestBox), Height: lipgloss.Height(dailyDigestBox)})
+		db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, progressBox, " ", dailyDigestBox) + "\n")
+	}
 
 	activityY := strings.Count(db.String(), "\n")
 	recentDecksBox := ""
@@ -183,33 +215,65 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 				hint = keyStyle.Render("#") + " "
 			}
 
-			rowY := activityY + i + 1
-			deckName := truncateLine(name, maxInt(20, (layout.Width-2)/2-6))
+			deckName := truncateLine(name, maxInt(20, boxWidth-6))
 			recentDecksContent += fmt.Sprintf("  %s• %s\n", hint, deckName)
 
-			m.hitboxes = append(m.hitboxes, Hitbox{
-				ID:     fmt.Sprintf("dash-recent-%d", i),
-				View:   ViewDashboard,
-				X:      layout.X + (layout.Width-2)/2 + 3,
-				Y:      layout.Y + rowY,
-				Width:  lipgloss.Width(deckName),
-				Height: 1,
-			})
+			// Note: hitboxes for recent decks might be tricky if we don't know the final Y.
+			// For now, we'll skip precise hitboxes in narrow mode for these, or recalculate.
 		}
 		recentDecksBox = dashRecentStyle.
-			Width(maxInt(25, (layout.Width-2)/2)).
+			Width(boxWidth).
 			Render(recentDecksContent)
 	}
 
 	activityY = strings.Count(db.String(), "\n")
 	if recentDecksBox != "" {
-		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-activity", View: ViewDashboard, X: layout.X, Y: layout.Y + activityY, Width: lipgloss.Width(activityBox), Height: lipgloss.Height(activityBox)})
-		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-recent-decks", View: ViewDashboard, X: layout.X + lipgloss.Width(activityBox) + 1, Y: layout.Y + activityY, Width: lipgloss.Width(recentDecksBox), Height: lipgloss.Height(recentDecksBox)})
-		db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, activityBox, " ", recentDecksBox) + "\n")
+		if isNarrow {
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-activity", View: ViewDashboard, X: layout.X, Y: layout.Y + activityY, Width: lipgloss.Width(activityBox), Height: lipgloss.Height(activityBox)})
+			db.WriteString(activityBox + "\n")
+			activityY = strings.Count(db.String(), "\n")
+			// Individual deck hitboxes
+			for i := 0; i < len(m.recentDecks) && i < 3; i++ {
+				m.hitboxes = append(m.hitboxes, Hitbox{
+					ID:     fmt.Sprintf("dash-recent-%d", i),
+					View:   ViewDashboard,
+					X:      layout.X + 2,
+					Y:      layout.Y + activityY + 2 + i,
+					Width:  boxWidth - 4,
+					Height: 1,
+				})
+			}
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-recent-decks", View: ViewDashboard, X: layout.X, Y: layout.Y + activityY, Width: lipgloss.Width(recentDecksBox), Height: lipgloss.Height(recentDecksBox)})
+			db.WriteString(recentDecksBox + "\n")
+		} else {
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-activity", View: ViewDashboard, X: layout.X, Y: layout.Y + activityY, Width: lipgloss.Width(activityBox), Height: lipgloss.Height(activityBox)})
+			recentX := layout.X + lipgloss.Width(activityBox) + 1
+			// Individual deck hitboxes
+			for i := 0; i < len(m.recentDecks) && i < 3; i++ {
+				m.hitboxes = append(m.hitboxes, Hitbox{
+					ID:     fmt.Sprintf("dash-recent-%d", i),
+					View:   ViewDashboard,
+					X:      recentX + 2,
+					Y:      layout.Y + activityY + 2 + i,
+					Width:  boxWidth - 4,
+					Height: 1,
+				})
+			}
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-recent-decks", View: ViewDashboard, X: recentX, Y: layout.Y + activityY, Width: lipgloss.Width(recentDecksBox), Height: lipgloss.Height(recentDecksBox)})
+			db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, activityBox, " ", recentDecksBox) + "\n")
+		}
 	} else if layout.Height > 26 {
-		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-activity", View: ViewDashboard, X: layout.X, Y: layout.Y + activityY, Width: lipgloss.Width(activityBox), Height: lipgloss.Height(activityBox)})
-		m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-card-mix", View: ViewDashboard, X: layout.X + lipgloss.Width(activityBox) + 1, Y: layout.Y + activityY, Width: lipgloss.Width(dueMixBox), Height: lipgloss.Height(dueMixBox)})
-		db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, activityBox, " ", dueMixBox) + "\n")
+		if isNarrow {
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-activity", View: ViewDashboard, X: layout.X, Y: layout.Y + activityY, Width: lipgloss.Width(activityBox), Height: lipgloss.Height(activityBox)})
+			db.WriteString(activityBox + "\n")
+			activityY = strings.Count(db.String(), "\n")
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-card-mix", View: ViewDashboard, X: layout.X, Y: layout.Y + activityY, Width: lipgloss.Width(dueMixBox), Height: lipgloss.Height(dueMixBox)})
+			db.WriteString(dueMixBox + "\n")
+		} else {
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-activity", View: ViewDashboard, X: layout.X, Y: layout.Y + activityY, Width: lipgloss.Width(activityBox), Height: lipgloss.Height(activityBox)})
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-card-mix", View: ViewDashboard, X: layout.X + lipgloss.Width(activityBox) + 1, Y: layout.Y + activityY, Width: lipgloss.Width(dueMixBox), Height: lipgloss.Height(dueMixBox)})
+			db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, activityBox, " ", dueMixBox) + "\n")
+		}
 	} else {
 		// Even more compact row
 		activityBox = dashActivityStyle.
@@ -223,14 +287,40 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 
 	// Compact Quick Actions
 	if remainingHeight >= 2 {
-		quickActions := fmt.Sprintf("  %s %s  %s %s  %s %s  %s %s  %s %s  %s %s",
-			keyStyle.Render("[3]"), "Review",
-			keyStyle.Render("[9]"), "Cram",
-			keyStyle.Render("[8]"), "Browser",
-			keyStyle.Render("[4]"), "Stats",
-			keyStyle.Render("[5]"), "Import",
-			keyStyle.Render("[6]"), "AI Draft")
-		db.WriteString(lipgloss.NewStyle().Foreground(colorBlue).Bold(true).Render("  Quick Actions:") + " " + quickActions + "\n")
+		label := lipgloss.NewStyle().Foreground(colorBlue).Bold(true).Render("  Quick Actions:")
+		db.WriteString(label + " ")
+
+		currentY := strings.Count(db.String(), "\n")
+		currentX := lipgloss.Width(label) + 1
+
+		actions := []struct {
+			id    string
+			label string
+			key   string
+		}{
+			{"nav-review", "Review", "3"},
+			{"nav-cram", "Cram", "9"},
+			{"nav-browser", "Browser", "8"},
+			{"nav-statistics", "Stats", "4"},
+			{"nav-import", "Import", "5"},
+			{"nav-ai", "AI Draft", "6"},
+		}
+
+		for _, action := range actions {
+			keyStr := keyStyle.Render("[" + action.key + "]")
+			item := fmt.Sprintf("%s %s  ", keyStr, action.label)
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID:     action.id,
+				View:   ViewDashboard,
+				X:      layout.X + currentX,
+				Y:      layout.Y + currentY,
+				Width:  lipgloss.Width(item) - 2, // -2 for trailing spaces
+				Height: 1,
+			})
+			db.WriteString(item)
+			currentX += lipgloss.Width(item)
+		}
+		db.WriteString("\n")
 		remainingHeight -= 2
 	}
 
@@ -246,7 +336,6 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 			exampleText = fmt.Sprintf("\n  Example: %s", lipgloss.NewStyle().Italic(true).Foreground(colorBlue).Render(tip.Example))
 		}
 
-		boxWidth := maxInt(35, layout.Width/2-3)
 		tipBox := dashTipStyle.
 			Width(boxWidth).
 			Render(tipLabelStyle.Render("Grammar Tip: "+tip.Title) + "\n" +
@@ -260,7 +349,11 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 				fmt.Sprintf("  ich %-8s wir %-8s\n  du  %-8s ihr %-8s\n  er/sie/es %-4s sie/Sie %-5s",
 					verb.Ich, verb.Wir, verb.Du, verb.Ihr, verb.ErSieEs, verb.SieSie))
 
-		db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, tipBox, " ", verbBox) + "\n")
+		if isNarrow {
+			db.WriteString(tipBox + "\n" + verbBox + "\n")
+		} else {
+			db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, tipBox, " ", verbBox) + "\n")
+		}
 	}
 
 	db.WriteString(mutedStyle.Render(fmt.Sprintf("Use %s and %s to switch decks.\nUse %s (%s) to start studying.\nPress %s for help.",
