@@ -4,7 +4,10 @@ set -e
 # Configuration
 REPO="tungnguyenlam/language-learning-tui"
 BINARY_NAME="deutsch-tui"
-INSTALL_DIR="/usr/local/bin"
+INSTALL_DIR="${HOME}/.local/bin"
+
+# Ensure install directory exists
+mkdir -p "${INSTALL_DIR}"
 
 # Detect OS
 OS="$(uname -s | tr '[:upper:]' '[:lower:]')"
@@ -53,13 +56,16 @@ curl -L -o "${BINARY_NAME}" "${URL}"
 chmod +x "${BINARY_NAME}"
 
 # Install
-if [ -w "${INSTALL_DIR}" ]; then
-    mv "${BINARY_NAME}" "${INSTALL_DIR}/${BINARY_NAME}"
-    echo "Successfully installed to ${INSTALL_DIR}/${BINARY_NAME}"
-else
-    echo "Permission denied for ${INSTALL_DIR}. Trying with sudo..."
-    sudo mv "${BINARY_NAME}" "${INSTALL_DIR}/${BINARY_NAME}"
-    echo "Successfully installed to ${INSTALL_DIR}/${BINARY_NAME}"
+mv "${BINARY_NAME}" "${INSTALL_DIR}/${BINARY_NAME}"
+echo "Successfully installed to ${INSTALL_DIR}/${BINARY_NAME}"
+
+# Path check
+if [[ ":$PATH:" != *":${INSTALL_DIR}:"* ]]; then
+    echo ""
+    echo "⚠️  Note: ${INSTALL_DIR} is not in your PATH."
+    echo "To run ${BINARY_NAME} from anywhere, add it to your shell config (e.g., ~/.bashrc or ~/.zshrc):"
+    echo "    export PATH=\"\$PATH:${INSTALL_DIR}\""
+    echo ""
 fi
 
-echo "You can now run '${BINARY_NAME}'"
+echo "You can now run '${INSTALL_DIR}/${BINARY_NAME}'"
