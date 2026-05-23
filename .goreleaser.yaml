@@ -19,8 +19,6 @@ builds:
     ldflags:
       - -s -w
 
-# We use the 'binary' format to upload raw executables instead of zip/tar.gz
-# This ensures our curl and PowerShell install scripts continue to work seamlessly.
 archives:
   - format: binary
     name_template: "{{ .ProjectName }}-{{ if eq .Os \"darwin\" }}macos{{ else }}{{ .Os }}{{ end }}-{{ .Arch }}"
@@ -35,9 +33,9 @@ changelog:
       - "^docs:"
       - "^test:"
 
-# Package for Debian/Ubuntu (APT) and RedHat (RPM)
 nfpms:
-  - file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+  - id: default
+    file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
     vendor: tungnguyenlam
     homepage: https://github.com/tungnguyenlam/language-learning-tui
     maintainer: tungnguyenlam
@@ -47,9 +45,6 @@ nfpms:
       - deb
       - rpm
 
-# Prepare for WinGet
-# Currently this generates the manifest locally. 
-# See comments below to automate publishing to microsoft/winget-pkgs.
 winget:
   - name: deutsch-tui
     publisher: tungnguyenlam
@@ -64,15 +59,32 @@ winget:
     license: MIT
     publisher_support_url: https://github.com/tungnguyenlam/language-learning-tui/issues
     package_identifier: tungnguyenlam.deutsch-tui
-    # To automatically open a PR on the official Microsoft WinGet repo:
-    # 1. Generate a GitHub PAT with repo permissions
-    # 2. Add it to your repository secrets as WINGET_GITHUB_TOKEN
-    # 3. Uncomment the section below:
-    # repository:
-    #   github:
-    #     owner: microsoft
-    #     name: winget-pkgs
-    #     branch: "deutsch-tui-{{ .Version }}"
-    #     pull_request:
-    #       base: master
-    #     token: "{{ .Env.WINGET_GITHUB_TOKEN }}"
+    repository:
+      owner: tungnguyenlam
+      name: winget-pkgs
+      branch: "deutsch-tui-{{ .Version }}"
+      token: "{{ .Env.WINGET_GITHUB_TOKEN }}"
+      pull_request:
+        base:
+          owner: microsoft
+          name: winget-pkgs
+          branch: master
+
+brews:
+  - name: deutsch-tui
+    repository:
+      owner: tungnguyenlam
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+    directory: Formula
+    homepage: https://github.com/tungnguyenlam/language-learning-tui
+    description: A terminal-native German flashcard and quiz app.
+    license: MIT
+
+publishers:
+  - name: gemfury
+    ids:
+      - default
+    dir: "{{ dir .ArtifactPath }}"
+    cmd: |
+      curl -F package=@{{ .ArtifactName }} https://{{ .Env.FURY_TOKEN }}@push.fury.io/{{ .Env.FURY_ACCOUNT }}/
