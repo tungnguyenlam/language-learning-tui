@@ -59,13 +59,42 @@ chmod +x "${BINARY_NAME}"
 mv "${BINARY_NAME}" "${INSTALL_DIR}/${BINARY_NAME}"
 echo "Successfully installed to ${INSTALL_DIR}/${BINARY_NAME}"
 
-# Path check
+# Path check and auto-configuration
 if [[ ":$PATH:" != *":${INSTALL_DIR}:"* ]]; then
     echo ""
     echo "⚠️  Note: ${INSTALL_DIR} is not in your PATH."
-    echo "To run ${BINARY_NAME} from anywhere, add it to your shell config (e.g., ~/.bashrc or ~/.zshrc):"
-    echo "    export PATH=\"\$PATH:${INSTALL_DIR}\""
-    echo ""
-fi
+    
+    SHELL_NAME=$(basename "$SHELL")
+    CONFIG_FILE=""
+    EXPORT_CMD="export PATH=\"\$HOME/.local/bin:\$PATH\""
 
-echo "You can now run '${INSTALL_DIR}/${BINARY_NAME}'"
+    case "$SHELL_NAME" in
+        "zsh") CONFIG_FILE="${HOME}/.zshrc" ;;
+        "bash") CONFIG_FILE="${HOME}/.bashrc" ;;
+        "fish") 
+            CONFIG_FILE="${HOME}/.config/fish/config.fish"
+            EXPORT_CMD="fish_add_path \$HOME/.local/bin"
+            ;;
+        *) CONFIG_FILE="${HOME}/.profile" ;;
+    esac
+
+    if ! grep -q "\.local/bin" "${CONFIG_FILE}" 2>/dev/null; then
+        echo "Auto-configuring ${SHELL_NAME} by updating ${CONFIG_FILE}..."
+        
+        if [ "$SHELL_NAME" = "fish" ]; then
+            mkdir -p "${HOME}/.config/fish"
+        fi
+
+        echo "" >> "${CONFIG_FILE}"
+        echo "# Added by deutsch-tui installer" >> "${CONFIG_FILE}"
+        echo "${EXPORT_CMD}" >> "${CONFIG_FILE}"
+        
+        echo "✅ Added to ${CONFIG_FILE}."
+        echo "To use '${BINARY_NAME}' immediately, run: source ${CONFIG_FILE} (or restart your terminal)"
+    else
+        echo "ℹ️  It looks like ${INSTALL_DIR} is already in ${CONFIG_FILE}, but hasn't been loaded in this session."
+        echo "To use '${BINARY_NAME}' immediately, run: source ${CONFIG_FILE} (or restart your terminal)"
+    fi
+else
+    echo "You can now run '${BINARY_NAME}'"
+fi
