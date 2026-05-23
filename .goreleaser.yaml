@@ -48,7 +48,6 @@ nfpms:
 winget:
   - name: deutsch-tui
     publisher: tungnguyenlam
-    title: deutsch-tui
     short_description: Terminal-native German flashcard app.
     description: A terminal-native German flashcard and quiz app with FSRS scheduling.
     tags:
