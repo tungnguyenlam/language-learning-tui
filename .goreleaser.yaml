@@ -84,6 +84,5 @@ publishers:
   - name: gemfury
     ids:
       - default
-    dir: "{{ dir .ArtifactPath }}"
     cmd: |
-      curl -F package=@{{ .ArtifactName }} https://{{ .Env.FURY_TOKEN }}@push.fury.io/{{ .Env.FURY_ACCOUNT }}/
+      curl -F package=@{{ .ArtifactPath }} https://{{ .Env.FURY_TOKEN }}@push.fury.io/{{ .Env.FURY_ACCOUNT }}/
