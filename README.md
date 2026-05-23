@@ -123,6 +123,8 @@ For full repo verification (optional): Python 3 with `pytest` / `pytest-xdist` f
 curl -sSL https://raw.githubusercontent.com/tungnguyenlam/language-learning-tui/refs/heads/main/scripts/install.sh | bash
 ```
 
+> **Note:** This installs the `deutsch-tui` binary to `~/.local/bin`. Ensure this directory is in your system `$PATH`. Once installed, you can start the app by simply running `deutsch-tui` in your terminal.
+
 **From source:**
 
 ```bash
