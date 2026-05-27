@@ -2147,3 +2147,47 @@ func renderedRuneAt(view string, x, y int) rune {
 	}
 	return runes[x]
 }
+
+func TestBrowserSelectAllAndPlayAudio(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Prompt: "Apple", Answer: "Apfel", Audio: "apple.mp3"},
+			{ID: "c2", DeckID: "deck-1", Prompt: "Banana", Answer: "Banane"},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewBrowser
+	model.browserDeckID = "deck-1"
+	model.browserCards = repo.dueCards
+
+	// 1. Test Select All
+	_, handled := model.updateBrowserKey(tea.KeyPressMsg{Code: 'a'})
+	if !handled {
+		t.Fatal("expected 'a' to be handled")
+	}
+	if !model.browserSelected["c1"] || !model.browserSelected["c2"] {
+		t.Fatal("expected both cards to be selected after 'a'")
+	}
+
+	// 2. Test Deselect All (using toggle 'a' again)
+	_, handled = model.updateBrowserKey(tea.KeyPressMsg{Code: 'a'})
+	if !handled {
+		t.Fatal("expected second 'a' to be handled")
+	}
+	if model.browserSelected["c1"] || model.browserSelected["c2"] {
+		t.Fatal("expected both cards to be deselected after second 'a'")
+	}
+
+	// 3. Test Play Audio
+	cmd, handled := model.updateBrowserKey(tea.KeyPressMsg{Code: 'p'})
+	if !handled {
+		t.Fatal("expected 'p' to be handled")
+	}
+	if cmd == nil {
+		t.Fatal("expected command from playing card audio")
+	}
+	if model.status != "Playing audio..." {
+		t.Fatalf("expected status 'Playing audio...', got %q", model.status)
+	}
+}

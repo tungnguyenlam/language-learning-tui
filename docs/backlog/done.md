@@ -1,5 +1,19 @@
 # Done Backlog
 
+## 2026-05-28 (Audio Cache Fix & Browser Shortcuts)
+
+### Bug Fixes
+- **NativeTTS Caching Bug on macOS:** Resolved a cache checking mismatch in `NativeTTS` on macOS. The output of the `say` command was targeting `.wav.aiff` extension while the check looked for `.wav`, which led to cache misses and shell executions on every pronunciation playback. Now cache filename extensions are aligned dynamically based on OS.
+
+### UI & Interactivity
+- **Audio Playback in Browser:** Added a `p` keybinding in Card Browser to play the pronunciation of the highlighted card, aligning browser UX with Cram and Review modes.
+- **Select All in Browser:** Added a `a` keybinding in Card Browser to select/deselect all currently visible cards in the active filtered view.
+- **Documentation Updates:** Updated the browser view footer and global shortcuts help screen overlay to document the new `p` and `a` shortcuts.
+
+### Testing & Verification
+- **New Unit Tests:** Added `TestBrowserSelectAllAndPlayAudio` in `model_test.go` to verify the functionality of `a` and `p` keypresses in the Card Browser.
+- **All Tests Passing:** Verified all 332 tests pass end-to-end via `./scripts/verify.sh`.
+
 ## 2026-05-23 (Dashboard, Deduplication & UX)
 
 ### Code Maintenance & Deduplication

@@ -49,12 +49,11 @@ func (n *NativeTTS) Synthesize(ctx context.Context, text string) (string, error)
 	switch n.goos {
 	case "darwin":
 		// say -o output.aiff "text"
-		aiffPath := path + ".aiff"
-		cmd := exec.CommandContext(ctx, "say", "-o", aiffPath, text)
+		cmd := exec.CommandContext(ctx, "say", "-o", path, text)
 		if err := cmd.Run(); err != nil {
 			return "", fmt.Errorf("native tts (say) failed: %w", err)
 		}
-		return aiffPath, nil
+		return path, nil
 	case "linux":
 		// espeak -w output.wav "text"
 		cmd := exec.CommandContext(ctx, "espeak", "-v", "de", "-w", path, text)
@@ -69,5 +68,9 @@ func (n *NativeTTS) Synthesize(ctx context.Context, text string) (string, error)
 
 func (n *NativeTTS) cacheFilename(text string) string {
 	sum := sha256.Sum256([]byte("native\x00" + text))
-	return hex.EncodeToString(sum[:]) + ".wav"
+	ext := ".wav"
+	if n.goos == "darwin" {
+		ext = ".aiff"
+	}
+	return hex.EncodeToString(sum[:]) + ext
 }

@@ -14,6 +14,8 @@ Polish and Reliability - IN PROGRESS.
 - [x] **Dashboard Interactivity:** Added individual hitboxes for recently studied decks and interactive hitboxes for the 'Quick Actions' section.
 - [x] **New Content: False Friends Mastery:** Added a new deck with 12 high-quality cards covering German-English false friends.
 - [x] **E2E Improvements:** Added `e2e_tests/test_may23_improvements.py` to verify dashboard interactivity and new content.
+- [x] **NativeTTS Cache Fix:** Fixed macOS cache mismatch where synthesis output target used `.aiff` while existence checks queried `.wav`.
+- [x] **Browser Audio Playback & Select All:** Added `p` (play audio) and `a` (select/deselect all) shortcuts to the Card Browser, with unit tests and help overlay updates.
 
 ## Exact Next Action
 

@@ -242,12 +242,12 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 
 	if numSelected > 0 {
 		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-		ctx.WriteLine(lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true).Render(fmt.Sprintf("\n%d cards selected. Bulk actions: %s (bookmark/un) | %s (suspend/un) | %s (type) | %s (tags) | %s (delete) | %s (clear selection)", numSelected,
-			keyStyle.Render("b/B"), keyStyle.Render("x/X"), keyStyle.Render("t"), keyStyle.Render("T"), keyStyle.Render("Del"), keyStyle.Render("esc"))))
+		ctx.WriteLine(lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true).Render(fmt.Sprintf("\n%d cards selected. Bulk actions: %s (bookmark/un) | %s (suspend/un) | %s (type) | %s (tags) | %s (delete) | %s (select/deselect all) | %s (clear selection)", numSelected,
+			keyStyle.Render("b/B"), keyStyle.Render("x/X"), keyStyle.Render("t"), keyStyle.Render("T"), keyStyle.Render("Del"), keyStyle.Render("a"), keyStyle.Render("esc"))))
 	} else {
 		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-		ctx.WriteLine(fmt.Sprintf("\nUse %s/%s to navigate, %s to select, %s to toggle kind, %s for tags, %s to cleanup tags, %s to search, %s for history, %s to delete.",
-			keyStyle.Render("j"), keyStyle.Render("k"), keyStyle.Render("m"), keyStyle.Render("t"), keyStyle.Render("T"), keyStyle.Render("C"), keyStyle.Render("/"), keyStyle.Render("Enter"), keyStyle.Render("Backspace")))
+		ctx.WriteLine(fmt.Sprintf("\nUse %s/%s to navigate, %s to select, %s to select all, %s to play audio, %s to toggle kind, %s for tags, %s to cleanup tags, %s to search, %s for history, %s to delete.",
+			keyStyle.Render("j"), keyStyle.Render("k"), keyStyle.Render("m"), keyStyle.Render("a"), keyStyle.Render("p"), keyStyle.Render("t"), keyStyle.Render("T"), keyStyle.Render("C"), keyStyle.Render("/"), keyStyle.Render("Enter"), keyStyle.Render("Backspace")))
 	}
 	return ctx.String()
 }

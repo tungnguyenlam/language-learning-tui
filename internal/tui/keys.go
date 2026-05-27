@@ -979,6 +979,25 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, true
 	case "C":
 		return m.cleanupBrowserTags(), true
+	case "p":
+		if len(m.browserCards) > 0 {
+			return m.playCardAudio(m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)]), true
+		}
+		return nil, true
+	case "a":
+		if len(m.browserCards) > 0 {
+			allSelected := true
+			for _, card := range m.browserCards {
+				if !m.browserSelected[card.ID] {
+					allSelected = false
+					break
+				}
+			}
+			for _, card := range m.browserCards {
+				m.browserSelected[card.ID] = !allSelected
+			}
+		}
+		return nil, true
 	case "enter", "\r", "\n":
 		if len(m.browserCards) > 0 {
 			cardID := m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)].ID

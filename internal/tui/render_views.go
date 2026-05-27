@@ -48,12 +48,13 @@ func (m *Model) renderHelp(layout viewportLayout) string {
 	browser := sectionStyle.Render("Browser:") + "\n" +
 		"  j/k      Navigate\n" +
 		"  / / #    Search/Tag filter\n" +
-		"  m        Select card\n" +
+		"  m / a    Select / Select all\n" +
 		"  b / B    Bookmark / Unmark\n" +
 		"  x / X    Suspend / Unsuspend\n" +
 		"  t / T    Toggle kind/Tags\n" +
-		"  d / Ent  Dict / History\n" +
-		"  C / Del  Cleanup tags/Delete"
+		"  p / d    Play audio / Dict\n" +
+		"  Ent/Del  History / Delete\n" +
+		"  C        Cleanup tags"
 
 	other := sectionStyle.Render("Other:") + "\n" +
 		"  Stats    j/k scroll, x exp\n" +
