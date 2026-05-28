@@ -40,10 +40,10 @@ func (m *Model) renderHelp(layout viewportLayout) string {
 		"  b / B    Bookmark / Filter\n" +
 		"  u / r    Undo / History\n" +
 		"  f / i    Focus / Info\n" +
-		"  p        Play audio\n" +
-		"  d        Dictionary\n" +
+		"  p / d    Play audio / Dict\n" +
 		"  t / x    Type / Suspend\n" +
-		"  h / F    Hint / Fix card"
+		"  h / H    Hint / AI Explain\n" +
+		"  F        Fix card"
 
 	browser := sectionStyle.Render("Browser:") + "\n" +
 		"  j/k      Navigate\n" +

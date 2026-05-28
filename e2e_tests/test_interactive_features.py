@@ -197,8 +197,8 @@ def test_settings_mouse_interaction():
             # Plus "[+] " is 4 chars (24..27)
             # 1-based: Label (4..20), Minus (21..24), Plus (25..28)
             
-            # Move to Daily Goal (it's at index 4)
-            for _ in range(4):
+            # Move to Daily Goal (it's at index 5)
+            for _ in range(5):
                 agent.act('j')
             agent.wait_for_text("> Daily Goal: 10")
             
@@ -209,7 +209,7 @@ def test_settings_mouse_interaction():
             agent.act('-')
             agent.wait_for_text("Daily Goal: 10")
             
-            # Move to Auto-play audio (index 5)
+            # Move to Auto-play audio (index 6)
             agent.act('j')
             agent.wait_for_text("> Auto-play audio: off")
             agent.act('<Enter>')

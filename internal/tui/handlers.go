@@ -550,6 +550,9 @@ func (m *Model) resetMCQState() {
 	m.mcqAnswered = false
 	m.mcqCorrect = false
 	m.reviewPredictions = nil
+	m.explanation = ""
+	m.explainingCard = false
+	m.explainError = ""
 }
 
 func (m *Model) clearReviewHistory() {
@@ -557,6 +560,9 @@ func (m *Model) clearReviewHistory() {
 	m.showReviewHistory = false
 	m.reviewHistoryCard = ""
 	m.reviewPredictions = nil
+	m.explanation = ""
+	m.explainingCard = false
+	m.explainError = ""
 }
 
 func (m *Model) deckLabel() string {

@@ -640,7 +640,7 @@ func TestSettingsProviderSwitching(t *testing.T) {
 func TestSettingsTemplateEditing(t *testing.T) {
 	model := NewModel(&mockRepo{}, &mockScheduler{})
 	model.activeView = ViewSettings
-	model.settingsCursor = 1 // Front Template
+	model.settingsCursor = 2 // Front Template (was 1)
 
 	// Start editing
 	model.Update(tea.KeyPressMsg{Code: '\r'}) // Enter to edit
@@ -969,7 +969,7 @@ func TestSettingsDailyGoalAdjustsAndRenders(t *testing.T) {
 	model.height = 50
 	model.Update(statsMsg(core.Statistics{DailyGoal: 10, Grades: map[core.ReviewGrade]int{}}))
 	model.activeView = ViewSettings
-	model.settingsCursor = 1
+	model.settingsCursor = 2
 
 	if !strings.Contains(model.renderSettings(0, 0), "Daily Goal: 10") {
 		t.Fatalf("settings should show daily goal: %s", model.renderSettings(0, 0))

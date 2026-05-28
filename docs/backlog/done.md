@@ -1,5 +1,30 @@
 # Done Backlog
 
+## 2026-05-28 (Dictionary Provider Selection & Polish)
+
+### UX & Interactivity
+- **Dictionary Provider Selection:** Users can now choose their preferred German dictionary in the Settings view. Supported providers include dict.cc, Linguee, Leo, Duden, Pons, Cambridge, and Google Translate.
+- **Settings UI Polish:** Adjusted settings indices and navigation to accommodate the new dictionary selection row.
+
+### Engineering & Reliability
+- **Config Persistence:** The dictionary provider preference is persisted in `config.json`.
+- **Test Coverage:** Updated unit tests and 10+ E2E tests to align with the new settings layout.
+- **Code Health:** Fixed `gofmt` issues and improved robustness of settings index handling.
+
+## 2026-05-28 (Cloze UI Polish & AI Tutor Explanation)
+
+### UX & Interactivity
+- **Cloze Deletion UI Polish:** Enhanced the revealed state for Cloze deletion cards. Instead of just showing the full sentence, the app now highlights the specific cloze answer with a green background, making it immediately obvious what the missing part was.
+- **AI Tutor Explanation:** Added an "Explain This" feature (`Shift+H`) in the Review view. Users can now ask the active AI provider for a brief (2-4 sentence) pedagogical explanation of a card's grammar, usage, or cultural context.
+
+### Logic & Features
+- **AI Explanation Flow:** Implemented a new asynchronous flow for card explanations, including loading spinners and error handling, integrated with the existing AI provider system.
+- **Improved Cloze Rendering:** Refactored Cloze card rendering to use the prompt as a template when revealed, ensuring correct highlighting even when the same word appears multiple times in a sentence.
+
+### Testing & Verification
+- **New Unit Tests:** Added `internal/ai/explain_test.go` to verify the AI explanation logic for both Chat and Offline providers.
+- **All Tests Passing:** Verified all 332 tests pass end-to-end via `./scripts/verify.sh`.
+
 ## 2026-05-28 (Audio Cache Fix & Browser Shortcuts)
 
 ### Bug Fixes

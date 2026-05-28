@@ -104,6 +104,7 @@ def test_settings_template_backspace_handles_umlaut():
             agent.act("<Enter>")
             agent.wait_for_text("AI Provider:    template")
             agent.act("j")
+            agent.act("j")
             agent.wait_until_stable()
             agent.act("<Enter>")
             agent.wait_for_text("EDITING")

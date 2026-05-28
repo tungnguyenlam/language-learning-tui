@@ -375,7 +375,21 @@ func (m *Model) renderReview(x, y int) string {
 			answer = "Press Space or Enter to reveal choices."
 		}
 	} else if m.revealState == RevealRevealed {
-		answer = fmt.Sprintf("%s%s\n\nGrade: %s %s | %s %s | %s %s | %s %s", answerStyle.Render(card.Answer), extraDisplay,
+		answerDisplay := answerStyle.Render(card.Answer)
+		if card.Kind == core.CardKindCloze && len(card.Choices) > 0 {
+			clozeStyle := lipgloss.NewStyle().
+				Foreground(lipgloss.Color("0")).
+				Background(lipgloss.Color("46")).
+				Bold(true)
+
+			re := regexp.MustCompile(`\[[^\]]+\]`)
+			answerDisplay = re.ReplaceAllStringFunc(card.Prompt, func(s string) string {
+				return clozeStyle.Render(card.Choices[0])
+			})
+			answerDisplay = answerStyle.Render(answerDisplay)
+		}
+
+		answer = fmt.Sprintf("%s%s\n\nGrade: %s %s | %s %s | %s %s | %s %s", answerDisplay, extraDisplay,
 			keyStyle.Render("a"), gradeAgain+" "+keyStyle.Render("(1)"), keyStyle.Render("h"), gradeHard+" "+keyStyle.Render("(2)"), keyStyle.Render("g"), gradeGood+" "+keyStyle.Render("(3)"), keyStyle.Render("e"), gradeEasy+" "+keyStyle.Render("(4)"))
 		answerYOffset = cardY + strings.Count(fmt.Sprintf("%s%s\n\n%s\n\nGrade: ", promptDisplay, mature, card.Answer), "\n")
 
@@ -427,13 +441,32 @@ func (m *Model) renderReview(x, y int) string {
 			Padding(0, 1).
 			Render(infoStyle.Bold(true).Render("Reporting card to AI…")+"  "+spin)
 	}
+	if m.explainingCard {
+		spinFrames := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
+		spin := spinFrames[m.spinnerFrame%len(spinFrames)]
+		view += "\n\n" + lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("81")).
+			Padding(0, 1).
+			Render(lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("Asking AI tutor for explanation…")+"  "+spin)
+	}
+	if m.explanation != "" {
+		explanationStyle := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("81")).
+			Padding(0, 1).
+			Width(cardWidth)
+
+		title := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("81")).Render("AI Tutor Explanation")
+		view += "\n\n" + explanationStyle.Render(title+"\n\n"+m.explanation)
+	}
 	if m.fixProposal != nil && m.fixOldNote != nil {
 		view += "\n\n" + m.renderFixProposal()
 	}
 
 	// Add Interactive Footer
-	footerActions := fmt.Sprintf("%s hint | %s bookmark | %s suspend | %s undo | %s history | %s info | %s focus | %s audio",
-		keyStyle.Render("h"), keyStyle.Render("b"), keyStyle.Render("x"),
+	footerActions := fmt.Sprintf("%s hint | %s explain | %s bookmark | %s suspend | %s undo | %s history | %s info | %s focus | %s audio",
+		keyStyle.Render("h"), keyStyle.Render("H"), keyStyle.Render("b"), keyStyle.Render("x"),
 		keyStyle.Render("u"), keyStyle.Render("r"), keyStyle.Render("i"),
 		keyStyle.Render("f"), keyStyle.Render("p"))
 	if m.bookmarkFilter {

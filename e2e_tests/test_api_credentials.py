@@ -63,8 +63,8 @@ def test_typing_api_key_persists_to_secrets_json():
                 agent.wait_until_stable()
             agent.wait_for_text("AI Provider:    openai", timeout=2.0)
 
-            # Move down to the API Key row (cursor 7) — 7 j keypresses from cursor 0
-            for _ in range(7):
+            # Move down to the API Key row (cursor 8) — 8 j keypresses from cursor 0
+            for _ in range(8):
                 agent.act("j")
                 time.sleep(0.05)
             agent.wait_until_stable()
@@ -85,7 +85,11 @@ def test_typing_api_key_persists_to_secrets_json():
             assert (stat.st_mode & 0o777) == 0o600, f"mode = {oct(stat.st_mode & 0o777)}"
             with open(secrets_path) as f:
                 data = json.load(f)
-            assert data["openai"]["api_key"] == "sk-test-abc123", data
+            try:
+                assert data["openai"]["api_key"] == "sk-test-abc123", data
+            except KeyError as e:
+                from tui_tester.exceptions import TUIAssertionError
+                raise TUIAssertionError(f"KeyError: {e} in {data}", agent.observe())
 
             # Screen should mask it
             text = agent.observe()

@@ -63,8 +63,8 @@ def test_strict_normalization_setting():
             agent.act('7')
             agent.wait_until_stable()
             
-            # Navigate to Strict Normalization (idx 6)
-            for _ in range(6):
+            # Navigate to Strict Normalization (idx 7)
+            for _ in range(7):
                 agent.act('j')
             
             agent.assert_text("Strict Normalization (ss vs ß)")
@@ -87,7 +87,7 @@ def test_settings_persistence():
         try:
             agent.act('7')
             agent.wait_until_stable()
-            for _ in range(6):
+            for _ in range(7):
                 agent.act('j')
             agent.act('<Enter>') # Toggle ON
             agent.wait_until_stable()
@@ -109,8 +109,8 @@ def test_navigation_to_new_settings():
         try:
             agent.act('7')
             agent.wait_until_stable()
-            # Stop at Strict Normalization (cursor 6) — 6 j keystrokes from cursor 0.
-            for _ in range(6):
+            # Stop at Strict Normalization (cursor 7) — 7 j keystrokes from cursor 0.
+            for _ in range(7):
                 agent.act('j')
             agent.assert_text("> Strict Normalization")
         finally:

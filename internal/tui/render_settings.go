@@ -71,6 +71,7 @@ func (m *Model) renderSettings(x, y int) string {
 	setMap := m.aiTemplates[activeSet]
 	aiOptions := []string{
 		fmt.Sprintf("AI Provider:    %s", aiProviderName),
+		fmt.Sprintf("Dictionary:     %s", m.dictionaryProvider),
 		fmt.Sprintf("Front Template: %s", strings.ReplaceAll(setMap["front"], "\n", "\\n")),
 		fmt.Sprintf("Back Template:  %s", strings.ReplaceAll(setMap["back"], "\n", "\\n")),
 		fmt.Sprintf("Example Tmpl:   %s", strings.ReplaceAll(setMap["example"], "\n", "\\n")),
@@ -92,7 +93,7 @@ func (m *Model) renderSettings(x, y int) string {
 
 	addContent(sectionStyle.Render("STUDY PREFERENCES"), nil)
 
-	goalIdx := 4
+	goalIdx := 5
 	prefix := "  "
 	itemStyle := lipgloss.NewStyle()
 	if goalIdx == m.settingsCursor {
@@ -116,7 +117,7 @@ func (m *Model) renderSettings(x, y int) string {
 	goalLine.WriteString(btnStyle.Render(plusBtn))
 	addContent(goalLine.String(), &lineInfo{itemIdx: goalIdx, kind: "goal"})
 
-	audioIdx := 5
+	audioIdx := 6
 	prefix = "  "
 	itemStyle = lipgloss.NewStyle()
 	if audioIdx == m.settingsCursor {
@@ -125,7 +126,7 @@ func (m *Model) renderSettings(x, y int) string {
 	}
 	addContent(itemStyle.Render(fmt.Sprintf("%sAuto-play audio: %s", prefix, autoPlayStatus)), &lineInfo{itemIdx: audioIdx, kind: "item"})
 
-	strictIdx := 6
+	strictIdx := 7
 	prefix = "  "
 	itemStyle = lipgloss.NewStyle()
 	if strictIdx == m.settingsCursor {
@@ -154,9 +155,9 @@ func (m *Model) renderSettings(x, y int) string {
 		label string
 		value string
 	}{
-		{7, "API Key:    ", app.MaskAPIKey(creds.APIKey)},
-		{8, "Model:      ", credValueOrDefault(creds.Model, credProvider)},
-		{9, "Base URL:   ", credValueOrDefault(creds.BaseURL, credProvider+"-url")},
+		{8, "API Key:    ", app.MaskAPIKey(creds.APIKey)},
+		{9, "Model:      ", credValueOrDefault(creds.Model, credProvider)},
+		{10, "Base URL:   ", credValueOrDefault(creds.BaseURL, credProvider+"-url")},
 	}
 	for _, row := range credRows {
 		prefix = "  "

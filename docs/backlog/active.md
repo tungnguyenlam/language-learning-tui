@@ -1,6 +1,6 @@
 # Active Backlog
 
-Last updated: 2026-05-23
+Last updated: 2026-05-28
 
 ## Current Milestone
 
@@ -8,6 +8,8 @@ Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
 
+- [x] **Cloze UI Polish:** Highlight revealed cloze answers in standard review mode.
+- [x] **AI Tutor Explanation:** Added `Shift+H` shortcut to get card explanations from AI.
 - [x] **Code Deduplication:** Introduced `executeBulkAction` and `executeSingleAction` helpers in `internal/tui/handlers.go`, reducing repetitive boilerplate for browser and review actions.
 - [x] **Rendering Consistency:** Centralized `formatReviewInterval` and `renderReviewHistory` in common files (`utils.go` and `render_views.go`) for consistent card metadata display across views.
 - [x] **RenderContext Enhancements:** Added `RegisterAction` and `WriteAction` to `RenderContext` to streamline the implementation of interactive UI elements.
@@ -19,7 +21,7 @@ Polish and Reliability - IN PROGRESS.
 
 ## Exact Next Action
 
-Look for further codebase improvements (refactoring, new features, or content).
+Explore additional learning modes (e.g. grammar games or verb conjugation practice) to make learning more enjoyable.
 
 ## Top Issues / Priorities
 
@@ -27,7 +29,20 @@ None.
 
 ## Last Verified
 
-- `./scripts/verify.sh` passed with 0 test failures (320 passed).
+- `./scripts/verify.sh` passed with 0 test failures (332 passed).
+
+## Blockers
+
+None.
+selection) or additional learning modes.
+
+## Top Issues / Priorities
+
+None.
+
+## Last Verified
+
+- `./scripts/verify.sh` passed with 0 test failures (332 passed).
 
 ## Blockers
 

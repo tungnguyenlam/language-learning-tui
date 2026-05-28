@@ -100,6 +100,7 @@ type Model struct {
 	hitboxes              []Hitbox
 	aiProvider            ai.Provider
 	aiProviderName        string
+	dictionaryProvider    string
 	aiTemplates           map[string]map[string]string
 	aiTemplateSets        []string
 	aiTemplateIndex       int
@@ -127,7 +128,7 @@ type Model struct {
 	editingImportPath     bool
 	editingExportTag      bool
 	theme                 string
-	onConfigChange        func(string, string, map[string]map[string]string, bool, bool)
+	onConfigChange        func(string, string, string, map[string]map[string]string, bool, bool)
 	bookmarkFilter        bool
 	originalTemplateValue string
 	mcqChoice             int
@@ -195,6 +196,11 @@ type Model struct {
 	showHint              bool               // Whether to show hint for the current card
 	showCardInfo          bool               // Whether to show card info overlay
 
+	// Card-explanation flow: AI provides a brief pedagogical explanation.
+	explainingCard bool
+	explanation    string
+	explainError   string
+
 	// Card-fix flow: user reports the current Review card as wrong; AI
 	// proposes a corrected note metadata; the user accepts or discards.
 	fixingCard  bool          // AI request in flight
@@ -245,6 +251,7 @@ type ModelOptions struct {
 	Theme               string
 	AIProvider          ai.Provider
 	AIProviderName      string
+	DictionaryProvider  string
 	AITemplates         map[string]map[string]string
 	AISecrets           app.Secrets
 	TTSProvider         string
@@ -254,7 +261,7 @@ type ModelOptions struct {
 	StrictNormalization bool
 	ImportPath          string
 	ExportPath          string
-	OnConfigChange      func(string, string, map[string]map[string]string, bool, bool)
+	OnConfigChange      func(string, string, string, map[string]map[string]string, bool, bool)
 	OnSecretsChange     func(app.Secrets)
 	Logger              *app.LeveledLogger
 }
@@ -360,6 +367,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		theme:               opts.Theme,
 		aiProvider:          provider,
 		aiProviderName:      providerName,
+		dictionaryProvider:  opts.DictionaryProvider,
 		aiTemplates:         templates,
 		aiTemplateSets:      sets,
 		aiTemplateIndex:     aiTemplateIndex,
@@ -442,6 +450,14 @@ type statusMsg struct {
 type tagsUpdatedMsg struct {
 	cardIDs []string
 	tags    []string
+}
+type explainMsg struct {
+	cardID      string
+	explanation string
+}
+type explainErrorMsg struct {
+	cardID string
+	err    error
 }
 type deckDeletedMsg struct{}
 
@@ -584,6 +600,19 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.applyDeckFilter()
 		m.logger.Info("Applied fix for card %s", msg.cardID)
 		return m, m.setStatus("Card updated by AI", 3*time.Second)
+	case explainMsg:
+		m.explainingCard = false
+		m.explanation = msg.explanation
+		m.explainError = ""
+		m.logger.Info("AI returned explanation for card %s", msg.cardID)
+		m.status = "Pedagogical explanation received"
+		return m, nil
+	case explainErrorMsg:
+		m.explainingCard = false
+		m.explanation = ""
+		m.explainError = msg.err.Error()
+		m.logger.Error("Explanation failed for card %s: %v", msg.cardID, msg.err)
+		return m, m.setStatus("Explanation failed: "+msg.err.Error(), 5*time.Second)
 	case deckDeletedMsg:
 		m.logger.Info("Deck deleted")
 		return m, tea.Batch(m.loadDecks, m.loadDueCards)
@@ -1420,15 +1449,32 @@ func (m *Model) openDictionary(word string) tea.Cmd {
 		return nil
 	}
 	return func() tea.Msg {
-		url := "https://www.dict.cc/?s=" + url.QueryEscape(word)
+		var urlStr string
+		switch strings.ToLower(m.dictionaryProvider) {
+		case "linguee":
+			urlStr = "https://www.linguee.com/german-english/search?source=auto&query=" + url.QueryEscape(word)
+		case "leo":
+			urlStr = "https://dict.leo.org/german-english/" + url.QueryEscape(word)
+		case "duden":
+			urlStr = "https://www.duden.de/suchen/dudenonline/" + url.QueryEscape(word)
+		case "pons":
+			urlStr = "https://en.pons.com/translate/german-english/" + url.QueryEscape(word)
+		case "cambridge":
+			urlStr = "https://dictionary.cambridge.org/dictionary/german-english/" + url.QueryEscape(word)
+		case "google translate":
+			urlStr = "https://translate.google.com/?sl=de&tl=en&text=" + url.QueryEscape(word) + "&op=translate"
+		default: // dict.cc
+			urlStr = "https://www.dict.cc/?s=" + url.QueryEscape(word)
+		}
+
 		var cmd *exec.Cmd
 		switch runtime.GOOS {
 		case "darwin":
-			cmd = exec.Command("open", url)
+			cmd = exec.Command("open", urlStr)
 		case "windows":
-			cmd = exec.Command("cmd", "/c", "start", url)
+			cmd = exec.Command("cmd", "/c", "start", urlStr)
 		default:
-			cmd = exec.Command("xdg-open", url)
+			cmd = exec.Command("xdg-open", urlStr)
 		}
 		if err := cmd.Run(); err != nil {
 			return err

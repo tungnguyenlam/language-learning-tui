@@ -181,8 +181,9 @@ def test_settings_and_template_drafting():
             agent.assert_text("AI Provider:    template")
             agent.assert_text("Switched to template AI provider")
 
-            # Edit Front Template
-            agent.act('j') # Move to Front Template
+            # Edit Front Template (index 2)
+            agent.act('j')
+            agent.act('j')
             agent.wait_until_stable()
             agent.act('<Enter>') # Start editing
             agent.wait_until_stable()
@@ -433,6 +434,7 @@ def test_settings_navigation_with_up_down_arrows():
             agent.wait_for_text("AI Provider:    disabled")
             
             agent.act('<Down>')
+            agent.act('<Down>') # Move to Front Template (index 2)
             agent.wait_until_stable()
             
             agent.act('<Enter>')
@@ -442,6 +444,7 @@ def test_settings_navigation_with_up_down_arrows():
             agent.wait_until_stable()
             
             agent.act('<Up>')
+            agent.act('<Up>') # Move back to AI Provider (index 0)
             agent.wait_until_stable()
             
             agent.act('<Enter>')

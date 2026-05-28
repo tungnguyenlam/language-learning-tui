@@ -640,23 +640,39 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		m.aiProvider = buildProvider(next, m.aiSecrets, m.aiTemplates, m.currentAITemplateSet())
 		m.status = fmt.Sprintf("Switched to %s AI provider", m.aiProviderName)
 		if m.onConfigChange != nil {
-			m.onConfigChange(m.theme, m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
+			m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
 		}
 
-	case 1, 2, 3:
+	case 1:
+		// Dictionary cycle
+		cycle := []string{"dict.cc", "Linguee", "Leo", "Duden", "Pons", "Cambridge", "Google Translate"}
+		next := "dict.cc"
+		for i, name := range cycle {
+			if strings.EqualFold(name, m.dictionaryProvider) {
+				next = cycle[(i+1)%len(cycle)]
+				break
+			}
+		}
+		m.dictionaryProvider = next
+		m.status = fmt.Sprintf("Switched to %s dictionary", m.dictionaryProvider)
+		if m.onConfigChange != nil {
+			m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
+		}
+
+	case 2, 3, 4:
 		m.editingTemplate = true
 		activeSet := m.currentAITemplateSet()
 		key := ""
 		switch m.settingsCursor {
-		case 1:
-			key = "front"
 		case 2:
-			key = "back"
+			key = "front"
 		case 3:
+			key = "back"
+		case 4:
 			key = "example"
 		}
 		m.originalTemplateValue = m.aiTemplates[activeSet][key]
-	case 5:
+	case 6:
 		m.autoPlayAudio = !m.autoPlayAudio
 		status := "disabled"
 		if m.autoPlayAudio {
@@ -664,9 +680,9 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		}
 		m.status = fmt.Sprintf("Auto-play audio %s", status)
 		if m.onConfigChange != nil {
-			m.onConfigChange(m.theme, m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
+			m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
 		}
-	case 6:
+	case 7:
 		m.strictNormalization = !m.strictNormalization
 		status := "disabled"
 		if m.strictNormalization {
@@ -674,9 +690,9 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		}
 		m.status = fmt.Sprintf("Strict normalization %s", status)
 		if m.onConfigChange != nil {
-			m.onConfigChange(m.theme, m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
+			m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
 		}
-	case 7, 8, 9:
+	case 8, 9, 10:
 		provider := m.credProviderName()
 		if provider == "" {
 			m.status = "Select OpenAI or Anthropic first (Enter on AI Provider)"
@@ -704,11 +720,11 @@ func (m *Model) credProviderName() string {
 
 func credKeyForCursor(cursor int) string {
 	switch cursor {
-	case 7:
-		return "api_key"
 	case 8:
-		return "model"
+		return "api_key"
 	case 9:
+		return "model"
+	case 10:
 		return "base_url"
 	}
 	return ""
@@ -767,7 +783,7 @@ func (m *Model) cycleTheme() tea.Cmd {
 	m.theme = themes[(currentIndex+1)%len(themes)]
 	m.status = fmt.Sprintf("Switched to %s theme", m.theme)
 	if m.onConfigChange != nil {
-		m.onConfigChange(m.theme, m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
+		m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
 	}
 	return nil
 }
@@ -778,11 +794,11 @@ func (m *Model) currentTemplateKey() string {
 
 func (m *Model) templateKeyAtCursor() string {
 	switch m.settingsCursor {
-	case 1:
-		return "front"
 	case 2:
-		return "back"
+		return "front"
 	case 3:
+		return "back"
+	case 4:
 		return "example"
 	}
 	return "front"
@@ -901,6 +917,34 @@ type fixErrorMsg struct {
 type fixAppliedMsg struct {
 	cardID string
 	cards  []core.Card
+}
+
+// explainCard starts the AI-powered pedagogical explanation flow for the
+// currently focused review card.
+func (m *Model) explainCard() tea.Cmd {
+	if m.activeView != ViewReview || len(m.dueCards) == 0 || m.explainingCard {
+		return nil
+	}
+	card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
+	provider := m.aiProvider
+	if provider == nil {
+		m.status = "Enable an AI provider in Settings to get explanations"
+		return nil
+	}
+	m.explainingCard = true
+	m.explanation = ""
+	m.explainError = ""
+	m.status = "Asking AI for explanation…"
+	cardID := card.ID
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancel()
+		explanation, err := ai.ExplainCard(ctx, provider, card)
+		if err != nil {
+			return explainErrorMsg{cardID: cardID, err: err}
+		}
+		return explainMsg{cardID: cardID, explanation: explanation}
+	}
 }
 
 // reportCardWrong starts the fix-card flow for the currently focused

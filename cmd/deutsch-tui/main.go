@@ -81,6 +81,7 @@ func main() {
 		Theme:               cfg.Theme,
 		AIProvider:          nil,
 		AIProviderName:      cfg.AIProvider,
+		DictionaryProvider:  cfg.DictionaryProvider,
 		AITemplates:         cfg.AITemplates,
 		AISecrets:           secrets,
 		TTSProvider:         cfg.TTSProvider,
@@ -91,9 +92,10 @@ func main() {
 		ImportPath:          filepath.Join(dir, "import.tsv"),
 		ExportPath:          filepath.Join(dir, "export.tsv"),
 		Logger:              leveledLogger, // Pass the logger
-		OnConfigChange: func(theme string, name string, tmpls map[string]map[string]string, autoPlayAudio bool, strictNormalization bool) {
+		OnConfigChange: func(theme string, aiProvider string, dictProvider string, tmpls map[string]map[string]string, autoPlayAudio bool, strictNormalization bool) {
 			pCfg.Theme = theme
-			pCfg.AIProvider = name
+			pCfg.AIProvider = aiProvider
+			pCfg.DictionaryProvider = dictProvider
 			pCfg.AITemplates = tmpls
 			pCfg.AutoPlayAudio = autoPlayAudio
 			pCfg.StrictNormalization = strictNormalization

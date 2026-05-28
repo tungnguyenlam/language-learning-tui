@@ -436,6 +436,8 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.status = "Focus mode disabled"
 		}
 		return nil, true
+	case "H":
+		return m.explainCard(), true
 	case "p":
 		if len(m.dueCards) > 0 {
 			return m.playCardAudio(m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]), true
@@ -768,7 +770,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 				}
 			}
 			if m.onConfigChange != nil {
-				m.onConfigChange(m.theme, m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
+				m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
 			}
 			return nil, true
 		case "esc":
@@ -784,7 +786,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 				}
 			}
 			if m.onConfigChange != nil {
-				m.onConfigChange(m.theme, m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
+				m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
 			}
 			return nil, true
 		case "backspace":
@@ -815,7 +817,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "down", "j":
-		if m.settingsCursor < 9 {
+		if m.settingsCursor < 10 {
 			m.settingsCursor++
 		}
 		return nil, true

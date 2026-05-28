@@ -16,6 +16,7 @@ type Config struct {
 	Theme               string                       `json:"theme"`
 	Keymap              string                       `json:"keymap"`
 	AIProvider          string                       `json:"ai_provider"`
+	DictionaryProvider  string                       `json:"dictionary_provider"`
 	TTSProvider         string                       `json:"tts_provider"`
 	TTSVoice            string                       `json:"tts_voice"`
 	LogLevel            string                       `json:"log_level"`
@@ -26,13 +27,14 @@ type Config struct {
 
 func DefaultConfig() Config {
 	return Config{
-		Theme:         "system",
-		Keymap:        "default",
-		AIProvider:    "disabled",
-		TTSProvider:   "edge",
-		TTSVoice:      "de-DE-KatjaNeural",
-		LogLevel:      "info",
-		AutoPlayAudio: false,
+		Theme:              "system",
+		Keymap:             "default",
+		AIProvider:         "disabled",
+		DictionaryProvider: "dict.cc",
+		TTSProvider:        "edge",
+		TTSVoice:           "de-DE-KatjaNeural",
+		LogLevel:           "info",
+		AutoPlayAudio:      false,
 		AITemplates: map[string]map[string]string{
 			"vocabulary": {
 				"front":   "{{.Topic}}",
@@ -128,6 +130,9 @@ func (c Config) withDefaults() Config {
 	if c.AIProvider == "" {
 		c.AIProvider = defaults.AIProvider
 	}
+	if c.DictionaryProvider == "" {
+		c.DictionaryProvider = defaults.DictionaryProvider
+	}
 	if c.TTSProvider == "" {
 		c.TTSProvider = defaults.TTSProvider
 	}
@@ -154,6 +159,7 @@ func unmarshalConfig(raw []byte, cfg *Config) error {
 		Theme               string          `json:"theme"`
 		Keymap              string          `json:"keymap"`
 		AIProvider          string          `json:"ai_provider"`
+		DictionaryProvider  string          `json:"dictionary_provider"`
 		TTSProvider         string          `json:"tts_provider"`
 		TTSVoice            string          `json:"tts_voice"`
 		LogLevel            string          `json:"log_level"`
@@ -169,6 +175,7 @@ func unmarshalConfig(raw []byte, cfg *Config) error {
 	cfg.Theme = file.Theme
 	cfg.Keymap = file.Keymap
 	cfg.AIProvider = file.AIProvider
+	cfg.DictionaryProvider = file.DictionaryProvider
 	cfg.TTSProvider = file.TTSProvider
 	cfg.TTSVoice = file.TTSVoice
 	cfg.LogLevel = file.LogLevel
