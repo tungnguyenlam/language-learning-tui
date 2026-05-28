@@ -14,7 +14,7 @@ import (
 )
 
 func (m *Model) nextViewCmd() tea.Cmd {
-	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser, ViewCram}
+	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser, ViewCram, ViewPractice}
 	for i, view := range views {
 		if m.activeView == view {
 			return m.updateView(views[(i+1)%len(views)])
@@ -24,7 +24,7 @@ func (m *Model) nextViewCmd() tea.Cmd {
 }
 
 func (m *Model) previousViewCmd() tea.Cmd {
-	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser, ViewCram}
+	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser, ViewCram, ViewPractice}
 	for i, view := range views {
 		if m.activeView == view {
 			return m.updateView(views[(i-1+len(views))%len(views)])
@@ -67,6 +67,14 @@ func (m *Model) updateView(view View) tea.Cmd {
 		m.cramReviewed = 0
 		m.cramCorrect = 0
 		return m.loadCramCards()
+	}
+	if view == ViewPractice {
+		m.practiceIndex = 0
+		m.practiceCorrect = 0
+		m.practiceTotal = 0
+		m.practiceRevealed = false
+		m.status = "Loading nouns for practice..."
+		return m.loadPracticeItems()
 	}
 
 	if view == ViewDashboard || view == ViewReview {

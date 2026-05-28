@@ -31,7 +31,8 @@ func (m *Model) renderHelp(layout viewportLayout) string {
 		"  L        Edit deck limits\n" +
 		"  +/-      Adjust limits\n" +
 		"  !/@/#    Recent decks\n" +
-		"  Enter    Select deck"
+		"  Enter    Select deck\n" +
+		"  0        Practice"
 
 	review := sectionStyle.Render("Review:") + "\n" +
 		"  Spc/Ent  Reveal answer\n" +
@@ -60,6 +61,7 @@ func (m *Model) renderHelp(layout viewportLayout) string {
 		"  Stats    j/k scroll, x exp\n" +
 		"  AI       / topic, a/d draft\n" +
 		"  Cram     Ent start, 1-5 filter\n" +
+		"  Practice 1-3/d-a/m-n select\n" +
 		"  Import   i/I import, x/X exp\n" +
 		"  Settings j/k nav, +/- goal"
 

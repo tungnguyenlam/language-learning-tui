@@ -8,6 +8,7 @@ Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
 
+- [x] **Gender Trainer Practice Mode:** Added a new interactive mode for practicing German noun genders (der/die/das), including automated noun extraction and session scoring.
 - [x] **Cloze UI Polish:** Highlight revealed cloze answers in standard review mode.
 - [x] **AI Tutor Explanation:** Added `Shift+H` shortcut to get card explanations from AI.
 - [x] **Code Deduplication:** Introduced `executeBulkAction` and `executeSingleAction` helpers in `internal/tui/handlers.go`, reducing repetitive boilerplate for browser and review actions.
@@ -21,7 +22,7 @@ Polish and Reliability - IN PROGRESS.
 
 ## Exact Next Action
 
-Explore additional learning modes (e.g. grammar games or verb conjugation practice) to make learning more enjoyable.
+Refine the Gender Trainer with a session summary view or implement a "Verb Conjugation Trainer" to further expand learning modes.
 
 ## Top Issues / Priorities
 
@@ -29,7 +30,7 @@ None.
 
 ## Last Verified
 
-- `./scripts/verify.sh` passed with 0 test failures (332 passed).
+- `./scripts/verify.sh` passed with 0 test failures (333 passed).
 
 ## Blockers
 

@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"deutsch-tui/internal/content"
 	"deutsch-tui/internal/core"
 
 	tea "charm.land/bubbletea/v2"
@@ -151,6 +152,40 @@ func (m *Model) reloadBrowserForSelectedDeck() tea.Cmd {
 	m.status = fmt.Sprintf("Browsing %s", m.deckLabel())
 	return m.loadBrowserCards()
 }
+
+func (m *Model) loadPracticeItems() tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+
+		cards, err := m.repo.Cards(ctx, "", "", "")
+		if err != nil {
+			return err
+		}
+
+		var items []practiceItem
+		for _, card := range cards {
+			info := content.AnalyzeCard(card.Prompt, card.Answer)
+			if info.Kind == content.KindNoun && info.Article != "" {
+				// Meaning is usually the side that isn't German
+				meaning := card.Answer
+				if content.Analyze(card.Answer).Article != "" {
+					meaning = card.Prompt
+				}
+
+				items = append(items, practiceItem{
+					Word:    info.Base,
+					Article: info.Article,
+					Meaning: meaning,
+				})
+			}
+		}
+
+		return practiceItemsMsg(items)
+	}
+}
+
+type practiceItemsMsg []practiceItem
 
 func (m *Model) filteredDecks() []core.Deck {
 	if m.deckFilter == "" {

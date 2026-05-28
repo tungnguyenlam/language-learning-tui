@@ -210,7 +210,10 @@ func (m *Model) updateNumberKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, false
 	}
 	switch key {
-	case "0", "1":
+	case "0":
+		m.activeView = ViewPractice
+		return m.updateView(ViewPractice), true
+	case "1":
 		m.activeView = ViewDashboard
 		return m.updateView(ViewDashboard), true
 	case "2":
@@ -258,6 +261,8 @@ func (m *Model) updateActiveViewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return m.updateSettingsKey(msg)
 	case ViewCram:
 		return m.updateCramKey(msg)
+	case ViewPractice:
+		return m.updatePracticeKey(msg)
 	case ViewSessionSummary:
 		return m.updateSessionSummaryKey(msg)
 	case ViewDecks:
@@ -1290,5 +1295,47 @@ func (m *Model) handleSecretEditKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		m.setCredValue(provider, key, m.getCredValue(provider, key)+ch)
 		return nil, true
 	}
+	return nil, true
+}
+
+func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
+	if len(m.practiceItems) == 0 {
+		return nil, false
+	}
+
+	if m.practiceRevealed {
+		// Any key to next noun
+		m.practiceRevealed = false
+		m.practiceIndex = (m.practiceIndex + 1) % len(m.practiceItems)
+		// Reshuffle or repeat? For now just cycle.
+		return nil, true
+	}
+
+	key := msg.String()
+	item := m.practiceItems[m.practiceIndex]
+	var choice string
+
+	switch key {
+	case "1", "d", "m":
+		choice = "der"
+	case "2", "i", "f":
+		choice = "die"
+	case "3", "a", "n":
+		choice = "das"
+	case "q", "esc":
+		return m.updateView(ViewDashboard), true
+	default:
+		return nil, false
+	}
+
+	m.practiceTotal++
+	m.practiceRevealed = true
+	if choice == item.Article {
+		m.practiceCorrect++
+		m.practiceLastResult = true
+	} else {
+		m.practiceLastResult = false
+	}
+
 	return nil, true
 }

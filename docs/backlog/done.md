@@ -1,5 +1,23 @@
 # Done Backlog
 
+## 2026-05-28 (Gender Trainer Practice Mode)
+
+### UX & Learning
+- **Gender Trainer Mode:** Added a new dedicated practice mode (accessible via key `0` or the Dashboard) for mastering German noun genders (der/die/das).
+- **Automated Noun Extraction:** The trainer automatically scans all of the user's decks and identifies nouns with explicit articles using the linguistic analysis engine.
+- **Interactive Training Loop:** Users are presented with a noun and must select the correct article using intuitive keybindings (`1/2/3`, `d/i/a`, or `m/f/n`). Immediate visual feedback (Correct/Incorrect) is provided along with the English meaning.
+- **Session Tracking:** The mode tracks the current session's score and accuracy percentage.
+
+### UI & Navigation
+- **New Practice View:** Implemented a clean, centered practice interface with bold typography and clear calls to action.
+- **Dashboard Integration:** Added "Practice [0]" to the Quick Actions section for easy discovery.
+- **Global Navigation:** Added "Practice" to the sidebar, top tabs, and help overlays.
+
+### Engineering & Testing
+- **New E2E Test:** Added `e2e_tests/test_gender_trainer.py` to verify the full practice flow from navigation to interaction.
+- **Linguistic Integration:** Leveraged `internal/content/wordinfo.go` to provide high-quality noun analysis without manual tagging.
+- **Code Structure:** Created `internal/tui/render_practice.go` and updated `internal/tui/loaders.go` to maintain clean separation of concerns.
+
 ## 2026-05-28 (Dictionary Provider Selection & Polish)
 
 ### UX & Interactivity

@@ -35,6 +35,7 @@ const (
 	ViewSettings       View = "settings"
 	ViewBrowser        View = "browser"
 	ViewCram           View = "cram"
+	ViewPractice       View = "practice"
 	ViewDebug          View = "debug"
 	ViewSessionSummary View = "session_summary"
 )
@@ -70,6 +71,12 @@ func (l viewportLayout) WithHeight(h int) viewportLayout {
 func (l viewportLayout) WithY(y int) viewportLayout {
 	l.Y = y
 	return l
+}
+
+type practiceItem struct {
+	Word    string
+	Article string // "der", "die", "das"
+	Meaning string
 }
 
 type Model struct {
@@ -195,6 +202,14 @@ type Model struct {
 	typingCorrect         bool               // Whether typed answer was correct
 	showHint              bool               // Whether to show hint for the current card
 	showCardInfo          bool               // Whether to show card info overlay
+
+	// Gender Trainer state
+	practiceItems      []practiceItem
+	practiceIndex      int
+	practiceCorrect    int
+	practiceTotal      int
+	practiceRevealed   bool
+	practiceLastResult bool
 
 	// Card-explanation flow: AI provides a brief pedagogical explanation.
 	explainingCard bool
@@ -616,6 +631,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case deckDeletedMsg:
 		m.logger.Info("Deck deleted")
 		return m, tea.Batch(m.loadDecks, m.loadDueCards)
+	case practiceItemsMsg:
+		m.practiceItems = []practiceItem(msg)
+		if len(m.practiceItems) == 0 {
+			m.status = "No nouns found for practice"
+		} else {
+			m.status = fmt.Sprintf("Loaded %d nouns for practice", len(m.practiceItems))
+		}
+		return m, nil
 	case timedClearStatusMsg:
 		if msg.seq == m.statusSeq {
 			m.status = "Ready"
@@ -1064,6 +1087,7 @@ func (m *Model) renderNav(x, y int) string {
 		{"nav-settings", ViewSettings, "Settings"},
 		{"nav-browser", ViewBrowser, "Browser"},
 		{"nav-cram", ViewCram, "Cram"},
+		{"nav-practice", ViewPractice, "Practice [0]"},
 	}
 
 	var b strings.Builder
@@ -1102,6 +1126,7 @@ func (m *Model) renderTabs(x, y int) string {
 		{"tab-settings", ViewSettings, "Settings"},
 		{"tab-browser", ViewBrowser, "Browser"},
 		{"tab-cram", ViewCram, "Cram"},
+		{"tab-practice", ViewPractice, "Practice"},
 	}
 
 	var renderedTabs []string
@@ -1156,6 +1181,8 @@ func (m *Model) renderActiveViewPlainAt(layout viewportLayout) string {
 		content = m.renderBrowserAt(layout)
 	case ViewCram:
 		content = m.renderCramAt(layout)
+	case ViewPractice:
+		content = m.renderPractice(layout)
 	case ViewDebug:
 		content = m.renderDebug(layout.X, layout.Y)
 	case ViewSessionSummary:
