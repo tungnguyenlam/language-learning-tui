@@ -449,6 +449,22 @@ func (m *Model) startDrafting() tea.Cmd {
 		m.status = "AI provider is disabled. Enable it in Settings."
 		return nil
 	}
+
+	// Extract tags from input (e.g. "doctor visit #medical #b1")
+	var tags []string
+	cleanTopic := ""
+	words := strings.Fields(m.aiInput)
+	for _, w := range words {
+		if strings.HasPrefix(w, "#") && len(w) > 1 {
+			tags = append(tags, w[1:])
+		} else {
+			if cleanTopic != "" {
+				cleanTopic += " "
+			}
+			cleanTopic += w
+		}
+	}
+
 	m.drafting = true
 	m.status = "AI is drafting flashcards..."
 	return tea.Batch(
@@ -463,8 +479,9 @@ func (m *Model) startDrafting() tea.Cmd {
 			}
 
 			drafts, err := m.aiProvider.GenerateDrafts(ctx, ai.DraftRequest{
-				SourceText: m.aiInput,
+				SourceText: cleanTopic,
 				DeckID:     deckID,
+				Tags:       tags,
 			})
 
 			if err != nil {
@@ -692,13 +709,23 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		if m.onConfigChange != nil {
 			m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
 		}
-	case 8, 9, 10:
-		provider := m.credProviderName()
-		if provider == "" {
-			m.status = "Select OpenAI or Anthropic first (Enter on AI Provider)"
-			return nil
+	case 8, 9, 10, 11:
+		var provider string
+		var key string
+		switch m.settingsCursor {
+		case 8:
+			provider = "openai"
+			key = "api_key"
+		case 9:
+			provider = "openai"
+			key = "model"
+		case 10:
+			provider = "anthropic"
+			key = "api_key"
+		case 11:
+			provider = "anthropic"
+			key = "model"
 		}
-		key := credKeyForCursor(m.settingsCursor)
 		m.editingSecretProvider = provider
 		m.editingSecretKey = key
 		m.originalSecretValue = m.getCredValue(provider, key)
@@ -707,29 +734,17 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 	return nil
 }
 
-// credProviderName returns "openai" or "anthropic" when the active provider
-// is a key-based one, otherwise an empty string. The credential rows in
-// Settings only act on the currently-selected provider.
-func (m *Model) credProviderName() string {
-	switch m.aiProviderName {
-	case "openai", "anthropic":
-		return m.aiProviderName
-	}
-	return ""
-}
-
 func credKeyForCursor(cursor int) string {
 	switch cursor {
-	case 8:
+	case 8, 10:
 		return "api_key"
-	case 9:
+	case 9, 11:
 		return "model"
-	case 10:
-		return "base_url"
 	}
 	return ""
 }
 
+// getCredValue returns the current credential value for the named provider and key.
 func (m *Model) getCredValue(provider, key string) string {
 	c := m.credsFor(provider)
 	switch key {

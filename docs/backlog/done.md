@@ -1,5 +1,18 @@
 # Done Backlog
 
+## 2026-05-28 (AI Feature Improvements)
+
+### AI & Content Generation
+- **Seamless API Setup:** Redesigned the Settings view to show both OpenAI and Anthropic credential rows at all times. Users can now enter their API keys without first having to cycle the active provider.
+- **Automatic Provider Activation:** Entering a valid API key now automatically enables the corresponding AI provider, drastically simplifying the first-run experience for AI features.
+- **Inline Tag Extraction:** AI Drafting now supports extracting hashtags directly from the topic input (e.g., "doctor visit #medical"). These tags are passed to the LLM and applied to the generated cards.
+- **Anthropic Model Update:** Updated the default Anthropic model to `claude-3-5-haiku-latest` to ensure compatibility with current APIs.
+- **Improved UI Guidance:** Updated the AI view's "disabled" state message to explicitly guide users toward enabling OpenAI or Anthropic providers once they have a key.
+
+### Engineering & Testing
+- **New E2E Tests:** Added `e2e_tests/test_ai_improvements.py` verifying auto-enable logic and hashtag extraction.
+- **Code Cleanup:** Refactored `handleSettingsEnter` and `credKeyForCursor` for better maintainability and support for parallel provider credentials.
+
 ## 2026-05-28 (Gender Trainer Practice Mode)
 
 ### UX & Learning

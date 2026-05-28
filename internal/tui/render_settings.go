@@ -141,41 +141,32 @@ func (m *Model) renderSettings(x, y int) string {
 
 	addContent("", nil)
 	addContent(sectionStyle.Render("API CREDENTIALS"), nil)
-	credProvider := m.credProviderName()
-	disabledStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true)
-	if credProvider == "" {
-		addContent(disabledStyle.Render("  (select openai or anthropic above to edit credentials)"), nil)
-	} else {
-		addContent(mutedStyle.Render(fmt.Sprintf("  Provider: %s. Press Enter on a row to edit.", credProvider)), nil)
-	}
+	addContent(mutedStyle.Render("  Press Enter on a row to edit credentials."), nil)
 
-	creds := m.credsFor(credProvider)
 	credRows := []struct {
-		idx   int
-		label string
-		value string
+		idx      int
+		provider string
+		label    string
+		value    string
 	}{
-		{8, "API Key:    ", app.MaskAPIKey(creds.APIKey)},
-		{9, "Model:      ", credValueOrDefault(creds.Model, credProvider)},
-		{10, "Base URL:   ", credValueOrDefault(creds.BaseURL, credProvider+"-url")},
+		{8, "openai", "OpenAI Key: ", app.MaskAPIKey(m.aiSecrets.OpenAI.APIKey)},
+		{9, "openai", "OpenAI Model: ", credValueOrDefault(m.aiSecrets.OpenAI.Model, "openai")},
+		{10, "anthropic", "Anthropic Key:", app.MaskAPIKey(m.aiSecrets.Anthropic.APIKey)},
+		{11, "anthropic", "Anthropic Mod:", credValueOrDefault(m.aiSecrets.Anthropic.Model, "anthropic")},
 	}
 	for _, row := range credRows {
 		prefix = "  "
-		itemStyle = lipgloss.NewStyle()
+		itemStyle := lipgloss.NewStyle()
 		if row.idx == m.settingsCursor {
 			prefix = "> "
-			if m.editingSecretKey != "" && credKeyForCursor(row.idx) == m.editingSecretKey {
+			if m.editingSecretKey != "" && row.provider == m.editingSecretProvider {
 				itemStyle = itemStyle.Bold(true).Background(lipgloss.Color("62"))
-			} else if credProvider == "" {
-				itemStyle = itemStyle.Bold(true).Foreground(lipgloss.Color("240"))
 			} else {
 				itemStyle = itemStyle.Bold(true).Foreground(lipgloss.Color("212"))
 			}
-		} else if credProvider == "" {
-			itemStyle = itemStyle.Foreground(lipgloss.Color("240"))
 		}
 		displayValue := row.value
-		if m.editingSecretKey != "" && credKeyForCursor(row.idx) == m.editingSecretKey {
+		if m.editingSecretKey != "" && row.idx == m.settingsCursor {
 			raw := m.getCredValue(m.editingSecretProvider, m.editingSecretKey)
 			if m.editingSecretKey == "api_key" {
 				displayValue = fmt.Sprintf("•%d chars (Enter to save, Esc to cancel)", len(raw))
@@ -260,7 +251,7 @@ func credValueOrDefault(value, kind string) string {
 	case "openai":
 		return "(default: gpt-4o-mini)"
 	case "anthropic":
-		return "(default: claude-haiku-4-5)"
+		return "(default: claude-3-5-haiku-latest)"
 	case "openai-url":
 		return "(default: api.openai.com/v1)"
 	case "anthropic-url":

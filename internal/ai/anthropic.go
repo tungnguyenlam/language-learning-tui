@@ -15,7 +15,7 @@ import (
 const (
 	defaultAnthropicBaseURL = "https://api.anthropic.com"
 	defaultAnthropicVersion = "2023-06-01"
-	defaultAnthropicModel   = "claude-haiku-4-5-20251001"
+	defaultAnthropicModel   = "claude-3-5-haiku-latest"
 	defaultAnthropicMaxTok  = 1500
 )
 

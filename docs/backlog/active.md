@@ -8,6 +8,7 @@ Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
 
+- [x] **AI Feature Improvements:** Implemented automatic provider activation on API key entry, added inline tag extraction for AI drafting, and updated Anthropic model defaults.
 - [x] **Gender Trainer Practice Mode:** Added a new interactive mode for practicing German noun genders (der/die/das), including automated noun extraction and session scoring.
 - [x] **Cloze UI Polish:** Highlight revealed cloze answers in standard review mode.
 - [x] **AI Tutor Explanation:** Added `Shift+H` shortcut to get card explanations from AI.
@@ -22,7 +23,7 @@ Polish and Reliability - IN PROGRESS.
 
 ## Exact Next Action
 
-Refine the Gender Trainer with a session summary view or implement a "Verb Conjugation Trainer" to further expand learning modes.
+Implement a "Verb Conjugation Trainer" to further expand interactive learning modes.
 
 ## Top Issues / Priorities
 
@@ -30,7 +31,7 @@ None.
 
 ## Last Verified
 
-- `./scripts/verify.sh` passed with 0 test failures (333 passed).
+- `./scripts/verify.sh` passed with 0 test failures (335 passed).
 
 ## Blockers
 

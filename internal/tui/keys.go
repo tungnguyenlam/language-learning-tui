@@ -1258,10 +1258,21 @@ func (m *Model) handleSecretEditKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	}
 
 	commit := func() {
+		if m.aiProviderName == "disabled" || m.aiProviderName == "offline" || m.aiProviderName == "template" {
+			if provider == "openai" && strings.TrimSpace(m.aiSecrets.OpenAI.APIKey) != "" {
+				m.aiProviderName = "openai"
+			} else if provider == "anthropic" && strings.TrimSpace(m.aiSecrets.Anthropic.APIKey) != "" {
+				m.aiProviderName = "anthropic"
+			}
+		}
+
 		// Rebuild the provider so the new credentials take effect immediately.
 		m.aiProvider = buildProvider(m.aiProviderName, m.aiSecrets, m.aiTemplates, m.currentAITemplateSet())
 		if m.onSecretsChange != nil {
 			m.onSecretsChange(m.aiSecrets)
+		}
+		if m.onConfigChange != nil {
+			m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
 		}
 	}
 
