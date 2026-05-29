@@ -24,10 +24,12 @@ Polish and Reliability - IN PROGRESS.
 - [x] **NativeTTS Cache Fix:** Fixed macOS cache mismatch where synthesis output target used `.aiff` while existence checks queried `.wav`.
 - [x] **Browser Audio Playback & Select All:** Added `p` (play audio) and `a` (select/deselect all) shortcuts to the Card Browser, with unit tests and help overlay updates.
 - [x] **Grammar Hint Overlay:** Added a `Shift+G` shortcut in the Review view to toggle a contextual grammar hint based on the card contents.
+- [x] **List Navigation Shortcuts:** Added `g` (jump to top) and `G` (jump to bottom) shortcuts to Browser, Settings, and Decks views for faster navigation.
+- [x] **Browser Contextual Hints:** Integrated the grammar hint analysis directly into the Card Preview box in the Browser view to show contextual word usage information.
 
 ## Exact Next Action
 
-Refine the UI - evaluate adding visual transitions, more contextual hints in the browser, or improve the settings pane navigation.
+Explore further visual polish or performance optimization, or move on to the next set of user feedback.
 
 ## Top Issues / Priorities
 

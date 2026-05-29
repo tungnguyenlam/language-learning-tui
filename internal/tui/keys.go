@@ -605,6 +605,16 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	case "down", "j":
 		m.moveDeckCursor(1)
 		return nil, true
+	case "g":
+		if len(filtered) > 0 {
+			m.deckCursor = 0
+		}
+		return nil, true
+	case "G":
+		if len(filtered) > 0 {
+			m.deckCursor = len(filtered) - 1
+		}
+		return nil, true
 	case " ":
 		if len(filtered) > 0 {
 			id := filtered[m.deckCursor].ID
@@ -847,6 +857,12 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.settingsCursor++
 		}
 		return nil, true
+	case "g":
+		m.settingsCursor = 0
+		return nil, true
+	case "G":
+		m.settingsCursor = 11
+		return nil, true
 	case "c":
 		return m.cycleTheme(), true
 	case "enter":
@@ -949,6 +965,16 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, true
 	case "down", "j":
 		m.moveBrowserCursor(1)
+		return nil, true
+	case "g":
+		if len(m.browserCards) > 0 {
+			m.browserCursor = 0
+		}
+		return nil, true
+	case "G":
+		if len(m.browserCards) > 0 {
+			m.browserCursor = len(m.browserCards) - 1
+		}
 		return nil, true
 	case "/":
 		m.searchingBrowser = true

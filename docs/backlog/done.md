@@ -1,5 +1,18 @@
 # Done Backlog
 
+## 2026-05-29 (Grammar Hints & Navigation Polish)
+
+### UX & Learning
+- **Grammar Hint Overlay:** Added a `Shift+G` shortcut in the Review view to toggle a contextual grammar hint based on the card contents.
+- **Browser Contextual Hints:** Integrated the grammar hint analysis directly into the Card Preview box in the Browser view to show contextual word usage information.
+
+### UI & Navigation
+- **List Navigation Shortcuts:** Added `g` (jump to top) and `G` (jump to bottom) shortcuts to Browser, Settings, and Decks views for faster navigation.
+
+### Engineering & Testing
+- **New Unit Tests:** Added `internal/content/grammar_tips_test.go` and updated `internal/tui/model_test.go`.
+- **Verified Suite:** All 337 tests are passing green.
+
 ## 2026-05-28 (Practice Hub & Case Ending Trainer)
 
 ### UX & Learning
