@@ -8,59 +8,61 @@ import (
 )
 
 func (m *Model) renderPractice(layout viewportLayout) string {
-	if len(m.practiceItems) == 0 {
-		return lipgloss.NewStyle().
-			Width(layout.Width).
-			Height(layout.Height).
-			Align(lipgloss.Center, lipgloss.Center).
-			Render("No nouns with articles found in your decks.\nAdd some cards with 'der', 'die', or 'das' to start practicing!")
+	switch m.practiceSubView {
+	case PracticeSubViewHub:
+		return m.renderPracticeHub(layout)
+	case PracticeSubViewGender:
+		return m.renderGenderTrainer(layout)
+	case PracticeSubViewConjugation:
+		return m.renderConjugation(layout)
+	case PracticeSubViewCase:
+		return m.renderCaseTrainer(layout)
 	}
+	return "Unknown Practice View"
+}
 
+func (m *Model) renderPracticeHub(layout viewportLayout) string {
 	var b strings.Builder
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(colorCyan).MarginBottom(1)
-	b.WriteString(titleStyle.Render("GENDER TRAINER") + "\n\n")
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212")).Underline(true)
+	b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, titleStyle.Render(" PRACTICE HUB ")) + "\n\n")
 
-	scoreStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("245"))
-	accuracy := 0.0
-	if m.practiceTotal > 0 {
-		accuracy = float64(m.practiceCorrect) / float64(m.practiceTotal) * 100
+	modes := []struct {
+		id    string
+		key   string
+		label string
+		desc  string
+		sub   PracticeSubView
+	}{
+		{"practice-gender", "1", "Gender Trainer", "Practice der/die/das noun genders", PracticeSubViewGender},
+		{"practice-conjugation", "2", "Conjugation Trainer", "Practice German verb forms", PracticeSubViewConjugation},
+		{"practice-case", "3", "Case Ending Trainer", "Practice Nom/Acc/Dat/Gen endings", PracticeSubViewCase},
 	}
-	b.WriteString(scoreStyle.Render(fmt.Sprintf("Score: %d/%d (%.0f%%)", m.practiceCorrect, m.practiceTotal, accuracy)) + "\n\n")
 
-	item := m.practiceItems[m.practiceIndex]
+	for i, mode := range modes {
+		btnStyle := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			Padding(0, 2).
+			Width(40).
+			BorderForeground(lipgloss.Color("81"))
 
-	wordStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("255")).Padding(1, 4).Border(lipgloss.RoundedBorder())
-	b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, wordStyle.Render(item.Word)) + "\n\n")
+		keyHint := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212")).Render("[" + mode.key + "]")
+		content := fmt.Sprintf("%s %s\n%s", keyHint, mode.label, mutedStyle.Render(mode.desc))
 
-	if !m.practiceRevealed {
-		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, "Which article?") + "\n\n")
+		btn := btnStyle.Render(content)
+		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, btn) + "\n")
 
-		btnStyle := lipgloss.NewStyle().Padding(0, 2).Margin(0, 1).Background(lipgloss.Color("235"))
-		derBtn := btnStyle.Render("der [1/d/m]")
-		dieBtn := btnStyle.Render("die [2/i/f]")
-		dasBtn := btnStyle.Render("das [3/a/n]")
-
-		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, lipgloss.JoinHorizontal(lipgloss.Center, derBtn, dieBtn, dasBtn)) + "\n")
-	} else {
-		resultStyle := lipgloss.NewStyle().Bold(true).Padding(0, 2).MarginBottom(1)
-		if m.practiceLastResult {
-			resultStyle = resultStyle.Foreground(lipgloss.Color("46")).SetString("CORRECT")
-		} else {
-			resultStyle = resultStyle.Foreground(lipgloss.Color("196")).SetString("INCORRECT")
-		}
-
-		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, resultStyle.String()) + "\n")
-
-		fullWord := fmt.Sprintf("%s %s", item.Article, item.Word)
-		fullWordStyle := lipgloss.NewStyle().Bold(true).Foreground(colorPink)
-		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, fullWordStyle.Render(fullWord)) + "\n")
-
-		if item.Meaning != "" {
-			b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, mutedStyle.Render(item.Meaning)) + "\n")
-		}
-
-		b.WriteString("\n" + lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, "Press any key for next noun") + "\n")
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     mode.id,
+			View:   ViewPractice,
+			X:      layout.X + (layout.Width-40)/2,
+			Y:      layout.Y + 3 + (i * 4),
+			Width:  40,
+			Height: 3,
+		})
 	}
+
+	b.WriteString("\n" + lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, "Press a key to select a trainer") + "\n")
+	b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, mutedStyle.Render("Press Esc to return to Dashboard")))
 
 	return b.String()
 }

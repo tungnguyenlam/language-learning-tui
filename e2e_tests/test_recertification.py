@@ -28,8 +28,7 @@ def test_tab_cycles_through_all_primary_views_and_wraps():
                 "Settings",
                 "Card Browser",
                 "Cram Mode",
-                "GENDER TRAINER",
-                "VERB CONJUGATION TRAINER",
+                "PRACTICE HUB",
                 "Use Review (3) to start studying.",
             ]:
                 agent.act("<Tab>")

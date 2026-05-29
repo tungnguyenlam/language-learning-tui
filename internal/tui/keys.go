@@ -107,8 +107,9 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	switch key {
 	case "K":
 		if !m.textInputActive() {
-			m.activeView = ViewConjugation
-			return m, m.updateView(ViewConjugation)
+			return m, tea.Sequence(m.updateView(ViewPractice), func() tea.Msg {
+				return m.enterPracticeMode(PracticeSubViewConjugation)()
+			})
 		}
 	case "tab", "right", "s":
 		if cmd, handled := m.updateActiveViewKey(msg); handled {
@@ -268,8 +269,6 @@ func (m *Model) updateActiveViewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return m.updateCramKey(msg)
 	case ViewPractice:
 		return m.updatePracticeKey(msg)
-	case ViewConjugation:
-		return m.updateConjugationKey(msg)
 	case ViewSessionSummary:
 		return m.updateSessionSummaryKey(msg)
 	case ViewDecks:
@@ -1317,45 +1316,109 @@ func (m *Model) handleSecretEditKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 }
 
 func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
-	if len(m.practiceItems) == 0 {
-		return nil, false
-	}
-
-	if m.practiceRevealed {
-		// Any key to next noun
-		m.practiceRevealed = false
-		m.practiceIndex = (m.practiceIndex + 1) % len(m.practiceItems)
-		// Reshuffle or repeat? For now just cycle.
-		return nil, true
-	}
-
 	key := msg.String()
-	item := m.practiceItems[m.practiceIndex]
-	var choice string
 
-	switch key {
-	case "1", "d", "m":
-		choice = "der"
-	case "2", "i", "f":
-		choice = "die"
-	case "3", "a", "n":
-		choice = "das"
-	case "q", "esc":
-		return m.updateView(ViewDashboard), true
-	default:
+	switch m.practiceSubView {
+	case PracticeSubViewHub:
+		switch key {
+		case "1":
+			return m.enterPracticeMode(PracticeSubViewGender), true
+		case "2":
+			return m.enterPracticeMode(PracticeSubViewConjugation), true
+		case "3":
+			return m.enterPracticeMode(PracticeSubViewCase), true
+		case "q", "esc":
+			return m.updateView(ViewDashboard), true
+		}
 		return nil, false
+
+	case PracticeSubViewGender:
+		if len(m.practiceItems) == 0 {
+			return nil, false
+		}
+		if m.practiceRevealed {
+			m.practiceRevealed = false
+			m.practiceIndex = (m.practiceIndex + 1) % len(m.practiceItems)
+			return nil, true
+		}
+		if key == "esc" {
+			m.practiceSubView = PracticeSubViewHub
+			return nil, true
+		}
+		item := m.practiceItems[m.practiceIndex]
+		var choice string
+		switch key {
+		case "1", "d", "m":
+			choice = "der"
+		case "2", "i", "f":
+			choice = "die"
+		case "3", "a", "n":
+			choice = "das"
+		default:
+			return nil, false
+		}
+		m.practiceTotal++
+		m.practiceRevealed = true
+		if choice == item.Article {
+			m.practiceCorrect++
+			m.practiceLastResult = true
+		} else {
+			m.practiceLastResult = false
+		}
+		return nil, true
+
+	case PracticeSubViewConjugation:
+		if key == "esc" && !m.conjugationRevealed && m.conjugationInput == "" {
+			m.practiceSubView = PracticeSubViewHub
+			return nil, true
+		}
+		return m.updateConjugationKey(msg)
+
+	case PracticeSubViewCase:
+		if len(m.caseItems) == 0 {
+			return nil, false
+		}
+		if m.caseRevealed {
+			m.caseRevealed = false
+			m.caseInput = ""
+			m.caseIndex = (m.caseIndex + 1) % len(m.caseItems)
+			return nil, true
+		}
+		if key == "esc" && m.caseInput == "" {
+			m.practiceSubView = PracticeSubViewHub
+			return nil, true
+		}
+		switch key {
+		case "enter", "\r", "\n":
+			if m.caseInput == "" {
+				return nil, true
+			}
+			m.caseTotal++
+			m.caseRevealed = true
+			target := m.caseItems[m.caseIndex].Answer
+			if strings.TrimSpace(strings.ToLower(m.caseInput)) == strings.TrimSpace(strings.ToLower(target)) {
+				m.caseCorrect++
+				m.caseLastResult = true
+			} else {
+				m.caseLastResult = false
+			}
+			return nil, true
+		case "backspace":
+			if len(m.caseInput) > 0 {
+				m.caseInput = trimLastRune(m.caseInput)
+			}
+			return nil, true
+		case "ctrl+u":
+			m.caseInput = ""
+			return nil, true
+		}
+		if ch, ok := singlePrintableInput(key); ok {
+			m.caseInput += ch
+			return nil, true
+		}
 	}
 
-	m.practiceTotal++
-	m.practiceRevealed = true
-	if choice == item.Article {
-		m.practiceCorrect++
-		m.practiceLastResult = true
-	} else {
-		m.practiceLastResult = false
-	}
-
-	return nil, true
+	return nil, false
 }
 
 func (m *Model) updateConjugationKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {

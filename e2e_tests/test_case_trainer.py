@@ -16,35 +16,29 @@ def start_agent(tmpdir, columns=110, lines=30):
     agent.wait_until_stable()
     return agent
 
-def test_gender_trainer_navigation():
-    """Test navigating to and interacting with Gender Trainer."""
+def test_case_trainer_navigation():
+    """Test navigating to and interacting with Case Ending Trainer."""
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
-            # Go to Decks and select one to ensure we have nouns
-            agent.act('2')
-            agent.wait_for_text("Decks")
-            agent.act('<Enter>')
-            agent.wait_for_text("DASHBOARD")
-
             # Go to Practice Hub (key 0)
             agent.act('0')
             agent.wait_for_text("PRACTICE HUB", timeout=5.0)
             
-            # Select Gender Trainer (key 1)
-            agent.act('1')
-            agent.wait_for_text("GENDER TRAINER", timeout=5.0)
+            # Select Case Ending Trainer (key 3)
+            agent.act('3')
+            agent.wait_for_text("CASE ENDING TRAINER", timeout=5.0)
             
-            # Should show a noun and options
+            # Should show a sentence with blank
             screen = agent.observe()
             assert "Score: 0/0" in screen
-            assert "Which article?" in screen
-            assert "der" in screen
-            assert "die" in screen
-            assert "das" in screen
-
-            # Pick an answer (1 for der)
-            agent.act('1')
+            assert "_____" in screen
+            
+            # Type something and press enter
+            agent.act('d')
+            agent.act('e')
+            agent.act('m')
+            agent.act('<Enter>')
             agent.wait_until_stable()
             
             # Should show revealed state
@@ -56,8 +50,12 @@ def test_gender_trainer_navigation():
             agent.act(' ')
             agent.wait_until_stable()
             
-            # Should be back to "Which article?" for next noun
-            assert "Which article?" in agent.observe()
+            # Should be back to a sentence with blank
+            assert "_____" in agent.observe()
+            
+            # Test Esc to go back to Hub
+            agent.act('<Esc>')
+            agent.wait_for_text("PRACTICE HUB")
             
         finally:
             agent.close()

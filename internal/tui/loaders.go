@@ -193,6 +193,29 @@ func (m *Model) loadConjugationItems() tea.Cmd {
 	}
 }
 
+func (m *Model) loadCaseItems() tea.Cmd {
+	return func() tea.Msg {
+		items := []caseItem{
+			{"Ich gehe mit {{...}} Hund.", "dem", "m, Dative (after mit)"},
+			{"Ich sehe {{...}} Mann.", "den", "m, Accusative (direct object)"},
+			{"Das ist das Buch {{...}} Frau.", "der", "f, Genitive (possession)"},
+			{"Wir wohnen in {{...}} Stadt.", "der", "f, Dative (location)"},
+			{"Er wartet auf {{...}} Bus.", "den", "m, Accusative (movement/direction)"},
+			{"Sie gibt {{...}} Kind einen Apfel.", "dem", "n, Dative (indirect object)"},
+			{"Ohne {{...}} Hilfe schaffe ich es nicht.", "deine", "f, Accusative (after ohne)"},
+			{"Das ist das Haus {{...}} Mannes.", "des", "m, Genitive (possession)"},
+			{"Ich komme aus {{...}} Schweiz.", "der", "f, Dative (after aus)"},
+			{"Für {{...}} Mutter kaufe ich Blumen.", "meine", "f, Accusative (after für)"},
+			{"Neben {{...}} Tisch steht ein Stuhl.", "dem", "m, Dative (location)"},
+			{"Stell die Lampe auf {{...}} Tisch.", "den", "m, Accusative (movement)"},
+			{"Wegen {{...}} Wetters bleiben wir zu Hause.", "des", "m, Genitive (after wegen)"},
+			{"Ich danke {{...}} Lehrer.", "dem", "m, Dative (verb danken)"},
+			{"Hilfst du {{...}} Bruder?", "deinem", "m, Dative (verb helfen)"},
+		}
+		return caseItemsMsg(items)
+	}
+}
+
 type conjugationItemsMsg []content.DailyVerb
 
 type practiceItemsMsg []practiceItem

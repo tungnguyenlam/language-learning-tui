@@ -37,9 +37,17 @@ const (
 	ViewBrowser        View = "browser"
 	ViewCram           View = "cram"
 	ViewPractice       View = "practice"
-	ViewConjugation    View = "conjugation"
 	ViewDebug          View = "debug"
 	ViewSessionSummary View = "session_summary"
+)
+
+type PracticeSubView int
+
+const (
+	PracticeSubViewHub PracticeSubView = iota
+	PracticeSubViewGender
+	PracticeSubViewConjugation
+	PracticeSubViewCase
 )
 
 type RevealState int
@@ -79,6 +87,12 @@ type practiceItem struct {
 	Word    string
 	Article string // "der", "die", "das"
 	Meaning string
+}
+
+type caseItem struct {
+	Sentence string // "Ich gehe mit {{...}} Hund."
+	Answer   string // "dem"
+	Context  string // "m, Dative"
 }
 
 type Model struct {
@@ -223,6 +237,17 @@ type Model struct {
 	conjugationPerson     int // 0-5
 	conjugationAnswer     string
 	conjugationInput      string
+
+	// Case Ending Trainer state
+	caseItems      []caseItem
+	caseIndex      int
+	caseCorrect    int
+	caseTotal      int
+	caseRevealed   bool
+	caseLastResult bool
+	caseInput      string
+
+	practiceSubView PracticeSubView
 
 	// Card-explanation flow: AI provides a brief pedagogical explanation.
 	explainingCard bool
@@ -489,6 +514,8 @@ type explainErrorMsg struct {
 }
 type deckDeletedMsg struct{}
 
+type caseItemsMsg []caseItem
+
 func (m *Model) Init() tea.Cmd {
 	return tea.Sequence(m.loadDueCards, m.loadDecks, m.loadStatistics(), m.loadReviewsPerDay(), m.loadRecentDecks())
 }
@@ -658,6 +685,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.status = "No verbs found for practice"
 		} else {
 			m.status = fmt.Sprintf("Loaded %d verbs for conjugation practice", len(m.conjugationItems))
+		}
+		return m, nil
+	case caseItemsMsg:
+		m.caseItems = []caseItem(msg)
+		if len(m.caseItems) == 0 {
+			m.status = "No case exercises found"
+		} else {
+			m.status = fmt.Sprintf("Loaded %d case exercises", len(m.caseItems))
 		}
 		return m, nil
 	case timedClearStatusMsg:
@@ -1114,7 +1149,6 @@ func (m *Model) renderNav(x, y int) string {
 		{"nav-browser", ViewBrowser, "Browser"},
 		{"nav-cram", ViewCram, "Cram"},
 		{"nav-practice", ViewPractice, "Practice [0]"},
-		{"nav-conjugation", ViewConjugation, "Conjugation [K]"},
 	}
 
 	var b strings.Builder
@@ -1154,7 +1188,6 @@ func (m *Model) renderTabs(x, y int) string {
 		{"tab-browser", ViewBrowser, "Browser"},
 		{"tab-cram", ViewCram, "Cram"},
 		{"tab-practice", ViewPractice, "Practice"},
-		{"tab-conjugation", ViewConjugation, "Conjugation"},
 	}
 
 	var renderedTabs []string
@@ -1211,8 +1244,6 @@ func (m *Model) renderActiveViewPlainAt(layout viewportLayout) string {
 		content = m.renderCramAt(layout)
 	case ViewPractice:
 		content = m.renderPractice(layout)
-	case ViewConjugation:
-		content = m.renderConjugation(layout)
 	case ViewDebug:
 		content = m.renderDebug(layout.X, layout.Y)
 	case ViewSessionSummary:

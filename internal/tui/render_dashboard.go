@@ -300,7 +300,6 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		}{
 			{"nav-review", "Review", "3"},
 			{"nav-practice", "Practice", "0"},
-			{"nav-conjugation", "Conjugation", "K"},
 			{"nav-cram", "Cram", "9"},
 			{"nav-browser", "Browser", "8"},
 			{"nav-statistics", "Stats", "4"},

@@ -1,5 +1,22 @@
 # Done Backlog
 
+## 2026-05-28 (Practice Hub & Case Ending Trainer)
+
+### UX & Learning
+- **Practice Hub:** Consolidated all interactive learning modes into a single, clean "Practice Hub" (accessible via key `0`). This declutters the main navigation while providing an inviting entry point for specialized trainers.
+- **Case Ending Trainer:** Added a third interactive practice mode for mastering German cases (Nominative, Accusative, Dative, Genitive). Users fill in the blanks in sentences and receive immediate grammatical feedback.
+- **Improved Practice Flow:** All practice modes now support returning to the Hub via `Esc`, allowing for seamless switching between different types of exercises.
+
+### UI & Navigation
+- **Navigation Declutter:** Removed individual practice mode tabs to reclaim valuable horizontal space, while keeping high-speed global shortcuts like `K` for Conjugation.
+- **Hub Interface:** Implemented a new, centered Hub layout with descriptive buttons and hitboxes for easy mouse interaction.
+- **Consistent Feedback:** Standardized the "Reveal -> Result -> Next" interaction pattern across all trainers.
+
+### Engineering & Testing
+- **Sub-view Architecture:** Refactored `ViewPractice` to support `PracticeSubView` states, improving code maintainability and scalability for future trainers.
+- **New E2E Test:** Added `e2e_tests/test_case_trainer.py` and updated existing practice tests to navigate through the Hub.
+- **Verified Suite:** All 337 tests are passing green.
+
 ## 2026-05-28 (Verb Conjugation Trainer & Dashboard Polish)
 
 ### UX & Learning
