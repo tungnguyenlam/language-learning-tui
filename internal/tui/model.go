@@ -254,6 +254,10 @@ type Model struct {
 	explanation    string
 	explainError   string
 
+	// Grammar hint overlay
+	showGrammarHint bool
+	grammarHint     *content.GrammarTip
+
 	// Card-fix flow: user reports the current Review card as wrong; AI
 	// proposes a corrected note metadata; the user accepts or discards.
 	fixingCard  bool          // AI request in flight

@@ -1,6 +1,7 @@
 package content
 
 import (
+	"strings"
 	"time"
 )
 
@@ -681,4 +682,25 @@ var grammarTips = []GrammarTip{
 func GetDailyGrammarTip() GrammarTip {
 	dayOfYear := time.Now().YearDay()
 	return grammarTips[dayOfYear%len(grammarTips)]
+}
+
+// GetRelevantGrammarTip tries to find a grammar tip related to the given text,
+// falling back to the daily tip if no strong match is found.
+func GetRelevantGrammarTip(text string) GrammarTip {
+	if text == "" {
+		return GetDailyGrammarTip()
+	}
+
+	lowerText := strings.ToLower(text)
+
+	// Very simple heuristic: check if any word in the tip's title or example is in the text.
+	for _, tip := range grammarTips {
+		titleWords := strings.Fields(strings.ToLower(tip.Title))
+		for _, w := range titleWords {
+			if len(w) > 3 && strings.Contains(lowerText, w) {
+				return tip
+			}
+		}
+	}
+	return GetDailyGrammarTip()
 }

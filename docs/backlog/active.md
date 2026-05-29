@@ -23,10 +23,11 @@ Polish and Reliability - IN PROGRESS.
 - [x] **E2E Improvements:** Added `e2e_tests/test_may23_improvements.py` to verify dashboard interactivity and new content.
 - [x] **NativeTTS Cache Fix:** Fixed macOS cache mismatch where synthesis output target used `.aiff` while existence checks queried `.wav`.
 - [x] **Browser Audio Playback & Select All:** Added `p` (play audio) and `a` (select/deselect all) shortcuts to the Card Browser, with unit tests and help overlay updates.
+- [x] **Grammar Hint Overlay:** Added a `Shift+G` shortcut in the Review view to toggle a contextual grammar hint based on the card contents.
 
 ## Exact Next Action
 
-Enhance the Review experience with a "Grammar Hint" overlay that shows relevant rules from `grammar_tips.go` when requested.
+Refine the UI - evaluate adding visual transitions, more contextual hints in the browser, or improve the settings pane navigation.
 
 ## Top Issues / Priorities
 
@@ -35,19 +36,6 @@ None.
 ## Last Verified
 
 - `./scripts/verify.sh` passed with 0 test failures (337 passed).
-
-## Blockers
-
-None.
-selection) or additional learning modes.
-
-## Top Issues / Priorities
-
-None.
-
-## Last Verified
-
-- `./scripts/verify.sh` passed with 0 test failures (332 passed).
 
 ## Blockers
 

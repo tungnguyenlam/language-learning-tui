@@ -153,6 +153,40 @@ func TestTabNavigationReturnsViewLoadCommand(t *testing.T) {
 	}
 }
 
+func TestReviewGrammarHintToggle(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", Prompt: "P1", Answer: "A1"},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(dueCardsMsg(repo.dueCards))
+	model.activeView = ViewReview
+
+	if model.showGrammarHint {
+		t.Fatal("grammar hint should be hidden initially")
+	}
+
+	// Press G to toggle hint
+	model.Update(tea.KeyPressMsg{Code: 'G'})
+	if !model.showGrammarHint {
+		t.Fatal("grammar hint should be shown after G")
+	}
+	if model.grammarHint == nil {
+		t.Fatal("grammarHint should not be nil")
+	}
+
+	// Press G to toggle off
+	model.Update(tea.KeyPressMsg{Code: 'G'})
+	if model.showGrammarHint {
+		t.Fatal("grammar hint should be hidden after G again")
+	}
+	if model.grammarHint != nil {
+		t.Fatal("grammarHint should be nil when hidden")
+	}
+}
+
 func TestReviewFlow(t *testing.T) {
 	repo := &mockRepo{
 		dueCards: []core.Card{

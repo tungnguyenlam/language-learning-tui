@@ -450,6 +450,19 @@ func (m *Model) renderReview(x, y int) string {
 			Padding(0, 1).
 			Render(lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("Asking AI tutor for explanation…")+"  "+spin)
 	}
+	if m.showGrammarHint && m.grammarHint != nil {
+		hintBoxStyle := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("212")). // Pink border
+			Padding(0, 1).
+			Width(cardWidth)
+
+		title := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212")).Render("Grammar Hint: " + m.grammarHint.Title)
+		content := lipgloss.NewStyle().Foreground(lipgloss.Color("250")).Render(m.grammarHint.Tip)
+		example := lipgloss.NewStyle().Foreground(lipgloss.Color("159")).Italic(true).Render(m.grammarHint.Example)
+
+		view += "\n\n" + hintBoxStyle.Render(title+"\n\n"+content+"\n\n"+example)
+	}
 	if m.explanation != "" {
 		explanationStyle := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
@@ -465,8 +478,8 @@ func (m *Model) renderReview(x, y int) string {
 	}
 
 	// Add Interactive Footer
-	footerActions := fmt.Sprintf("%s hint | %s explain | %s bookmark | %s suspend | %s undo | %s history | %s info | %s focus | %s audio",
-		keyStyle.Render("h"), keyStyle.Render("H"), keyStyle.Render("b"), keyStyle.Render("x"),
+	footerActions := fmt.Sprintf("%s hint | %s grammar | %s explain | %s bookmark | %s suspend | %s undo | %s history | %s info | %s focus | %s audio",
+		keyStyle.Render("h"), keyStyle.Render("G"), keyStyle.Render("H"), keyStyle.Render("b"), keyStyle.Render("x"),
 		keyStyle.Render("u"), keyStyle.Render("r"), keyStyle.Render("i"),
 		keyStyle.Render("f"), keyStyle.Render("p"))
 	if m.bookmarkFilter {

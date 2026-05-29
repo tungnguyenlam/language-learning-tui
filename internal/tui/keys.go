@@ -10,6 +10,7 @@ import (
 	"unicode/utf8"
 
 	"deutsch-tui/internal/ai"
+	"deutsch-tui/internal/content"
 	"deutsch-tui/internal/core"
 
 	tea "charm.land/bubbletea/v2"
@@ -449,6 +450,20 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, true
 	case "H":
 		return m.explainCard(), true
+	case "G":
+		if len(m.dueCards) > 0 {
+			m.showGrammarHint = !m.showGrammarHint
+			if m.showGrammarHint {
+				card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
+				tip := content.GetRelevantGrammarTip(card.Prompt)
+				m.grammarHint = &tip
+				m.status = "Grammar hint shown"
+			} else {
+				m.grammarHint = nil
+				m.status = "Grammar hint hidden"
+			}
+			return nil, true
+		}
 	case "p":
 		if len(m.dueCards) > 0 {
 			return m.playCardAudio(m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]), true
