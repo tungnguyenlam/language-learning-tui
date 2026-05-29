@@ -821,3 +821,7 @@ func GetVerbOfTheDay() DailyVerb {
 	dayOfYear := time.Now().YearDay()
 	return dailyVerbs[dayOfYear%len(dailyVerbs)]
 }
+
+func AllDailyVerbs() []DailyVerb {
+	return dailyVerbs
+}

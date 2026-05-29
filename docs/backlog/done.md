@@ -1,5 +1,24 @@
 # Done Backlog
 
+## 2026-05-28 (Verb Conjugation Trainer & Dashboard Polish)
+
+### UX & Learning
+- **Verb Conjugation Trainer:** Added a second dedicated practice mode (accessible via key `K`) for mastering German verb conjugations.
+- **Integrated Verb Data:** Leveraged the existing `DailyVerb` dataset to provide high-quality conjugation practice across all persons (ich, du, er/sie/es, etc.).
+- **Interactive Input:** Users type the correct conjugation and receive immediate feedback, including seeing the correct form and an example sentence.
+- **Session Tracking:** Tracks accuracy and progress specifically for conjugation practice.
+
+### UI & Polish
+- **Dashboard Quick Actions:** Refined the Quick Actions section to handle wrapping more gracefully, ensuring intuitive shortcuts like `[8] Browser` stay together even on smaller terminals.
+- **Global Shortcuts:** Added `K` as a global shortcut for the Conjugation Trainer (while ensuring no conflicts with existing view-specific keys).
+- **Settings Navigation:** Fixed a boundary bug in Settings navigation and improved the layout for API credentials.
+- **Daily Goal Robustness:** Fixed a race condition when rapidly adjusting the daily goal, ensuring the UI remains in sync with the optimistic state.
+
+### Engineering & Testing
+- **New E2E Test:** Added `e2e_tests/test_conjugation_trainer.py` verifying the full conjugation training flow.
+- **Code Reuse:** Followed the "Practice Mode" pattern established earlier for consistent implementation and maintainability.
+- **Verified Suite:** All 336 tests (unit and E2E) are passing green.
+
 ## 2026-05-28 (AI Feature Improvements)
 
 ### AI & Content Generation

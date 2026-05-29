@@ -8,6 +8,8 @@ Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
 
+- [x] **Verb Conjugation Trainer:** Added a new interactive mode for practicing German verb conjugations (ich, du, er/sie/es, etc.), including automated person selection and session scoring.
+- [x] **Dashboard & UI Polish:** Improved Quick Actions layout, fixed Settings navigation boundaries, and resolved race conditions in daily goal adjustment.
 - [x] **AI Feature Improvements:** Implemented automatic provider activation on API key entry, added inline tag extraction for AI drafting, and updated Anthropic model defaults.
 - [x] **Gender Trainer Practice Mode:** Added a new interactive mode for practicing German noun genders (der/die/das), including automated noun extraction and session scoring.
 - [x] **Cloze UI Polish:** Highlight revealed cloze answers in standard review mode.
@@ -23,7 +25,7 @@ Polish and Reliability - IN PROGRESS.
 
 ## Exact Next Action
 
-Implement a "Verb Conjugation Trainer" to further expand interactive learning modes.
+Refine the "Practice" experience by adding a Practice Hub menu or implement a "Case Ending Trainer" (Nominative/Accusative/Dative).
 
 ## Top Issues / Priorities
 
@@ -31,7 +33,7 @@ None.
 
 ## Last Verified
 
-- `./scripts/verify.sh` passed with 0 test failures (335 passed).
+- `./scripts/verify.sh` passed with 0 test failures (336 passed).
 
 ## Blockers
 

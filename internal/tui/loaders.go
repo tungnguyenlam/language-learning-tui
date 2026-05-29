@@ -185,6 +185,16 @@ func (m *Model) loadPracticeItems() tea.Cmd {
 	}
 }
 
+func (m *Model) loadConjugationItems() tea.Cmd {
+	return func() tea.Msg {
+		// For now, we use the hardcoded daily verbs list from content package.
+		// In a real app, we might also extract from cards, but this is a high-quality starter.
+		return conjugationItemsMsg(content.AllDailyVerbs())
+	}
+}
+
+type conjugationItemsMsg []content.DailyVerb
+
 type practiceItemsMsg []practiceItem
 
 func (m *Model) filteredDecks() []core.Deck {

@@ -14,7 +14,7 @@ import (
 )
 
 func (m *Model) nextViewCmd() tea.Cmd {
-	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser, ViewCram, ViewPractice}
+	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser, ViewCram, ViewPractice, ViewConjugation}
 	for i, view := range views {
 		if m.activeView == view {
 			return m.updateView(views[(i+1)%len(views)])
@@ -24,7 +24,7 @@ func (m *Model) nextViewCmd() tea.Cmd {
 }
 
 func (m *Model) previousViewCmd() tea.Cmd {
-	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser, ViewCram, ViewPractice}
+	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser, ViewCram, ViewPractice, ViewConjugation}
 	for i, view := range views {
 		if m.activeView == view {
 			return m.updateView(views[(i-1+len(views))%len(views)])
@@ -75,6 +75,15 @@ func (m *Model) updateView(view View) tea.Cmd {
 		m.practiceRevealed = false
 		m.status = "Loading nouns for practice..."
 		return m.loadPracticeItems()
+	}
+	if view == ViewConjugation {
+		m.conjugationIndex = 0
+		m.conjugationCorrect = 0
+		m.conjugationTotal = 0
+		m.conjugationRevealed = false
+		m.conjugationInput = ""
+		m.status = "Loading verbs for conjugation practice..."
+		return m.loadConjugationItems()
 	}
 
 	if view == ViewDashboard || view == ViewReview {

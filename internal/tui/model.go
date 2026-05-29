@@ -17,6 +17,7 @@ import (
 	"deutsch-tui/internal/ai"
 	"deutsch-tui/internal/app"
 	"deutsch-tui/internal/audio"
+	"deutsch-tui/internal/content"
 	"deutsch-tui/internal/core"
 
 	tea "charm.land/bubbletea/v2"
@@ -36,6 +37,7 @@ const (
 	ViewBrowser        View = "browser"
 	ViewCram           View = "cram"
 	ViewPractice       View = "practice"
+	ViewConjugation    View = "conjugation"
 	ViewDebug          View = "debug"
 	ViewSessionSummary View = "session_summary"
 )
@@ -210,6 +212,17 @@ type Model struct {
 	practiceTotal      int
 	practiceRevealed   bool
 	practiceLastResult bool
+
+	// Verb Conjugation Trainer state
+	conjugationItems      []content.DailyVerb
+	conjugationIndex      int
+	conjugationCorrect    int
+	conjugationTotal      int
+	conjugationRevealed   bool
+	conjugationLastResult bool
+	conjugationPerson     int // 0-5
+	conjugationAnswer     string
+	conjugationInput      string
 
 	// Card-explanation flow: AI provides a brief pedagogical explanation.
 	explainingCard bool
@@ -639,6 +652,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.status = fmt.Sprintf("Loaded %d nouns for practice", len(m.practiceItems))
 		}
 		return m, nil
+	case conjugationItemsMsg:
+		m.conjugationItems = []content.DailyVerb(msg)
+		if len(m.conjugationItems) == 0 {
+			m.status = "No verbs found for practice"
+		} else {
+			m.status = fmt.Sprintf("Loaded %d verbs for conjugation practice", len(m.conjugationItems))
+		}
+		return m, nil
 	case timedClearStatusMsg:
 		if msg.seq == m.statusSeq {
 			m.status = "Ready"
@@ -713,9 +734,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.logger.Info("Suspended card %s", msg.cardID)
 		return m, m.loadReviewsPerDay()
 	case dailyGoalSetMsg:
-		m.stats = core.Statistics(msg)
+		newStats := core.Statistics(msg)
+		// Preserve optimistic goal to avoid race conditions when spamming keys
+		goal := m.stats.DailyGoal
+		m.stats = newStats
+		m.stats.DailyGoal = goal
 		m.status = fmt.Sprintf("Daily goal set to %d", m.stats.DailyGoal)
-		m.logger.Info("Daily goal set to %d", m.stats.DailyGoal)
+		m.logger.Info("Daily goal set to %d (optimistic preserved)", m.stats.DailyGoal)
+		return m, nil
 	case reviewUndoneMsg:
 		m.lastReviewedCardID = ""
 		if m.sessionReviewed > 0 {
@@ -1088,6 +1114,7 @@ func (m *Model) renderNav(x, y int) string {
 		{"nav-browser", ViewBrowser, "Browser"},
 		{"nav-cram", ViewCram, "Cram"},
 		{"nav-practice", ViewPractice, "Practice [0]"},
+		{"nav-conjugation", ViewConjugation, "Conjugation [K]"},
 	}
 
 	var b strings.Builder
@@ -1127,6 +1154,7 @@ func (m *Model) renderTabs(x, y int) string {
 		{"tab-browser", ViewBrowser, "Browser"},
 		{"tab-cram", ViewCram, "Cram"},
 		{"tab-practice", ViewPractice, "Practice"},
+		{"tab-conjugation", ViewConjugation, "Conjugation"},
 	}
 
 	var renderedTabs []string
@@ -1183,6 +1211,8 @@ func (m *Model) renderActiveViewPlainAt(layout viewportLayout) string {
 		content = m.renderCramAt(layout)
 	case ViewPractice:
 		content = m.renderPractice(layout)
+	case ViewConjugation:
+		content = m.renderConjugation(layout)
 	case ViewDebug:
 		content = m.renderDebug(layout.X, layout.Y)
 	case ViewSessionSummary:

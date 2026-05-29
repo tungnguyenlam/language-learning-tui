@@ -105,6 +105,11 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 	// 3. Global navigation
 	switch key {
+	case "K":
+		if !m.textInputActive() {
+			m.activeView = ViewConjugation
+			return m, m.updateView(ViewConjugation)
+		}
 	case "tab", "right", "s":
 		if cmd, handled := m.updateActiveViewKey(msg); handled {
 			return m, cmd
@@ -263,6 +268,8 @@ func (m *Model) updateActiveViewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return m.updateCramKey(msg)
 	case ViewPractice:
 		return m.updatePracticeKey(msg)
+	case ViewConjugation:
+		return m.updateConjugationKey(msg)
 	case ViewSessionSummary:
 		return m.updateSessionSummaryKey(msg)
 	case ViewDecks:
@@ -822,7 +829,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "down", "j":
-		if m.settingsCursor < 10 {
+		if m.settingsCursor < 11 {
 			m.settingsCursor++
 		}
 		return nil, true
@@ -1349,4 +1356,81 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	}
 
 	return nil, true
+}
+
+func (m *Model) updateConjugationKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
+	if len(m.conjugationItems) == 0 {
+		return nil, false
+	}
+
+	if m.conjugationRevealed {
+		// Any key to next verb
+		m.conjugationRevealed = false
+		m.conjugationInput = ""
+		m.conjugationIndex = (m.conjugationIndex + 1) % len(m.conjugationItems)
+		m.conjugationPerson = int(time.Now().UnixNano() % 6)
+		return nil, true
+	}
+
+	key := msg.String()
+	item := m.conjugationItems[m.conjugationIndex]
+	var target string
+	personLabel := ""
+
+	switch m.conjugationPerson {
+	case 0:
+		target = item.Ich
+		personLabel = "ich"
+	case 1:
+		target = item.Du
+		personLabel = "du"
+	case 2:
+		target = item.ErSieEs
+		personLabel = "er/sie/es"
+	case 3:
+		target = item.Wir
+		personLabel = "wir"
+	case 4:
+		target = item.Ihr
+		personLabel = "ihr"
+	case 5:
+		target = item.SieSie
+		personLabel = "sie/Sie"
+	}
+
+	_ = personLabel // Used in render
+
+	switch key {
+	case "enter", "\r", "\n":
+		if m.conjugationInput == "" {
+			return nil, true
+		}
+		m.conjugationTotal++
+		m.conjugationRevealed = true
+		m.conjugationAnswer = target
+		if strings.TrimSpace(strings.ToLower(m.conjugationInput)) == strings.TrimSpace(strings.ToLower(target)) {
+			m.conjugationCorrect++
+			m.conjugationLastResult = true
+		} else {
+			m.conjugationLastResult = false
+		}
+		return nil, true
+	case "backspace":
+		if len(m.conjugationInput) > 0 {
+			m.conjugationInput = trimLastRune(m.conjugationInput)
+		}
+		return nil, true
+	case "ctrl+u":
+		m.conjugationInput = ""
+		return nil, true
+	case "esc":
+		return m.updateView(ViewDashboard), true
+	}
+
+	if ch, ok := singlePrintableInput(key); ok {
+		m.conjugationInput += ch
+		return nil, true
+	}
+
+	return nil, false
 }

@@ -300,6 +300,7 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		}{
 			{"nav-review", "Review", "3"},
 			{"nav-practice", "Practice", "0"},
+			{"nav-conjugation", "Conjugation", "K"},
 			{"nav-cram", "Cram", "9"},
 			{"nav-browser", "Browser", "8"},
 			{"nav-statistics", "Stats", "4"},
@@ -310,19 +311,28 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		for _, action := range actions {
 			keyStr := keyStyle.Render("[" + action.key + "]")
 			item := fmt.Sprintf("%s %s  ", keyStr, action.label)
+			itemWidth := lipgloss.Width(item)
+
+			if currentX+itemWidth > layout.Width-2 {
+				db.WriteString("\n  ")
+				currentY++
+				currentX = 2
+				remainingHeight--
+			}
+
 			m.hitboxes = append(m.hitboxes, Hitbox{
 				ID:     action.id,
 				View:   ViewDashboard,
 				X:      layout.X + currentX,
 				Y:      layout.Y + currentY,
-				Width:  lipgloss.Width(item) - 2, // -2 for trailing spaces
+				Width:  itemWidth - 2, // -2 for trailing spaces
 				Height: 1,
 			})
 			db.WriteString(item)
-			currentX += lipgloss.Width(item)
+			currentX += itemWidth
 		}
 		db.WriteString("\n")
-		remainingHeight -= 2
+		remainingHeight -= 1
 	}
 
 	if remainingHeight >= 3 {
