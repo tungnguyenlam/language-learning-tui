@@ -25,7 +25,7 @@ def test_ai_draft_navigation():
             
             # Navigate to AI view
             agent.act("6")
-            agent.wait_for_text("AI Drafts")
+            agent.wait_for_text("Topic:")
             
             # Enter edit mode to type topic
             agent.act("/")
@@ -89,7 +89,7 @@ def test_ai_draft_approval():
             
             # Navigate to AI view
             agent.act("6")
-            agent.wait_for_text("AI Drafts")
+            agent.wait_for_text("Topic:")
             
             # Enter edit mode
             agent.act("/")

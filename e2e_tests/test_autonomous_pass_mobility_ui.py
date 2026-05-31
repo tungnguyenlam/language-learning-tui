@@ -64,7 +64,7 @@ def test_ai_suggestions_include_levels_and_mobility():
         agent = start_agent(tmpdir)
         try:
             agent.act("6")
-            agent.wait_for_text("AI Drafts")
+            agent.wait_for_text("Topic:")
             agent.assert_text("B2 urban mobility")
             agent.assert_text("C1 business email")
             agent.assert_text("Click a topic")

@@ -301,10 +301,12 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 			{"nav-review", "Review", "3"},
 			{"nav-practice", "Practice", "0"},
 			{"nav-cram", "Cram", "9"},
+			{"nav-decks", "Decks", "2"},
 			{"nav-browser", "Browser", "8"},
 			{"nav-statistics", "Stats", "4"},
 			{"nav-import", "Import", "5"},
 			{"nav-ai", "AI Draft", "6"},
+			{"nav-settings", "Settings", "7"},
 		}
 
 		for _, action := range actions {

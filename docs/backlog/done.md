@@ -1,5 +1,17 @@
 # Done Backlog
 
+## 2026-05-31 (C2 Finance Deck, E2E Stability & SQLite WAL)
+
+### Content Expansion
+- **C2 Finance & Economics Deck:** Added a new specialized deck with 38 advanced terms covering finance, economics, and corporate topics.
+
+### Reliability & Bug Fixes
+- **SQLite WAL Mode:** Enabled WAL mode and busy_timeout (5000ms) for the SQLite database. This fixes intermittent `database is locked (SQLITE_BUSY)` errors that could occur when background syncing or multiple tests hit the DB concurrently.
+- **E2E Stability:** Replaced flaky UI assertions in the AI Drafts view. The tests now wait for unique, persistent text (`Topic: `) instead of the generic view title (`AI Drafts`), which was inadvertently matching the sidebar and causing premature actions and race conditions.
+
+### UI & Navigation
+- **Dashboard Quick Actions:** Added `Decks [2]` and `Settings [7]` to the Quick Actions row on the Dashboard for a more complete and accessible navigation hub.
+
 ## 2026-05-31 (Adjective Ending Trainer & E2E Polish)
 
 ### UX & Learning

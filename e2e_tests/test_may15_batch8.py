@@ -42,7 +42,7 @@ def test_may15_batch8():
             agent.wait_for_text("A1 Essential German", timeout=5.0)            
             # 3. Verify AI Drafts view
             agent.act("6") # AI
-            agent.wait_for_text("AI Drafts")
+            agent.wait_for_text("Topic:")
             agent.wait_for_text("apartment viewing")
             
             # 4. Verify Browser

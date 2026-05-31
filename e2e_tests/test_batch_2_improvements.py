@@ -125,7 +125,7 @@ def test_improved_ai_templates():
                 agent.wait_until_stable()
 
             agent.act("6") # AI view
-            agent.wait_for_text("AI Drafts")
+            agent.wait_for_text("Topic:")
             
             # Type a topic
             agent.act("/")

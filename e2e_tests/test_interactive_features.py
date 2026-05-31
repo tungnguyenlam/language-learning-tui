@@ -125,7 +125,7 @@ def test_ai_draft_interaction():
             agent.wait_for_text("offline")
             # Go to AI View
             agent.act("6")
-            agent.wait_for_text("AI Drafts")
+            agent.wait_for_text("Topic:")
             
             # Clear existing topic
             agent.act("<Esc>")

@@ -72,7 +72,7 @@ def test_ai_suggestions_include_grammar():
         try:
             agent.wait_for_text("DASHBOARD")
             agent.act("6")  # AI view
-            agent.wait_for_text("AI Drafts")
+            agent.wait_for_text("Topic:")
             # The AI view shows suggestion count, confirming suggestions exist
             agent.wait_for_text("suggestions")
             # Verify the view renders correctly
@@ -88,7 +88,7 @@ def test_ai_suggestions_include_city_directions():
         try:
             agent.wait_for_text("DASHBOARD")
             agent.act("6")  # AI view
-            agent.wait_for_text("AI Drafts")
+            agent.wait_for_text("Topic:")
             # The AI view shows suggestion count, confirming suggestions exist
             agent.wait_for_text("suggestions")
             # Verify template switching works

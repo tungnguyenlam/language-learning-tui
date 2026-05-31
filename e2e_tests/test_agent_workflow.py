@@ -25,5 +25,5 @@ def test_ai_placeholder(agent):
     # Navigate to AI View
     agent.act("6") # 6 is AI view
         
-    agent.wait_for_text("AI Drafts")
+    agent.wait_for_text("Topic:")
     agent.wait_for_text("A1 survival")

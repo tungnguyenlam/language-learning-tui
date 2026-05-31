@@ -22,9 +22,9 @@ const defaultDueCardsLimit = 20000
 
 func Open(path string) (*Store, error) {
 	if !strings.Contains(path, "?") {
-		path += "?_pragma=foreign_keys(1)"
+		path += "?_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)"
 	} else if !strings.Contains(path, "foreign_keys") {
-		path += "&_pragma=foreign_keys(1)"
+		path += "&_pragma=foreign_keys(1)&_pragma=journal_mode(WAL)&_pragma=busy_timeout(5000)"
 	}
 	db, err := sql.Open("sqlite", path)
 	if err != nil {

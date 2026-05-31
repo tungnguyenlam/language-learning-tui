@@ -105,25 +105,23 @@ def test_ai_empty_topic_guard_is_visible():
         agent = start_agent(tmpdir)
         try:
             agent.act("6")
-            agent.wait_for_text("AI Drafts")
+            agent.wait_for_text("Click a topic or type your own")
             agent.act("<Esc>")
             agent.act("<Enter>")
             agent.wait_for_text("Enter a topic before generating AI drafts")
         finally:
             agent.close()
 
-
 def test_ai_suggestions_include_new_practical_topics():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir, columns=140)
         try:
             agent.act("6")
-            agent.wait_for_text("AI Drafts")
+            agent.wait_for_text("Click a topic or type your own")
             agent.assert_text("B1 bureaucracy appointment")
             agent.assert_text("B2 digital privacy")
         finally:
             agent.close()
-
 
 def test_statistics_forecast_renders_without_wrapping_status_area():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -143,7 +141,7 @@ def test_mouse_click_side_navigation_opens_ai_view():
         agent = start_agent(tmpdir)
         try:
             agent.click(5, 10)
-            agent.wait_for_text("AI Drafts")
+            agent.wait_for_text("Topic:")
             agent.assert_text("B2 digital privacy")
         finally:
             agent.close()

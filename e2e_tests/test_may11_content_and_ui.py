@@ -64,7 +64,7 @@ def test_ai_view_has_topic_suggestions():
         agent = start_agent(tmpdir)
         try:
             agent.act("6")
-            agent.wait_for_text("AI Drafts")
+            agent.wait_for_text("Topic:")
             agent.wait_for_text("Click a topic")
             agent.wait_for_text("A1 survival")
             agent.wait_for_text("B1")

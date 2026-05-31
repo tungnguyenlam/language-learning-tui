@@ -145,7 +145,7 @@ def test_c3_ai_draft_disabled_guard():
         agent = start_agent(tmpdir)
         try:
             agent.act("6") # AI View
-            agent.wait_for_text("AI Drafts")
+            agent.wait_for_text("Topic:")
             # Try to generate when disabled
             agent.act("<Enter>")
             agent.wait_until_stable()

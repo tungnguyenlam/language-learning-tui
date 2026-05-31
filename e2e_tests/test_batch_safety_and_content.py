@@ -31,7 +31,7 @@ def test_ai_disabled_warning_and_generate_guard():
                 agent.act("<Enter>")
                 agent.wait_for_text(f"AI Provider:    {want}")
             agent.act("6")
-            agent.wait_for_text("AI Drafts")
+            agent.wait_for_text("Topic:")
             agent.assert_text("AI provider is disabled")
             agent.act("<Enter>")
             agent.wait_for_text("AI provider is disabled. Enable it in Settings.")
@@ -79,7 +79,7 @@ def test_ai_topic_backspace_handles_umlaut():
         agent = start_agent(tmpdir)
         try:
             agent.act("6")
-            agent.wait_for_text("AI Drafts")
+            agent.wait_for_text("Topic:")
             agent.act("<Esc>")
             agent.wait_until_stable()
             agent.act("/")

@@ -5,10 +5,15 @@ import pytest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../tui_tester")))
 from tui_tester import TUIAgent
 
+import tempfile
+
 @pytest.fixture
 def agent():
-    app = TUIAgent("go run cmd/deutsch-tui/main.go", columns=100, lines=50)
-    yield app
+    app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
+    with tempfile.TemporaryDirectory() as tmpdir:
+        app = TUIAgent(f'{app_cmd} -data-dir {tmpdir}', columns=100, lines=50)
+        yield app
+        app.close()
 
 def test_new_a1_decks_loaded(agent: TUIAgent):
     import time
@@ -53,7 +58,7 @@ def test_ai_draft_empty_state(agent: TUIAgent):
     
     # Go to AI Drafts view
     agent.act("6")
-    agent.wait_for_text("AI Drafts")
+    agent.wait_for_text("Topic:")
     
     # Verify the new empty state box is there
     agent.wait_for_text("Click a topic or type your own")
@@ -86,7 +91,7 @@ def test_cram_mode_navigation(agent: TUIAgent):
 def test_ai_draft_suggestions(agent: TUIAgent):
     agent.wait_for_text("DASHBOARD")
     agent.act("6")
-    agent.wait_for_text("AI Drafts")
+    agent.wait_for_text("Topic:")
     agent.wait_for_text("Click a topic")
     agent.wait_for_text("A1 survival")
     agent.wait_for_text("B1 doctor visit")

@@ -22,7 +22,7 @@ def test_ai_multi_topic_generation():
             agent.act("<Enter>")
             agent.wait_for_text("offline")
             agent.act("6") # AI view
-            agent.wait_for_text("AI Drafts")
+            agent.wait_for_text("Topic:")
             
             # Enter edit mode
             agent.act("/")

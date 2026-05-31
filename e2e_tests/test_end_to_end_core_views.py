@@ -81,7 +81,7 @@ def test_ai_view_topic_placeholder_and_tip():
         agent = start_agent(tmpdir)
         try:
             agent.act("6")
-            agent.wait_for_text("AI Drafts")
+            agent.wait_for_text("Topic:")
             agent.assert_text("apartment viewing")
             agent.assert_text("Tip: include level and use case")
         finally:

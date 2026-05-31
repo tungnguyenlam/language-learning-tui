@@ -169,7 +169,7 @@ def test_ai_tag_extraction():
             
             # 2. Go to AI view
             agent.act("6")
-            agent.wait_for_text("AI Drafts")
+            agent.wait_for_text("Topic:")
             
             # 3. Enter topic with tags: "Hund #animal #nature"
             agent.act("/")
