@@ -45,7 +45,7 @@ def test_leech_detection_in_statistics():
 
             for _ in range(3):
                 agent.act("<Space>")
-                agent.wait_for_text("cards due")
+                agent.wait_for_text("a Again")
                 agent.act("a")
                 agent.wait_for_text("cards due")
 

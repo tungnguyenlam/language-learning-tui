@@ -216,6 +216,29 @@ func (m *Model) loadCaseItems() tea.Cmd {
 	}
 }
 
+func (m *Model) loadAdjectiveItems() tea.Cmd {
+	return func() tea.Msg {
+		items := []adjectiveItem{
+			{"Ich trinke ein {{...}} (kalt) Bier.", "kaltes", "n, Accusative, mixed declension (ein-word)"},
+			{"Der {{...}} (groß) Hund bellt.", "große", "m, Nominative, weak declension (der-word)"},
+			{"Ich wohne in einem {{...}} (alt) Haus.", "alten", "n, Dative, weak declension"},
+			{"Das ist eine {{...}} (schön) Blume.", "schöne", "f, Nominative, mixed declension"},
+			{"Wir mögen {{...}} (deutsch) Wein.", "deutschen", "m, Accusative, strong declension (no article)"},
+			{"Mit {{...}} (freundlich) Grüßen", "freundlichen", "plural, Dative, strong declension"},
+			{"Sie kauft die {{...}} (rot) Schuhe.", "roten", "plural, Accusative, weak declension"},
+			{"Ein {{...}} (gut) Freund hilft immer.", "guter", "m, Nominative, mixed declension"},
+			{"Er trinkt gerne {{...}} (schwarz) Tee.", "schwarzen", "m, Accusative, strong declension"},
+			{"Das ist das Auto des {{...}} (reich) Mannes.", "reichen", "m, Genitive, weak declension"},
+			{"Eine {{...}} (jung) Frau sucht einen Job.", "junge", "f, Nominative, mixed declension"},
+			{"Sie trägt ein {{...}} (blau) Kleid.", "blaues", "n, Accusative, mixed declension"},
+			{"Wir gehen durch den {{...}} (dunkel) Wald.", "dunklen", "m, Accusative, weak declension"},
+			{"Er arbeitet mit {{...}} (neu) Kollegen.", "neuen", "plural, Dative, strong declension"},
+			{"Das ist ein {{...}} (schwierig) Rätsel.", "schwieriges", "n, Nominative, mixed declension"},
+		}
+		return adjItemsMsg(items)
+	}
+}
+
 type conjugationItemsMsg []content.DailyVerb
 
 type practiceItemsMsg []practiceItem

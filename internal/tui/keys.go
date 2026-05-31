@@ -1368,6 +1368,8 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return m.enterPracticeMode(PracticeSubViewConjugation), true
 		case "3":
 			return m.enterPracticeMode(PracticeSubViewCase), true
+		case "4":
+			return m.enterPracticeMode(PracticeSubViewAdjective), true
 		case "q", "esc":
 			return m.updateView(ViewDashboard), true
 		}
@@ -1386,27 +1388,38 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.practiceSubView = PracticeSubViewHub
 			return nil, true
 		}
-		item := m.practiceItems[m.practiceIndex]
-		var choice string
 		switch key {
-		case "1", "d", "m":
-			choice = "der"
-		case "2", "i", "f":
-			choice = "die"
-		case "3", "a", "n":
-			choice = "das"
-		default:
-			return nil, false
+		case "1", "d", "m": // Masculine
+			m.practiceTotal++
+			m.practiceRevealed = true
+			if m.practiceItems[m.practiceIndex].Article == "der" {
+				m.practiceCorrect++
+				m.practiceLastResult = true
+			} else {
+				m.practiceLastResult = false
+			}
+			return nil, true
+		case "2", "i", "f": // Feminine
+			m.practiceTotal++
+			m.practiceRevealed = true
+			if m.practiceItems[m.practiceIndex].Article == "die" {
+				m.practiceCorrect++
+				m.practiceLastResult = true
+			} else {
+				m.practiceLastResult = false
+			}
+			return nil, true
+		case "3", "a", "n": // Neuter
+			m.practiceTotal++
+			m.practiceRevealed = true
+			if m.practiceItems[m.practiceIndex].Article == "das" {
+				m.practiceCorrect++
+				m.practiceLastResult = true
+			} else {
+				m.practiceLastResult = false
+			}
+			return nil, true
 		}
-		m.practiceTotal++
-		m.practiceRevealed = true
-		if choice == item.Article {
-			m.practiceCorrect++
-			m.practiceLastResult = true
-		} else {
-			m.practiceLastResult = false
-		}
-		return nil, true
 
 	case PracticeSubViewConjugation:
 		if key == "esc" && !m.conjugationRevealed && m.conjugationInput == "" {
@@ -1455,6 +1468,49 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		if ch, ok := singlePrintableInput(key); ok {
 			m.caseInput += ch
+			return nil, true
+		}
+
+	case PracticeSubViewAdjective:
+		if len(m.adjItems) == 0 {
+			return nil, false
+		}
+		if m.adjRevealed {
+			m.adjRevealed = false
+			m.adjInput = ""
+			m.adjIndex = (m.adjIndex + 1) % len(m.adjItems)
+			return nil, true
+		}
+		if key == "esc" && m.adjInput == "" {
+			m.practiceSubView = PracticeSubViewHub
+			return nil, true
+		}
+		switch key {
+		case "enter", "\r", "\n":
+			if m.adjInput == "" {
+				return nil, true
+			}
+			m.adjTotal++
+			m.adjRevealed = true
+			target := m.adjItems[m.adjIndex].Answer
+			if strings.TrimSpace(strings.ToLower(m.adjInput)) == strings.TrimSpace(strings.ToLower(target)) {
+				m.adjCorrect++
+				m.adjLastResult = true
+			} else {
+				m.adjLastResult = false
+			}
+			return nil, true
+		case "backspace":
+			if len(m.adjInput) > 0 {
+				m.adjInput = trimLastRune(m.adjInput)
+			}
+			return nil, true
+		case "ctrl+u":
+			m.adjInput = ""
+			return nil, true
+		}
+		if ch, ok := singlePrintableInput(key); ok {
+			m.adjInput += ch
 			return nil, true
 		}
 	}

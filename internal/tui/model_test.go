@@ -2225,3 +2225,50 @@ func TestBrowserSelectAllAndPlayAudio(t *testing.T) {
 		t.Fatalf("expected status 'Playing audio...', got %q", model.status)
 	}
 }
+
+func TestAdjectiveEndingTrainer(t *testing.T) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	model.activeView = ViewPractice
+	model.practiceSubView = PracticeSubViewHub
+
+	// 1. Select the Adjective Ending Trainer (key "4")
+	updated, cmd := model.Update(tea.KeyPressMsg{Code: '4'})
+	model = updated.(*Model)
+	if model.practiceSubView != PracticeSubViewAdjective {
+		t.Fatalf("expected practiceSubView to be PracticeSubViewAdjective, got %v", model.practiceSubView)
+	}
+	if cmd == nil {
+		t.Fatal("expected load command")
+	}
+
+	// Execute load command
+	msgs := executeCmd(cmd)
+	if len(msgs) != 1 {
+		t.Fatalf("expected 1 message, got %d", len(msgs))
+	}
+	updated, _ = model.Update(msgs[0])
+	model = updated.(*Model)
+
+	if len(model.adjItems) == 0 {
+		t.Fatal("expected loaded adjective items to be non-empty")
+	}
+
+	// Test inputs
+	// Type correct/incorrect ending
+	model.adjInput = "kaltes"
+	updated, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+	model = updated.(*Model)
+	if !model.adjRevealed {
+		t.Fatal("expected exercise to be revealed after Enter")
+	}
+
+	// Press key to move to next item
+	updated, _ = model.Update(tea.KeyPressMsg{Code: ' '})
+	model = updated.(*Model)
+	if model.adjRevealed {
+		t.Fatal("expected exercise to reset revealed state on next action")
+	}
+	if model.adjIndex != 1 {
+		t.Fatalf("expected adjIndex to advance to 1, got %d", model.adjIndex)
+	}
+}

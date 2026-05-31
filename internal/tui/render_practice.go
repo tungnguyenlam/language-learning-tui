@@ -17,6 +17,8 @@ func (m *Model) renderPractice(layout viewportLayout) string {
 		return m.renderConjugation(layout)
 	case PracticeSubViewCase:
 		return m.renderCaseTrainer(layout)
+	case PracticeSubViewAdjective:
+		return m.renderAdjectiveTrainer(layout)
 	}
 	return "Unknown Practice View"
 }
@@ -36,6 +38,7 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 		{"practice-gender", "1", "Gender Trainer", "Practice der/die/das noun genders", PracticeSubViewGender},
 		{"practice-conjugation", "2", "Conjugation Trainer", "Practice German verb forms", PracticeSubViewConjugation},
 		{"practice-case", "3", "Case Ending Trainer", "Practice Nom/Acc/Dat/Gen endings", PracticeSubViewCase},
+		{"practice-adjective", "4", "Adjective Ending Trainer", "Practice Nom/Acc/Dat/Gen endings", PracticeSubViewAdjective},
 	}
 
 	for i, mode := range modes {

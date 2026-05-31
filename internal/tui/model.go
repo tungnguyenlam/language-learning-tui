@@ -48,6 +48,7 @@ const (
 	PracticeSubViewGender
 	PracticeSubViewConjugation
 	PracticeSubViewCase
+	PracticeSubViewAdjective
 )
 
 type RevealState int
@@ -93,6 +94,12 @@ type caseItem struct {
 	Sentence string // "Ich gehe mit {{...}} Hund."
 	Answer   string // "dem"
 	Context  string // "m, Dative"
+}
+
+type adjectiveItem struct {
+	Sentence string // "Ich sehe einen {{...}} (alt) Mann."
+	Answer   string // "alten"
+	Context  string // "m, Accusative, mixed declension"
 }
 
 type Model struct {
@@ -246,6 +253,15 @@ type Model struct {
 	caseRevealed   bool
 	caseLastResult bool
 	caseInput      string
+
+	// Adjective Ending Trainer state
+	adjItems      []adjectiveItem
+	adjIndex      int
+	adjCorrect    int
+	adjTotal      int
+	adjRevealed   bool
+	adjLastResult bool
+	adjInput      string
 
 	practiceSubView PracticeSubView
 
@@ -519,6 +535,7 @@ type explainErrorMsg struct {
 type deckDeletedMsg struct{}
 
 type caseItemsMsg []caseItem
+type adjItemsMsg []adjectiveItem
 
 func (m *Model) Init() tea.Cmd {
 	return tea.Sequence(m.loadDueCards, m.loadDecks, m.loadStatistics(), m.loadReviewsPerDay(), m.loadRecentDecks())
@@ -697,6 +714,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.status = "No case exercises found"
 		} else {
 			m.status = fmt.Sprintf("Loaded %d case exercises", len(m.caseItems))
+		}
+		return m, nil
+	case adjItemsMsg:
+		m.adjItems = []adjectiveItem(msg)
+		if len(m.adjItems) == 0 {
+			m.status = "No adjective exercises found"
+		} else {
+			m.status = fmt.Sprintf("Loaded %d adjective exercises", len(m.adjItems))
 		}
 		return m, nil
 	case timedClearStatusMsg:
