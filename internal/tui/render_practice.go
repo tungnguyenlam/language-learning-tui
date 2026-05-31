@@ -19,6 +19,8 @@ func (m *Model) renderPractice(layout viewportLayout) string {
 		return m.renderCaseTrainer(layout)
 	case PracticeSubViewAdjective:
 		return m.renderAdjectiveTrainer(layout)
+	case PracticeSubViewPreposition:
+		return m.renderPrepositionTrainer(layout)
 	}
 	return "Unknown Practice View"
 }
@@ -39,6 +41,12 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 		{"practice-conjugation", "2", "Conjugation Trainer", "Practice German verb forms", PracticeSubViewConjugation},
 		{"practice-case", "3", "Case Ending Trainer", "Practice Nom/Acc/Dat/Gen endings", PracticeSubViewCase},
 		{"practice-adjective", "4", "Adjective Ending Trainer", "Practice Nom/Acc/Dat/Gen endings", PracticeSubViewAdjective},
+		{"practice-preposition", "5", "Preposition Trainer", "Practice two-way prepositions & cases", PracticeSubViewPreposition},
+	}
+
+	spacing := 4
+	if layout.Height < 24 {
+		spacing = 3 // Compact spacing
 	}
 
 	for i, mode := range modes {
@@ -50,6 +58,10 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 
 		keyHint := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212")).Render("[" + mode.key + "]")
 		content := fmt.Sprintf("%s %s\n%s", keyHint, mode.label, mutedStyle.Render(mode.desc))
+		if spacing == 3 {
+			content = fmt.Sprintf("%s %s - %s", keyHint, mode.label, mutedStyle.Render(mode.desc))
+			btnStyle = btnStyle.Padding(0, 1)
+		}
 
 		btn := btnStyle.Render(content)
 		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, btn) + "\n")
@@ -58,9 +70,9 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 			ID:     mode.id,
 			View:   ViewPractice,
 			X:      layout.X + (layout.Width-40)/2,
-			Y:      layout.Y + 3 + (i * 4),
+			Y:      layout.Y + 3 + (i * spacing),
 			Width:  40,
-			Height: 3,
+			Height: spacing - 1,
 		})
 	}
 

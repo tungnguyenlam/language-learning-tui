@@ -1,5 +1,15 @@
 # Done Backlog
 
+## 2026-05-31 (Preposition Trainer & UI Polish)
+
+### UX & Learning
+- **Preposition Trainer:** Added a fifth practice mode to the Practice Hub for mastering German two-way prepositions (Wechselpräpositionen) and their correct cases (Dative vs Accusative). Loaded with a robust set of dynamic fill-in-the-blank sentences.
+- **Responsive Practice Hub:** Made the vertical spacing in the Practice Hub dynamic, allowing all 5 options to display correctly on smaller terminal sizes without overflow.
+
+### Engineering & Testing
+- **New E2E Test:** Added `e2e_tests/test_preposition_trainer.py`.
+- **Verified Suite:** All 340 tests are passing green.
+
 ## 2026-05-31 (C2 Finance Deck, E2E Stability & SQLite WAL)
 
 ### Content Expansion

@@ -1370,6 +1370,8 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return m.enterPracticeMode(PracticeSubViewCase), true
 		case "4":
 			return m.enterPracticeMode(PracticeSubViewAdjective), true
+		case "5":
+			return m.enterPracticeMode(PracticeSubViewPreposition), true
 		case "q", "esc":
 			return m.updateView(ViewDashboard), true
 		}
@@ -1511,6 +1513,49 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		if ch, ok := singlePrintableInput(key); ok {
 			m.adjInput += ch
+			return nil, true
+		}
+
+	case PracticeSubViewPreposition:
+		if len(m.prepItems) == 0 {
+			return nil, false
+		}
+		if m.prepRevealed {
+			m.prepRevealed = false
+			m.prepInput = ""
+			m.prepIndex = (m.prepIndex + 1) % len(m.prepItems)
+			return nil, true
+		}
+		if key == "esc" && m.prepInput == "" {
+			m.practiceSubView = PracticeSubViewHub
+			return nil, true
+		}
+		switch key {
+		case "enter", "\r", "\n":
+			if m.prepInput == "" {
+				return nil, true
+			}
+			m.prepTotal++
+			m.prepRevealed = true
+			target := m.prepItems[m.prepIndex].Answer
+			if strings.TrimSpace(strings.ToLower(m.prepInput)) == strings.TrimSpace(strings.ToLower(target)) {
+				m.prepCorrect++
+				m.prepLastResult = true
+			} else {
+				m.prepLastResult = false
+			}
+			return nil, true
+		case "backspace":
+			if len(m.prepInput) > 0 {
+				m.prepInput = trimLastRune(m.prepInput)
+			}
+			return nil, true
+		case "ctrl+u":
+			m.prepInput = ""
+			return nil, true
+		}
+		if ch, ok := singlePrintableInput(key); ok {
+			m.prepInput += ch
 			return nil, true
 		}
 	}

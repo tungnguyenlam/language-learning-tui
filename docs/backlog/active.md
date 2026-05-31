@@ -8,6 +8,8 @@ Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
 
+- [x] **Preposition Trainer:** Added a fifth practice mode to the Practice Hub for mastering German two-way prepositions (Wechselpräpositionen) and their correct cases (Dative vs Accusative).
+- [x] **Responsive Practice Hub:** Made the vertical spacing in the Practice Hub dynamic, allowing all 5 options to display correctly on smaller terminal sizes without overflow.
 - [x] **Adjective Ending Trainer:** Added a fourth practice mode to the Practice Hub for mastering German adjective endings (weak, strong, and mixed declensions) with interactive fill-in-the-blank sentences and dynamic grammar contexts.
 - [x] **Leech E2E Test Fix:** Resolved a false-positive E2E timeout in `test_leech_detection_in_statistics` by updating the screen expectation from `"cards due"` (which disappears when revealed) to `"a Again"` (present on the grade selection overlay).
 - [x] **Practice Hub & Case Trainer:** Consolidated interactive modes into a central hub and added a new "Case Ending Trainer" for mastering German grammar.
@@ -31,7 +33,7 @@ Polish and Reliability - IN PROGRESS.
 
 ## Exact Next Action
 
-Explore further visual polish or performance optimization, or move on to the next set of user feedback.
+Await next user feedback or feature request.
 
 ## Top Issues / Priorities
 
@@ -39,7 +41,7 @@ None.
 
 ## Last Verified
 
-- `./scripts/verify.sh` passed with 0 test failures (339 passed).
+- `./scripts/verify.sh` passed with 0 test failures (340 passed).
 
 ## Blockers
 

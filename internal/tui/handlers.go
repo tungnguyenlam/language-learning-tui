@@ -118,6 +118,14 @@ func (m *Model) enterPracticeMode(mode PracticeSubView) tea.Cmd {
 		m.adjInput = ""
 		m.status = "Loading adjective exercises..."
 		return m.loadAdjectiveItems()
+	case PracticeSubViewPreposition:
+		m.prepIndex = 0
+		m.prepCorrect = 0
+		m.prepTotal = 0
+		m.prepRevealed = false
+		m.prepInput = ""
+		m.status = "Loading preposition exercises..."
+		return m.loadPrepositionItems()
 	}
 	return nil
 }

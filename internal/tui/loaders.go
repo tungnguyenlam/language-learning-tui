@@ -239,6 +239,21 @@ func (m *Model) loadAdjectiveItems() tea.Cmd {
 	}
 }
 
+func (m *Model) loadPrepositionItems() tea.Cmd {
+	return func() tea.Msg {
+		items := content.GetPrepositionExercises()
+		prepItems := make([]prepositionItem, len(items))
+		for i, item := range items {
+			prepItems[i] = prepositionItem{
+				Sentence: item.Sentence,
+				Answer:   item.Answer,
+				Context:  item.Context,
+			}
+		}
+		return prepItemsMsg(prepItems)
+	}
+}
+
 type conjugationItemsMsg []content.DailyVerb
 
 type practiceItemsMsg []practiceItem

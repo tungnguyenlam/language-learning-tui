@@ -49,6 +49,7 @@ const (
 	PracticeSubViewConjugation
 	PracticeSubViewCase
 	PracticeSubViewAdjective
+	PracticeSubViewPreposition
 )
 
 type RevealState int
@@ -100,6 +101,12 @@ type adjectiveItem struct {
 	Sentence string // "Ich sehe einen {{...}} (alt) Mann."
 	Answer   string // "alten"
 	Context  string // "m, Accusative, mixed declension"
+}
+
+type prepositionItem struct {
+	Sentence string
+	Answer   string
+	Context  string
 }
 
 type Model struct {
@@ -262,6 +269,15 @@ type Model struct {
 	adjRevealed   bool
 	adjLastResult bool
 	adjInput      string
+
+	// Preposition Trainer state
+	prepItems      []prepositionItem
+	prepIndex      int
+	prepCorrect    int
+	prepTotal      int
+	prepRevealed   bool
+	prepLastResult bool
+	prepInput      string
 
 	practiceSubView PracticeSubView
 
@@ -536,6 +552,7 @@ type deckDeletedMsg struct{}
 
 type caseItemsMsg []caseItem
 type adjItemsMsg []adjectiveItem
+type prepItemsMsg []prepositionItem
 
 func (m *Model) Init() tea.Cmd {
 	return tea.Sequence(m.loadDueCards, m.loadDecks, m.loadStatistics(), m.loadReviewsPerDay(), m.loadRecentDecks())
@@ -722,6 +739,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.status = "No adjective exercises found"
 		} else {
 			m.status = fmt.Sprintf("Loaded %d adjective exercises", len(m.adjItems))
+		}
+		return m, nil
+	case prepItemsMsg:
+		m.prepItems = []prepositionItem(msg)
+		if len(m.prepItems) == 0 {
+			m.status = "No preposition exercises found"
+		} else {
+			m.status = fmt.Sprintf("Loaded %d preposition exercises", len(m.prepItems))
 		}
 		return m, nil
 	case timedClearStatusMsg:
