@@ -1,5 +1,17 @@
 # Done Backlog
 
+## 2026-05-31 (Adjective Ending Trainer & E2E Polish)
+
+### UX & Learning
+- **Adjective Ending Trainer:** Added a 4th practice mode to the Practice Hub for mastering German adjective declensions (Nom/Acc/Dat/Gen endings across strong, weak, and mixed declensions). Loaded with 15 pedagogical sentences.
+
+### Bug Fixes & Quality Assurance
+- **Leech E2E Test Fix:** Resolved a false-positive E2E timeout in `test_leech_detection_in_statistics` by updating the screen expectation from `"cards due"` (which disappears when revealed) to `"a Again"` (present on the grade selection overlay).
+
+### Engineering & Testing
+- **Tests Added:** Added `e2e_tests/test_adjective_trainer.py` and a Go unit test `TestAdjectiveEndingTrainer` in `internal/tui/model_test.go`.
+- **Formatting:** Formatted all modified Go source code using `gofmt`.
+
 ## 2026-05-29 (Grammar Hints & Navigation Polish)
 
 ### UX & Learning

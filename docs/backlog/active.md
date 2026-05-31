@@ -1,6 +1,6 @@
 # Active Backlog
 
-Last updated: 2026-05-28
+Last updated: 2026-05-31
 
 ## Current Milestone
 
@@ -8,6 +8,8 @@ Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
 
+- [x] **Adjective Ending Trainer:** Added a fourth practice mode to the Practice Hub for mastering German adjective endings (weak, strong, and mixed declensions) with interactive fill-in-the-blank sentences and dynamic grammar contexts.
+- [x] **Leech E2E Test Fix:** Resolved a false-positive E2E timeout in `test_leech_detection_in_statistics` by updating the screen expectation from `"cards due"` (which disappears when revealed) to `"a Again"` (present on the grade selection overlay).
 - [x] **Practice Hub & Case Trainer:** Consolidated interactive modes into a central hub and added a new "Case Ending Trainer" for mastering German grammar.
 - [x] **Verb Conjugation Trainer:** Added a new interactive mode for practicing German verb conjugations (ich, du, er/sie/es, etc.), including automated person selection and session scoring.
 - [x] **Dashboard & UI Polish:** Improved Quick Actions layout, fixed Settings navigation boundaries, and resolved race conditions in daily goal adjustment.
@@ -37,7 +39,7 @@ None.
 
 ## Last Verified
 
-- `./scripts/verify.sh` passed with 0 test failures (337 passed).
+- `./scripts/verify.sh` passed with 0 test failures (338 passed).
 
 ## Blockers
 
