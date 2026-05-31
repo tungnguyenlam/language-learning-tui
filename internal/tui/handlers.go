@@ -126,6 +126,14 @@ func (m *Model) enterPracticeMode(mode PracticeSubView) tea.Cmd {
 		m.prepInput = ""
 		m.status = "Loading preposition exercises..."
 		return m.loadPrepositionItems()
+	case PracticeSubViewPlural:
+		m.pluralIndex = 0
+		m.pluralCorrect = 0
+		m.pluralTotal = 0
+		m.pluralRevealed = false
+		m.pluralInput = ""
+		m.status = "Loading plural exercises..."
+		return m.loadPluralItems()
 	}
 	return nil
 }

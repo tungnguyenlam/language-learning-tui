@@ -2272,3 +2272,60 @@ func TestAdjectiveEndingTrainer(t *testing.T) {
 		t.Fatalf("expected adjIndex to advance to 1, got %d", model.adjIndex)
 	}
 }
+
+func TestPluralTrainer(t *testing.T) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	model.activeView = ViewPractice
+	model.practiceSubView = PracticeSubViewHub
+
+	// 1. Select the Plural Trainer (key "6")
+	updated, cmd := model.Update(tea.KeyPressMsg{Code: '6'})
+	model = updated.(*Model)
+	if model.practiceSubView != PracticeSubViewPlural {
+		t.Fatalf("expected practiceSubView to be PracticeSubViewPlural, got %v", model.practiceSubView)
+	}
+	if cmd == nil {
+		t.Fatal("expected load command")
+	}
+
+	// Execute load command
+	msgs := executeCmd(cmd)
+	if len(msgs) != 1 {
+		t.Fatalf("expected 1 message, got %d", len(msgs))
+	}
+	updated, _ = model.Update(msgs[0])
+	model = updated.(*Model)
+
+	if len(model.pluralItems) == 0 {
+		t.Fatal("expected loaded plural items to be non-empty")
+	}
+
+	// Set singular and plural for testing
+	model.pluralItems[0] = pluralItem{
+		Singular: "das Buch",
+		Plural:   "die Bücher",
+		Meaning:  "book",
+	}
+
+	// Test inputs
+	// Type correct plural form
+	model.pluralInput = "die Bücher"
+	updated, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+	model = updated.(*Model)
+	if !model.pluralRevealed {
+		t.Fatal("expected exercise to be revealed after Enter")
+	}
+	if !model.pluralLastResult {
+		t.Fatal("expected correct answer to be recorded")
+	}
+
+	// Press key to move to next item
+	updated, _ = model.Update(tea.KeyPressMsg{Code: ' '})
+	model = updated.(*Model)
+	if model.pluralRevealed {
+		t.Fatal("expected exercise to reset revealed state on next action")
+	}
+	if model.pluralIndex != 1 {
+		t.Fatalf("expected pluralIndex to advance to 1, got %d", model.pluralIndex)
+	}
+}

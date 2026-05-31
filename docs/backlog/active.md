@@ -8,6 +8,7 @@ Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
 
+- [x] **Noun Plural Trainer:** Added a sixth practice mode to the Practice Hub for mastering German noun plural forms with article normalization, automatic extraction from deck notes, and fallback high-quality singular-plural noun lists.
 - [x] **Preposition Trainer:** Added a fifth practice mode to the Practice Hub for mastering German two-way prepositions (Wechselpräpositionen) and their correct cases (Dative vs Accusative).
 - [x] **Responsive Practice Hub:** Made the vertical spacing in the Practice Hub dynamic, allowing all 5 options to display correctly on smaller terminal sizes without overflow.
 - [x] **Adjective Ending Trainer:** Added a fourth practice mode to the Practice Hub for mastering German adjective endings (weak, strong, and mixed declensions) with interactive fill-in-the-blank sentences and dynamic grammar contexts.

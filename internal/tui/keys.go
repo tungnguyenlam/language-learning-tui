@@ -1372,6 +1372,8 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return m.enterPracticeMode(PracticeSubViewAdjective), true
 		case "5":
 			return m.enterPracticeMode(PracticeSubViewPreposition), true
+		case "6":
+			return m.enterPracticeMode(PracticeSubViewPlural), true
 		case "q", "esc":
 			return m.updateView(ViewDashboard), true
 		}
@@ -1556,6 +1558,60 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		if ch, ok := singlePrintableInput(key); ok {
 			m.prepInput += ch
+			return nil, true
+		}
+
+	case PracticeSubViewPlural:
+		if len(m.pluralItems) == 0 {
+			return nil, false
+		}
+		if m.pluralRevealed {
+			m.pluralRevealed = false
+			m.pluralInput = ""
+			m.pluralIndex = (m.pluralIndex + 1) % len(m.pluralItems)
+			return nil, true
+		}
+		if key == "esc" && m.pluralInput == "" {
+			m.practiceSubView = PracticeSubViewHub
+			return nil, true
+		}
+		switch key {
+		case "enter", "\r", "\n":
+			if m.pluralInput == "" {
+				return nil, true
+			}
+			m.pluralTotal++
+			m.pluralRevealed = true
+			target := m.pluralItems[m.pluralIndex].Plural
+			userInput := strings.TrimSpace(strings.ToLower(m.pluralInput))
+			cleanTarget := strings.TrimSpace(strings.ToLower(target))
+			cleanTargetNoun := cleanTarget
+			if strings.HasPrefix(cleanTarget, "die ") {
+				cleanTargetNoun = strings.TrimPrefix(cleanTarget, "die ")
+			}
+
+			isCorrect := userInput == cleanTarget || userInput == cleanTargetNoun ||
+				normalizeUmlauts(userInput) == normalizeUmlauts(cleanTarget) ||
+				normalizeUmlauts(userInput) == normalizeUmlauts(cleanTargetNoun)
+
+			if isCorrect {
+				m.pluralCorrect++
+				m.pluralLastResult = true
+			} else {
+				m.pluralLastResult = false
+			}
+			return nil, true
+		case "backspace":
+			if len(m.pluralInput) > 0 {
+				m.pluralInput = trimLastRune(m.pluralInput)
+			}
+			return nil, true
+		case "ctrl+u":
+			m.pluralInput = ""
+			return nil, true
+		}
+		if ch, ok := singlePrintableInput(key); ok {
+			m.pluralInput += ch
 			return nil, true
 		}
 	}

@@ -254,6 +254,73 @@ func (m *Model) loadPrepositionItems() tea.Cmd {
 	}
 }
 
+func extractPlural(extra string) string {
+	lower := strings.ToLower(extra)
+	idx := strings.Index(lower, "plural:")
+	if idx == -1 {
+		return ""
+	}
+	sub := extra[idx+7:]
+	if end := strings.IndexAny(sub, ";\n\r"); end != -1 {
+		sub = sub[:end]
+	}
+	return strings.TrimSpace(sub)
+}
+
+func (m *Model) loadPluralItems() tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+
+		cards, err := m.repo.Cards(ctx, "", "", "")
+		if err != nil {
+			return err
+		}
+
+		var items []pluralItem
+		for _, card := range cards {
+			pluralVal := extractPlural(card.Extra)
+			if pluralVal != "" {
+				singular := card.Prompt
+				info := content.AnalyzeCard(card.Prompt, card.Answer)
+				if info.Kind == content.KindNoun {
+					singular = info.Display
+				}
+				items = append(items, pluralItem{
+					Singular: singular,
+					Plural:   pluralVal,
+					Meaning:  card.Answer,
+				})
+			}
+		}
+
+		if len(items) < 10 {
+			fallback := []pluralItem{
+				{"das Buch", "die Bücher", "book"},
+				{"der Hund", "die Hunde", "dog"},
+				{"das Kind", "die Kinder", "child"},
+				{"das Auto", "die Autos", "car"},
+				{"das Haus", "die Häuser", "house"},
+				{"der Tisch", "die Tische", "table"},
+				{"die Hand", "die Hände", "hand"},
+				{"der Apfel", "die Äpfel", "apple"},
+				{"das Ei", "die Eier", "egg"},
+				{"die Stadt", "die Städte", "city"},
+				{"das Bild", "die Bilder", "picture"},
+				{"die Blume", "die Blumen", "flower"},
+				{"der Freund", "die Freunde", "friend"},
+				{"der Mann", "die Männer", "man"},
+				{"die Frau", "die Frauen", "woman"},
+			}
+			items = append(items, fallback...)
+		}
+
+		return pluralItemsMsg(items)
+	}
+}
+
+type pluralItemsMsg []pluralItem
+
 type conjugationItemsMsg []content.DailyVerb
 
 type practiceItemsMsg []practiceItem

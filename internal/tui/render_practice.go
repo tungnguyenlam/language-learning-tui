@@ -21,6 +21,8 @@ func (m *Model) renderPractice(layout viewportLayout) string {
 		return m.renderAdjectiveTrainer(layout)
 	case PracticeSubViewPreposition:
 		return m.renderPrepositionTrainer(layout)
+	case PracticeSubViewPlural:
+		return m.renderPluralTrainer(layout)
 	}
 	return "Unknown Practice View"
 }
@@ -42,11 +44,12 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 		{"practice-case", "3", "Case Ending Trainer", "Practice Nom/Acc/Dat/Gen endings", PracticeSubViewCase},
 		{"practice-adjective", "4", "Adjective Ending Trainer", "Practice Nom/Acc/Dat/Gen endings", PracticeSubViewAdjective},
 		{"practice-preposition", "5", "Preposition Trainer", "Practice two-way prepositions & cases", PracticeSubViewPreposition},
+		{"practice-plural", "6", "Plural Trainer", "Practice German noun plural forms", PracticeSubViewPlural},
 	}
 
-	spacing := 4
-	if layout.Height < 24 {
-		spacing = 3 // Compact spacing
+	spacing := 3
+	if layout.Height >= 28 {
+		spacing = 4
 	}
 
 	for i, mode := range modes {

@@ -321,6 +321,14 @@ func (m *Model) normalizeAnswer(s string) string {
 	return s
 }
 
+func normalizeUmlauts(s string) string {
+	s = strings.ReplaceAll(s, "ß", "ss")
+	s = strings.ReplaceAll(s, "ä", "ae")
+	s = strings.ReplaceAll(s, "ö", "oe")
+	s = strings.ReplaceAll(s, "ü", "ue")
+	return s
+}
+
 func highlightMatch(text, query string, style lipgloss.Style) string {
 	if query == "" {
 		return text

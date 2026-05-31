@@ -50,6 +50,7 @@ const (
 	PracticeSubViewCase
 	PracticeSubViewAdjective
 	PracticeSubViewPreposition
+	PracticeSubViewPlural
 )
 
 type RevealState int
@@ -107,6 +108,12 @@ type prepositionItem struct {
 	Sentence string
 	Answer   string
 	Context  string
+}
+
+type pluralItem struct {
+	Singular string
+	Plural   string
+	Meaning  string
 }
 
 type Model struct {
@@ -278,6 +285,15 @@ type Model struct {
 	prepRevealed   bool
 	prepLastResult bool
 	prepInput      string
+
+	// Noun Plural Trainer state
+	pluralItems      []pluralItem
+	pluralIndex      int
+	pluralCorrect    int
+	pluralTotal      int
+	pluralRevealed   bool
+	pluralLastResult bool
+	pluralInput      string
 
 	practiceSubView PracticeSubView
 
@@ -747,6 +763,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.status = "No preposition exercises found"
 		} else {
 			m.status = fmt.Sprintf("Loaded %d preposition exercises", len(m.prepItems))
+		}
+		return m, nil
+	case pluralItemsMsg:
+		m.pluralItems = []pluralItem(msg)
+		if len(m.pluralItems) == 0 {
+			m.status = "No plural exercises found"
+		} else {
+			m.status = fmt.Sprintf("Loaded %d plural exercises", len(m.pluralItems))
 		}
 		return m, nil
 	case timedClearStatusMsg:
