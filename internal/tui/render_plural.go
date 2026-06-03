@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
 
@@ -78,6 +79,21 @@ func (m *Model) renderPluralTrainer(layout viewportLayout) string {
 		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, answerBox.Render(item.Plural)) + "\n")
 
 		b.WriteString("\n" + lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, "Press any key for next noun") + "\n")
+
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     "plural-next",
+			View:   ViewPractice,
+			X:      layout.X,
+			Y:      layout.Y,
+			Width:  layout.Width,
+			Height: layout.Height,
+			Action: func() tea.Cmd {
+				m.pluralRevealed = false
+				m.pluralInput = ""
+				m.pluralIndex = (m.pluralIndex + 1) % len(m.pluralItems)
+				return nil
+			},
+		})
 	}
 
 	return b.String()

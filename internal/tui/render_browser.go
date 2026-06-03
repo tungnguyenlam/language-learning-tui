@@ -118,20 +118,28 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		if card.Mature {
 			mature = " ✨"
 		}
+
+		stateIcon := mutedStyle.Render("○") // New
+		if card.Mature {
+			stateIcon = lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render("●") // Mature
+		} else if card.Reviews > 0 {
+			stateIcon = lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Render("◐") // Learning
+		}
+
 		plainTags := ""
 		if len(card.Tags) > 0 {
 			plainTags = " #" + strings.Join(card.Tags, " #")
 		}
 
-		otherWidth := lipgloss.Width(prefix + selected + "[" + kind + "] " + interval + mature + bookmark + leech + suspended)
+		otherWidth := lipgloss.Width(prefix + selected + stateIcon + " [" + kind + "] " + interval + mature + bookmark + leech + suspended)
 		availWidth := lineWidth - otherWidth
 		if availWidth < 10 {
 			availWidth = 10
 		}
 
-		maxTagsWidth := availWidth * 3 / 10
-		if maxTagsWidth > 25 {
-			maxTagsWidth = 25
+		maxTagsWidth := availWidth * 4 / 10
+		if maxTagsWidth > 35 {
+			maxTagsWidth = 35
 		}
 		if maxTagsWidth < 5 && len(card.Tags) > 0 {
 			maxTagsWidth = 5
@@ -155,7 +163,7 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 			styledTags = " " + mutedStyle.Render(strings.TrimSpace(truncatedTags))
 		}
 
-		label := fmt.Sprintf("%s%s[%s] %s%s%s%s%s%s%s", prefix, selected, kind, highlightedPrompt, interval, mature, bookmark, leech, suspended, styledTags)
+		label := fmt.Sprintf("%s%s%s [%s] %s%s%s%s%s%s%s", prefix, selected, stateIcon, kind, highlightedPrompt, interval, mature, bookmark, leech, suspended, styledTags)
 		content.WriteString(style.Render(label) + "\n")
 	}
 

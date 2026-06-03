@@ -8,51 +8,51 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-func (m *Model) renderAdjectiveTrainer(layout viewportLayout) string {
-	if len(m.adjItems) == 0 {
+func (m *Model) renderSeparableTrainer(layout viewportLayout) string {
+	if len(m.separableItems) == 0 {
 		return lipgloss.NewStyle().
 			Width(layout.Width).
 			Height(layout.Height).
 			Align(lipgloss.Center, lipgloss.Center).
-			Render("No adjective exercises found.\nTry adding more grammar content!")
+			Render("No separable verb exercises found.")
 	}
 
-	item := m.adjItems[m.adjIndex]
+	item := m.separableItems[m.separableIndex]
 
 	var b strings.Builder
 
 	// Header
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212")).Underline(true)
-	b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, titleStyle.Render(" ADJECTIVE ENDING TRAINER ")) + "\n\n")
+	b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, titleStyle.Render(" SEPARABLE VERB TRAINER ")) + "\n\n")
 
 	// Score
 	accuracy := 0.0
-	if m.adjTotal > 0 {
-		accuracy = float64(m.adjCorrect) / float64(m.adjTotal) * 100
+	if m.separableTotal > 0 {
+		accuracy = float64(m.separableCorrect) / float64(m.separableTotal) * 100
 	}
-	scoreStr := fmt.Sprintf("Score: %d/%d (%.0f%%)", m.adjCorrect, m.adjTotal, accuracy)
+	scoreStr := fmt.Sprintf("Score: %d/%d (%.0f%%)", m.separableCorrect, m.separableTotal, accuracy)
 	b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, mutedStyle.Render(scoreStr)) + "\n\n")
 
 	// Sentence
-	sentence := strings.Replace(item.Sentence, "{{...}}", "_____", 1)
 	sentenceStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("81"))
-	b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, sentenceStyle.Render(sentence)) + "\n\n")
+	b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, sentenceStyle.Render(item.Sentence)) + "\n")
+	b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, mutedStyle.Render("Verb: "+item.Verb+" ("+item.Meaning+")")) + "\n\n")
 
 	// Input/Answer area
-	if !m.adjRevealed {
-		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, "Fill in the blank (enter the correct adjective ending):") + "\n\n")
+	if !m.separableRevealed {
+		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, "Enter the missing prefix:") + "\n\n")
 
 		inputBox := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			Padding(0, 1).
 			Width(30).
 			Align(lipgloss.Center).
-			Render(m.adjInput + "▌")
+			Render(m.separableInput + "▌")
 		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, inputBox) + "\n")
 	} else {
 		var resultStyle lipgloss.Style
 		resultText := ""
-		if m.adjLastResult {
+		if m.separableLastResult {
 			resultStyle = lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("42"))
 			resultText = "CORRECT!"
 		} else {
@@ -62,31 +62,31 @@ func (m *Model) renderAdjectiveTrainer(layout viewportLayout) string {
 
 		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, resultStyle.Render(resultText)) + "\n\n")
 
-		if !m.adjLastResult {
-			b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, "You typed: "+m.adjInput) + "\n")
+		if !m.separableLastResult {
+			b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, "You typed: "+m.separableInput) + "\n")
 		}
 
-		answer := strings.Replace(item.Sentence, "{{...}}", item.Answer, 1)
-		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, sentenceStyle.Render(answer)) + "\n")
+		answerBox := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			Padding(0, 1).
+			Width(30).
+			Align(lipgloss.Center)
 
-		if item.Context != "" {
-			b.WriteString("\n" + lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, "Grammar Context:") + "\n")
-			b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, mutedStyle.Render(item.Context)) + "\n")
-		}
+		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, answerBox.Render(item.Answer)) + "\n")
 
 		b.WriteString("\n" + lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, "Press any key for next exercise") + "\n")
 
 		m.hitboxes = append(m.hitboxes, Hitbox{
-			ID:     "adjective-next",
+			ID:     "separable-next",
 			View:   ViewPractice,
 			X:      layout.X,
 			Y:      layout.Y,
 			Width:  layout.Width,
 			Height: layout.Height,
 			Action: func() tea.Cmd {
-				m.adjRevealed = false
-				m.adjInput = ""
-				m.adjIndex = (m.adjIndex + 1) % len(m.adjItems)
+				m.separableRevealed = false
+				m.separableInput = ""
+				m.separableIndex = (m.separableIndex + 1) % len(m.separableItems)
 				return nil
 			},
 		})

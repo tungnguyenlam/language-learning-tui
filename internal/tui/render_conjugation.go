@@ -3,7 +3,9 @@ package tui
 import (
 	"fmt"
 	"strings"
+	"time"
 
+	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
 
@@ -84,6 +86,22 @@ func (m *Model) renderConjugation(layout viewportLayout) string {
 		}
 
 		b.WriteString("\n" + lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, "Press any key for next verb") + "\n")
+
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     "conjugation-next",
+			View:   ViewPractice,
+			X:      layout.X,
+			Y:      layout.Y,
+			Width:  layout.Width,
+			Height: layout.Height,
+			Action: func() tea.Cmd {
+				m.conjugationRevealed = false
+				m.conjugationInput = ""
+				m.conjugationIndex = (m.conjugationIndex + 1) % len(m.conjugationItems)
+				m.conjugationPerson = int(time.Now().UnixNano() % 6)
+				return nil
+			},
+		})
 	}
 
 	return b.String()

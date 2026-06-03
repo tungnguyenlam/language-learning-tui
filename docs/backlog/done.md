@@ -1,5 +1,51 @@
 # Done Backlog
 
+## 2026-06-03 (Numbers Trainer, Browser State Icons, Dashboard Polish)
+
+### UX & Learning
+- **Numbers & Time Trainer:** Added an eighth practice mode to the Practice Hub for mastering German numbers (0-1000+) and time expressions (e.g., "halb vier", "viertel nach"). Features dynamic generation and randomized exercises.
+- **Browser State Indicators:** Enhanced the Card Browser with visual state icons (○ for New, ◐ for Learning, ● for Mature) and improved color-coding for better collection overview.
+- **Dashboard Layout Polish:** Implemented a more responsive 3-column layout for "Grammar Tip", "Verb of the Day", and "Word of the Day" on wide terminals, and improved alignment on all sizes.
+
+### Engineering & Testing
+- **New Content File:** Added `internal/content/numbers.go` with German number and time formatting logic and exercise generator.
+- **New E2E Test:** Added `e2e_tests/test_numbers_trainer.py` verifying the full number practice flow.
+- **Regression Fix:** Increased tag width ratio in the Card Browser to 40% to prevent truncation of tags when state icons are displayed.
+- **Verified Suite:** All 343 tests pass cleanly end-to-end.
+
+## 2026-06-01 (Session Summary Grades, Word of the Day, Review ETA)
+
+### UX & Learning
+- **Session Summary Grade Distribution:** Added a visual grade distribution chart (Again/Hard/Good/Easy) to the Session Summary view, giving learners clear feedback on their session performance breakdown.
+- **Dashboard Word of the Day:** Added a "Word of the Day" vocabulary box to the Dashboard with 40 curated German nouns, each showing article, plural form, and example sentence. Rotates daily alongside the existing Grammar Tip and Verb of the Day.
+- **Review Session Speed & ETA:** Enhanced the Review header's session progress indicator to show cards-per-minute rate and estimated time remaining, helping learners pace their sessions.
+
+### Engineering & Testing
+- **New Content File:** Added `internal/content/word_of_the_day.go` with 40 high-quality German noun entries.
+- **New Tests:** Added `TestSessionGradeDistributionTracking`, `TestSessionSummaryShowsGradeDistribution`, `TestGetWordOfTheDay`, `TestGetWordOfTheDayConsistency`, `TestAllWordsOfDayHaveValidData`.
+- **Verified Suite:** All 345 tests pass cleanly end-to-end.
+
+## 2026-05-31 (Practice Hub Navigation & Badge Counts)
+
+### UX & Polish
+- **Dynamic Badge Counts:** Dynamically loaded the item count for all 6 trainers on entering the Practice Hub and displayed them on the buttons to improve discovery.
+- **Consistent Navigation:** Fixed a bug where pressing Esc in Conjugation Trainer navigated to the Dashboard instead of the Practice Hub, and standardized Esc behavior to always clear input or return to the Hub gracefully.
+
+### Engineering & Testing
+- **Verified Suite:** All 342 tests pass cleanly end-to-end.
+
+## 2026-05-31 (Practice Hub Mouse Interactivity & Bug Fixes)
+
+### UX & Interactivity
+- **Practice Hub Mouse Navigation:** Fixed a bug where clicking the Hub menu options did not enter the corresponding trainer.
+- **Gender Trainer Mouse Support:** Added hitboxes for the "der", "die", "das" options.
+- **Click-to-Continue Hitboxes:** Added layout-wide hitboxes to proceed to the next card/noun on click in all 6 trainers.
+
+### Engineering & Testing
+- **New E2E Test:** Added `e2e_tests/test_practice_mouse.py`.
+- **New Unit Test:** Added `TestPracticeMouseClicks` in `internal/tui/model_test.go`.
+- **Verified Suite:** All 341 tests (Go unit and pytest E2E tests) pass cleanly.
+
 ## 2026-05-31 (Preposition Trainer & UI Polish)
 
 ### UX & Learning

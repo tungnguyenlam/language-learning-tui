@@ -292,6 +292,12 @@ func (m *Model) updateDashboardKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return m.updateView(ViewReview), true
 		}
 		return nil, true
+	case "g":
+		return m.searchGrammarTipInBrowser(), true
+	case "v":
+		return m.practiceVerbOfTheDay(), true
+	case "w":
+		return m.addWordOfTheDayToCollection(), true
 	}
 	return nil, false
 }
@@ -1374,6 +1380,10 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return m.enterPracticeMode(PracticeSubViewPreposition), true
 		case "6":
 			return m.enterPracticeMode(PracticeSubViewPlural), true
+		case "7":
+			return m.enterPracticeMode(PracticeSubViewSeparable), true
+		case "8":
+			return m.enterPracticeMode(PracticeSubViewNumbers), true
 		case "q", "esc":
 			return m.updateView(ViewDashboard), true
 		}
@@ -1383,13 +1393,13 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		if len(m.practiceItems) == 0 {
 			return nil, false
 		}
+		if key == "esc" {
+			m.practiceSubView = PracticeSubViewHub
+			return nil, true
+		}
 		if m.practiceRevealed {
 			m.practiceRevealed = false
 			m.practiceIndex = (m.practiceIndex + 1) % len(m.practiceItems)
-			return nil, true
-		}
-		if key == "esc" {
-			m.practiceSubView = PracticeSubViewHub
 			return nil, true
 		}
 		switch key {
@@ -1426,24 +1436,24 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 
 	case PracticeSubViewConjugation:
-		if key == "esc" && !m.conjugationRevealed && m.conjugationInput == "" {
-			m.practiceSubView = PracticeSubViewHub
-			return nil, true
-		}
 		return m.updateConjugationKey(msg)
 
 	case PracticeSubViewCase:
 		if len(m.caseItems) == 0 {
 			return nil, false
 		}
+		if key == "esc" {
+			if m.caseInput != "" {
+				m.caseInput = ""
+			} else {
+				m.practiceSubView = PracticeSubViewHub
+			}
+			return nil, true
+		}
 		if m.caseRevealed {
 			m.caseRevealed = false
 			m.caseInput = ""
 			m.caseIndex = (m.caseIndex + 1) % len(m.caseItems)
-			return nil, true
-		}
-		if key == "esc" && m.caseInput == "" {
-			m.practiceSubView = PracticeSubViewHub
 			return nil, true
 		}
 		switch key {
@@ -1479,14 +1489,18 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		if len(m.adjItems) == 0 {
 			return nil, false
 		}
+		if key == "esc" {
+			if m.adjInput != "" {
+				m.adjInput = ""
+			} else {
+				m.practiceSubView = PracticeSubViewHub
+			}
+			return nil, true
+		}
 		if m.adjRevealed {
 			m.adjRevealed = false
 			m.adjInput = ""
 			m.adjIndex = (m.adjIndex + 1) % len(m.adjItems)
-			return nil, true
-		}
-		if key == "esc" && m.adjInput == "" {
-			m.practiceSubView = PracticeSubViewHub
 			return nil, true
 		}
 		switch key {
@@ -1522,14 +1536,18 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		if len(m.prepItems) == 0 {
 			return nil, false
 		}
+		if key == "esc" {
+			if m.prepInput != "" {
+				m.prepInput = ""
+			} else {
+				m.practiceSubView = PracticeSubViewHub
+			}
+			return nil, true
+		}
 		if m.prepRevealed {
 			m.prepRevealed = false
 			m.prepInput = ""
 			m.prepIndex = (m.prepIndex + 1) % len(m.prepItems)
-			return nil, true
-		}
-		if key == "esc" && m.prepInput == "" {
-			m.practiceSubView = PracticeSubViewHub
 			return nil, true
 		}
 		switch key {
@@ -1565,14 +1583,18 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		if len(m.pluralItems) == 0 {
 			return nil, false
 		}
+		if key == "esc" {
+			if m.pluralInput != "" {
+				m.pluralInput = ""
+			} else {
+				m.practiceSubView = PracticeSubViewHub
+			}
+			return nil, true
+		}
 		if m.pluralRevealed {
 			m.pluralRevealed = false
 			m.pluralInput = ""
 			m.pluralIndex = (m.pluralIndex + 1) % len(m.pluralItems)
-			return nil, true
-		}
-		if key == "esc" && m.pluralInput == "" {
-			m.practiceSubView = PracticeSubViewHub
 			return nil, true
 		}
 		switch key {
@@ -1614,14 +1636,129 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.pluralInput += ch
 			return nil, true
 		}
+
+	case PracticeSubViewSeparable:
+		if len(m.separableItems) == 0 {
+			return nil, false
+		}
+		if key == "esc" {
+			if m.separableInput != "" {
+				m.separableInput = ""
+			} else {
+				m.practiceSubView = PracticeSubViewHub
+			}
+			return nil, true
+		}
+		if m.separableRevealed {
+			m.separableRevealed = false
+			m.separableInput = ""
+			m.separableIndex = (m.separableIndex + 1) % len(m.separableItems)
+			return nil, true
+		}
+		switch key {
+		case "enter", "\r", "\n":
+			if m.separableInput == "" {
+				return nil, true
+			}
+			m.separableTotal++
+			m.separableRevealed = true
+			target := m.separableItems[m.separableIndex].Answer
+			if strings.TrimSpace(strings.ToLower(m.separableInput)) == strings.TrimSpace(strings.ToLower(target)) {
+				m.separableCorrect++
+				m.separableLastResult = true
+			} else {
+				m.separableLastResult = false
+			}
+			return nil, true
+		case "backspace":
+			if len(m.separableInput) > 0 {
+				m.separableInput = trimLastRune(m.separableInput)
+			}
+			return nil, true
+		case "ctrl+u":
+			m.separableInput = ""
+			return nil, true
+		}
+		if ch, ok := singlePrintableInput(key); ok {
+			m.separableInput += ch
+			return nil, true
+		}
+
+	case PracticeSubViewNumbers:
+		return m.updateNumbersTrainerKey(msg)
 	}
 
 	return nil, false
 }
 
+func (m *Model) updateNumbersTrainerKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
+	if len(m.numberItems) == 0 {
+		return nil, false
+	}
+
+	key := msg.String()
+
+	if key == "esc" {
+		if m.numberInput != "" {
+			m.numberInput = ""
+		} else {
+			m.practiceSubView = PracticeSubViewHub
+		}
+		return nil, true
+	}
+
+	if m.numberRevealed {
+		m.numberRevealed = false
+		m.numberInput = ""
+		m.numberIndex = (m.numberIndex + 1) % len(m.numberItems)
+		return nil, true
+	}
+
+	switch key {
+	case "enter", "\r", "\n":
+		if m.numberInput == "" {
+			return nil, true
+		}
+		m.numberTotal++
+		m.numberRevealed = true
+		target := m.numberItems[m.numberIndex].Answer
+		if strings.TrimSpace(strings.ToLower(m.numberInput)) == strings.TrimSpace(strings.ToLower(target)) {
+			m.numberCorrect++
+			m.numberLastResult = true
+		} else {
+			m.numberLastResult = false
+		}
+		return nil, true
+	case "backspace":
+		if len(m.numberInput) > 0 {
+			m.numberInput = trimLastRune(m.numberInput)
+		}
+		return nil, true
+	case "ctrl+u":
+		m.numberInput = ""
+		return nil, true
+	}
+	if ch, ok := singlePrintableInput(key); ok {
+		m.numberInput += ch
+		return nil, true
+	}
+	return nil, true
+}
+
 func (m *Model) updateConjugationKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	if len(m.conjugationItems) == 0 {
 		return nil, false
+	}
+
+	key := msg.String()
+
+	if key == "esc" {
+		if m.conjugationInput != "" {
+			m.conjugationInput = ""
+		} else {
+			m.practiceSubView = PracticeSubViewHub
+		}
+		return nil, true
 	}
 
 	if m.conjugationRevealed {
@@ -1633,7 +1770,6 @@ func (m *Model) updateConjugationKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, true
 	}
 
-	key := msg.String()
 	item := m.conjugationItems[m.conjugationIndex]
 	var target string
 	personLabel := ""
@@ -1684,8 +1820,6 @@ func (m *Model) updateConjugationKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	case "ctrl+u":
 		m.conjugationInput = ""
 		return nil, true
-	case "esc":
-		return m.updateView(ViewDashboard), true
 	}
 
 	if ch, ok := singlePrintableInput(key); ok {

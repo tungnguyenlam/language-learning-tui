@@ -5,6 +5,8 @@ import (
 	"strings"
 	"time"
 
+	"deutsch-tui/internal/core"
+
 	"charm.land/lipgloss/v2"
 )
 
@@ -53,9 +55,9 @@ func (m *Model) renderSessionSummary(layout viewportLayout) string {
 	} else if accuracy < 50 && accuracy > 0 {
 		barColor = "196"
 	}
-	bar := lipgloss.NewStyle().Foreground(lipgloss.Color(barColor)).Render(strings.Repeat("█", filled))
-	empty := lipgloss.NewStyle().Foreground(lipgloss.Color("236")).Render(strings.Repeat("░", barWidth-filled))
-	progressBar := bar + empty
+	accBar := lipgloss.NewStyle().Foreground(lipgloss.Color(barColor)).Render(strings.Repeat("█", filled))
+	accEmpty := lipgloss.NewStyle().Foreground(lipgloss.Color("236")).Render(strings.Repeat("░", barWidth-filled))
+	accProgressBar := accBar + accEmpty
 
 	summaryContent := fmt.Sprintf(
 		"%s %s\n%s %s\n%s %s\n%s %s\n%s %s\n\n%s\n  %s",
@@ -64,10 +66,54 @@ func (m *Model) renderSessionSummary(layout viewportLayout) string {
 		statsStyle.Render("Session Time:  "), valStyle.Render(duration.Round(time.Second).String()),
 		statsStyle.Render("Accuracy Score:"), valStyle.Render(fmt.Sprintf("%.1f%%", accuracy)),
 		statsStyle.Render("Efficiency:    "), valStyle.Render(fmt.Sprintf("%.1f cards/min", cardsPerMin)),
-		statsStyle.Render("Performance:"), progressBar,
+		statsStyle.Render("Performance:"), accProgressBar,
 	)
 
 	b.WriteString(mainBox.Render(summaryContent) + "\n\n")
+
+	if m.sessionGrades != nil && len(m.sessionGrades) > 0 && m.sessionReviewed > 0 {
+		gradeOrder := []core.ReviewGrade{core.GradeAgain, core.GradeHard, core.GradeGood, core.GradeEasy}
+		gradeColors := map[core.ReviewGrade]string{
+			core.GradeAgain: "196",
+			core.GradeHard:  "208",
+			core.GradeGood:  "46",
+			core.GradeEasy:  "81",
+		}
+		gradeIcons := map[core.ReviewGrade]string{
+			core.GradeAgain: "✗",
+			core.GradeHard:  "~",
+			core.GradeGood:  "✓",
+			core.GradeEasy:  "★",
+		}
+
+		distributionBox := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("99")).
+			Padding(1, 2).
+			Width(maxInt(40, layout.Width-10))
+
+		distContent := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("99")).Render("Grade Distribution") + "\n"
+		maxCount := 0
+		for _, g := range gradeOrder {
+			if m.sessionGrades[g] > maxCount {
+				maxCount = m.sessionGrades[g]
+			}
+		}
+		for _, g := range gradeOrder {
+			count := m.sessionGrades[g]
+			pct := 0.0
+			if maxCount > 0 {
+				pct = float64(count) / float64(maxCount)
+			}
+			bar := progressBar(15, pct, gradeColors[g], "238")
+			distContent += fmt.Sprintf("  %s %s %-5s %d\n",
+				lipgloss.NewStyle().Foreground(lipgloss.Color(gradeColors[g])).Render(gradeIcons[g]),
+				bar,
+				lipgloss.NewStyle().Foreground(lipgloss.Color(gradeColors[g])).Bold(true).Render(string(g)),
+				count)
+		}
+		b.WriteString(distributionBox.Render(distContent) + "\n\n")
+	}
 
 	b.WriteString(lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Render("Press any key or Enter to return to Dashboard.") + "\n")
 

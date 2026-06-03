@@ -71,7 +71,16 @@ func (m *Model) updateView(view View) tea.Cmd {
 	if view == ViewPractice {
 		m.practiceSubView = PracticeSubViewHub
 		m.status = "Practice Hub: Choose a trainer"
-		return nil
+		return tea.Batch(
+			m.loadPracticeItems(),
+			m.loadConjugationItems(),
+			m.loadCaseItems(),
+			m.loadAdjectiveItems(),
+			m.loadPrepositionItems(),
+			m.loadPluralItems(),
+			m.loadSeparableItems(),
+			m.loadNumberItems(),
+		)
 	}
 
 	if view == ViewDashboard || view == ViewReview {
@@ -134,6 +143,22 @@ func (m *Model) enterPracticeMode(mode PracticeSubView) tea.Cmd {
 		m.pluralInput = ""
 		m.status = "Loading plural exercises..."
 		return m.loadPluralItems()
+	case PracticeSubViewSeparable:
+		m.separableIndex = 0
+		m.separableCorrect = 0
+		m.separableTotal = 0
+		m.separableRevealed = false
+		m.separableInput = ""
+		m.status = "Loading separable verb exercises..."
+		return m.loadSeparableItems()
+	case PracticeSubViewNumbers:
+		m.numberIndex = 0
+		m.numberCorrect = 0
+		m.numberTotal = 0
+		m.numberRevealed = false
+		m.numberInput = ""
+		m.status = "Loading number & time exercises..."
+		return m.loadNumberItems()
 	}
 	return nil
 }

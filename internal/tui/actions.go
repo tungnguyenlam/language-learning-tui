@@ -1058,3 +1058,62 @@ func (m *Model) discardFixProposal() {
 	m.fixError = ""
 	m.status = "Fix discarded"
 }
+
+func (m *Model) addWordOfTheDayToCollection() tea.Cmd {
+	word := content.GetWordOfTheDay()
+	m.status = fmt.Sprintf("Adding %s to collection...", word.German)
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		note := core.Note{
+			ID:     "wotd-" + time.Now().Format("2006-01-02"),
+			DeckID: "quick-add",
+			Front:  word.German,
+			Back:   word.English,
+			Extra:  fmt.Sprintf("Plural: %s\nExample: %s", word.Plural, word.Example),
+			Tags:   []string{"word-of-the-day"},
+		}
+		note.Cards = content.CardsForNote(note)
+
+		if err := m.repo.UpsertNote(ctx, note); err != nil {
+			return err
+		}
+		return statusMsg{text: "Added " + word.German + " to Quick Add deck"}
+	}
+}
+
+func (m *Model) practiceVerbOfTheDay() tea.Cmd {
+	verb := content.GetVerbOfTheDay()
+	m.status = fmt.Sprintf("Practicing %s...", verb.German)
+
+	return tea.Sequence(
+		m.updateView(ViewPractice),
+		func() tea.Msg {
+			// Find the verb in conjugation items and set the index
+			for i, item := range m.conjugationItems {
+				if item.German == verb.German {
+					m.practiceSubView = PracticeSubViewConjugation
+					m.conjugationIndex = i
+					m.conjugationRevealed = false
+					m.conjugationInput = ""
+					m.status = fmt.Sprintf("Conjugate: %s", verb.German)
+					return nil
+				}
+			}
+			// Fallback: load it into conjugation items if not found
+			return m.enterPracticeMode(PracticeSubViewConjugation)()
+		},
+	)
+}
+
+func (m *Model) searchGrammarTipInBrowser() tea.Cmd {
+	tip := content.GetDailyGrammarTip()
+	m.status = fmt.Sprintf("Searching for %s in browser...", tip.Title)
+
+	m.activeView = ViewBrowser
+	m.browserSearch = tip.Title
+	m.browserDeckID = ""
+	m.browserTag = ""
+	return m.loadBrowserCards()
+}

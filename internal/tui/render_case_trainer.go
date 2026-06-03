@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
 
@@ -74,6 +75,21 @@ func (m *Model) renderCaseTrainer(layout viewportLayout) string {
 		}
 
 		b.WriteString("\n" + lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, "Press any key for next exercise") + "\n")
+
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     "case-next",
+			View:   ViewPractice,
+			X:      layout.X,
+			Y:      layout.Y,
+			Width:  layout.Width,
+			Height: layout.Height,
+			Action: func() tea.Cmd {
+				m.caseRevealed = false
+				m.caseInput = ""
+				m.caseIndex = (m.caseIndex + 1) % len(m.caseItems)
+				return nil
+			},
+		})
 	}
 
 	return b.String()

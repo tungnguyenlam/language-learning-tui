@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
 
@@ -74,6 +75,21 @@ func (m *Model) renderPrepositionTrainer(layout viewportLayout) string {
 		}
 
 		b.WriteString("\n" + lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, "Press any key for next exercise") + "\n")
+
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     "preposition-next",
+			View:   ViewPractice,
+			X:      layout.X,
+			Y:      layout.Y,
+			Width:  layout.Width,
+			Height: layout.Height,
+			Action: func() tea.Cmd {
+				m.prepRevealed = false
+				m.prepInput = ""
+				m.prepIndex = (m.prepIndex + 1) % len(m.prepItems)
+				return nil
+			},
+		})
 	}
 
 	return b.String()

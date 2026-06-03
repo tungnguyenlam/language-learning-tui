@@ -29,3 +29,11 @@
 - Audio/media support.
 - More German content.
 - Sync or backup workflow.
+
+## Milestone 4: Hybrid Dictionary (Next Focus)
+- Transform the app into a unified dictionary-flashcard hybrid.
+- **Storage Layer:** FTS5 SQLite table and parser for offline `dict.cc` text file ingestion.
+- **Core API:** `DictionaryEntry` domain struct and `SearchDictionary` repository interface.
+- **TUI Integration:** A dedicated `ViewDictionary` with real-time, zero-latency type-ahead search.
+- **Flashcard Loop:** Seamlessly convert dictionary search results into new flashcards via the Drafting flow.
+- **Onboarding:** Settings UI and documentation to guide users on importing the `dict.cc` dataset.

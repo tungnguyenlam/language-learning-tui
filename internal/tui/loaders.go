@@ -319,6 +319,46 @@ func (m *Model) loadPluralItems() tea.Cmd {
 	}
 }
 
+func (m *Model) loadSeparableItems() tea.Cmd {
+	return func() tea.Msg {
+		items := []separableItem{
+			{"Ich stehe um 7 Uhr {{...}}.", "aufstehen", "auf", "to get up"},
+			{"Wann fängt der Film {{...}}?", "anfangen", "an", "to begin"},
+			{"Komm bitte {{...}}!", "mitkommen", "mit", "to come along"},
+			{"Ich rufe dich morgen {{...}}.", "anrufen", "an", "to call"},
+			{"Wir kaufen im Supermarkt {{...}}.", "einkaufen", "ein", "to shop"},
+			{"Der Zug kommt um 10 Uhr {{...}}.", "ankommen", "an", "to arrive"},
+			{"Mach bitte das Licht {{...}}.", "ausmachen", "aus", "to turn off"},
+			{"Er sieht jeden Abend {{...}}.", "fernsehen", "fern", "to watch TV"},
+			{"Wir ziehen nächste Woche {{...}}.", "umziehen", "um", "to move"},
+			{"Ich bereite das Essen {{...}}.", "vorbereiten", "vor", "to prepare"},
+			{"Stell bitte die Milch {{...}}.", "wegstellen", "weg", "to put away"},
+			{"Hör mir bitte {{...}}!", "zuhören", "zu", "to listen"},
+			{"Wir laden euch zur Party {{...}}.", "einladen", "ein", "to invite"},
+			{"Er gibt das Geld {{...}}.", "ausgeben", "aus", "to spend"},
+			{"Ich schlage ein Treffen {{...}}.", "vorschlagen", "vor", "to suggest"},
+		}
+		return separableItemsMsg(items)
+	}
+}
+
+func (m *Model) loadNumberItems() tea.Cmd {
+	return func() tea.Msg {
+		exercises := content.GetNumberExercises()
+		items := make([]numberItem, len(exercises))
+		for i, ex := range exercises {
+			items[i] = numberItem{
+				Question: ex.Question,
+				Answer:   ex.Answer,
+				Help:     ex.Help,
+			}
+		}
+		return numberItemsMsg(items)
+	}
+}
+
+type separableItemsMsg []separableItem
+
 type pluralItemsMsg []pluralItem
 
 type conjugationItemsMsg []content.DailyVerb

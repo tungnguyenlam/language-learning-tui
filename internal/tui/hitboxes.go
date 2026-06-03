@@ -73,16 +73,40 @@ func (m *Model) activateHitboxByID(id string) tea.Cmd {
 		m.drafts = nil
 		m.draftCursor = 0
 		return m.startDrafting()
+	case strings.HasPrefix(id, "practice-"):
+		mode := strings.TrimPrefix(id, "practice-")
+		switch mode {
+		case "gender":
+			return m.enterPracticeMode(PracticeSubViewGender)
+		case "conjugation":
+			return m.enterPracticeMode(PracticeSubViewConjugation)
+		case "case":
+			return m.enterPracticeMode(PracticeSubViewCase)
+		case "adjective":
+			return m.enterPracticeMode(PracticeSubViewAdjective)
+		case "preposition":
+			return m.enterPracticeMode(PracticeSubViewPreposition)
+		case "plural":
+			return m.enterPracticeMode(PracticeSubViewPlural)
+		case "separable":
+			return m.enterPracticeMode(PracticeSubViewSeparable)
+		}
+		return nil
 	case strings.HasPrefix(id, "dash-"):
 		if strings.HasPrefix(id, "dash-recent-") {
 			idx, err := strconv.Atoi(strings.TrimPrefix(id, "dash-recent-"))
-			if err == nil && idx >= 0 && idx < len(m.recentDecks) {
+			if err == nil && idx < len(m.recentDecks) {
 				m.selectDeckByID(m.recentDecks[idx])
 				return m.updateView(ViewReview)
 			}
-			return nil
 		}
 		switch id {
+		case "dash-tip":
+			return m.searchGrammarTipInBrowser()
+		case "dash-verb":
+			return m.practiceVerbOfTheDay()
+		case "dash-word":
+			return m.addWordOfTheDayToCollection()
 		case "dash-review":
 			return m.updateView(ViewReview)
 		case "dash-collection":

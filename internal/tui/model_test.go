@@ -1503,6 +1503,66 @@ func TestSessionStatsTracking(t *testing.T) {
 	}
 }
 
+func TestSessionGradeDistributionTracking(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Prompt: "P1", Answer: "A1"},
+			{ID: "c2", DeckID: "deck-1", Prompt: "P2", Answer: "A2"},
+			{ID: "c3", DeckID: "deck-1", Prompt: "P3", Answer: "A3"},
+			{ID: "c4", DeckID: "deck-1", Prompt: "P4", Answer: "A4"},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.Update(dueCardsMsg(repo.dueCards))
+
+	model.Update(reviewRecordedMsg{cardID: "c1", cards: repo.dueCards, decks: repo.decks, stats: core.Statistics{}, grade: core.GradeAgain})
+	model.Update(reviewRecordedMsg{cardID: "c2", cards: repo.dueCards, decks: repo.decks, stats: core.Statistics{}, grade: core.GradeGood})
+	model.Update(reviewRecordedMsg{cardID: "c3", cards: repo.dueCards, decks: repo.decks, stats: core.Statistics{}, grade: core.GradeGood})
+	model.Update(reviewRecordedMsg{cardID: "c4", cards: repo.dueCards, decks: repo.decks, stats: core.Statistics{}, grade: core.GradeEasy})
+
+	if model.sessionGrades[core.GradeAgain] != 1 {
+		t.Fatalf("GradeAgain = %d, want 1", model.sessionGrades[core.GradeAgain])
+	}
+	if model.sessionGrades[core.GradeGood] != 2 {
+		t.Fatalf("GradeGood = %d, want 2", model.sessionGrades[core.GradeGood])
+	}
+	if model.sessionGrades[core.GradeEasy] != 1 {
+		t.Fatalf("GradeEasy = %d, want 1", model.sessionGrades[core.GradeEasy])
+	}
+	if model.sessionGrades[core.GradeHard] != 0 {
+		t.Fatalf("GradeHard = %d, want 0", model.sessionGrades[core.GradeHard])
+	}
+}
+
+func TestSessionSummaryShowsGradeDistribution(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "deck-1", Prompt: "P1", Answer: "A1"},
+		},
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(decksMsg(repo.decks))
+	model.Update(dueCardsMsg(repo.dueCards))
+	model.sessionReviewed = 3
+	model.sessionCorrect = 2
+	model.sessionGrades = map[core.ReviewGrade]int{
+		core.GradeAgain: 1,
+		core.GradeGood:  1,
+		core.GradeEasy:  1,
+	}
+
+	view := model.renderSessionSummary(viewportLayout{Width: 80, Height: 30})
+	if !strings.Contains(view, "Grade Distribution") {
+		t.Fatalf("session summary should show Grade Distribution: %s", view)
+	}
+	if !strings.Contains(view, "again") || !strings.Contains(view, "good") || !strings.Contains(view, "easy") {
+		t.Fatalf("session summary should show all grade labels: %s", view)
+	}
+}
+
 func TestHelpOverlayToggle(t *testing.T) {
 	model := NewModel(&mockRepo{}, &mockScheduler{})
 
@@ -2327,5 +2387,92 @@ func TestPluralTrainer(t *testing.T) {
 	}
 	if model.pluralIndex != 1 {
 		t.Fatalf("expected pluralIndex to advance to 1, got %d", model.pluralIndex)
+	}
+}
+
+func TestPracticeMouseClicks(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{
+				ID:     "card-1",
+				Prompt: "der Tisch",
+				Answer: "table",
+				DeckID: "mock-1",
+			},
+			{
+				ID:     "card-2",
+				Prompt: "die Tür",
+				Answer: "door",
+				DeckID: "mock-1",
+			},
+		},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewPractice
+	model.practiceSubView = PracticeSubViewHub
+
+	// 1. Click "practice-gender" button on Practice Hub
+	cmd := model.activateHitboxByID("practice-gender")
+	if cmd == nil {
+		t.Fatal("expected load command")
+	}
+	if model.practiceSubView != PracticeSubViewGender {
+		t.Fatalf("expected practiceSubView to transition to PracticeSubViewGender, got %v", model.practiceSubView)
+	}
+
+	// 2. Load the items
+	msgs := executeCmd(cmd)
+	updated, _ := model.Update(msgs[0])
+	model = updated.(*Model)
+
+	if len(model.practiceItems) == 0 {
+		t.Fatal("expected loaded practice items to be non-empty")
+	}
+
+	// 3. Click one of the gender options (e.g. "gender-opt-der")
+	// Since we appended the hitboxes inside renderGenderTrainer, let's trigger the render first to populate model.hitboxes.
+	model.View() // Render to populate hitboxes
+
+	// Find the hitbox for "gender-opt-der"
+	var hitbox Hitbox
+	found := false
+	for _, h := range model.hitboxes {
+		if h.ID == "gender-opt-der" {
+			hitbox = h
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatal("expected gender-opt-der hitbox to be registered")
+	}
+
+	// Activate it
+	model.activateHitbox(hitbox)
+	if !model.practiceRevealed {
+		t.Fatal("expected practice to be revealed after clicking der")
+	}
+
+	// 4. Click to proceed to next noun
+	model.View() // Render to populate hitboxes in revealed state
+
+	foundNext := false
+	for _, h := range model.hitboxes {
+		if h.ID == "gender-next" {
+			hitbox = h
+			foundNext = true
+			break
+		}
+	}
+	if !foundNext {
+		t.Fatal("expected gender-next hitbox to be registered")
+	}
+
+	model.activateHitbox(hitbox)
+	if model.practiceRevealed {
+		t.Fatal("expected practice to reset revealed state on next action click")
+	}
+	if model.practiceIndex != 1 {
+		t.Fatalf("expected practiceIndex to advance to 1, got %d", model.practiceIndex)
 	}
 }

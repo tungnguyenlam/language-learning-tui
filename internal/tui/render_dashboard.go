@@ -339,9 +339,11 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 	if remainingHeight >= 3 {
 		tip := content.GetDailyGrammarTip()
 		verb := content.GetVerbOfTheDay()
+		word := content.GetWordOfTheDay()
 
 		tipLabelStyle := lipgloss.NewStyle().Foreground(colorAITitle).Bold(true)
 		verbLabelStyle := lipgloss.NewStyle().Foreground(colorPink).Bold(true)
+		wordLabelStyle := lipgloss.NewStyle().Foreground(colorGold).Bold(true)
 
 		exampleText := ""
 		if tip.Example != "" && remainingHeight >= 5 {
@@ -350,10 +352,10 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 
 		tipBox := dashTipStyle.
 			Width(boxWidth).
-			Render(tipLabelStyle.Render("Grammar Tip: "+tip.Title) + "\n" +
+			Render(tipLabelStyle.Render("Grammar Tip: [g] "+tip.Title) + "\n" +
 				fmt.Sprintf("  %s", tip.Tip) + exampleText)
 
-		verbHeader := verbLabelStyle.Render("Verb: "+verb.German) +
+		verbHeader := verbLabelStyle.Render("Verb: [v] "+verb.German) +
 			lipgloss.NewStyle().Foreground(colorMuted).Render(" — "+verb.English)
 		verbBox := dashVerbStyle.
 			Width(boxWidth).
@@ -361,9 +363,52 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 				fmt.Sprintf("  ich %-8s wir %-8s\n  du  %-8s ihr %-8s\n  er/sie/es %-4s sie/Sie %-5s",
 					verb.Ich, verb.Wir, verb.Du, verb.Ihr, verb.ErSieEs, verb.SieSie))
 
+		wordHeader := wordLabelStyle.Render("Word: [w] "+word.German) +
+			lipgloss.NewStyle().Foreground(colorMuted).Render(" — "+word.English)
+		wordContent := wordHeader + "\n"
+		if word.Plural != "" {
+			wordContent += fmt.Sprintf("  Plural: %s\n", word.Plural)
+		}
+		if word.Example != "" {
+			wordContent += fmt.Sprintf("  %s", lipgloss.NewStyle().Italic(true).Foreground(colorBlue).Render(word.Example))
+		}
+		wordBox := dashTipStyle.
+			BorderForeground(colorGold).
+			Width(boxWidth).
+			Render(wordHeader + "\n" +
+				wordContent)
+
+		tipY := strings.Count(db.String(), "\n")
 		if isNarrow {
-			db.WriteString(tipBox + "\n" + verbBox + "\n")
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-tip", View: ViewDashboard, X: layout.X, Y: layout.Y + tipY, Width: boxWidth, Height: lipgloss.Height(tipBox)})
+			db.WriteString(tipBox + "\n")
+			verbY := strings.Count(db.String(), "\n")
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-verb", View: ViewDashboard, X: layout.X, Y: layout.Y + verbY, Width: boxWidth, Height: lipgloss.Height(verbBox)})
+			db.WriteString(verbBox + "\n")
+			wordY := strings.Count(db.String(), "\n")
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-word", View: ViewDashboard, X: layout.X, Y: layout.Y + wordY, Width: boxWidth, Height: lipgloss.Height(wordBox)})
+			db.WriteString(wordBox + "\n")
+		} else if layout.Width > 110 && remainingHeight >= 5 {
+			// Three column row for wide terminals
+			thirdWidth := (layout.Width - 4) / 3
+			tipBox = dashTipStyle.Width(thirdWidth).Render(tipLabelStyle.Render("Grammar: [g] "+tip.Title) + "\n" + tip.Tip)
+			verbBox = dashVerbStyle.Width(thirdWidth).Render(verbHeader + "\n" + fmt.Sprintf("  ich %-8s wir %-8s\n  du  %-8s ihr %-8s", verb.Ich, verb.Wir, verb.Du, verb.Ihr))
+			wordBox = dashTipStyle.BorderForeground(colorGold).Width(thirdWidth).Render(wordHeader + "\n" + wordContent)
+
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-tip", View: ViewDashboard, X: layout.X, Y: layout.Y + tipY, Width: thirdWidth, Height: lipgloss.Height(tipBox)})
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-verb", View: ViewDashboard, X: layout.X + thirdWidth + 1, Y: layout.Y + tipY, Width: thirdWidth, Height: lipgloss.Height(verbBox)})
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-word", View: ViewDashboard, X: layout.X + 2*thirdWidth + 2, Y: layout.Y + tipY, Width: thirdWidth, Height: lipgloss.Height(wordBox)})
+			db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, tipBox, " ", verbBox, " ", wordBox) + "\n")
+		} else if remainingHeight >= 7 {
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-tip", View: ViewDashboard, X: layout.X, Y: layout.Y + tipY, Width: boxWidth, Height: lipgloss.Height(tipBox)})
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-verb", View: ViewDashboard, X: layout.X + boxWidth + 1, Y: layout.Y + tipY, Width: boxWidth, Height: lipgloss.Height(verbBox)})
+			db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, tipBox, " ", verbBox) + "\n")
+			wordY := strings.Count(db.String(), "\n")
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-word", View: ViewDashboard, X: layout.X, Y: layout.Y + wordY, Width: boxWidth, Height: lipgloss.Height(wordBox)})
+			db.WriteString(wordBox + "\n")
 		} else {
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-tip", View: ViewDashboard, X: layout.X, Y: layout.Y + tipY, Width: boxWidth, Height: lipgloss.Height(tipBox)})
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-verb", View: ViewDashboard, X: layout.X + boxWidth + 1, Y: layout.Y + tipY, Width: boxWidth, Height: lipgloss.Height(verbBox)})
 			db.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, tipBox, " ", verbBox) + "\n")
 		}
 	}

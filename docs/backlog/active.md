@@ -1,6 +1,6 @@
 # Active Backlog
 
-Last updated: 2026-05-31
+Last updated: 2026-06-01
 
 ## Current Milestone
 
@@ -8,6 +8,10 @@ Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
 
+- [x] **Session Summary Grade Distribution:** Added a visual grade distribution chart (Again/Hard/Good/Easy) to the Session Summary view. Session grades are now tracked during reviews and displayed with colored bars and icons.
+- [x] **Dashboard Word of the Day:** Added a "Word of the Day" vocabulary box to the Dashboard, displaying a rotating German noun with its article, plural form, and example sentence. Appears alongside the existing Grammar Tip and Verb of the Day when space allows.
+- [x] **Review Session Speed & ETA:** Enhanced the Review header's session progress indicator to show cards-per-minute rate and estimated time remaining based on current review speed.
+- [x] **Practice Hub Mouse Interactivity:** Fixed a bug where clicking Practice Hub buttons failed to enter the practice subviews, and added full mouse click interaction to Gender Trainer (der/die/das buttons) and click-to-continue hitboxes for all other trainers.
 - [x] **Noun Plural Trainer:** Added a sixth practice mode to the Practice Hub for mastering German noun plural forms with article normalization, automatic extraction from deck notes, and fallback high-quality singular-plural noun lists.
 - [x] **Preposition Trainer:** Added a fifth practice mode to the Practice Hub for mastering German two-way prepositions (Wechselpräpositionen) and their correct cases (Dative vs Accusative).
 - [x] **Responsive Practice Hub:** Made the vertical spacing in the Practice Hub dynamic, allowing all 5 options to display correctly on smaller terminal sizes without overflow.
@@ -31,6 +35,10 @@ Polish and Reliability - IN PROGRESS.
 - [x] **Grammar Hint Overlay:** Added a `Shift+G` shortcut in the Review view to toggle a contextual grammar hint based on the card contents.
 - [x] **List Navigation Shortcuts:** Added `g` (jump to top) and `G` (jump to bottom) shortcuts to Browser, Settings, and Decks views for faster navigation.
 - [x] **Browser Contextual Hints:** Integrated the grammar hint analysis directly into the Card Preview box in the Browser view to show contextual word usage information.
+- [x] **Interactive Dashboard Elements:** Made Word of the Day, Verb of the Day, and Grammar Tips actionable. Users can now press 'w' to add the word to their collection, 'v' to practice the verb, or 'g' to search for related grammar in the browser.
+- [x] **Separable Verb Trainer:** Added a seventh practice mode to the Practice Hub for mastering German separable verbs and their prefixes in sentences.
+- [x] **Review Focus Mode Polish:** Enhanced the 'Shift+F' Focus Mode in the Review view with a centered, distraction-free layout and clearer visual feedback, while maintaining compatibility with E2E tests.
+- [x] **Practice Hub Navigation & Badge Counts:** Standardized the `esc` key behavior across all 7 practice modes (always clears current input or gracefully returns to the Hub, rather than the dashboard). Added dynamic, parallel-loaded item counts next to each trainer in the Practice Hub to display the number of practice items available.
 
 ## Exact Next Action
 
@@ -42,7 +50,7 @@ None.
 
 ## Last Verified
 
-- `./scripts/verify.sh` passed with 0 test failures (341 passed).
+- `./scripts/verify.sh` passed with 0 test failures (343 passed) on 2026-06-03.
 
 ## Blockers
 

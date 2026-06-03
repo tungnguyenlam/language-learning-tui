@@ -23,6 +23,10 @@ func (m *Model) renderPractice(layout viewportLayout) string {
 		return m.renderPrepositionTrainer(layout)
 	case PracticeSubViewPlural:
 		return m.renderPluralTrainer(layout)
+	case PracticeSubViewSeparable:
+		return m.renderSeparableTrainer(layout)
+	case PracticeSubViewNumbers:
+		return m.renderNumberTrainer(layout)
 	}
 	return "Unknown Practice View"
 }
@@ -45,11 +49,35 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 		{"practice-adjective", "4", "Adjective Ending Trainer", "Practice Nom/Acc/Dat/Gen endings", PracticeSubViewAdjective},
 		{"practice-preposition", "5", "Preposition Trainer", "Practice two-way prepositions & cases", PracticeSubViewPreposition},
 		{"practice-plural", "6", "Plural Trainer", "Practice German noun plural forms", PracticeSubViewPlural},
+		{"practice-separable", "7", "Separable Verb Trainer", "Practice verb prefixes and word order", PracticeSubViewSeparable},
+		{"practice-numbers", "8", "Numbers & Time", "Practice German numbers and time", PracticeSubViewNumbers},
 	}
 
 	spacing := 3
-	if layout.Height >= 28 {
+	if layout.Height >= 32 {
 		spacing = 4
+	}
+
+	getItemCount := func(sub PracticeSubView) int {
+		switch sub {
+		case PracticeSubViewGender:
+			return len(m.practiceItems)
+		case PracticeSubViewConjugation:
+			return len(m.conjugationItems)
+		case PracticeSubViewCase:
+			return len(m.caseItems)
+		case PracticeSubViewAdjective:
+			return len(m.adjItems)
+		case PracticeSubViewPreposition:
+			return len(m.prepItems)
+		case PracticeSubViewPlural:
+			return len(m.pluralItems)
+		case PracticeSubViewSeparable:
+			return len(m.separableItems)
+		case PracticeSubViewNumbers:
+			return len(m.numberItems)
+		}
+		return 0
 	}
 
 	for i, mode := range modes {
@@ -59,10 +87,16 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 			Width(40).
 			BorderForeground(lipgloss.Color("81"))
 
+		count := getItemCount(mode.sub)
+		countStr := ""
+		if count > 0 {
+			countStr = fmt.Sprintf(" (%d)", count)
+		}
+
 		keyHint := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212")).Render("[" + mode.key + "]")
-		content := fmt.Sprintf("%s %s\n%s", keyHint, mode.label, mutedStyle.Render(mode.desc))
+		content := fmt.Sprintf("%s %s%s\n%s", keyHint, mode.label, countStr, mutedStyle.Render(mode.desc))
 		if spacing == 3 {
-			content = fmt.Sprintf("%s %s - %s", keyHint, mode.label, mutedStyle.Render(mode.desc))
+			content = fmt.Sprintf("%s %s%s - %s", keyHint, mode.label, countStr, mutedStyle.Render(mode.desc))
 			btnStyle = btnStyle.Padding(0, 1)
 		}
 

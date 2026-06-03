@@ -191,7 +191,25 @@ func (m *Model) renderReview(x, y int) string {
 	duration := time.Since(m.sessionStartTime)
 	timerStr := fmt.Sprintf("%02d:%02d", int(duration.Minutes()), int(duration.Seconds())%60)
 
-	sessionProgress := fmt.Sprintf(" | Session: %s %d%% | ⏱ %s", sessionBar, int(sessionPercentage*100), timerStr)
+	cardsPerMin := 0.0
+	if duration.Minutes() > 0 {
+		cardsPerMin = float64(m.sessionReviewed) / duration.Minutes()
+	}
+
+	etaStr := ""
+	if cardsPerMin > 0 && len(m.dueCards) > 0 {
+		remaining := len(m.dueCards)
+		etaMin := float64(remaining) / cardsPerMin
+		if etaMin < 1 {
+			etaStr = fmt.Sprintf(" | ETA <1m")
+		} else if etaMin < 60 {
+			etaStr = fmt.Sprintf(" | ETA ~%dm", int(etaMin))
+		} else {
+			etaStr = fmt.Sprintf(" | ETA ~%dh%dm", int(etaMin)/60, int(etaMin)%60)
+		}
+	}
+
+	sessionProgress := fmt.Sprintf(" | Session: %s %d%% | ⏱ %s | %.1f/min%s", sessionBar, int(sessionPercentage*100), timerStr, cardsPerMin, etaStr)
 
 	mature := ""
 	if card.Mature {
@@ -246,7 +264,7 @@ func (m *Model) renderReview(x, y int) string {
 	promptStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
 	promptDisplay = promptStyle.Render(promptDisplay + hintDisplay)
 
-	width, _ := m.activePanelSize()
+	width, height := m.activePanelSize()
 	cardWidth := maxInt(30, width-6)
 	if cardWidth > 80 {
 		cardWidth = 80
@@ -426,6 +444,19 @@ func (m *Model) renderReview(x, y int) string {
 	}
 
 	view := fmt.Sprintf("%s\n\n%s", headerSection, cardStyle.Render(promptDisplay+mature+"\n"+answer))
+	if m.focusMode {
+		// Use full width/height in focus mode
+		content := promptDisplay + mature + "\n" + answer
+		focusHeader := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true).Render("Focus Mode Active (f to exit)")
+		view = cardStyle.
+			Width(width-4).
+			Height(height-4).
+			Align(lipgloss.Center, lipgloss.Center).
+			Render(content)
+		centered := lipgloss.Place(m.width, m.height-10, lipgloss.Center, lipgloss.Center, view)
+		return focusHeader + "\n" + centered
+	}
+
 	if m.showCardInfo {
 		view += "\n\n" + m.renderCardInfo(card)
 	}

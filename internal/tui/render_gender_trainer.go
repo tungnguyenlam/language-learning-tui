@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
 
@@ -46,6 +47,65 @@ func (m *Model) renderGenderTrainer(layout viewportLayout) string {
 			keyStyle.Render("[3/a/n]") + " das",
 		}
 		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, strings.Join(options, "   ")) + "\n")
+
+		startX := layout.X + (layout.Width-39)/2
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     "gender-opt-der",
+			View:   ViewPractice,
+			X:      startX,
+			Y:      layout.Y + 11,
+			Width:  11,
+			Height: 1,
+			Action: func() tea.Cmd {
+				m.practiceTotal++
+				m.practiceRevealed = true
+				if m.practiceItems[m.practiceIndex].Article == "der" {
+					m.practiceCorrect++
+					m.practiceLastResult = true
+				} else {
+					m.practiceLastResult = false
+				}
+				return nil
+			},
+		})
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     "gender-opt-die",
+			View:   ViewPractice,
+			X:      startX + 14,
+			Y:      layout.Y + 11,
+			Width:  11,
+			Height: 1,
+			Action: func() tea.Cmd {
+				m.practiceTotal++
+				m.practiceRevealed = true
+				if m.practiceItems[m.practiceIndex].Article == "die" {
+					m.practiceCorrect++
+					m.practiceLastResult = true
+				} else {
+					m.practiceLastResult = false
+				}
+				return nil
+			},
+		})
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     "gender-opt-das",
+			View:   ViewPractice,
+			X:      startX + 28,
+			Y:      layout.Y + 11,
+			Width:  11,
+			Height: 1,
+			Action: func() tea.Cmd {
+				m.practiceTotal++
+				m.practiceRevealed = true
+				if m.practiceItems[m.practiceIndex].Article == "das" {
+					m.practiceCorrect++
+					m.practiceLastResult = true
+				} else {
+					m.practiceLastResult = false
+				}
+				return nil
+			},
+		})
 	} else {
 		var resultStyle lipgloss.Style
 		resultText := ""
@@ -67,6 +127,20 @@ func (m *Model) renderGenderTrainer(layout viewportLayout) string {
 		}
 
 		b.WriteString("\n" + lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, "Press any key for next noun") + "\n")
+
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     "gender-next",
+			View:   ViewPractice,
+			X:      layout.X,
+			Y:      layout.Y,
+			Width:  layout.Width,
+			Height: layout.Height,
+			Action: func() tea.Cmd {
+				m.practiceRevealed = false
+				m.practiceIndex = (m.practiceIndex + 1) % len(m.practiceItems)
+				return nil
+			},
+		})
 	}
 
 	return b.String()

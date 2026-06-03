@@ -51,6 +51,8 @@ const (
 	PracticeSubViewAdjective
 	PracticeSubViewPreposition
 	PracticeSubViewPlural
+	PracticeSubViewSeparable
+	PracticeSubViewNumbers
 )
 
 type RevealState int
@@ -114,6 +116,19 @@ type pluralItem struct {
 	Singular string
 	Plural   string
 	Meaning  string
+}
+
+type separableItem struct {
+	Sentence string // "Ich stehe um 7 Uhr {{...}}."
+	Verb     string // "aufstehen"
+	Answer   string // "auf"
+	Meaning  string // "to get up"
+}
+
+type numberItem struct {
+	Question string
+	Answer   string
+	Help     string
 }
 
 type Model struct {
@@ -294,6 +309,24 @@ type Model struct {
 	pluralRevealed   bool
 	pluralLastResult bool
 	pluralInput      string
+
+	// Separable Verb Trainer state
+	separableItems      []separableItem
+	separableIndex      int
+	separableCorrect    int
+	separableTotal      int
+	separableRevealed   bool
+	separableLastResult bool
+	separableInput      string
+
+	// Number Trainer state
+	numberItems      []numberItem
+	numberIndex      int
+	numberCorrect    int
+	numberTotal      int
+	numberRevealed   bool
+	numberLastResult bool
+	numberInput      string
 
 	practiceSubView PracticeSubView
 
@@ -569,6 +602,7 @@ type deckDeletedMsg struct{}
 type caseItemsMsg []caseItem
 type adjItemsMsg []adjectiveItem
 type prepItemsMsg []prepositionItem
+type numberItemsMsg []numberItem
 
 func (m *Model) Init() tea.Cmd {
 	return tea.Sequence(m.loadDueCards, m.loadDecks, m.loadStatistics(), m.loadReviewsPerDay(), m.loadRecentDecks())
@@ -773,6 +807,23 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.status = fmt.Sprintf("Loaded %d plural exercises", len(m.pluralItems))
 		}
 		return m, nil
+
+	case separableItemsMsg:
+		m.separableItems = []separableItem(msg)
+		if len(m.separableItems) == 0 {
+			m.status = "No separable verb exercises found"
+		} else {
+			m.status = fmt.Sprintf("Loaded %d separable verb exercises", len(m.separableItems))
+		}
+		return m, nil
+	case numberItemsMsg:
+		m.numberItems = []numberItem(msg)
+		if len(m.numberItems) == 0 {
+			m.status = "No number exercises found"
+		} else {
+			m.status = fmt.Sprintf("Loaded %d number exercises", len(m.numberItems))
+		}
+		return m, nil
 	case timedClearStatusMsg:
 		if msg.seq == m.statusSeq {
 			m.status = "Ready"
@@ -795,6 +846,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if msg.grade != core.GradeAgain {
 				m.sessionCorrect++
 			}
+			if m.sessionGrades == nil {
+				m.sessionGrades = make(map[core.ReviewGrade]int)
+			}
+			m.sessionGrades[msg.grade]++
 
 			gradeIcon := map[core.ReviewGrade]string{
 				core.GradeAgain: "✗",
@@ -1126,6 +1181,9 @@ func (m *Model) renderConfirmation() string {
 }
 
 func (m *Model) renderWide() string {
+	if m.focusMode && m.activeView == ViewReview {
+		return "\n" + m.renderActiveView(0, 1)
+	}
 	if m.width < 120 {
 		nav := m.renderNav(0, 2)
 		content := m.renderActiveView(20, 1)
@@ -1204,10 +1262,16 @@ func (m *Model) renderWide() string {
 }
 
 func (m *Model) renderMedium() string {
+	if m.focusMode && m.activeView == ViewReview {
+		return "\n" + m.renderActiveView(0, 1)
+	}
 	return m.renderTabs(0, 2) + "\n" + m.renderActiveView(0, 2)
 }
 
 func (m *Model) renderCompact() string {
+	if m.focusMode && m.activeView == ViewReview {
+		return "\n" + m.renderActiveView(0, 1)
+	}
 	return m.renderTabs(0, 2) + "\n" + m.renderActiveView(0, 2)
 }
 
@@ -1348,6 +1412,9 @@ func contentLayoutForStyle(style lipgloss.Style, x, y int) viewportLayout {
 }
 
 func (m *Model) activePanelSize() (int, int) {
+	if m.focusMode && m.activeView == ViewReview {
+		return m.width - 4, m.height - 8
+	}
 	width := maxInt(30, m.width-50)
 	height := maxInt(15, m.height-10)
 	if m.breakpoint == BreakpointWide {
