@@ -169,6 +169,23 @@ type Scheduler interface {
 	Predict(state ReviewState, now time.Time) map[ReviewGrade]time.Duration
 }
 
+type DictionaryEntry struct {
+	ID          string
+	Word        string
+	Translation string
+	WordClass   string
+	Gender      string
+	Forms       string
+	Examples    []string
+	Tags        []string
+}
+
+type DictionaryRepository interface {
+	Search(ctx context.Context, query string, limit int) ([]DictionaryEntry, error)
+	GetEntry(ctx context.Context, id string) (DictionaryEntry, error)
+	ImportEntries(ctx context.Context, entries []DictionaryEntry) error
+}
+
 func ValidateCard(card Card) error {
 	if strings.TrimSpace(card.ID) == "" {
 		return errors.New("card id is required")

@@ -28,6 +28,7 @@ type View string
 
 const (
 	ViewDashboard      View = "dashboard"
+	ViewDictionary     View = "dictionary"
 	ViewDecks          View = "decks"
 	ViewReview         View = "review"
 	ViewStatistics     View = "statistics"
@@ -199,8 +200,12 @@ type Model struct {
 	browserTag            string
 	browserSearchHistory  []string
 	browserDeckID         string
-	searchingTags         bool
 	browserSelected       map[string]bool
+	dictionarySearch      string
+	dictionaryResults     []core.DictionaryEntry
+	dictionaryCursor      int
+	dictionaryScroll      int
+	searchingTags         bool
 	sessionReviewed       int
 	sessionCorrect        int
 	lastSessionReviewed   int
@@ -612,6 +617,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.logger.Debug("Processing message: %T", msg)
 
 	switch msg := msg.(type) {
+	case dictionarySearchResultsMsg:
+		m.dictionaryResults = msg.results
+		m.dictionaryCursor = 0
+		if len(msg.results) > 0 {
+			m.status = fmt.Sprintf("Found %d dictionary results", len(msg.results))
+		} else {
+			m.status = "No results"
+		}
 	case spinnerTickMsg:
 		if m.drafting {
 			m.spinnerFrame++
@@ -1085,7 +1098,7 @@ func (m *Model) View() tea.View {
 	helpHint := ""
 	switch m.activeView {
 	case ViewDashboard:
-		helpHint = "| [ / ] switch decks | 3 Review"
+		helpHint = "| / search dictionary | [ ] switch decks | 3 Review"
 	case ViewReview:
 		if len(m.dueCards) > 0 {
 			if m.revealState == RevealRevealed {
@@ -1282,6 +1295,7 @@ func (m *Model) renderNav(x, y int) string {
 		text string
 	}{
 		{"nav-dashboard", ViewDashboard, "Dashboard"},
+		{"nav-dictionary", ViewDictionary, "Dictionary"},
 		{"nav-decks", ViewDecks, "Decks"},
 		{"nav-review", ViewReview, "Review"},
 		{"nav-statistics", ViewStatistics, "Statistics"},
@@ -1321,6 +1335,7 @@ func (m *Model) renderTabs(x, y int) string {
 		text string
 	}{
 		{"tab-dashboard", ViewDashboard, "Dashboard"},
+		{"tab-dictionary", ViewDictionary, "Dictionary"},
 		{"tab-decks", ViewDecks, "Decks"},
 		{"tab-review", ViewReview, "Review"},
 		{"tab-statistics", ViewStatistics, "Statistics"},
@@ -1368,6 +1383,8 @@ func (m *Model) renderActiveViewPlainAt(layout viewportLayout) string {
 	switch m.activeView {
 	case ViewDashboard:
 		content = m.renderDashboard(layout)
+	case ViewDictionary:
+		content = m.renderDictionary(layout)
 	case ViewDecks:
 		content = m.renderDecks(layout)
 	case ViewReview:

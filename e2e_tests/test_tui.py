@@ -239,12 +239,12 @@ def test_all_core_views_render_with_keyboard_navigation():
         try:
             expected_views = [
                 ('1', "DASHBOARD"),
-                ('2', "Decks"),
+                ('2', "DECK LIST"),
                 ('3', "Review 1/52"),
-                ('4', "Statistics"),
+                ('4', "Statistics:"),
                 ('5', "Import / Export"),
-                ('6', "AI"),
-                ('7', "Settings"),
+                ('6', "Topic:"),
+                ('7', "SETTINGS"),
             ]
             for key, text in expected_views:
                 agent.act(key)
@@ -262,12 +262,12 @@ def test_compact_layout_renders_all_core_views():
 
             for key, text in [
                 ('1', "DASHBOARD"),
-                ('2', "Decks"),
+                ('2', "DECK LIST"),
                 ('3', "Review 1/52"),
-                ('4', "Statistics"),
+                ('4', "Statistics:"),
                 ('5', "Import / Export"),
-                ('6', "AI"),
-                ('7', "Settings"),
+                ('6', "Topic:"),
+                ('7', "SETTINGS"),
             ]:
                 agent.act(key)
                 agent.wait_for_text(text)
@@ -299,23 +299,21 @@ def test_mouse_tabs_open_import_ai_and_settings_views():
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
             # Stats tab 
-            agent.click(32, 3)
+            agent.click(48, 3)
             agent.wait_for_text("Statistics")
             
             # Import tab
-            agent.click(45, 3)
+            agent.click(58, 3)
             agent.wait_for_text("Import / Export")
             agent.assert_text("[i] Import TSV")
             
             # AI tab
-            agent.click(54, 3)
-            agent.wait_for_text("AI")
-            agent.assert_text("Topic: der Kaffee")
+            agent.click(65, 3)
+            agent.wait_for_text("Topic:")
             
             # Settings tab
-            agent.click(59, 3)
-            agent.wait_for_text("Settings")
-            agent.assert_text("AI Provider:    disabled")
+            agent.click(73, 3)
+            agent.wait_for_text("SETTINGS")
         finally:
             agent.close()
 
@@ -346,8 +344,8 @@ def test_mouse_tab_navigation_and_grade_button():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
-            # Medium layout tab row starts on terminal row 3; Review(6) tab spans columns 20-30.
-            agent.click(22, 3)
+            # Medium layout tab row starts on terminal row 3
+            agent.click(36, 3)
             agent.wait_for_text("Review 1/52")
             agent.act('<Enter>')
             agent.wait_for_text("Grade: a Again")

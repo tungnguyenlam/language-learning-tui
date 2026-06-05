@@ -317,18 +317,18 @@ func (m *Model) renderReview(x, y int) string {
 		inputDisplay := m.typedAnswer + "_"
 
 		if m.typingChecked {
-			if m.typingCorrect {
-				correctStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Bold(true)
-				inputDisplay = correctStyle.Render("✓ " + m.typedAnswer)
-				typingBoxStyle = typingBoxStyle.BorderForeground(lipgloss.Color("46"))
-			} else {
-				wrongStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Bold(true)
-				inputDisplay = wrongStyle.Render("✗ " + m.typedAnswer)
-				typingBoxStyle = typingBoxStyle.BorderForeground(lipgloss.Color("196"))
-			}
 			targetAnswer := card.Answer
 			if card.Kind == core.CardKindCloze && len(card.Choices) > 0 {
 				targetAnswer = card.Choices[0]
+			}
+			if m.typingCorrect {
+				correctStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Bold(true)
+				inputDisplay = correctStyle.Render("✓ ") + renderTypingDiff(m.typedAnswer, targetAnswer)
+				typingBoxStyle = typingBoxStyle.BorderForeground(lipgloss.Color("46"))
+			} else {
+				wrongStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Bold(true)
+				inputDisplay = wrongStyle.Render("✗ ") + renderTypingDiff(m.typedAnswer, targetAnswer)
+				typingBoxStyle = typingBoxStyle.BorderForeground(lipgloss.Color("196"))
 			}
 			typingContent := fmt.Sprintf("Your answer: %s\nCorrect: %s%s\n\nGrade: %s %s | %s %s | %s %s | %s %s",
 				inputDisplay, answerStyle.Render(targetAnswer), extraDisplay,

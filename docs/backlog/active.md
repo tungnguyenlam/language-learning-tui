@@ -8,6 +8,7 @@ Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
 
+- [x] **Milestone 4 (Hybrid Dictionary):** Transformed the app by adding a unified dictionary feature. Built the Core API (`DictionaryEntry`, `DictionaryRepository`), FTS5 SQLite tables for fast indexing, and a dict.cc dataset parser. Added a real-time `ViewDictionary` TUI screen accessible via `/` from the dashboard, seamlessly integrated with the AI Drafting flow.
 - [x] **Session Summary Grade Distribution:** Added a visual grade distribution chart (Again/Hard/Good/Easy) to the Session Summary view. Session grades are now tracked during reviews and displayed with colored bars and icons.
 - [x] **Dashboard Word of the Day:** Added a "Word of the Day" vocabulary box to the Dashboard, displaying a rotating German noun with its article, plural form, and example sentence. Appears alongside the existing Grammar Tip and Verb of the Day when space allows.
 - [x] **Review Session Speed & ETA:** Enhanced the Review header's session progress indicator to show cards-per-minute rate and estimated time remaining based on current review speed.

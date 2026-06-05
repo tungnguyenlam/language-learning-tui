@@ -347,3 +347,49 @@ func highlightMatch(text, query string, style lipgloss.Style) string {
 
 	return before + style.Render(match) + highlightMatch(after, query, style)
 }
+
+func renderTypingDiff(typed, expected string) string {
+	tRunes := []rune(typed)
+	eRunes := []rune(expected)
+
+	tLen, eLen := len(tRunes), len(eRunes)
+	m := make([][]int, tLen+1)
+	for i := range m {
+		m[i] = make([]int, eLen+1)
+	}
+	for i := 1; i <= tLen; i++ {
+		for j := 1; j <= eLen; j++ {
+			if tRunes[i-1] == eRunes[j-1] {
+				m[i][j] = m[i-1][j-1] + 1
+			} else {
+				m[i][j] = maxInt(m[i-1][j], m[i][j-1])
+			}
+		}
+	}
+
+	correctStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Bold(true)
+	wrongStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Bold(true).Strikethrough(true)
+	missingStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Bold(true)
+
+	var diff []string
+	i, j := tLen, eLen
+	for i > 0 || j > 0 {
+		if i > 0 && j > 0 && tRunes[i-1] == eRunes[j-1] {
+			diff = append([]string{correctStyle.Render(string(tRunes[i-1]))}, diff...)
+			i--
+			j--
+		} else if j > 0 && (i == 0 || m[i][j-1] >= m[i-1][j]) {
+			char := string(eRunes[j-1])
+			if char == " " {
+				char = "_"
+			}
+			diff = append([]string{missingStyle.Render(char)}, diff...)
+			j--
+		} else if i > 0 && (j == 0 || m[i][j-1] < m[i-1][j]) {
+			diff = append([]string{wrongStyle.Render(string(tRunes[i-1]))}, diff...)
+			i--
+		}
+	}
+
+	return strings.Join(diff, "")
+}

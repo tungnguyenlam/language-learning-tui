@@ -65,7 +65,17 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		var answer string
 		if m.cramRevealed {
 			answerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
-			answer = answerStyle.Render(card.Answer)
+
+			extraDisplay := ""
+			if card.Extra != "" {
+				extraStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("159")).Italic(true)
+				extraDisplay = "\n\n" + extraStyle.Render("💡 CONTEXT: "+card.Extra)
+			}
+			if hint := renderGrammarHint(card); hint != "" {
+				extraDisplay = "\n\n" + hint + extraDisplay
+			}
+
+			answer = answerStyle.Render(card.Answer) + extraDisplay
 
 			keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 			answer += fmt.Sprintf("\n\nGrade: %s Again | %s Hard | %s Good | %s Easy",

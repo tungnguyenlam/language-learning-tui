@@ -5,9 +5,9 @@ import tempfile
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from tui_tester.agent import TUIAgent
 
-def start_agent(tmpdir):
+def start_agent(tmpdir, columns=100, lines=30):
     app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
-    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir}')
+    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir}', columns=columns, lines=lines)
     agent.wait_for_text("Dashboard", timeout=15.0)
     agent.wait_until_stable()
     return agent
@@ -15,7 +15,7 @@ def start_agent(tmpdir):
 def test_cram_review_flow():
     with tempfile.TemporaryDirectory() as tmpdir:
         # Create some bookmarked cards
-        agent = start_agent(tmpdir)
+        agent = start_agent(tmpdir, columns=100, lines=30)
         try:
             # Go to review and bookmark a card
             agent.act("3")

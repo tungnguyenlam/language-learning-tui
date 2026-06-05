@@ -1,5 +1,10 @@
 # Done Backlog
 
+## 2026-06-06 (E2E Layout Fixes)
+
+### Reliability & Testing
+- **E2E Test Stability:** Fixed 5 E2E tests (`test_mouse_click_side_navigation_opens_ai_view`, `test_mouse_navigation_tabs`, `test_compact_layout_renders_all_core_views`, `test_mouse_tabs_open_import_ai_and_settings_views`, `test_mouse_tab_navigation_and_grade_button`) that were failing due to the recent addition of the Dictionary view. Updated mouse click coordinates and text assertions to account for the shifted UI layout and truncated tab names in compact view.
+
 ## 2026-06-03 (Numbers Trainer, Browser State Icons, Dashboard Polish)
 
 ### UX & Learning

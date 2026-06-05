@@ -181,4 +181,19 @@ var migrations = []migration{
 			ALTER TABLE review_states ADD COLUMN last_review_at TIMESTAMP;
 		`,
 	},
+	{
+		ID: 25,
+		SQL: `
+		CREATE VIRTUAL TABLE IF NOT EXISTS dictionary_fts USING fts5(
+			id UNINDEXED,
+			word,
+			translation,
+			word_class UNINDEXED,
+			gender UNINDEXED,
+			forms UNINDEXED,
+			examples UNINDEXED,
+			tags UNINDEXED
+		);
+		`,
+	},
 }

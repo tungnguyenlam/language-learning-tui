@@ -256,6 +256,8 @@ func (m *Model) updateActiveViewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	switch m.activeView {
 	case ViewDashboard:
 		return m.updateDashboardKey(msg)
+	case ViewDictionary:
+		return m.updateDictionaryKey(msg)
 	case ViewReview:
 		return m.updateReviewKey(msg)
 	case ViewAI:
@@ -298,6 +300,8 @@ func (m *Model) updateDashboardKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return m.practiceVerbOfTheDay(), true
 	case "w":
 		return m.addWordOfTheDayToCollection(), true
+	case "/":
+		return m.updateView(ViewDictionary), true
 	}
 	return nil, false
 }
@@ -1825,6 +1829,57 @@ func (m *Model) updateConjugationKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	if ch, ok := singlePrintableInput(key); ok {
 		m.conjugationInput += ch
 		return nil, true
+	}
+
+	return nil, false
+}
+
+func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
+	key := msg.String()
+	switch key {
+	case "up", "k":
+		if m.dictionaryCursor > 0 {
+			m.dictionaryCursor--
+		}
+		return nil, true
+	case "down", "j":
+		if m.dictionaryCursor < len(m.dictionaryResults)-1 {
+			m.dictionaryCursor++
+		}
+		return nil, true
+	case "enter":
+		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			// Convert to AI draft or open external dictionary?
+			// The roadmap says "Seamlessly convert dictionary search results into new flashcards via the Drafting flow."
+			entry := m.dictionaryResults[m.dictionaryCursor]
+			m.aiInput = entry.Word + " - " + entry.Translation
+			m.updateView(ViewAI)
+			m.status = "Drafting flashcard from dictionary entry"
+			return m.startDrafting(), true
+		}
+		return nil, true
+	case "backspace":
+		if len(m.dictionarySearch) > 0 {
+			m.dictionarySearch = trimLastRune(m.dictionarySearch)
+			return m.searchDictionary(), true
+		}
+		return nil, true
+	case "esc":
+		m.dictionarySearch = ""
+		m.dictionaryResults = nil
+		m.dictionaryCursor = 0
+		return m.updateView(ViewDashboard), true
+	case "tab":
+		return nil, true
+	}
+
+	if len(key) == 1 {
+		m.dictionarySearch += key
+		return m.searchDictionary(), true
+	}
+	if key == "space" || key == " " {
+		m.dictionarySearch += " "
+		return m.searchDictionary(), true
 	}
 
 	return nil, false

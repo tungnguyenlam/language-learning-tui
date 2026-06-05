@@ -22,19 +22,18 @@ def test_mouse_navigation_tabs():
             # Dashboard is default
             agent.assert_text("DASHBOARD")
             
-            # Click Decks (Tab 2) - In 90 col medium layout
-            # Dashboard: X=0..11, Decks: X=12..19, Review: X=20..28
-            agent.click(15, 3) 
-            agent.wait_for_text("Decks")
+            # Click Decks (Tab 3 now)
+            agent.click(28, 3) 
+            agent.wait_for_text("DECK LIST")
             agent.assert_text("German A1 Survival")
             
-            # Click Statistics (Tab 4) - X=29..41
-            agent.click(35, 3)
+            # Click Statistics (Tab 5 now)
+            agent.click(48, 3)
             agent.wait_for_text("Statistics")
             agent.assert_text("Total Cards:")
             
-            # Click Browser (Tab 8) - Tab 5: 42..50, Tab 6: 51..55, Tab 7: 56..66, Tab 8: 67..76
-            agent.click(70, 3)
+            # Click Browser (Tab 9 now)
+            agent.click(84, 3)
             agent.wait_for_text("Browser")
             agent.assert_text("52 cards found")
             
