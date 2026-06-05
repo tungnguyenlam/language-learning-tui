@@ -8,6 +8,7 @@
 ## 2026-06-03 (Numbers Trainer, Browser State Icons, Dashboard Polish)
 
 ### UX & Learning
+- **New Content Deck:** Added "B2 Logistics & Supply Chain" vocabulary deck with 30 high-quality flashcards covering topics like supply chains, warehousing, freight, and procurement.
 - **Numbers & Time Trainer:** Added an eighth practice mode to the Practice Hub for mastering German numbers (0-1000+) and time expressions (e.g., "halb vier", "viertel nach"). Features dynamic generation and randomized exercises.
 - **Browser State Indicators:** Enhanced the Card Browser with visual state icons (○ for New, ◐ for Learning, ● for Mature) and improved color-coding for better collection overview.
 - **Dashboard Layout Polish:** Implemented a more responsive 3-column layout for "Grammar Tip", "Verb of the Day", and "Word of the Day" on wide terminals, and improved alignment on all sizes.
