@@ -4,18 +4,21 @@ import pytest
 import tempfile
 
 # Add tui_tester to sys.path so we can import it
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../tui_tester')))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../tui_tester"))
+)
 
 from tui_tester import TUIAgent
 
+
 def start_agent(tmpdir, columns=100, lines=50):
+    app_cmd = os.getenv("DEUTSCH_TUI_BIN", "go run ./cmd/deutsch-tui")
 
-    app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
-
-    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir}', columns=columns, lines=lines)
+    agent = TUIAgent(f"{app_cmd} -data-dir {tmpdir}", columns=columns, lines=lines)
     agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()
     return agent
+
 
 def test_dashboard_and_review_flow():
     # Use a temporary directory for data to ensure a clean state
@@ -30,7 +33,7 @@ def test_dashboard_and_review_flow():
             agent.assert_text("Due cards:   52")
 
             # Switch to Review view
-            agent.act('3')
+            agent.act("3")
             agent.wait_until_stable()
 
             # Verify review screen for the first card
@@ -39,14 +42,14 @@ def test_dashboard_and_review_flow():
             agent.assert_text("Press space or enter to reveal.")
 
             # Reveal the card using Enter
-            agent.act('<Enter>')
+            agent.act("<Enter>")
             agent.wait_until_stable()
 
             # Verify revealed content
             agent.assert_text("blue")
             agent.assert_text("Grade: a Again")
             # Press 'e' for Easy
-            agent.act('e')
+            agent.act("e")
             agent.wait_until_stable()
 
             # Verify it advanced to the next card (the MCQ for the same note)
@@ -56,13 +59,14 @@ def test_dashboard_and_review_flow():
             agent.assert_text("51 cards due")
 
             # Try returning to Dashboard
-            agent.act('1')
+            agent.act("1")
             agent.wait_until_stable()
             agent.assert_text("Use Review (3) to start studying.")
 
         finally:
             # Close the agent
             agent.close()
+
 
 def test_ai_draft_approval_persists_across_restart():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -73,21 +77,21 @@ def test_ai_draft_approval_persists_across_restart():
             agent.wait_for_text("Settings")
             agent.act("<Enter>")
             agent.wait_for_text("offline")
-            agent.act('6')
+            agent.act("6")
             agent.wait_until_stable()
             agent.assert_text("AI")
             agent.assert_text("Topic: der Kaffee")
 
-            agent.act('<Enter>')
+            agent.act("<Enter>")
             agent.wait_until_stable()
             agent.assert_text("> der Kaffee -> German prompt for der")
             agent.assert_text("Kaffee")
 
-            agent.act('a')
+            agent.act("a")
             agent.wait_until_stable()
             agent.assert_text("der Kaffee")
 
-            agent.act('1')
+            agent.act("1")
             agent.wait_until_stable()
             agent.assert_text("Due cards:   54")
         finally:
@@ -100,6 +104,7 @@ def test_ai_draft_approval_persists_across_restart():
         finally:
             restarted.close()
 
+
 def test_import_tsv_adds_reviewable_deck_and_export_writes_file():
     with tempfile.TemporaryDirectory() as tmpdir:
         import_path = os.path.join(tmpdir, "import.tsv")
@@ -111,46 +116,46 @@ def test_import_tsv_adds_reviewable_deck_and_export_writes_file():
         agent = start_agent(tmpdir, columns=110, lines=30)
 
         try:
-            agent.act('5')
+            agent.act("5")
             agent.wait_until_stable()
             agent.assert_text("Import / Export")
             agent.assert_text("[i] Import TSV")
 
             # Workflow: act("<Enter>"), act("<Ctrl-u>"), type path, act("<Enter>"), act("i")
-            agent.act('<Enter>')
+            agent.act("<Enter>")
             agent.wait_until_stable()
-            agent.act('<Ctrl-u>')
+            agent.act("<Ctrl-u>")
             for char in import_path:
                 agent.act(char)
-            agent.act('<Enter>')
+            agent.act("<Enter>")
             agent.wait_until_stable()
 
-            agent.act('i')
+            agent.act("i")
             agent.wait_until_stable()
             agent.assert_text("Imported 1 notes")
 
-            agent.act(']')
+            agent.act("]")
             agent.wait_until_stable()
             agent.assert_text("Imported A1")
-            agent.act('3')
+            agent.act("3")
             agent.wait_until_stable()
             agent.assert_text("die Bahn")
 
-            agent.act('5')
+            agent.act("5")
             agent.wait_until_stable()
 
             # Set export path
-            agent.act('<Down>') # Move to Export Path
+            agent.act("<Down>")  # Move to Export Path
             agent.wait_until_stable()
-            agent.act('<Enter>')
+            agent.act("<Enter>")
             agent.wait_until_stable()
-            agent.act('<Ctrl-u>')
+            agent.act("<Ctrl-u>")
             for char in export_path:
                 agent.act(char)
-            agent.act('<Enter>')
+            agent.act("<Enter>")
             agent.wait_until_stable()
 
-            agent.act('x')
+            agent.act("x")
             agent.wait_until_stable()
             agent.assert_text("Exported 1 notes")
         finally:
@@ -161,65 +166,67 @@ def test_import_tsv_adds_reviewable_deck_and_export_writes_file():
         assert "die Bahn\ttrain" in exported
         assert "\tImported A1\tBasic" in exported
 
+
 def test_settings_and_template_drafting():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
             # Go to Settings
-            agent.act('7')
+            agent.act("7")
             agent.wait_until_stable()
             agent.assert_text("Settings")
             agent.assert_text("AI Provider:    disabled")
 
             # Switch to offline, then template provider
-            agent.act('<Enter>')
+            agent.act("<Enter>")
             agent.wait_until_stable()
             agent.assert_text("AI Provider:    offline")
-            
-            agent.act('<Enter>')
+
+            agent.act("<Enter>")
             agent.wait_until_stable()
             agent.assert_text("AI Provider:    template")
             agent.assert_text("Switched to template AI provider")
 
             # Edit Front Template (index 2)
-            agent.act('j')
-            agent.act('j')
+            agent.act("j")
+            agent.act("j")
             agent.wait_until_stable()
-            agent.act('<Enter>') # Start editing
+            agent.act("<Enter>")  # Start editing
             agent.wait_until_stable()
             agent.assert_text("EDITING")
-            
+
             # Add suffix to template
-            agent.act('P')
-            agent.act(':')
-            agent.act(' ')
-            agent.act('<Enter>') # Save
+            agent.act("P")
+            agent.act(":")
+            agent.act(" ")
+            agent.act("<Enter>")  # Save
             agent.wait_until_stable()
             agent.wait_for_text("Front Template: {{.Topic}}P: ")
             agent.assert_text("Front Template: {{.Topic}}P: ")
 
             # Go to AI Drafts and verify template is used
-            agent.act('6')
+            agent.act("6")
             agent.wait_until_stable()
-            agent.act('<Enter>') # Generate
+            agent.act("<Enter>")  # Generate
             agent.wait_until_stable()
             agent.assert_text("> der KaffeeP: ")
         finally:
             agent.close()
 
+
 def test_settings_persistence():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
-            agent.act('7')
+            agent.act("7")
             agent.wait_until_stable()
-            
+
             # Switch to offline, then template provider
-            agent.act('<Enter>')
+            agent.act("<Enter>")
             agent.wait_until_stable()
             agent.assert_text("AI Provider:    offline")
 
-            agent.act('<Enter>')
+            agent.act("<Enter>")
             agent.wait_until_stable()
             agent.assert_text("AI Provider:    template")
         finally:
@@ -228,23 +235,25 @@ def test_settings_persistence():
         # Restart and verify
         restarted = start_agent(tmpdir)
         try:
-            restarted.act('7')
+            restarted.act("7")
             restarted.wait_until_stable()
             restarted.assert_text("AI Provider:    template")
         finally:
             restarted.close()
+
+
 def test_all_core_views_render_with_keyboard_navigation():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
             expected_views = [
-                ('1', "DASHBOARD"),
-                ('2', "DECK LIST"),
-                ('3', "Review 1/52"),
-                ('4', "Statistics:"),
-                ('5', "Import / Export"),
-                ('6', "Topic:"),
-                ('7', "SETTINGS"),
+                ("1", "DASHBOARD"),
+                ("2", "DECK LIST"),
+                ("3", "Review 1/52"),
+                ("4", "Statistics:"),
+                ("5", "Import / Export"),
+                ("6", "Topic:"),
+                ("7", "SETTINGS"),
             ]
             for key, text in expected_views:
                 agent.act(key)
@@ -254,20 +263,22 @@ def test_all_core_views_render_with_keyboard_navigation():
         finally:
             agent.close()
 
+
 def test_compact_layout_renders_all_core_views():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir, columns=60, lines=24)
         try:
-            agent.assert_text("deutsch-tui compact")
+            agent.assert_text("DEUTSCH-TUI")
+            agent.assert_text("compact")
 
             for key, text in [
-                ('1', "DASHBOARD"),
-                ('2', "DECK LIST"),
-                ('3', "Review 1/52"),
-                ('4', "Statistics:"),
-                ('5', "Import / Export"),
-                ('6', "Topic:"),
-                ('7', "SETTINGS"),
+                ("1", "DASHBOARD"),
+                ("2", "DECK LIST"),
+                ("3", "Review 1/52"),
+                ("4", "Statistics:"),
+                ("5", "Import / Export"),
+                ("6", "Topic:"),
+                ("7", "SETTINGS"),
             ]:
                 agent.act(key)
                 agent.wait_for_text(text)
@@ -276,58 +287,61 @@ def test_compact_layout_renders_all_core_views():
         finally:
             agent.close()
 
+
 def test_space_reveal_and_again_grade_keyboard_flow():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
-            agent.act('3')
+            agent.act("3")
             agent.wait_for_text("Review 1/52")
 
-            agent.act('<Space>')
+            agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.assert_text("blue")
 
-            agent.act('a')
+            agent.act("a")
             agent.wait_for_text("Review 1/51")
             agent.assert_text("51 cards due")
             agent.assert_text("reveal")
         finally:
             agent.close()
 
+
 def test_mouse_tabs_open_import_ai_and_settings_views():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
-            # Stats tab 
+            # Stats tab
             agent.click(48, 3)
             agent.wait_for_text("Statistics")
-            
+
             # Import tab
             agent.click(58, 3)
             agent.wait_for_text("Import / Export")
             agent.assert_text("[i] Import TSV")
-            
+
             # AI tab
             agent.click(65, 3)
             agent.wait_for_text("Topic:")
-            
+
             # Settings tab
             agent.click(73, 3)
             agent.wait_for_text("SETTINGS")
         finally:
             agent.close()
 
+
 def test_review_grade_persists_to_sqlite_across_restart():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
-            agent.act('3')
+            agent.act("3")
             agent.wait_for_text("Review 1/52")
-            agent.act('<Enter>')
+            agent.act("<Enter>")
             agent.wait_for_text("Grade: a Again")
-            agent.act('e')
+            agent.act("e")
             agent.wait_for_text("51 cards due")
-            agent.act('1')
+            agent.act("1")
             agent.wait_for_text("Due cards:   51")
         finally:
             agent.close()
@@ -335,10 +349,11 @@ def test_review_grade_persists_to_sqlite_across_restart():
         restarted = start_agent(tmpdir)
         try:
             restarted.assert_text("Due cards:   51")
-            restarted.act('3')
+            restarted.act("3")
             restarted.wait_for_text("Review 1/51")
         finally:
             restarted.close()
+
 
 def test_mouse_tab_navigation_and_grade_button():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -347,14 +362,15 @@ def test_mouse_tab_navigation_and_grade_button():
             # Medium layout tab row starts on terminal row 3
             agent.click(36, 3)
             agent.wait_for_text("Review 1/52")
-            agent.act('<Enter>')
+            agent.act("<Enter>")
             agent.wait_for_text("Grade: a Again")
 
             # In the medium review panel, the Good grade hitbox is now on terminal row 14 depending on content.
             # With current starter deck layout, it's at row 14. Column 45 hits 'Good'.
-            agent.click(45, 14) 
+            agent.click(45, 14)
             # Wait a bit for the review to process
             import time
+
             time.sleep(1)
             agent.wait_until_stable()
             # The exact count might vary, so we just check that we're back in review mode
@@ -362,30 +378,40 @@ def test_mouse_tab_navigation_and_grade_button():
         finally:
             agent.close()
 
+
 def test_view_navigation_with_arrow_keys():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
             agent.assert_text("DASHBOARD")
-            
-            agent.act('<Right>')
+
+            agent.act("<Right>")
+            agent.wait_for_text("Dictionary")
+            agent.wait_until_stable()
+
+            agent.act("<Right>")
             agent.wait_for_text("Press enter to select deck.")
             agent.wait_until_stable()
-            
-            agent.act('<Right>')
+
+            agent.act("<Right>")
             agent.wait_for_text("Review 1/")
             agent.wait_until_stable()
-            
-            agent.act('<Left>')
+
+            agent.act("<Left>")
             agent.wait_for_text("Press enter to select deck.")
             agent.wait_until_stable()
-            
-            agent.act('<Left>')
+
+            agent.act("<Left>")
+            agent.wait_for_text("Dictionary")
+            agent.wait_until_stable()
+
+            agent.act("<Left>")
             agent.wait_for_text("Use Review (3) to start studying.")
             agent.wait_until_stable()
             agent.assert_text("DASHBOARD")
         finally:
             agent.close()
+
 
 def test_deck_navigation_with_up_down_arrows():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -396,59 +422,61 @@ def test_deck_navigation_with_up_down_arrows():
 
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
-            agent.act('5')
+            agent.act("5")
             agent.wait_for_text("Import / Export")
             agent.assert_text("[i] Import TSV")
 
-            agent.act('<Enter>')
+            agent.act("<Enter>")
             agent.wait_until_stable()
-            agent.act('<Ctrl-u>')
+            agent.act("<Ctrl-u>")
             for char in import_path:
                 agent.act(char)
-            agent.act('<Enter>')
+            agent.act("<Enter>")
             agent.wait_until_stable()
 
-            agent.act('i')
+            agent.act("i")
             agent.wait_for_text("Imported 1 notes")
-            
-            agent.act('2')
+
+            agent.act("2")
             agent.wait_for_text("Press enter to select deck.")
-            
-            agent.act('<Down>')
+
+            agent.act("<Down>")
             agent.wait_for_text("> [ ] Z-Imported")
-            
-            agent.act('<Enter>')
+
+            agent.act("<Enter>")
             agent.wait_for_text("Use Review (3) to start studying.")
             agent.wait_until_stable()
             agent.assert_text("Deck: Z-Imported")
         finally:
             agent.close()
 
+
 def test_settings_navigation_with_up_down_arrows():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
-            agent.act('7')
+            agent.act("7")
             agent.wait_for_text("AI Provider:    disabled")
-            
-            agent.act('<Down>')
-            agent.act('<Down>') # Move to Front Template (index 2)
+
+            agent.act("<Down>")
+            agent.act("<Down>")  # Move to Front Template (index 2)
             agent.wait_until_stable()
-            
-            agent.act('<Enter>')
+
+            agent.act("<Enter>")
             agent.wait_for_text("EDITING")
-            
-            agent.act('<Esc>')
+
+            agent.act("<Esc>")
             agent.wait_until_stable()
-            
-            agent.act('<Up>')
-            agent.act('<Up>') # Move back to AI Provider (index 0)
+
+            agent.act("<Up>")
+            agent.act("<Up>")  # Move back to AI Provider (index 0)
             agent.wait_until_stable()
-            
-            agent.act('<Enter>')
+
+            agent.act("<Enter>")
             agent.wait_for_text("AI Provider:    offline")
         finally:
             agent.close()
+
 
 if __name__ == "__main__":
     pytest.main(["-v", __file__])

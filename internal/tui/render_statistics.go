@@ -267,15 +267,35 @@ func (m *Model) renderStatistics(layout viewportLayout) string {
 		}
 
 		barColor := "240"
+		goalReached := false
 		if d.count > 0 {
 			barColor = "34"
 			if d.count >= m.stats.DailyGoal && m.stats.DailyGoal > 0 {
 				barColor = "46"
+				goalReached = true
 			}
 		}
 
 		bar := progressBar(20, percentage, barColor, "238")
-		content.WriteString(fmt.Sprintf("  %s %s %d\n", labelStyle.Render(dayName), bar, d.count))
+
+		dayStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("248")).Bold(true)
+		var countStyle lipgloss.Style
+		if d.count > 0 {
+			countStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(barColor)).Bold(true)
+		} else {
+			countStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("242"))
+		}
+
+		goalIndicator := ""
+		if goalReached {
+			goalIndicator = lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Bold(true).Render(" ★")
+		}
+
+		content.WriteString(fmt.Sprintf("  %s  %s  %s%s\n",
+			dayStyle.Render(fmt.Sprintf("%-3s", dayName)),
+			bar,
+			countStyle.Render(fmt.Sprintf("%d", d.count)),
+			goalIndicator))
 	}
 
 	// --- Cards Added Chart ---
@@ -314,7 +334,19 @@ func (m *Model) renderStatistics(layout viewportLayout) string {
 		}
 
 		bar := progressBar(20, percentage, barColor, "238")
-		content.WriteString(fmt.Sprintf("  %s %s %d\n", labelStyle.Render(dayName), bar, d.count))
+
+		dayStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("248")).Bold(true)
+		var countStyle lipgloss.Style
+		if d.count > 0 {
+			countStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(barColor)).Bold(true)
+		} else {
+			countStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("242"))
+		}
+
+		content.WriteString(fmt.Sprintf("  %s  %s  %s\n",
+			dayStyle.Render(fmt.Sprintf("%-3s", dayName)),
+			bar,
+			countStyle.Render(fmt.Sprintf("%d", d.count))))
 	}
 
 	// Review Heatmap (last 3 months)
@@ -374,6 +406,14 @@ func (m *Model) renderStatistics(layout viewportLayout) string {
 			}
 		}
 		content.WriteString("\n")
+
+		legend := "Legend: " +
+			lipgloss.NewStyle().Foreground(lipgloss.Color("236")).Render("░") + " 0  " +
+			lipgloss.NewStyle().Foreground(lipgloss.Color("22")).Render("░") + " 1-4  " +
+			lipgloss.NewStyle().Foreground(lipgloss.Color("34")).Render("▒") + " 5-9  " +
+			lipgloss.NewStyle().Foreground(lipgloss.Color("40")).Render("▓") + " 10-19  " +
+			lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render("█") + " 20+"
+		content.WriteString("    " + legend + "\n")
 	}
 
 	// --- Card Type Distribution ---

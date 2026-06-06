@@ -3,15 +3,19 @@ import sys
 import tempfile
 import time
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../tui_tester")))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../tui_tester"))
+)
 from tui_tester import TUIAgent
 
+
 def start_agent(tmpdir):
-    app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
-    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir}', columns=100, lines=40)
+    app_cmd = os.getenv("DEUTSCH_TUI_BIN", "go run ./cmd/deutsch-tui")
+    agent = TUIAgent(f"{app_cmd} -data-dir {tmpdir}", columns=100, lines=50)
     agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()
     return agent
+
 
 def test_dashboard_header_visible():
     """Verify dashboard header shows WILLKOMMEN and daily progress"""
@@ -23,6 +27,7 @@ def test_dashboard_header_visible():
         finally:
             agent.close()
 
+
 def test_dashboard_grammar_tip_visible():
     """Verify grammar tip is displayed on dashboard"""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -33,6 +38,7 @@ def test_dashboard_grammar_tip_visible():
         finally:
             agent.close()
 
+
 def test_dashboard_verb_of_day_visible():
     """Verify Verb of the Day is displayed on dashboard"""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -42,6 +48,7 @@ def test_dashboard_verb_of_day_visible():
             agent.wait_for_text("Verb:", timeout=5.0)
         finally:
             agent.close()
+
 
 def test_dashboard_stats_visible():
     """Verify dashboard stats boxes are visible"""
@@ -54,6 +61,7 @@ def test_dashboard_stats_visible():
         finally:
             agent.close()
 
+
 def test_ai_view_renders():
     """Verify AI view renders correctly"""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -65,6 +73,7 @@ def test_ai_view_renders():
         finally:
             agent.close()
 
+
 def test_statistics_view_renders():
     """Verify Statistics view renders correctly"""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -74,6 +83,7 @@ def test_statistics_view_renders():
             agent.wait_for_text("Statistics", timeout=5.0)
         finally:
             agent.close()
+
 
 def test_browser_view_renders():
     """Verify Browser view renders correctly"""
@@ -86,6 +96,7 @@ def test_browser_view_renders():
         finally:
             agent.close()
 
+
 def test_settings_view_renders():
     """Verify Settings view renders correctly"""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -95,6 +106,7 @@ def test_settings_view_renders():
             agent.wait_for_text("SETTINGS", timeout=5.0)
         finally:
             agent.close()
+
 
 def test_cram_view_renders():
     """Verify Cram view renders correctly"""
@@ -106,6 +118,7 @@ def test_cram_view_renders():
         finally:
             agent.close()
 
+
 def test_import_view_renders():
     """Verify Import view renders correctly"""
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -115,6 +128,7 @@ def test_import_view_renders():
             agent.wait_for_text("Import / Export", timeout=5.0)
         finally:
             agent.close()
+
 
 def test_help_overlay():
     """Verify help overlay can be toggled"""
@@ -128,6 +142,7 @@ def test_help_overlay():
             agent.wait_until_stable()
         finally:
             agent.close()
+
 
 if __name__ == "__main__":
     test_dashboard_header_visible()

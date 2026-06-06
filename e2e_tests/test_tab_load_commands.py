@@ -10,10 +10,8 @@ from tui_tester import TUIAgent
 
 
 def start_agent(tmpdir, columns=100, lines=30):
-    app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
-    agent = TUIAgent(
-        f'{app_cmd} -data-dir {tmpdir}', columns=columns, lines=lines
-    )
+    app_cmd = os.getenv("DEUTSCH_TUI_BIN", "go run ./cmd/deutsch-tui")
+    agent = TUIAgent(f"{app_cmd} -data-dir {tmpdir}", columns=columns, lines=lines)
     agent.wait_for_text("Dashboard", timeout=15.0)
     agent.wait_until_stable()
     return agent
@@ -30,7 +28,7 @@ def test_tab_to_browser_loads_cards():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
-            tab_to(agent, "Card Browser", 7)
+            tab_to(agent, "Card Browser", 8)
             agent.wait_for_text("blau")
             agent.assert_text("[FC] blau")
             agent.assert_text("52 cards found")

@@ -68,14 +68,40 @@ func GetNumberExercises() []NumberExercise {
 		})
 	}
 
-	// Time exercises
-	for i := 0; i < 15; i++ {
+	// Thousands
+	for i := 0; i < 10; i++ {
+		n := (r.Intn(9)+1)*1000 + r.Intn(1000)
+		exercises = append(exercises, NumberExercise{
+			Question: fmt.Sprintf("%d", n),
+			Answer:   formatGermanNumber(n),
+			Help:     "Thousands",
+		})
+	}
+
+	// Time exercises (increased to 30 exercises)
+	for i := 0; i < 30; i++ {
 		hour := r.Intn(12) + 1
 		minute := []int{0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55}[r.Intn(12)]
 		exercises = append(exercises, NumberExercise{
 			Question: fmt.Sprintf("%02d:%02d", hour, minute),
 			Answer:   formatGermanTime(hour, minute),
 			Help:     "Time expression",
+		})
+	}
+
+	// Ordinal numbers (1-20)
+	ordinalsEng := map[int]string{
+		1: "first", 2: "second", 3: "third", 4: "fourth", 5: "fifth",
+		6: "sixth", 7: "seventh", 8: "eighth", 9: "ninth", 10: "tenth",
+		11: "eleventh", 12: "twelfth", 13: "thirteenth", 14: "fourteenth",
+		15: "fifteenth", 16: "sixteenth", 17: "seventeenth", 18: "eighteenth",
+		19: "nineteenth", 20: "twentieth",
+	}
+	for i := 1; i <= 20; i++ {
+		exercises = append(exercises, NumberExercise{
+			Question: ordinalsEng[i],
+			Answer:   formatGermanOrdinal(i),
+			Help:     "Ordinal number",
 		})
 	}
 
@@ -130,7 +156,42 @@ func formatGermanNumber(n int) string {
 		return hStr + formatGermanNumber(rem)
 	}
 
+	if n < 10000 {
+		t := n / 1000
+		rem := n % 1000
+		tStr := "tausend"
+		if t > 1 {
+			tStr = formatGermanNumber(t) + "tausend"
+		}
+		if rem == 0 {
+			return tStr
+		}
+		return tStr + formatGermanNumber(rem)
+	}
+
 	return fmt.Sprintf("%d", n) // Fallback for very large numbers
+}
+
+func formatGermanOrdinal(n int) string {
+	if n == 1 {
+		return "erste"
+	}
+	if n == 2 {
+		return "zweite"
+	}
+	if n == 3 {
+		return "dritte"
+	}
+	if n == 7 {
+		return "siebte"
+	}
+	if n == 8 {
+		return "achte"
+	}
+	if n < 20 {
+		return formatGermanNumber(n) + "te"
+	}
+	return formatGermanNumber(n) + "ste"
 }
 
 func formatGermanTime(h, m int) string {

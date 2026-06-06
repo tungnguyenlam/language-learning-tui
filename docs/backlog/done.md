@@ -1,9 +1,60 @@
 # Done Backlog
 
-## 2026-06-06 (E2E Layout Fixes)
+## 2026-06-07 (Dictionary Audio, Find in Decks & Polish)
+
+### Dictionary Improvements
+- **Audio Pronunciation:** Added `ctrl+p` to play TTS audio for the currently selected dictionary entry, leveraging the existing speech synthesizer.
+- **Find in Decks:** Added `ctrl+f` to quickly search for the selected dictionary word within existing decks via the Browser view.
+- **Gender Colorization:** Updated dictionary rendering to color-code German noun genders (`{m}` in blue, `{f}` in pink, `{n}` in green) across both list and detail views for better visual parsing.
+- **UI Polish:** Corrected the help menu shortcut for Quick Add from `a` to `ctrl+a`.
 
 ### Reliability & Testing
+- **E2E Test Stability:** Fixed navigation bugs related to WASD cycle falling through dictionary text input unexpectedly. Updated `test_wasd_navigation.py` to use `Tab`/`Shift-Tab` out of the dictionary view and corrected `test_dictionary_input_bug.py` to robustly test dictionary lookup functionality by bypassing unreliable seeding delays and fixing SQLite schema mismatches.
+
+## 2026-06-06 (Dictionary UX & UI Enhancements)
+
+### Dictionary Improvements
+- **Two-Column Detail View:** Implemented a two-column layout for the Dictionary view when terminal width allows (>80 chars). The left column displays a scrollable list of search results, while the right column shows a detailed panel for the selected entry, including word class, gender, forms, and examples.
+- **Improved Result Display:** Translations are now automatically split by semicolons and displayed as separate lines in the detail panel for better readability.
+- **Scrolling & Pagination:** Added full support for scrolling through large result sets. Implemented `PgUp` and `PgDn` shortcuts (moving 10 items at a time) and fixed result clipping in the rendering logic.
+- **Search Race Condition Fix:** Introduced a `dictionarySearchID` mechanism to ensure that only the results of the most recent search request are displayed, eliminating flickering and stale results during rapid typing.
+- **Quick Add Feature:** Added a new 'a' shortcut in the Dictionary view that instantly saves the selected entry as a new flashcard to a dedicated "Dictionary" deck, bypassing the AI drafting flow for faster vocabulary acquisition.
+- **UI & Help Updates:** Updated the global help overlay ('?') with a dedicated Dictionary section. Added `dictionaryScroll` reset logic to ensure a consistent experience when switching results or clearing searches.
+
+### Reliability & Testing
+- **Dictionary Unit Tests:** Added comprehensive unit tests in `render_dictionary_test.go` verifying both the two-column layout (wide) and single-column layout (compact), as well as details rendering.
+- **E2E Test Fixes:** Updated `test_wasd_navigation.py` to align with the current 11-view tab cycle and fixed broken assertions regarding sidebar visibility. Corrected view indices for number-key navigation in E2E scenarios.
+
+## 2026-06-06 (Local TUI Dictionary & UI Polish)
+
+### Dictionary Improvements
+- **Local TUI Dictionary Provider:** Added a new "Local TUI" option to the dictionary provider cycle. When selected, looking up a word from the Review or Browser views (via key `d`) switches to the internal `ViewDictionary` and pre-fills the search, providing a seamless, terminal-native lookup experience.
+- **Automated Dictionary Seeding:** Updated the `Seed Standard Content` action to also populate the local dictionary with core vocabulary from standard decks. This ensures the local lookup feature is immediately useful for new users.
+- **Dictionary UI Refinement:** Replaced the simple "Search:" label with a styled search bar featuring a rounded border and a search icon. Improved the placeholder text and added a cursor indicator for better interactivity.
+- **Default Provider Update:** Set "Local TUI" as the default dictionary provider in `DefaultConfig`, aligning with the "effortless learning" goal by reducing reliance on external browser links.
+- **Case-Insensitive Seeding:** Updated the Import view to accept both `S` and `s` for seeding standard content, improving accessibility and E2E test robustness.
+
+### Reliability & Testing
+- **New Dictionary E2E Test:** Created a robust E2E test (`test_dictionary_lookup.py`) that verifies the full dictionary flow: pre-seeding the database using the new `-smoke` flag logic, navigating to Review, triggering a lookup, and verifying the integrated Dictionary view results.
+
+## 2026-06-06 (E2E Layout Fixes & Practice Trainer Tests & UI Polish)
+
+### UI Polish
+- **Enhanced Header/Footer:** New styled header with accent coloring, view name display, and separator bars. Footer uses styled key bindings with pipe separators.
+- **Dashboard Quick Actions:** Bordered box layout with "Quick Actions •" prefix, responsive line wrapping, and proper hitbox registration.
+- **Dictionary Search Highlighting:** Added `highlightQuery` function to highlight matching query text in dictionary search results.
+- **Statistics Enhancements:** Goal indicators (★), colored day names and counts, heatmap legend for review activity.
+- **Numbers Trainer Expansion:** Added thousands formatting (up to 9999), ordinal numbers (1-20), and increased time exercises from 15 to 30.
+- **Preposition Trainer Expansion:** Added 12 new two-way preposition exercises (an, hinter, neben, über, vor, zwischen).
+- **NativeTTS Error Messages:** Better error messages when `say` or `espeak` executables are not found in PATH.
+- **Dictionary LIKE Fallback:** Extracted `queryDictionaryEntries` helper and added LIKE-based substring search fallback when FTS5 returns no results.
+- **Style Additions:** Added `dashWordStyle` and `dashActionsStyle` for new dashboard elements.
+- **Code Organization:** Moved `renderNav` and `renderTabs` from `model.go` to `render_views.go`.
+
+### Reliability & Testing
+- **E2E Practice Trainer Tests:** Added a new E2E test file (`test_practice_hub_extra.py`) verifying both the Separable Verb Trainer (key '7') and the Noun Plural Trainer (key '6') with interactive input and correctness verification.
 - **E2E Test Stability:** Fixed 5 E2E tests (`test_mouse_click_side_navigation_opens_ai_view`, `test_mouse_navigation_tabs`, `test_compact_layout_renders_all_core_views`, `test_mouse_tabs_open_import_ai_and_settings_views`, `test_mouse_tab_navigation_and_grade_button`) that were failing due to the recent addition of the Dictionary view. Updated mouse click coordinates and text assertions to account for the shifted UI layout and truncated tab names in compact view.
+- **E2E UI Polish Fixes:** Fixed 7 E2E tests broken by UI polish changes: header format ("DEUTSCH-TUI │ VIEW"), Quick Actions bordered box label, increased terminal heights for bottom dashboard sections, and statistics visible line count (12→11).
 
 ## 2026-06-03 (Numbers Trainer, Browser State Icons, Dashboard Polish)
 

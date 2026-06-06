@@ -99,8 +99,13 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 				m.logger.Debug("Key %s handled by active view despite text input", key)
 				return m, cmd
 			}
-			m.logger.Debug("Key %s trapped by text input mode", key)
-			return m, nil // Trap everything else
+
+			if m.activeView == ViewDictionary && (key == "left" || key == "right") {
+				// Allow left/right to fall through for view navigation in Dictionary
+			} else {
+				m.logger.Debug("Key %s trapped by text input mode", key)
+				return m, nil // Trap everything else
+			}
 		}
 	}
 
@@ -116,14 +121,14 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if cmd, handled := m.updateActiveViewKey(msg); handled {
 			return m, cmd
 		}
-		if !m.textInputActive() {
+		if !m.textInputActive() || m.activeView == ViewDictionary {
 			return m, m.nextViewCmd()
 		}
 	case "shift+tab", "left", "w":
 		if cmd, handled := m.updateActiveViewKey(msg); handled {
 			return m, cmd
 		}
-		if !m.textInputActive() {
+		if !m.textInputActive() || m.activeView == ViewDictionary {
 			return m, m.previousViewCmd()
 		}
 	case "[":
@@ -205,6 +210,7 @@ func (m *Model) textInputActive() bool {
 		m.searchingTags ||
 		m.searchingDecks ||
 		m.searchingAI ||
+		m.activeView == ViewDictionary ||
 		m.drafting // AI drafting also uses input
 }
 
@@ -782,7 +788,7 @@ func (m *Model) updateImportKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return m.importTSV(), true
 	case "I":
 		return m.importAPKG(), true
-	case "S":
+	case "S", "s":
 		return m.seedStandardContent(), true
 	case "R":
 		return m.handleResetDatabase(), true
@@ -1847,10 +1853,48 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.dictionaryCursor++
 		}
 		return nil, true
+	case "pgdown":
+		m.dictionaryCursor += 10
+		if m.dictionaryCursor >= len(m.dictionaryResults) {
+			m.dictionaryCursor = len(m.dictionaryResults) - 1
+		}
+		if m.dictionaryCursor < 0 {
+			m.dictionaryCursor = 0
+		}
+		return nil, true
+	case "pgup":
+		m.dictionaryCursor -= 10
+		if m.dictionaryCursor < 0 {
+			m.dictionaryCursor = 0
+		}
+		return nil, true
+	case "ctrl+p":
+		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			entry := m.dictionaryResults[m.dictionaryCursor]
+			return m.playDictionaryAudio(entry.Word), true
+		}
+		return nil, true
+	case "ctrl+a":
+		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			entry := m.dictionaryResults[m.dictionaryCursor]
+			return m.addDictionaryEntryCmd(entry), true
+		}
+		return nil, true
+	case "ctrl+f":
+		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			entry := m.dictionaryResults[m.dictionaryCursor]
+			m.browserSearch = entry.Word
+			return tea.Batch(m.updateView(ViewBrowser), m.loadBrowserCards()), true
+		}
+		return nil, true
+	case "ctrl+u":
+		m.dictionarySearch = ""
+		m.dictionaryResults = nil
+		m.dictionaryCursor = 0
+		m.dictionaryScroll = 0
+		return nil, true
 	case "enter":
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
-			// Convert to AI draft or open external dictionary?
-			// The roadmap says "Seamlessly convert dictionary search results into new flashcards via the Drafting flow."
 			entry := m.dictionaryResults[m.dictionaryCursor]
 			m.aiInput = entry.Word + " - " + entry.Translation
 			m.updateView(ViewAI)
@@ -1868,9 +1912,10 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		m.dictionarySearch = ""
 		m.dictionaryResults = nil
 		m.dictionaryCursor = 0
+		m.dictionaryScroll = 0
 		return m.updateView(ViewDashboard), true
-	case "tab":
-		return nil, true
+	case "tab", "shift+tab", "left", "right":
+		return nil, false
 	}
 
 	if len(key) == 1 {

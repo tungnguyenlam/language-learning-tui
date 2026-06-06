@@ -3,24 +3,29 @@ import sys
 import tempfile
 import pytest
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../tui_tester")))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../tui_tester"))
+)
 from tui_tester import TUIAgent
 
+
 def start_agent(tmpdir):
-    app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
-    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir}', columns=100, lines=45)
+    app_cmd = os.getenv("DEUTSCH_TUI_BIN", "go run ./cmd/deutsch-tui")
+    agent = TUIAgent(f"{app_cmd} -data-dir {tmpdir}", columns=100, lines=50)
     agent.wait_for_text("Dashboard", timeout=15.0)
     agent.wait_until_stable()
-    
+
     # Seed standard content
     agent.act("5")
     agent.wait_for_text("Import / Export")
     agent.act("S")
     import time
+
     time.sleep(2.0)
     agent.wait_until_stable()
-    
+
     return agent
+
 
 def test_b1_art_deck():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -38,6 +43,7 @@ def test_b1_art_deck():
         finally:
             agent.close()
 
+
 def test_a2_hobbies_ii_deck():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
@@ -49,6 +55,7 @@ def test_a2_hobbies_ii_deck():
             agent.wait_for_text("A2 Hobbies & Free Time II")
         finally:
             agent.close()
+
 
 def test_b2_science_ii_deck():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -62,6 +69,7 @@ def test_b2_science_ii_deck():
         finally:
             agent.close()
 
+
 def test_verb_of_the_day_presence():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
@@ -73,19 +81,21 @@ def test_verb_of_the_day_presence():
         finally:
             agent.close()
 
+
 def test_cram_mode_visuals():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
             agent.act("9")
             agent.wait_for_text("Cram Mode")
-            agent.act("5") # Filter all
+            agent.act("5")  # Filter all
             agent.act("<Enter>")
             agent.wait_for_text("Cram Review")
-            agent.wait_for_text("Type: flashcard") # should show metadata
+            agent.wait_for_text("Type: flashcard")  # should show metadata
             agent.wait_for_text("p play audio")
         finally:
             agent.close()
+
 
 def test_cram_mode_reveal_and_grade():
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -101,6 +111,7 @@ def test_cram_mode_reveal_and_grade():
         finally:
             agent.close()
 
+
 def test_deck_view_visuals():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
@@ -114,6 +125,7 @@ def test_deck_view_visuals():
             agent.wait_for_text("| today")
         finally:
             agent.close()
+
 
 def test_browser_empty_search():
     with tempfile.TemporaryDirectory() as tmpdir:

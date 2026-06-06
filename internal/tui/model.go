@@ -202,6 +202,7 @@ type Model struct {
 	browserDeckID         string
 	browserSelected       map[string]bool
 	dictionarySearch      string
+	dictionarySearchID    int
 	dictionaryResults     []core.DictionaryEntry
 	dictionaryCursor      int
 	dictionaryScroll      int
@@ -618,8 +619,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	switch msg := msg.(type) {
 	case dictionarySearchResultsMsg:
+		if msg.id != m.dictionarySearchID {
+			return m, nil
+		}
 		m.dictionaryResults = msg.results
 		m.dictionaryCursor = 0
+		m.dictionaryScroll = 0
 		if len(msg.results) > 0 {
 			m.status = fmt.Sprintf("Found %d dictionary results", len(msg.results))
 		} else {
@@ -1082,7 +1087,14 @@ func (m *Model) View() tea.View {
 	m.hitboxes = m.hitboxes[:0]
 	var b strings.Builder
 
-	header := headerStyle.Render("deutsch-tui") + " " + mutedStyle.Render(string(m.breakpoint))
+	header := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(colorAccent).
+		Render(" DEUTSCH-TUI ") +
+		lipgloss.NewStyle().Foreground(colorPanel).Render("│") + " " +
+		lipgloss.NewStyle().Bold(true).Foreground(colorBlue).Render(strings.ToUpper(string(m.activeView))) + " " +
+		lipgloss.NewStyle().Foreground(colorPanel).Render("│") + " " +
+		mutedStyle.Render(string(m.breakpoint))
 	b.WriteString(header)
 	b.WriteString("\n")
 
@@ -1136,7 +1148,22 @@ func (m *Model) View() tea.View {
 		accuracy := float64(m.sessionCorrect) / float64(m.sessionReviewed) * 100
 		statusLine += fmt.Sprintf(" | session: %d/%d (%.0f%%)", m.sessionCorrect, m.sessionReviewed, accuracy)
 	}
-	footer := fmt.Sprintf("tab/arrows views | 1-9 views | ? help | q quit | mouse %d,%d %s", m.mouseX, m.mouseY, helpHint)
+
+	keyInfoStyle := lipgloss.NewStyle().Foreground(colorPink).Bold(true)
+	footerParts := []string{
+		keyInfoStyle.Render("tab/arrows") + " views",
+		keyInfoStyle.Render("1-9") + " views",
+		keyInfoStyle.Render("?") + " help",
+		keyInfoStyle.Render("q") + " quit",
+	}
+	if m.mouseX > 0 || m.mouseY > 0 {
+		footerParts = append(footerParts, fmt.Sprintf("mouse %d,%d", m.mouseX, m.mouseY))
+	}
+	if helpHint != "" {
+		footerParts = append(footerParts, lipgloss.NewStyle().Foreground(colorMuted).Render(strings.TrimPrefix(helpHint, "| ")))
+	}
+	footer := strings.Join(footerParts, " │ ")
+
 	b.WriteString("\n")
 	b.WriteString(statusStyle.Render(truncateLine(statusLine, maxInt(20, m.width-2))))
 	b.WriteString("\n")
@@ -1158,7 +1185,12 @@ func (m *Model) View() tea.View {
 		helpView := lipgloss.Place(m.width, m.height-3, lipgloss.Center, lipgloss.Center, helpBox)
 
 		statusLine := fmt.Sprintf("status: %s", singleLine(m.status))
-		footer := fmt.Sprintf("tab/arrows views | 1-9 views | ? help | q quit")
+		footer := strings.Join([]string{
+			keyInfoStyle.Render("tab/arrows") + " views",
+			keyInfoStyle.Render("1-9") + " views",
+			keyInfoStyle.Render("?") + " help",
+			keyInfoStyle.Render("q") + " quit",
+		}, " │ ")
 
 		return tea.View{
 			Content:   helpView + "\n\n" + statusStyle.Render(truncateLine(statusLine, m.width-2)) + "\n" + statusStyle.Render(truncateLine(footer, m.width-2)),
@@ -1286,88 +1318,6 @@ func (m *Model) renderCompact() string {
 		return "\n" + m.renderActiveView(0, 1)
 	}
 	return m.renderTabs(0, 2) + "\n" + m.renderActiveView(0, 2)
-}
-
-func (m *Model) renderNav(x, y int) string {
-	labels := []struct {
-		id   string
-		view View
-		text string
-	}{
-		{"nav-dashboard", ViewDashboard, "Dashboard"},
-		{"nav-dictionary", ViewDictionary, "Dictionary"},
-		{"nav-decks", ViewDecks, "Decks"},
-		{"nav-review", ViewReview, "Review"},
-		{"nav-statistics", ViewStatistics, "Statistics"},
-		{"nav-import", ViewImport, "Import"},
-		{"nav-ai", ViewAI, "AI Drafts"},
-		{"nav-settings", ViewSettings, "Settings"},
-		{"nav-browser", ViewBrowser, "Browser"},
-		{"nav-cram", ViewCram, "Cram"},
-		{"nav-practice", ViewPractice, "Practice [0]"},
-	}
-
-	var b strings.Builder
-	b.WriteString(headerStyle.Render("deutsch-tui") + "\n\n")
-	for i, l := range labels {
-		style := navStyle
-		if m.activeView == l.view {
-			style = navActiveStyle
-		}
-		item := style.Render(l.text)
-		b.WriteString(item + "\n")
-		m.hitboxes = append(m.hitboxes, Hitbox{
-			ID:     l.id,
-			View:   l.view,
-			X:      x,
-			Y:      y + 2 + i,
-			Width:  lipgloss.Width(item),
-			Height: 1,
-		})
-	}
-	return b.String()
-}
-
-func (m *Model) renderTabs(x, y int) string {
-	tabs := []struct {
-		id   string
-		view View
-		text string
-	}{
-		{"tab-dashboard", ViewDashboard, "Dashboard"},
-		{"tab-dictionary", ViewDictionary, "Dictionary"},
-		{"tab-decks", ViewDecks, "Decks"},
-		{"tab-review", ViewReview, "Review"},
-		{"tab-statistics", ViewStatistics, "Statistics"},
-		{"tab-import", ViewImport, "Import"},
-		{"tab-ai", ViewAI, "AI"},
-		{"tab-settings", ViewSettings, "Settings"},
-		{"tab-browser", ViewBrowser, "Browser"},
-		{"tab-cram", ViewCram, "Cram"},
-		{"tab-practice", ViewPractice, "Practice"},
-	}
-
-	var renderedTabs []string
-	currentX := x
-	for _, t := range tabs {
-		style := tabStyle
-		if m.activeView == t.view {
-			style = tabActiveStyle
-		}
-		item := style.Render(t.text)
-		renderedTabs = append(renderedTabs, item)
-		m.hitboxes = append(m.hitboxes, Hitbox{
-			ID:     t.id,
-			View:   t.view,
-			X:      currentX,
-			Y:      y,
-			Width:  lipgloss.Width(item),
-			Height: 1,
-		})
-		currentX += lipgloss.Width(item) + 1
-	}
-
-	return lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs...)
 }
 
 func (m *Model) renderActiveView(x, y int) string {
@@ -1591,6 +1541,31 @@ func (m *Model) playCardAudio(card core.Card) tea.Cmd {
 	}
 }
 
+func (m *Model) playDictionaryAudio(word string) tea.Cmd {
+	if m.speechSynthesizer == nil {
+		m.status = "Audio not available (no TTS configured)"
+		return nil
+	}
+	if strings.TrimSpace(word) == "" {
+		m.status = "No word selected"
+		return nil
+	}
+	m.statusSeq++
+	m.status = fmt.Sprintf("Generating %s TTS audio...", m.speechSynthesizer.VoiceName())
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
+		defer cancel()
+		path, err := m.speechSynthesizer.Synthesize(ctx, word)
+		if err != nil {
+			return err
+		}
+		if err := startAudioPlayer(path); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
 func startAudioPlayer(audioPath string) error {
 	if audioPath == "" {
 		return nil
@@ -1698,6 +1673,14 @@ func (m *Model) openDictionary(word string) tea.Cmd {
 	if word == "" {
 		return nil
 	}
+
+	if strings.EqualFold(m.dictionaryProvider, "Local TUI") {
+		m.activeView = ViewDictionary
+		m.dictionarySearch = word
+		m.dictionaryCursor = 0
+		return m.searchDictionary()
+	}
+
 	return func() tea.Msg {
 		var urlStr string
 		switch strings.ToLower(m.dictionaryProvider) {

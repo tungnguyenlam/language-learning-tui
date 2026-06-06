@@ -1,6 +1,6 @@
 # Active Backlog
 
-Last updated: 2026-06-01
+Last updated: 2026-06-06
 
 ## Current Milestone
 
@@ -8,6 +8,13 @@ Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
 
+- [x] **Dictionary UX & UI Enhancements:** Implemented a two-column layout for the Dictionary view (list + details), added support for scrolling through search results with PgUp/PgDn, and introduced a "Quick Add" feature (ctrl+a) to instantly save dictionary entries to a dedicated deck. Improved search robustness with a request ID mechanism to prevent race conditions.
+- [x] **Dictionary Audio & Find in Decks:** Added audio pronunciation to dictionary entries (`ctrl+p`), find in decks search (`ctrl+f`), and gender colorization (`{m}` blue, `{f}` pink, `{n}` green) for better visual parsing. Fixes to E2E tests included.
+- [x] **Local TUI Dictionary & Seeding:** Implemented a new "Local TUI" dictionary provider that integrates lookups directly into the terminal. Updated standard content seeding to populate the local dictionary from flashcard notes. Refined the Dictionary view with a styled search bar and better interactivity. Added a robust E2E test suite for verification.
+- [x] **E2E Practice Trainers Tests:** Created a new E2E test file (`test_practice_hub_extra.py`) verifying both the Separable Verb Trainer (key '7') and the Noun Plural Trainer (key '6') with interactive input and correctness verification.
+- [x] **UI Polish & Content Enhancements:** Enhanced header with accent styling and view name, bordered Quick Actions box, styled footer, Dictionary search highlighting, Statistics goal indicators and heatmap legend, Numbers thousands/ordinals, expanded preposition exercises, NativeTTS error messages, dictionary LIKE fallback search, and relocated nav/tabs to render_views.go.
+- [x] **E2E Fixes for UI Polish:** Fixed 7 E2E tests broken by UI changes: updated header assertions for new "DEUTSCH-TUI │ VIEW" format, Quick Actions label from colon to bordered box, increased terminal height for Grammar Tip/Verb visibility, and updated statistics visible line count.
+- [x] **Dictionary in Tab Cycle:** Added Dictionary view to `nextViewCmd`/`previousViewCmd` navigation cycle so `s`/`tab`/`→` from Dashboard navigates to Dictionary. Updated Dictionary key handler to let `tab`/`right`/`s`/`w`/`left`/`shift+tab` pass through for navigation. Fixed 5 E2E tests for updated navigation order.
 - [x] **Milestone 4 (Hybrid Dictionary):** Transformed the app by adding a unified dictionary feature. Built the Core API (`DictionaryEntry`, `DictionaryRepository`), FTS5 SQLite tables for fast indexing, and a dict.cc dataset parser. Added a real-time `ViewDictionary` TUI screen accessible via `/` from the dashboard, seamlessly integrated with the AI Drafting flow.
 - [x] **Session Summary Grade Distribution:** Added a visual grade distribution chart (Again/Hard/Good/Easy) to the Session Summary view. Session grades are now tracked during reviews and displayed with colored bars and icons.
 - [x] **Dashboard Word of the Day:** Added a "Word of the Day" vocabulary box to the Dashboard, displaying a rotating German noun with its article, plural form, and example sentence. Appears alongside the existing Grammar Tip and Verb of the Day when space allows.
@@ -51,7 +58,7 @@ None.
 
 ## Last Verified
 
-- `./scripts/verify.sh` passed with 0 test failures (343 passed) on 2026-06-03.
+- `./scripts/verify.sh` passed with 0 test failures (345 passed) on 2026-06-06 (Local TUI Dictionary).
 
 ## Blockers
 

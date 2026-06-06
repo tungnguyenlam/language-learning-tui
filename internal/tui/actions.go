@@ -152,15 +152,38 @@ func (m *Model) setDeckLimits(deckID string, newLimit, reviewLimit int) tea.Cmd 
 func (m *Model) seedStandardContent() tea.Cmd {
 	m.status = "Seeding standard content..."
 	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second) // Increased timeout for dictionary
 		defer cancel()
 		count := 0
+		var dictEntries []core.DictionaryEntry
+
 		for _, deck := range content.StandardDecks() {
 			if err := m.repo.UpsertDeck(ctx, deck); err != nil {
 				return err
 			}
 			count += len(deck.Notes)
+
+			// Populate dictionary entries from notes
+			for _, note := range deck.Notes {
+				// We use the front as word and back as translation for basic seeding
+				// Standard decks usually have clean word - translation pairs in notes
+				entry := core.DictionaryEntry{
+					ID:          note.ID,
+					Word:        note.Front,
+					Translation: note.Back,
+					Tags:        note.Tags,
+				}
+				dictEntries = append(dictEntries, entry)
+			}
 		}
+
+		if dictRepo, ok := m.repo.(core.DictionaryRepository); ok {
+			if err := dictRepo.ImportEntries(ctx, dictEntries); err != nil {
+				// Don't fail the whole seed if dictionary fails
+				m.logger.Error("Failed to seed dictionary: %v", err)
+			}
+		}
+
 		loadedDecks, err := m.repo.Decks(ctx)
 		if err != nil {
 			return err
@@ -662,8 +685,8 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 
 	case 1:
 		// Dictionary cycle
-		cycle := []string{"dict.cc", "Linguee", "Leo", "Duden", "Pons", "Cambridge", "Google Translate"}
-		next := "dict.cc"
+		cycle := []string{"Local TUI", "dict.cc", "Linguee", "Leo", "Duden", "Pons", "Cambridge", "Google Translate"}
+		next := "Local TUI"
 		for i, name := range cycle {
 			if strings.EqualFold(name, m.dictionaryProvider) {
 				next = cycle[(i+1)%len(cycle)]

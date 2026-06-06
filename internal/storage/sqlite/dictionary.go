@@ -10,32 +10,10 @@ import (
 	"deutsch-tui/internal/core"
 )
 
-func (s *Store) Search(ctx context.Context, query string, limit int) ([]core.DictionaryEntry, error) {
-	terms := strings.Fields(query)
-	if len(terms) == 0 {
-		return nil, nil
-	}
-
-	var matchQuery strings.Builder
-	for i, term := range terms {
-		if i > 0 {
-			matchQuery.WriteString(" ")
-		}
-		safeTerm := strings.ReplaceAll(term, `"`, `""`)
-		matchQuery.WriteString(fmt.Sprintf(`"%s"*`, safeTerm))
-	}
-
-	q := `
-		SELECT id, word, translation, word_class, gender, forms, examples, tags
-		FROM dictionary_fts
-		WHERE dictionary_fts MATCH ?
-		ORDER BY rank
-		LIMIT ?
-	`
-
-	rows, err := s.db.QueryContext(ctx, q, matchQuery.String(), limit)
+func (s *Store) queryDictionaryEntries(ctx context.Context, q string, args ...any) ([]core.DictionaryEntry, error) {
+	rows, err := s.db.QueryContext(ctx, q, args...)
 	if err != nil {
-		return nil, fmt.Errorf("search dictionary: %w", err)
+		return nil, err
 	}
 	defer rows.Close()
 
@@ -74,6 +52,54 @@ func (s *Store) Search(ctx context.Context, query string, limit int) ([]core.Dic
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("rows error: %w", err)
 	}
+	return entries, nil
+}
+
+func (s *Store) Search(ctx context.Context, query string, limit int) ([]core.DictionaryEntry, error) {
+	terms := strings.Fields(query)
+	if len(terms) == 0 {
+		return nil, nil
+	}
+
+	var matchQuery strings.Builder
+	for i, term := range terms {
+		if i > 0 {
+			matchQuery.WriteString(" ")
+		}
+		safeTerm := strings.ReplaceAll(term, `"`, `""`)
+		matchQuery.WriteString(fmt.Sprintf(`"%s"*`, safeTerm))
+	}
+
+	q := `
+		SELECT id, word, translation, word_class, gender, forms, examples, tags
+		FROM dictionary_fts
+		WHERE dictionary_fts MATCH ?
+		ORDER BY rank
+		LIMIT ?
+	`
+
+	entries, err := s.queryDictionaryEntries(ctx, q, matchQuery.String(), limit)
+	if err != nil {
+		return nil, fmt.Errorf("search dictionary fts: %w", err)
+	}
+
+	if len(entries) > 0 {
+		return entries, nil
+	}
+
+	// Fallback to LIKE-based substring match
+	likePattern := "%" + query + "%"
+	qLike := `
+		SELECT id, word, translation, word_class, gender, forms, examples, tags
+		FROM dictionary_fts
+		WHERE word LIKE ? OR translation LIKE ?
+		LIMIT ?
+	`
+	entries, err = s.queryDictionaryEntries(ctx, qLike, likePattern, likePattern, limit)
+	if err != nil {
+		return nil, fmt.Errorf("search dictionary fallback like: %w", err)
+	}
+
 	return entries, nil
 }
 

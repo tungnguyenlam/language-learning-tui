@@ -17,7 +17,7 @@ go vet ./...
 # Build binary once for E2E tests to reduce resource contention
 printf 'Building binary for E2E tests...\n'
 go build -o deutsch-tui-test ./cmd/deutsch-tui
-export DEUTSCH_TUI_BIN="./deutsch-tui-test"
+export DEUTSCH_TUI_BIN="$(pwd)/deutsch-tui-test"
 
 if [ -d "tui_tester/venv" ]; then
 	printf 'Running E2E tests in parallel...\n'

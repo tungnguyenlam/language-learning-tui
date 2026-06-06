@@ -286,13 +286,7 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 	remainingHeight := layout.Height - usedHeight
 
 	// Compact Quick Actions
-	if remainingHeight >= 2 {
-		label := lipgloss.NewStyle().Foreground(colorBlue).Bold(true).Render("  Quick Actions:")
-		db.WriteString(label + " ")
-
-		currentY := strings.Count(db.String(), "\n")
-		currentX := lipgloss.Width(label) + 1
-
+	if remainingHeight >= 3 {
 		actions := []struct {
 			id    string
 			label string
@@ -309,31 +303,81 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 			{"nav-settings", "Settings", "7"},
 		}
 
+		actionsBoxWidth := layout.Width - 2
+		contentWidth := actionsBoxWidth - 4 // border + padding
+		if contentWidth < 10 {
+			contentWidth = 10
+		}
+
+		prefix := lipgloss.NewStyle().Foreground(colorBlue).Bold(true).Render("Quick Actions") + "  •  "
+		prefixWidth := 17 // printed width of "Quick Actions  •  "
+
+		var lines []string
+		var currentLine string
+		var currentLineWidth int
+
+		if isNarrow {
+			lines = append(lines, lipgloss.NewStyle().Foreground(colorBlue).Bold(true).Render("Quick Actions"))
+			currentLine = ""
+			currentLineWidth = 0
+		} else {
+			currentLine = prefix
+			currentLineWidth = prefixWidth
+		}
+
+		type relativeHitbox struct {
+			id    string
+			relX  int
+			relY  int
+			width int
+		}
+		var relHitboxes []relativeHitbox
+
 		for _, action := range actions {
 			keyStr := keyStyle.Render("[" + action.key + "]")
 			item := fmt.Sprintf("%s %s  ", keyStr, action.label)
 			itemWidth := lipgloss.Width(item)
 
-			if currentX+itemWidth > layout.Width-2 {
-				db.WriteString("\n  ")
-				currentY++
-				currentX = 2
-				remainingHeight--
+			if currentLineWidth+itemWidth > contentWidth {
+				if currentLine != "" {
+					lines = append(lines, currentLine)
+				}
+				currentLine = ""
+				currentLineWidth = 0
 			}
 
+			relHitboxes = append(relHitboxes, relativeHitbox{
+				id:    action.id,
+				relX:  currentLineWidth,
+				relY:  len(lines),
+				width: itemWidth - 2, // exclude trailing spaces
+			})
+
+			currentLine += item
+			currentLineWidth += itemWidth
+		}
+
+		if currentLine != "" {
+			lines = append(lines, currentLine)
+		}
+
+		boxContent := strings.Join(lines, "\n")
+		actionsBox := dashActionsStyle.Width(actionsBoxWidth).Render(boxContent)
+
+		startY := strings.Count(db.String(), "\n")
+		db.WriteString(actionsBox + "\n")
+
+		for _, rh := range relHitboxes {
 			m.hitboxes = append(m.hitboxes, Hitbox{
-				ID:     action.id,
+				ID:     rh.id,
 				View:   ViewDashboard,
-				X:      layout.X + currentX,
-				Y:      layout.Y + currentY,
-				Width:  itemWidth - 2, // -2 for trailing spaces
+				X:      layout.X + rh.relX + 2,          // border(1) + padding(1)
+				Y:      layout.Y + startY + rh.relY + 1, // border(1)
+				Width:  rh.width,
 				Height: 1,
 			})
-			db.WriteString(item)
-			currentX += itemWidth
 		}
-		db.WriteString("\n")
-		remainingHeight -= 1
+		remainingHeight -= lipgloss.Height(actionsBox)
 	}
 
 	if remainingHeight >= 3 {
@@ -365,15 +409,14 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 
 		wordHeader := wordLabelStyle.Render("Word: [w] "+word.German) +
 			lipgloss.NewStyle().Foreground(colorMuted).Render(" — "+word.English)
-		wordContent := wordHeader + "\n"
+		wordContent := ""
 		if word.Plural != "" {
 			wordContent += fmt.Sprintf("  Plural: %s\n", word.Plural)
 		}
 		if word.Example != "" {
 			wordContent += fmt.Sprintf("  %s", lipgloss.NewStyle().Italic(true).Foreground(colorBlue).Render(word.Example))
 		}
-		wordBox := dashTipStyle.
-			BorderForeground(colorGold).
+		wordBox := dashWordStyle.
 			Width(boxWidth).
 			Render(wordHeader + "\n" +
 				wordContent)
@@ -393,7 +436,7 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 			thirdWidth := (layout.Width - 4) / 3
 			tipBox = dashTipStyle.Width(thirdWidth).Render(tipLabelStyle.Render("Grammar: [g] "+tip.Title) + "\n" + tip.Tip)
 			verbBox = dashVerbStyle.Width(thirdWidth).Render(verbHeader + "\n" + fmt.Sprintf("  ich %-8s wir %-8s\n  du  %-8s ihr %-8s", verb.Ich, verb.Wir, verb.Du, verb.Ihr))
-			wordBox = dashTipStyle.BorderForeground(colorGold).Width(thirdWidth).Render(wordHeader + "\n" + wordContent)
+			wordBox = dashWordStyle.Width(thirdWidth).Render(wordHeader + "\n" + wordContent)
 
 			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-tip", View: ViewDashboard, X: layout.X, Y: layout.Y + tipY, Width: thirdWidth, Height: lipgloss.Height(tipBox)})
 			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-verb", View: ViewDashboard, X: layout.X + thirdWidth + 1, Y: layout.Y + tipY, Width: thirdWidth, Height: lipgloss.Height(verbBox)})

@@ -30,7 +30,7 @@ func DefaultConfig() Config {
 		Theme:              "system",
 		Keymap:             "default",
 		AIProvider:         "disabled",
-		DictionaryProvider: "dict.cc",
+		DictionaryProvider: "Local TUI",
 		TTSProvider:        "edge",
 		TTSVoice:           "de-DE-KatjaNeural",
 		LogLevel:           "info",

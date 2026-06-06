@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -51,6 +52,9 @@ func (n *NativeTTS) Synthesize(ctx context.Context, text string) (string, error)
 		// say -o output.aiff "text"
 		cmd := exec.CommandContext(ctx, "say", "-o", path, text)
 		if err := cmd.Run(); err != nil {
+			if errors.Is(err, exec.ErrNotFound) {
+				return "", fmt.Errorf("native tts (say) failed: 'say' executable not found in $PATH")
+			}
 			return "", fmt.Errorf("native tts (say) failed: %w", err)
 		}
 		return path, nil
@@ -58,6 +62,9 @@ func (n *NativeTTS) Synthesize(ctx context.Context, text string) (string, error)
 		// espeak -w output.wav "text"
 		cmd := exec.CommandContext(ctx, "espeak", "-v", "de", "-w", path, text)
 		if err := cmd.Run(); err != nil {
+			if errors.Is(err, exec.ErrNotFound) {
+				return "", fmt.Errorf("native tts (espeak) failed: 'espeak' executable not found in $PATH. Please install it using: sudo apt install espeak")
+			}
 			return "", fmt.Errorf("native tts (espeak) failed: %w", err)
 		}
 		return path, nil

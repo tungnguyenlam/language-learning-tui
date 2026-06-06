@@ -49,6 +49,8 @@ var (
 	dashRecentStyle     = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(colorPurple).Padding(0, 1)
 	dashTipStyle        = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(colorAITitle).Padding(0, 1)
 	dashVerbStyle       = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(colorPink).Padding(0, 1)
+	dashWordStyle       = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(colorGold).Padding(0, 1)
+	dashActionsStyle    = lipgloss.NewStyle().Border(lipgloss.RoundedBorder()).BorderForeground(colorBlue).Padding(0, 1)
 
 	keyStyle = lipgloss.NewStyle().Foreground(colorPink).Bold(true)
 	btnStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("255")).Background(lipgloss.Color("62")).Padding(0, 1).MarginRight(1)
@@ -60,4 +62,5 @@ var (
 	warnStyle    = lipgloss.NewStyle().Foreground(colorOrange)
 	editStyle    = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("62"))
 	successStyle = lipgloss.NewStyle().Foreground(colorSuccess).Bold(true)
+	boldStyle    = lipgloss.NewStyle().Bold(true)
 )

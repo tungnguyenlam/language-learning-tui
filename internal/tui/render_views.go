@@ -57,6 +57,15 @@ func (m *Model) renderHelp(layout viewportLayout) string {
 		"  Ent/Del  History / Delete\n" +
 		"  C        Cleanup tags"
 
+	dictionary := sectionStyle.Render("Dictionary:") + "\n" +
+		"  j/k      Navigate\n" +
+		"  PgUp/Dn  Fast scroll\n" +
+		"  Enter    Draft AI card\n" +
+		"  ctrl+a   Quick add to deck\n" +
+		"  ctrl+f   Find in Decks\n" +
+		"  ctrl+p   Play audio\n" +
+		"  Esc      Back"
+
 	other := sectionStyle.Render("Other:") + "\n" +
 		"  Stats    j/k scroll, x exp\n" +
 		"  AI       / topic, a/d draft\n" +
@@ -67,7 +76,7 @@ func (m *Model) renderHelp(layout viewportLayout) string {
 
 	col1 := colStyle.Render(global + "\n\n" + dash)
 	col2 := colStyle.Render(review)
-	col3 := colStyle.Render(browser)
+	col3 := colStyle.Render(browser + "\n\n" + dictionary)
 	col4 := colStyle.Render(other)
 
 	helpContent := lipgloss.JoinHorizontal(lipgloss.Top, col1, col2, col3, col4)
@@ -573,4 +582,86 @@ func (m *Model) renderReviewHistory(label string) string {
 		)
 	}
 	return strings.TrimRight(b.String(), "\n")
+}
+
+func (m *Model) renderNav(x, y int) string {
+	labels := []struct {
+		id   string
+		view View
+		text string
+	}{
+		{"nav-dashboard", ViewDashboard, "Dashboard"},
+		{"nav-dictionary", ViewDictionary, "Dictionary"},
+		{"nav-decks", ViewDecks, "Decks"},
+		{"nav-review", ViewReview, "Review"},
+		{"nav-statistics", ViewStatistics, "Statistics"},
+		{"nav-import", ViewImport, "Import"},
+		{"nav-ai", ViewAI, "AI Drafts"},
+		{"nav-settings", ViewSettings, "Settings"},
+		{"nav-browser", ViewBrowser, "Browser"},
+		{"nav-cram", ViewCram, "Cram"},
+		{"nav-practice", ViewPractice, "Practice [0]"},
+	}
+
+	var b strings.Builder
+	b.WriteString(headerStyle.Render("deutsch-tui") + "\n\n")
+	for i, l := range labels {
+		style := navStyle
+		if m.activeView == l.view {
+			style = navActiveStyle
+		}
+		item := style.Render(l.text)
+		b.WriteString(item + "\n")
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     l.id,
+			View:   l.view,
+			X:      x,
+			Y:      y + 2 + i,
+			Width:  lipgloss.Width(item),
+			Height: 1,
+		})
+	}
+	return b.String()
+}
+
+func (m *Model) renderTabs(x, y int) string {
+	tabs := []struct {
+		id   string
+		view View
+		text string
+	}{
+		{"tab-dashboard", ViewDashboard, "Dashboard"},
+		{"tab-dictionary", ViewDictionary, "Dictionary"},
+		{"tab-decks", ViewDecks, "Decks"},
+		{"tab-review", ViewReview, "Review"},
+		{"tab-statistics", ViewStatistics, "Statistics"},
+		{"tab-import", ViewImport, "Import"},
+		{"tab-ai", ViewAI, "AI"},
+		{"tab-settings", ViewSettings, "Settings"},
+		{"tab-browser", ViewBrowser, "Browser"},
+		{"tab-cram", ViewCram, "Cram"},
+		{"tab-practice", ViewPractice, "Practice"},
+	}
+
+	var renderedTabs []string
+	currentX := x
+	for _, t := range tabs {
+		style := tabStyle
+		if m.activeView == t.view {
+			style = tabActiveStyle
+		}
+		item := style.Render(t.text)
+		renderedTabs = append(renderedTabs, item)
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     t.id,
+			View:   t.view,
+			X:      currentX,
+			Y:      y,
+			Width:  lipgloss.Width(item),
+			Height: 1,
+		})
+		currentX += lipgloss.Width(item) + 1
+	}
+
+	return lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs...)
 }

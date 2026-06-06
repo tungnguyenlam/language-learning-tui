@@ -2,14 +2,16 @@ import os
 import sys
 import tempfile
 
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../tui_tester")))
+sys.path.insert(
+    0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../tui_tester"))
+)
 
 from tui_tester import TUIAgent
 
 
 def start_agent(tmpdir, columns=90, lines=28):
-    app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
-    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir}', columns=columns, lines=lines)
+    app_cmd = os.getenv("DEUTSCH_TUI_BIN", "go run ./cmd/deutsch-tui")
+    agent = TUIAgent(f"{app_cmd} -data-dir {tmpdir}", columns=columns, lines=lines)
     agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()
     return agent
@@ -20,6 +22,7 @@ def test_tab_cycles_through_all_primary_views_and_wraps():
         agent = start_agent(tmpdir)
         try:
             for text in [
+                "Dictionary",
                 "Press enter to select deck.",
                 "Review 1/52",
                 "Statistics",
