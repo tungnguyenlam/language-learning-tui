@@ -146,6 +146,7 @@ type Model struct {
 	width                      int
 	height                     int
 	activeView                 View
+	dictionaryPreviousView     View
 	breakpoint                 Breakpoint
 	decks                      []core.Deck
 	deckIndex                  int
@@ -1127,9 +1128,9 @@ func (m *Model) View() tea.View {
 		helpHint = "| / search dictionary | [ ] switch decks | 3 Review"
 	case ViewDictionary:
 		if m.dictionarySearch != "" {
-			helpHint = "| Nav: j/k | Add: ctrl+a | Audio: ctrl+p"
+			helpHint = "| Nav: j/k | Shift+↑/↓ details | ctrl+a add | Enter draft | ctrl+f find"
 		} else {
-			helpHint = "| Search: type | Nav: j/k"
+			helpHint = "| Search: type | Nav: j/k | Esc: back"
 		}
 	case ViewReview:
 		if len(m.dueCards) > 0 {
@@ -1735,6 +1736,7 @@ func (m *Model) openDictionary(word string) tea.Cmd {
 	}
 
 	if strings.EqualFold(m.dictionaryProvider, "Local TUI") {
+		m.dictionaryPreviousView = m.activeView
 		m.activeView = ViewDictionary
 		m.dictionarySearch = word
 		m.dictionaryCursor = 0

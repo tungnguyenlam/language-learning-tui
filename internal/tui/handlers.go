@@ -37,6 +37,9 @@ func (m *Model) updateView(view View) tea.Cmd {
 	if m.activeView == ViewDictionary && m.dictionarySearch != "" {
 		m.recordDictionarySearch(m.dictionarySearch)
 	}
+	if view == ViewDictionary && m.activeView != ViewDictionary {
+		m.dictionaryPreviousView = m.activeView
+	}
 	m.activeView = view
 	m.isDragging = false
 	m.confirmingDelete = false

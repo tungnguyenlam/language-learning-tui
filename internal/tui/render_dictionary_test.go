@@ -265,3 +265,60 @@ func TestDictionarySearchClearHitbox(t *testing.T) {
 		t.Errorf("expected results to be cleared, got %d items", len(m.dictionaryResults))
 	}
 }
+
+func TestDictionaryPreviousView(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.dictionaryProvider = "Local TUI"
+	m.activeView = ViewBrowser
+
+	// Open dictionary via command
+	m.openDictionary("Apfel")
+	if m.activeView != ViewDictionary {
+		t.Fatalf("expected active view to be ViewDictionary, got %v", m.activeView)
+	}
+	if m.dictionaryPreviousView != ViewBrowser {
+		t.Fatalf("expected dictionaryPreviousView to be ViewBrowser, got %v", m.dictionaryPreviousView)
+	}
+
+	// Press Esc to go back
+	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: tea.KeyEsc})
+	if !handled {
+		t.Fatal("expected Esc to be handled")
+	}
+	if cmd != nil {
+		// updateView returns a Cmd if view requires loading, which ViewBrowser does
+		_ = cmd()
+	}
+
+	if m.activeView != ViewBrowser {
+		t.Fatalf("expected active view to return to ViewBrowser, got %v", m.activeView)
+	}
+}
+
+func TestDictionaryHeaderResultsCount(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.width = 100
+	m.height = 40
+
+	// Case 1: no results
+	m.dictionaryResults = nil
+	view := m.renderDictionary(m.activeViewContentLayout())
+	if !strings.Contains(stripANSI(view), "Dictionary") || strings.Contains(stripANSI(view), "results") {
+		t.Errorf("unexpected header for no results: %q", view)
+	}
+
+	// Case 2: few results
+	m.dictionaryResults = make([]core.DictionaryEntry, 5)
+	view = m.renderDictionary(m.activeViewContentLayout())
+	if !strings.Contains(stripANSI(view), "Dictionary (5 results)") {
+		t.Errorf("expected header to contain results count, got: %q", view)
+	}
+
+	// Case 3: 50+ results
+	m.dictionaryResults = make([]core.DictionaryEntry, 50)
+	view = m.renderDictionary(m.activeViewContentLayout())
+	if !strings.Contains(stripANSI(view), "Dictionary (50+ results)") {
+		t.Errorf("expected header to contain 50+ results, got: %q", view)
+	}
+}

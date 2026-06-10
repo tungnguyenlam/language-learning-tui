@@ -1941,7 +1941,11 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		m.dictionaryResults = nil
 		m.dictionaryCursor = 0
 		m.dictionaryScroll = 0
-		return m.updateView(ViewDashboard), true
+		destView := ViewDashboard
+		if m.dictionaryPreviousView != "" && m.dictionaryPreviousView != ViewDictionary {
+			destView = m.dictionaryPreviousView
+		}
+		return m.updateView(destView), true
 	case "tab", "shift+tab", "left", "right":
 		return nil, false
 	}

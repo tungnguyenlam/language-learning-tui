@@ -95,7 +95,15 @@ func dictionaryVisibleRows(layout viewportLayout) int {
 
 func (m *Model) renderDictionary(layout viewportLayout) string {
 	var b strings.Builder
-	b.WriteString(titleStyle.Render("Dictionary"))
+	if len(m.dictionaryResults) > 0 {
+		countSuffix := fmt.Sprintf(" (%d results)", len(m.dictionaryResults))
+		if len(m.dictionaryResults) >= 50 {
+			countSuffix = " (50+ results)"
+		}
+		b.WriteString(titleStyle.Render("Dictionary" + countSuffix))
+	} else {
+		b.WriteString(titleStyle.Render("Dictionary"))
+	}
 	b.WriteString("\n\n")
 
 	// Search input
@@ -276,7 +284,9 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 				detailBuilder.WriteString(boldStyle.Render("Translations:") + "\n")
 				translations := strings.Split(res.Translation, ";")
 				for _, t := range translations {
-					detailBuilder.WriteString("  " + strings.TrimSpace(t) + "\n")
+					trimmed := strings.TrimSpace(t)
+					highlightedT := highlightQuery(trimmed, m.dictionarySearch, dictHighlightStyle)
+					detailBuilder.WriteString("  " + highlightedT + "\n")
 				}
 				detailBuilder.WriteString("\n")
 			}
@@ -284,14 +294,16 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			// Word Forms
 			if res.Forms != "" {
 				detailBuilder.WriteString(boldStyle.Render("Word Forms:") + "\n")
-				detailBuilder.WriteString("  " + res.Forms + "\n\n")
+				highlightedForms := highlightQuery(res.Forms, m.dictionarySearch, dictHighlightStyle)
+				detailBuilder.WriteString("  " + highlightedForms + "\n\n")
 			}
 
 			// Examples
 			if len(res.Examples) > 0 {
 				detailBuilder.WriteString(boldStyle.Render("Examples:") + "\n")
 				for _, ex := range res.Examples {
-					detailBuilder.WriteString("  • " + ex + "\n")
+					highlightedEx := highlightQuery(ex, m.dictionarySearch, dictHighlightStyle)
+					detailBuilder.WriteString("  • " + highlightedEx + "\n")
 				}
 			}
 		}
