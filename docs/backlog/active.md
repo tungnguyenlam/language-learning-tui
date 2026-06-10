@@ -77,7 +77,7 @@ None.
 
 ## Last Verified
 
-- `./scripts/verify.sh` passed on 2026-06-10: Go tests, `go vet`, TUI smoke, binary build, and 347 E2E tests.
+- `./scripts/verify.sh` passed on 2026-06-11: Go tests, `go vet`, TUI smoke, binary build, and 347 E2E tests.
 - `go test ./internal/content` passed.
 - `go test ./internal/tui` passed.
 

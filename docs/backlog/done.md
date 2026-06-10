@@ -1,5 +1,16 @@
 # Done Backlog
 
+## 2026-06-11 (Dictionary UX Enhancements & View State Preservation)
+
+### Dictionary UX
+- **Search Results Count:** Displayed the total search matches count (e.g. `(5 results)` or `(50+ results)`) next to the "Dictionary" title in the header to give the user immediate feedback on their query matching.
+- **Detailed Query Highlighting:** Enhanced detail panel view to highlight search query matches in translations, word forms, and example sentences.
+- **Esc Key Navigation Return:** Captured the previous view before navigating to the Dictionary (e.g. from Browser or Review), allowing the `Esc` key in Dictionary to return to that view instead of always resetting to the Dashboard.
+- **Enhanced Help Hints:** Updated the Dictionary footer help hints to include detail scrolling, adding, drafting, and finding shortcuts.
+
+### Verification
+- `./scripts/verify.sh` passed successfully (all unit, smoke, and 347 E2E tests).
+
 ## 2026-06-10 (Dictionary Quick Add Fix, Settings Base URLs, Dictionary Clear Button)
 
 ### Dictionary UX
