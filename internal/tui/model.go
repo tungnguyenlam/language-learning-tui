@@ -1120,20 +1120,31 @@ func (m *Model) View() tea.View {
 			helpHint = "| Search: / | Select: x | Study: Enter"
 		}
 	case ViewStatistics:
-		helpHint = "| Scroll: j/k"
+		helpHint = "| Scroll: j/k | Export: x"
 	case ViewCram:
 		if m.cramActive {
 			if m.cramRevealed {
-				helpHint = "| Grade: a/h/g/e"
+				helpHint = "| Grade: a/h/g/e | Quit: q"
 			} else {
 				helpHint = "| Reveal: Space/Enter"
 			}
 		} else {
-			helpHint = "| Filter: 1-5"
+			helpHint = "| Filter: 1-5 | Start: Enter"
 		}
 	case ViewPractice:
 		if m.practiceSubView == PracticeSubViewHub {
 			helpHint = "| Trainer: 1-8 | Esc: back"
+		} else {
+			switch m.practiceSubView {
+			case PracticeSubViewGender:
+				helpHint = "| der(1/d) die(2/i) das(3/a) | Next click | Esc: back"
+			case PracticeSubViewConjugation:
+				helpHint = "| Type answer | Enter check | Esc: back"
+			case PracticeSubViewCase, PracticeSubViewAdjective, PracticeSubViewPreposition, PracticeSubViewSeparable, PracticeSubViewNumbers:
+				helpHint = "| Type answer | Enter check | Esc: back"
+			case PracticeSubViewPlural:
+				helpHint = "| Type plural | Enter check | Esc: back"
+			}
 		}
 	case ViewBrowser:
 		if m.searchingBrowser {

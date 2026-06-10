@@ -656,6 +656,27 @@ func (m *Model) resetMCQState() {
 	m.explainError = ""
 }
 
+func (m *Model) resetReviewState() {
+	m.revealState = RevealIdle
+	m.revealProgress = 0
+	m.typingMode = false
+	m.typedAnswer = ""
+	m.typingChecked = false
+	m.typingCorrect = false
+	m.showHint = false
+	m.showCardInfo = false
+	m.showGrammarHint = false
+	m.focusMode = false
+	m.fixProposal = nil
+	m.fixOldNote = nil
+	m.fixingCard = false
+	m.fixCardID = ""
+	m.fixError = ""
+	m.grammarHint = nil
+	m.resetMCQState()
+	m.clearReviewHistory()
+}
+
 func (m *Model) clearReviewHistory() {
 	m.reviewHistory = nil
 	m.showReviewHistory = false

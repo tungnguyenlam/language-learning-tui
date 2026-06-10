@@ -137,6 +137,11 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 				return m, m.reloadBrowserForSelectedDeck()
 			}
 			m.previousDeck()
+			if m.activeView == ViewReview {
+				m.cursor = 0
+				m.resetReviewState()
+				m.status = fmt.Sprintf("Deck: %s", m.deckLabel())
+			}
 			return m, nil
 		}
 	case "]":
@@ -149,6 +154,11 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 				return m, m.reloadBrowserForSelectedDeck()
 			}
 			m.nextDeck()
+			if m.activeView == ViewReview {
+				m.cursor = 0
+				m.resetReviewState()
+				m.status = fmt.Sprintf("Deck: %s", m.deckLabel())
+			}
 			return m, nil
 		}
 	}
@@ -168,14 +178,7 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if m.activeView == ViewReview {
 			if m.cursor > 0 {
 				m.cursor--
-				m.resetMCQState()
-				m.clearReviewHistory()
-				m.showHint = false
-				m.showCardInfo = false
-				m.typingMode = false
-				m.typedAnswer = ""
-				m.typingChecked = false
-				m.typingCorrect = false
+				m.resetReviewState()
 			}
 			return m, nil
 		}
@@ -183,14 +186,7 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if m.activeView == ViewReview {
 			if m.cursor < len(m.dueCards)-1 {
 				m.cursor++
-				m.resetMCQState()
-				m.clearReviewHistory()
-				m.showHint = false
-				m.showCardInfo = false
-				m.typingMode = false
-				m.typedAnswer = ""
-				m.typingChecked = false
-				m.typingCorrect = false
+				m.resetReviewState()
 			}
 			return m, nil
 		}

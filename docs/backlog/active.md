@@ -8,6 +8,9 @@ Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
 
+- [x] **Review State Reset & Deck Switching Fix:** Added `resetReviewState()` helper in `internal/tui/handlers.go` to consolidate review state cleanup (reveal, typing, fix, focus, hint, grammar). Refactored `up`/`down` navigation in Review view to use it. Fixed deck switching (`[`/`]`) on Review view to reset review state and update status, preventing stale card state when switching decks mid-review.
+- [x] **Contextual Help Hints for Practice Sub-views:** Added footer help hints for all 8 practice sub-views in `internal/tui/model.go` (Gender, Conjugation, Case, Adjective, Preposition, Plural, Separable, Numbers), plus added missing hints for Statistics (`x` export), Cram active (`q` quit), and Cram idle (`Enter` start).
+- [x] **Dictionary in Dashboard Quick Actions:** Added "Dictionary" (`/`) to the Quick Actions row on the Dashboard for one-click access alongside Review, Practice, Cram, etc.
 - [x] **SessionSummary State Leak Fix:** Changed the `reviewRecordedMsg` handler (`internal/tui/model.go:890`) to route through `m.updateView(ViewSessionSummary)` instead of directly setting `m.activeView`. Previously, the auto-transition after the last review bypassed `updateView`, leaving stale state (typingMode, fixProposal, showHint, etc.) alive in the summary view.
 - [x] **Context-Sensitive helpHint for Missing Views:** Added contextual footer hints for Dictionary, Decks, Statistics, and Practice views in the `View()` method (`internal/tui/model.go:1098-1150`). Previously, these four views showed no contextual guidance in the footer, while all other navigable views did.
 - [x] **A1 House & Furniture Deck:** Added a new 50-note A1 vocabulary deck covering rooms (Wohnzimmer, Küche, Bad), furniture (Tisch, Stuhl, Bett, Schrank), kitchen items (Herd, Kühlschrank, Spüle), and household verbs (wohnen, putzen). Registered in `StandardDecks()` and added a Go test in `new_decks_batch8_test.go`.
