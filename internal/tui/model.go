@@ -888,7 +888,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.typingCorrect = false
 
 		if len(m.dueCards) == 0 && m.sessionReviewed > 0 {
-			m.activeView = ViewSessionSummary
+			return m, tea.Batch(m.updateView(ViewSessionSummary), m.loadReviewsPerDay(), m.loadRecentDecks(), m.loadStatistics())
 		}
 		return m, tea.Batch(m.loadReviewsPerDay(), m.loadRecentDecks(), m.loadStatistics())
 	case bookmarkToggledMsg:
@@ -1099,6 +1099,12 @@ func (m *Model) View() tea.View {
 	switch m.activeView {
 	case ViewDashboard:
 		helpHint = "| / search dictionary | [ ] switch decks | 3 Review"
+	case ViewDictionary:
+		if m.dictionarySearch != "" {
+			helpHint = "| Nav: j/k | Add: ctrl+a | Audio: ctrl+p"
+		} else {
+			helpHint = "| Search: type | Nav: j/k"
+		}
 	case ViewReview:
 		if len(m.dueCards) > 0 {
 			if m.revealState == RevealRevealed {
@@ -1107,6 +1113,14 @@ func (m *Model) View() tea.View {
 				helpHint = "| Reveal: Space/Enter"
 			}
 		}
+	case ViewDecks:
+		if m.searchingDecks {
+			helpHint = "| Searching... | Stop: Esc/Enter"
+		} else {
+			helpHint = "| Search: / | Select: x | Study: Enter"
+		}
+	case ViewStatistics:
+		helpHint = "| Scroll: j/k"
 	case ViewCram:
 		if m.cramActive {
 			if m.cramRevealed {
@@ -1116,6 +1130,10 @@ func (m *Model) View() tea.View {
 			}
 		} else {
 			helpHint = "| Filter: 1-5"
+		}
+	case ViewPractice:
+		if m.practiceSubView == PracticeSubViewHub {
+			helpHint = "| Trainer: 1-8 | Esc: back"
 		}
 	case ViewBrowser:
 		if m.searchingBrowser {

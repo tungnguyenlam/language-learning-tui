@@ -55,6 +55,8 @@ See `GOAL.md` for the intended final state of the app. All work should move towa
 - **E2E Decks View Search:** After searching in Decks view, press `<Esc>` to clear the filter before starting a new search. Search state persists across navigation.
 - **E2E Review Empty State:** The starter deck has 52 cards due by default. Tests expecting "No cards due" must grade through all cards first or use a fresh database without seeded content.
 - **TSV Import Format:** When creating TSV files for E2E tests, use 6-column format: `id\tfront\tback\textra\ttags\tdeck`. The 6th column sets the deck name.
+- **Local Dictionary Data Constraint:** The directory `/local_dict_files/` contains raw zip files of the dict.cc German-English dictionary dataset. This dataset is restricted by license terms and MUST NOT be committed, published, or pushed to any repository. It is gitignored.
+
 
 ## Handoff Rules
 

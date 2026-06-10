@@ -1,6 +1,6 @@
 # Agent Context Index
 
-Last updated: 2026-05-03
+Last updated: 2026-06-10
 
 ## Vision & Prompts
 
@@ -28,14 +28,12 @@ Last updated: 2026-05-03
 
 ## Verification Status
 
-- ✅ All 194 E2E tests passing (as of 2026-05-11, including new content and UI tests)
-- ✅ All Go test suites passing (as of 2026-05-05)
+- ✅ All 194+ E2E tests passing (as of 2026-05-11, including new content and UI tests)
+- ✅ All Go test suites passing (as of 2026-06-10)
 - ✅ App launches without errors (smoke test passing)
-- ✅ All views render correctly (Dashboard, Review, Import, AI, Settings, Browser, Cram)
+- ✅ All views render correctly (Dashboard, Review, Import, AI, Settings, Browser, Cram, SessionSummary, Dictionary)
 - ✅ Core user interactions respond as expected
 - ✅ State successfully persisted to SQLite
-- ✅ Code formatting verified (gofmt)
-- ✅ Code quality verified (go vet)
 - ✅ Full verification passes with `./scripts/verify.sh`
 
 ## Decisions

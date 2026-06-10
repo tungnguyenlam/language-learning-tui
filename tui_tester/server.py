@@ -69,7 +69,7 @@ class TUIServer:
         return "OK"
 
 def start_server(command: str, port: int = 8765):
-    server_instance = TUIServer(command)
+    server_instance = TUIServer(command, columns=110, lines=40)
     server = SimpleXMLRPCServer(("localhost", port), requestHandler=RequestHandler, allow_none=True, logRequests=False)
     
     server.register_instance(server_instance)

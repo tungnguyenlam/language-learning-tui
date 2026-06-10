@@ -196,3 +196,12 @@ func (s *Store) ImportEntries(ctx context.Context, entries []core.DictionaryEntr
 	}
 	return nil
 }
+
+func (s *Store) DictionaryCount(ctx context.Context) (int, error) {
+	var count int
+	err := s.db.QueryRowContext(ctx, "SELECT count(*) FROM dictionary_fts").Scan(&count)
+	if err != nil {
+		return 0, fmt.Errorf("dictionary count: %w", err)
+	}
+	return count, nil
+}

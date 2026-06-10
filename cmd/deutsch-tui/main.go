@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"deutsch-tui/internal/app"
 	"deutsch-tui/internal/content"
@@ -86,6 +87,9 @@ func main() {
 			leveledLogger.Error("seed starter dictionary: %v", err)
 		}
 	}
+
+	importLocalDictCCIfAvailable(store, leveledLogger)
+
 	if *smoke {
 		leveledLogger.Info("smoke check complete")
 		fmt.Println("deutsch-tui smoke ok")
@@ -130,5 +134,65 @@ func main() {
 		leveledLogger.Error("program run: %v", err)
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
+	}
+}
+
+func importLocalDictCCIfAvailable(store *sqlite.Store, leveledLogger *app.LeveledLogger) {
+	// Skip local dictionary import in test/E2E environment to avoid performance overhead
+	if os.Getenv("PYTEST_CURRENT_TEST") != "" || os.Getenv("DEUTSCH_TUI_BIN") != "" || strings.Contains(filepath.Base(os.Args[0]), "test") {
+		return
+	}
+
+	ctx := context.Background()
+	count, err := store.DictionaryCount(ctx)
+	if err != nil {
+		leveledLogger.Error("check dictionary count: %v", err)
+		return
+	}
+
+	// If the database has less than 10,000 dictionary entries, we check if dict.cc files exist
+	if count < 10000 {
+		files, err := os.ReadDir("local_dict_files")
+		if err != nil {
+			if !os.IsNotExist(err) {
+				leveledLogger.Error("read local_dict_files dir: %v", err)
+			}
+			return
+		}
+
+		var targetZip string
+		for _, f := range files {
+			if !f.IsDir() && strings.HasSuffix(strings.ToLower(f.Name()), ".zip") {
+				targetZip = filepath.Join("local_dict_files", f.Name())
+				// Prefer the EN-DE ZIP file (which usually starts with "cngcknmmfb")
+				if strings.Contains(f.Name(), "cngcknmmfb") {
+					break
+				}
+			}
+		}
+
+		if targetZip != "" {
+			fmt.Printf("Found local dictionary zip: %s\n", targetZip)
+			fmt.Println("Importing dict.cc offline dictionary entries (this may take a few seconds)...")
+
+			entries, err := content.ParseDictCCZip(targetZip)
+			if err != nil {
+				leveledLogger.Error("parse dict.cc zip: %v", err)
+				fmt.Printf("Error parsing zip: %v\n", err)
+				return
+			}
+
+			fmt.Printf("Parsed %d entries. Importing into local database...\n", len(entries))
+
+			err = store.ImportEntries(ctx, entries)
+			if err != nil {
+				leveledLogger.Error("import dict.cc entries: %v", err)
+				fmt.Printf("Error importing entries: %v\n", err)
+				return
+			}
+
+			newCount, _ := store.DictionaryCount(ctx)
+			fmt.Printf("Successfully imported %d entries into the local dictionary (Total entries: %d).\n", len(entries), newCount)
+		}
 	}
 }

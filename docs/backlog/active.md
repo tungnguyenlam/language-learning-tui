@@ -8,6 +8,10 @@ Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
 
+- [x] **SessionSummary State Leak Fix:** Changed the `reviewRecordedMsg` handler (`internal/tui/model.go:890`) to route through `m.updateView(ViewSessionSummary)` instead of directly setting `m.activeView`. Previously, the auto-transition after the last review bypassed `updateView`, leaving stale state (typingMode, fixProposal, showHint, etc.) alive in the summary view.
+- [x] **Context-Sensitive helpHint for Missing Views:** Added contextual footer hints for Dictionary, Decks, Statistics, and Practice views in the `View()` method (`internal/tui/model.go:1098-1150`). Previously, these four views showed no contextual guidance in the footer, while all other navigable views did.
+- [x] **A1 House & Furniture Deck:** Added a new 50-note A1 vocabulary deck covering rooms (Wohnzimmer, Küche, Bad), furniture (Tisch, Stuhl, Bett, Schrank), kitchen items (Herd, Kühlschrank, Spüle), and household verbs (wohnen, putzen). Registered in `StandardDecks()` and added a Go test in `new_decks_batch8_test.go`.
+- [x] **Agent Index Refresh:** Updated `docs/agent/index.md` date from 2026-05-03 to 2026-06-10 and refreshed verification status entries.
 - [x] **applyOverlay UTF-8 Corruption Fix:** Fixed `applyOverlay` (`internal/tui/model.go:1417`) which sliced overlay strings by byte offset while content may contain multi-byte UTF-8 characters (umlauts, emojis). Changed to use `[]rune` conversion so character boundaries are respected during overlay placement, preventing garbled characters in confirmation dialogs.
 - [x] **State Leak Fixes — typingMode, showCardInfo, fixProposal:** Fixed `updateView` (`internal/tui/handlers.go:36`) to reset `typingMode`, `typedAnswer`, `typingChecked`, `typingCorrect`, `showHint`, `showCardInfo`, `showGrammarHint`, `focusMode`, and all `fix*` fields when switching views. Previously, typing mode would leak across views via number-key or tab navigation, causing printable keys to be swallowed. Also fixed card up/down navigation in Review view (`internal/tui/keys.go:167-186`) to reset `typingMode`/`showCardInfo` state so typed answers don't carry to adjacent cards.
 - [x] **Cram Session State Leaks:** Fixed `updateView` Cram entry (`internal/tui/handlers.go:64`) to reset `cramActive`, `cramRevealed`, `revealState`, and `revealProgress` so re-entering Cram via number keys doesn't land in a stale active session. Also fixed cram exit handler (`internal/tui/keys.go:1124`) to reset `cramRevealed`, `revealState`, and `revealProgress` when exiting via `q`/`esc`.
@@ -62,9 +66,8 @@ None.
 
 ## Last Verified
 
-- `go test ./...` passed (14 packages, 0 failures) on 2026-06-10 (state leak fixes, overlay UTF-8 fix, numbers trainer hitbox).
-- `go vet ./...` passed.
-- `gofmt -l` clean (no unformatted files).
+- `go test ./...` expected to pass (14 packages).
+- `go vet ./...` expected to pass.
 - E2E tests not run (Go not on default PATH in this environment).
 
 ## Blockers

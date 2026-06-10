@@ -62,6 +62,14 @@ func highlightQuery(text, query string, style lipgloss.Style) string {
 	return result.String()
 }
 
+func padString(s string, width int) string {
+	runes := []rune(s)
+	if len(runes) >= width {
+		return string(runes[:width])
+	}
+	return s + strings.Repeat(" ", width-len(runes))
+}
+
 func (m *Model) renderDictionary(layout viewportLayout) string {
 	var b strings.Builder
 	b.WriteString(titleStyle.Render("Dictionary"))
@@ -113,28 +121,40 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 
 	// Two-column layout if wide enough
 	if layout.Width > 80 {
-		listWidth := layout.Width / 2
-		detailWidth := layout.Width - listWidth - 6
+		listWidth := maxInt(30, minInt(50, layout.Width*4/10))
+		detailWidth := layout.Width - listWidth - 3
 
 		var listBuilder strings.Builder
+		contentWidth := listWidth - 2
 		for i := m.dictionaryScroll; i < len(m.dictionaryResults) && i < m.dictionaryScroll+maxResults; i++ {
 			res := m.dictionaryResults[i]
 			prefix := "  "
 			if i == m.dictionaryCursor {
 				prefix = "> "
 			}
-			highlightedWord := highlightQuery(res.Word, m.dictionarySearch, dictHighlightStyle)
-			line := fmt.Sprintf("%s%s", prefix, highlightedWord)
+
+			// Format the word text for list item (e.g. "Word {m}" or "Word [verb]")
+			wordText := res.Word
+			if res.Gender != "" {
+				wordText += " {" + res.Gender + "}"
+			} else if res.WordClass != "" {
+				wordText += " [" + res.WordClass + "]"
+			}
+
+			padded := padString(wordText, contentWidth)
+			highlighted := highlightQuery(padded, m.dictionarySearch, dictHighlightStyle)
+			line := prefix + highlighted
+
 			if i == m.dictionaryCursor {
-				listBuilder.WriteString(editStyle.Render(lipgloss.NewStyle().Width(listWidth-2).MaxHeight(1).Render(line)) + "\n")
+				listBuilder.WriteString(editStyle.Render(line) + "\n")
 			} else {
-				listBuilder.WriteString(lipgloss.NewStyle().Width(listWidth-2).MaxHeight(1).Render(line) + "\n")
+				listBuilder.WriteString(line + "\n")
 			}
 		}
 
 		// Fill remaining space in list
 		for i := len(m.dictionaryResults) - m.dictionaryScroll; i < maxResults; i++ {
-			listBuilder.WriteString("\n")
+			listBuilder.WriteString(strings.Repeat(" ", listWidth) + "\n")
 		}
 
 		// List scrollbar
@@ -151,41 +171,67 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 				sb.WriteString(lines[i] + lipgloss.NewStyle().Foreground(colorPanel).Render(char) + "\n")
 			}
 			listWithScroll = sb.String()
+		} else {
+			// Append an empty vertical line for alignment when no scrollbar is shown
+			var sb strings.Builder
+			lines := strings.Split(listBuilder.String(), "\n")
+			for i := 0; i < maxResults && i < len(lines); i++ {
+				sb.WriteString(lines[i] + " \n")
+			}
+			listWithScroll = sb.String()
 		}
 
 		var detailBuilder strings.Builder
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 			res := m.dictionaryResults[m.dictionaryCursor]
+			
+			// Modern styled header for detail view
 			detailBuilder.WriteString(titleStyle.Render(res.Word) + "\n")
-			if res.Translation != "" {
-				translations := strings.Split(res.Translation, ";")
-				for _, t := range translations {
-					detailBuilder.WriteString(strings.TrimSpace(t) + "\n")
-				}
+			
+			// Part of speech / Gender tags
+			meta := ""
+			if res.WordClass != "" {
+				meta += mutedStyle.Render("["+strings.ToUpper(res.WordClass)+"]") + " "
 			}
-			if res.WordClass != "" || res.Gender != "" {
-				meta := ""
-				if res.WordClass != "" {
-					meta += mutedStyle.Render("["+res.WordClass+"]") + " "
-				}
-				if res.Gender != "" {
-					meta += renderGender(res.Gender) + " "
-				}
+			if res.Gender != "" {
+				meta += renderGender(res.Gender) + " "
+			}
+			if meta != "" {
 				detailBuilder.WriteString(meta + "\n")
 			}
-			if res.Forms != "" {
-				detailBuilder.WriteString("\n" + boldStyle.Render("Forms:") + "\n")
-				detailBuilder.WriteString(res.Forms + "\n")
+			
+			detailBuilder.WriteString(mutedStyle.Render(strings.Repeat("─", detailWidth-6)) + "\n\n")
+
+			// Translation Section
+			if res.Translation != "" {
+				detailBuilder.WriteString(boldStyle.Render("Translations:") + "\n")
+				translations := strings.Split(res.Translation, ";")
+				for _, t := range translations {
+					detailBuilder.WriteString("  " + strings.TrimSpace(t) + "\n")
+				}
+				detailBuilder.WriteString("\n")
 			}
+			
+			// Word Forms
+			if res.Forms != "" {
+				detailBuilder.WriteString(boldStyle.Render("Word Forms:") + "\n")
+				detailBuilder.WriteString("  " + res.Forms + "\n\n")
+			}
+			
+			// Examples
 			if len(res.Examples) > 0 {
-				detailBuilder.WriteString("\n" + boldStyle.Render("Examples:") + "\n")
+				detailBuilder.WriteString(boldStyle.Render("Examples:") + "\n")
 				for _, ex := range res.Examples {
-					detailBuilder.WriteString("• " + ex + "\n")
+					detailBuilder.WriteString("  • " + ex + "\n")
 				}
 			}
 		}
 
 		detailLines := strings.Split(detailBuilder.String(), "\n")
+		// Clean up trailing empty line from splitting if present
+		if len(detailLines) > 0 && detailLines[len(detailLines)-1] == "" {
+			detailLines = detailLines[:len(detailLines)-1]
+		}
 		m.dictionaryDetailTotalLines = len(detailLines)
 
 		// Adjust detail scroll
@@ -193,13 +239,23 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			m.dictionaryDetailScroll = maxInt(0, m.dictionaryDetailTotalLines-maxResults)
 		}
 
-		var visibleDetail strings.Builder
-		for i := m.dictionaryDetailScroll; i < m.dictionaryDetailScroll+maxResults && i < len(detailLines); i++ {
-			visibleDetail.WriteString(detailLines[i] + "\n")
+		// Detail content width (accounting for border and padding)
+		detailContentWidth := detailWidth - 5
+		if detailContentWidth < 10 {
+			detailContentWidth = 10
 		}
 
-		// Detail scrollbar
-		detailPanelContent := visibleDetail.String()
+		var visibleDetailBuilder strings.Builder
+		for i := m.dictionaryDetailScroll; i < m.dictionaryDetailScroll+maxResults && i < len(detailLines); i++ {
+			// Pad detail lines so scrollbar aligns perfectly on the right
+			visibleDetailBuilder.WriteString(padString(detailLines[i], detailContentWidth) + "\n")
+		}
+		// Fill remaining vertical space in detail panel to match list height
+		for i := len(detailLines) - m.dictionaryDetailScroll; i < maxResults; i++ {
+			visibleDetailBuilder.WriteString(strings.Repeat(" ", detailContentWidth) + "\n")
+		}
+
+		detailPanelContent := visibleDetailBuilder.String()
 		if m.dictionaryDetailTotalLines > maxResults {
 			var sb strings.Builder
 			thumbStart, thumbHeight := scrollbarThumb(m.dictionaryDetailTotalLines, maxResults, m.dictionaryDetailScroll)
@@ -209,13 +265,22 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 				if i >= thumbStart && i < thumbStart+thumbHeight {
 					char = "┃"
 				}
-				sb.WriteString(lipgloss.NewStyle().Foreground(colorPanel).Render(char) + lines[i] + "\n")
+				sb.WriteString(lines[i] + lipgloss.NewStyle().Foreground(colorPanel).Render(char) + "\n")
+			}
+			detailPanelContent = sb.String()
+		} else {
+			// Append an empty vertical line for alignment when no scrollbar is shown
+			var sb strings.Builder
+			lines := strings.Split(detailPanelContent, "\n")
+			for i := 0; i < maxResults && i < len(lines); i++ {
+				sb.WriteString(lines[i] + " \n")
 			}
 			detailPanelContent = sb.String()
 		}
 
 		detailPanel := lipgloss.NewStyle().
 			Border(lipgloss.NormalBorder(), false, false, false, true).
+			BorderForeground(colorPanel).
 			Padding(0, 2).
 			Width(detailWidth).
 			Height(maxResults).
