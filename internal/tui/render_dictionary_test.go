@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"deutsch-tui/internal/core"
 )
@@ -35,6 +36,21 @@ func TestHighlightQuery(t *testing.T) {
 			text:     "banana",
 			query:    "",
 			expected: "banana",
+		},
+		{
+			text:     "Äpfel und Apfel",
+			query:    "äpf",
+			expected: style.Render("Äpf") + "el und Apfel",
+		},
+		{
+			text:     "Käsekuchen",
+			query:    "KÄSE",
+			expected: style.Render("Käse") + "kuchen",
+		},
+		{
+			text:     "Straße",
+			query:    "ß",
+			expected: "Stra" + style.Render("ß") + "e",
 		},
 	}
 
@@ -95,5 +111,29 @@ func TestRenderDictionary(t *testing.T) {
 
 	if strings.Contains(plainView, "Forms:") {
 		t.Errorf("expected compact view NOT to contain detail panel")
+	}
+}
+
+func TestDictionaryDetailScrollClampsToVisibleRows(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.width = 100
+	m.height = 40
+	m.breakpoint = BreakpointWide
+	m.dictionaryDetailTotalLines = 40
+
+	maxScroll := maxInt(0, m.dictionaryDetailTotalLines-dictionaryVisibleRows(m.activeViewContentLayout()))
+	for i := 0; i < 100; i++ {
+		cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: tea.KeyDown, Mod: tea.ModShift})
+		if cmd != nil {
+			t.Fatal("shift+down should not return a command")
+		}
+		if !handled {
+			t.Fatal("shift+down should be handled")
+		}
+	}
+
+	if m.dictionaryDetailScroll != maxScroll {
+		t.Fatalf("dictionaryDetailScroll = %d, want %d", m.dictionaryDetailScroll, maxScroll)
 	}
 }

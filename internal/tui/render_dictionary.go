@@ -38,25 +38,38 @@ func highlightQuery(text, query string, style lipgloss.Style) string {
 	if query == "" {
 		return text
 	}
-	lowerText := strings.ToLower(text)
-	lowerQuery := strings.ToLower(query)
+	textRunes := []rune(text)
+	lowerTextRunes := []rune(strings.ToLower(text))
+	lowerQueryRunes := []rune(strings.ToLower(query))
+	if len(lowerQueryRunes) == 0 || len(lowerQueryRunes) > len(lowerTextRunes) {
+		return text
+	}
 
 	var result strings.Builder
 	pos := 0
-	for {
-		idx := strings.Index(lowerText[pos:], lowerQuery)
-		if idx == -1 {
-			result.WriteString(text[pos:])
+	for pos < len(lowerTextRunes) {
+		matchStart := -1
+		for i := pos; i <= len(lowerTextRunes)-len(lowerQueryRunes); i++ {
+			matched := true
+			for j := range lowerQueryRunes {
+				if lowerTextRunes[i+j] != lowerQueryRunes[j] {
+					matched = false
+					break
+				}
+			}
+			if matched {
+				matchStart = i
+				break
+			}
+		}
+		if matchStart == -1 {
+			result.WriteString(string(textRunes[pos:]))
 			break
 		}
-		// Write text before match
-		result.WriteString(text[pos : pos+idx])
-		// Write matched text styled
-		matchStart := pos + idx
-		matchEnd := matchStart + len(query)
-		matchedText := text[matchStart:matchEnd]
-		result.WriteString(style.Render(matchedText))
 
+		result.WriteString(string(textRunes[pos:matchStart]))
+		matchEnd := matchStart + len(lowerQueryRunes)
+		result.WriteString(style.Render(string(textRunes[matchStart:matchEnd])))
 		pos = matchEnd
 	}
 	return result.String()
@@ -68,6 +81,14 @@ func padString(s string, width int) string {
 		return string(runes[:width])
 	}
 	return s + strings.Repeat(" ", width-len(runes))
+}
+
+func dictionaryVisibleRows(layout viewportLayout) int {
+	rows := layout.Height - 10
+	if rows < 1 {
+		return 1
+	}
+	return rows
 }
 
 func (m *Model) renderDictionary(layout viewportLayout) string {
@@ -106,10 +127,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		return b.String()
 	}
 
-	maxResults := layout.Height - 10
-	if maxResults < 1 {
-		maxResults = 1
-	}
+	maxResults := dictionaryVisibleRows(layout)
 
 	// Adjust scroll for list
 	if m.dictionaryCursor < m.dictionaryScroll {
@@ -184,10 +202,10 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		var detailBuilder strings.Builder
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 			res := m.dictionaryResults[m.dictionaryCursor]
-			
+
 			// Modern styled header for detail view
 			detailBuilder.WriteString(titleStyle.Render(res.Word) + "\n")
-			
+
 			// Part of speech / Gender tags
 			meta := ""
 			if res.WordClass != "" {
@@ -199,7 +217,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			if meta != "" {
 				detailBuilder.WriteString(meta + "\n")
 			}
-			
+
 			detailBuilder.WriteString(mutedStyle.Render(strings.Repeat("─", detailWidth-6)) + "\n\n")
 
 			// Translation Section
@@ -211,13 +229,13 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 				}
 				detailBuilder.WriteString("\n")
 			}
-			
+
 			// Word Forms
 			if res.Forms != "" {
 				detailBuilder.WriteString(boldStyle.Render("Word Forms:") + "\n")
 				detailBuilder.WriteString("  " + res.Forms + "\n\n")
 			}
-			
+
 			// Examples
 			if len(res.Examples) > 0 {
 				detailBuilder.WriteString(boldStyle.Render("Examples:") + "\n")

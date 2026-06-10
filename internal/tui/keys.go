@@ -1866,7 +1866,8 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "shift+down":
-		if m.dictionaryDetailScroll < m.dictionaryDetailTotalLines-5 { // 5 is a safe buffer
+		maxScroll := maxInt(0, m.dictionaryDetailTotalLines-dictionaryVisibleRows(m.activeViewContentLayout()))
+		if m.dictionaryDetailScroll < maxScroll {
 			m.dictionaryDetailScroll++
 		}
 		return nil, true

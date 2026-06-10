@@ -8,6 +8,9 @@ Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
 
+- [x] **Dictionary Unicode Highlighting Fix:** Reworked `highlightQuery` in `internal/tui/render_dictionary.go` to match and slice by runes instead of byte offsets, preserving German multi-byte characters like `Ä`, `ä`, and `ß` in styled Dictionary result highlights. Added regression coverage in `render_dictionary_test.go`.
+- [x] **Dictionary Detail Scroll Clamp:** Replaced the Dictionary detail panel's hardcoded `shift+down` scroll buffer with the actual visible row count derived from `activeViewContentLayout()`, preventing detail scroll state from drifting beyond the renderable panel. Added a unit test for the clamp.
+- [x] **B1 Email Phone Communication Deck:** Added a 40-note embedded TSV deck covering practical email, office message, and phone-call vocabulary/phrases. Added registry coverage to verify the deck loads with email and phone tagged notes.
 - [x] **Review State Reset & Deck Switching Fix:** Added `resetReviewState()` helper in `internal/tui/handlers.go` to consolidate review state cleanup (reveal, typing, fix, focus, hint, grammar). Refactored `up`/`down` navigation in Review view to use it. Fixed deck switching (`[`/`]`) on Review view to reset review state and update status, preventing stale card state when switching decks mid-review.
 - [x] **Contextual Help Hints for Practice Sub-views:** Added footer help hints for all 8 practice sub-views in `internal/tui/model.go` (Gender, Conjugation, Case, Adjective, Preposition, Plural, Separable, Numbers), plus added missing hints for Statistics (`x` export), Cram active (`q` quit), and Cram idle (`Enter` start).
 - [x] **Dictionary in Dashboard Quick Actions:** Added "Dictionary" (`/`) to the Quick Actions row on the Dashboard for one-click access alongside Review, Practice, Cram, etc.
@@ -69,9 +72,9 @@ None.
 
 ## Last Verified
 
-- `go test ./...` expected to pass (14 packages).
-- `go vet ./...` expected to pass.
-- E2E tests not run (Go not on default PATH in this environment).
+- `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` passed on 2026-06-10: Go tests, `go vet`, TUI smoke, binary build, and 346 E2E tests.
+- `/opt/homebrew/bin/go test ./internal/content` passed.
+- `/opt/homebrew/bin/go test ./internal/tui` passed.
 
 ## Blockers
 

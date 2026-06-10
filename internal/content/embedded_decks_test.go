@@ -34,6 +34,40 @@ func TestUrbanMobilityDeckIsEmbedded(t *testing.T) {
 	}
 }
 
+func TestEmailPhoneCommunicationDeckIsEmbedded(t *testing.T) {
+	deck, err := DeckByID("b1_email_phone_communication")
+	if err != nil {
+		t.Fatalf("DeckByID failed: %v", err)
+	}
+	if deck == nil {
+		t.Fatal("b1_email_phone_communication deck was not loaded")
+	}
+	if deck.Name != "b1-email-phone-communication" {
+		t.Fatalf("deck.Name = %q, want b1-email-phone-communication", deck.Name)
+	}
+	if len(deck.Notes) < 40 {
+		t.Fatalf("len(deck.Notes) = %d, want at least 40", len(deck.Notes))
+	}
+
+	var hasEmail, hasPhone bool
+	for _, note := range deck.Notes {
+		for _, tag := range note.Tags {
+			if tag == "email" {
+				hasEmail = true
+			}
+			if tag == "phone" {
+				hasPhone = true
+			}
+		}
+		if len(note.Cards) == 0 {
+			t.Fatalf("note %q has no generated cards", note.ID)
+		}
+	}
+	if !hasEmail || !hasPhone {
+		t.Fatalf("deck should include email and phone tagged notes; hasEmail=%v hasPhone=%v", hasEmail, hasPhone)
+	}
+}
+
 func TestEmbeddedDecksDoNotLeakHeadersOrLiteralFieldsIntoCards(t *testing.T) {
 	decks, err := AllDecks()
 	if err != nil {

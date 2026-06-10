@@ -1,5 +1,17 @@
 # Done Backlog
 
+## 2026-06-10 (Dictionary Reliability & Communication Content)
+
+### Dictionary Reliability
+- **Rune-Safe Search Highlighting:** Reworked Dictionary result highlighting to match and slice by runes instead of byte offsets, preserving German multi-byte characters such as `Ä`, `ä`, and `ß` when applying styled highlights.
+- **Detail Scroll Clamp:** Updated `Shift+Down` detail-panel scrolling to stop at the actual rendered Dictionary panel height instead of a hardcoded buffer, keeping keyboard scroll state aligned with the visible panel.
+
+### Content Expansion
+- **B1 Email Phone Communication Deck:** Added a 40-note embedded deck for practical email, office-message, and phone-call vocabulary/phrases, with registry tests verifying the deck and email/phone tags load correctly.
+
+### Verification
+- `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` passed: Go tests, `go vet`, TUI smoke, binary build, and 346 E2E tests.
+
 ## 2026-06-07 (Dictionary Fixes & UX Polish)
 
 ### Dictionary Improvements

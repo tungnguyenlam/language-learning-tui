@@ -1,0 +1,43 @@
+#separator:tab
+#html:false
+#deck:B1 Email Phone Communication
+b1-email-betreff	der Betreff	subject line	Plural: die Betreffzeilen	b1,email,noun
+b1-email-anhang	der Anhang	attachment	Plural: die Anhänge	b1,email,noun
+b1-email-datei	die Datei	file	Plural: die Dateien	b1,email,noun
+b1-email-empfaenger	der Empfänger	recipient	Plural: die Empfänger	b1,email,noun
+b1-email-absender	der Absender	sender	Plural: die Absender	b1,email,noun
+b1-email-kopie	die Kopie	copy	Plural: die Kopien	b1,email,noun
+b1-email-eingang	der Posteingang	inbox	Plural: die Posteingänge	b1,email,noun
+b1-email-entwurf	der Entwurf	draft	Plural: die Entwürfe	b1,email,noun
+b1-email-weiterleiten	eine Nachricht weiterleiten	to forward a message	Ich leite die E-Mail an das Team weiter.	b1,email,verb
+b1-email-beantworten	eine E-Mail beantworten	to answer an email	Bitte beantworten Sie die E-Mail bis Freitag.	b1,email,verb
+b1-email-schicken	eine Nachricht schicken	to send a message	Ich schicke Ihnen die Unterlagen heute.	b1,email,verb
+b1-email-erhalten	eine Nachricht erhalten	to receive a message	Wir haben Ihre Anfrage erhalten.	b1,email,verb
+b1-email-bestaetigen	einen Termin bestätigen	to confirm an appointment	Könnten Sie den Termin bitte bestätigen?	b1,email,verb
+b1-email-verschieben	einen Termin verschieben	to reschedule an appointment	Ich muss unseren Termin leider verschieben.	b1,email,verb
+b1-email-absagen	einen Termin absagen	to cancel an appointment	Der Termin wurde kurzfristig abgesagt.	b1,email,verb
+b1-email-erinnerung	die Erinnerung	reminder	Plural: die Erinnerungen	b1,email,noun
+b1-email-rueckmeldung	die Rückmeldung	feedback or response	Ich freue mich auf Ihre Rückmeldung.	b1,email,noun
+b1-email-anfrage	die Anfrage	inquiry	Plural: die Anfragen	b1,email,noun
+b1-email-unterlagen	die Unterlagen	documents	Plural only in this business context	b1,email,noun
+b1-email-frist	die Frist	deadline	Plural: die Fristen	b1,email,noun
+b1-email-dringend	dringend	urgent	Das ist dringend und muss heute erledigt werden.	b1,email,adjective
+b1-email-vertraulich	vertraulich	confidential	Bitte behandeln Sie diese Information vertraulich.	b1,email,adjective
+b1-email-zustaendig	zuständig	responsible or in charge	Wer ist dafür zuständig?	b1,email,adjective
+b1-email-erreichbar	erreichbar	reachable	Ich bin morgen ab 10 Uhr erreichbar.	b1,phone,adjective
+b1-phone-anruf	der Anruf	phone call	Plural: die Anrufe	b1,phone,noun
+b1-phone-nachricht	die Nachricht	message	Plural: die Nachrichten	b1,phone,noun
+b1-phone-mailbox	die Mailbox	voicemail	Plural: die Mailboxen	b1,phone,noun
+b1-phone-rueckruf	der Rückruf	callback	Plural: die Rückrufe	b1,phone,noun
+b1-phone-durchwahl	die Durchwahl	extension number	Plural: die Durchwahlen	b1,phone,noun
+b1-phone-leitung	die Leitung	line or connection	Die Leitung ist leider schlecht.	b1,phone,noun
+b1-phone-verbinden	jemanden verbinden	to connect someone	Ich verbinde Sie mit Frau Müller.	b1,phone,verb
+b1-phone-erreichen	jemanden erreichen	to reach someone	Ich konnte Herrn Becker nicht erreichen.	b1,phone,verb
+b1-phone-zurueckrufen	zurückrufen	to call back	Ich rufe Sie später zurück.	b1,phone,verb
+b1-phone-hinterlassen	eine Nachricht hinterlassen	to leave a message	Möchten Sie eine Nachricht hinterlassen?	b1,phone,verb
+b1-phone-wiederholen	etwas wiederholen	to repeat something	Könnten Sie das bitte wiederholen?	b1,phone,verb
+b1-phone-buchstabieren	etwas buchstabieren	to spell something	Könnten Sie Ihren Namen buchstabieren?	b1,phone,verb
+b1-phone-hoeren	Ich kann Sie schlecht hören	I can barely hear you	Useful phone phrase	b1,phone,phrase
+b1-phone-moment	Einen Moment bitte	One moment please	Useful phone phrase	b1,phone,phrase
+b1-phone-falsch	Da haben Sie sich verwählt	You have the wrong number	Useful phone phrase	b1,phone,phrase
+b1-phone-ausrichten	Ich richte es ihm aus	I will pass it on to him	Useful office phone phrase	b1,phone,phrase
