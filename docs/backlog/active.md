@@ -8,9 +8,10 @@ Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
 
-- [x] **Scheduler Ease Bug Fix:** Fixed `stateFromFSRS` in `internal/srs/scheduler.go` that incorrectly mapped `card.Difficulty` to both `Difficulty` and `Ease` fields of `ReviewState`. Since the FSRS `Card` struct has no `Ease` field, the previous Ease value is now preserved from the prior `ReviewState` rather than being overwritten with the FSRS difficulty value. This prevented corruption of the display-only ease metric shown in the Review view.
-- [x] **Dead Code Removal:** Removed 18 lines of unreachable code in `NewModelWithOptions` (`internal/tui/model.go`) where a duplicate template initialization block could never execute because `templates` is always either nil (replaced with defaults above) or a user-provided non-empty map.
-- [x] **applyOverlay Panic Fix:** Fixed a potential string slice out-of-bounds panic in `applyOverlay` (`internal/tui/model.go`). When the overlay start position exceeded the length of a base line, slicing `baseLines[startY+i][:startX]` would panic. Added proper clamping of start and end positions to base line length bounds.
+- [x] **applyOverlay UTF-8 Corruption Fix:** Fixed `applyOverlay` (`internal/tui/model.go:1417`) which sliced overlay strings by byte offset while content may contain multi-byte UTF-8 characters (umlauts, emojis). Changed to use `[]rune` conversion so character boundaries are respected during overlay placement, preventing garbled characters in confirmation dialogs.
+- [x] **State Leak Fixes — typingMode, showCardInfo, fixProposal:** Fixed `updateView` (`internal/tui/handlers.go:36`) to reset `typingMode`, `typedAnswer`, `typingChecked`, `typingCorrect`, `showHint`, `showCardInfo`, `showGrammarHint`, `focusMode`, and all `fix*` fields when switching views. Previously, typing mode would leak across views via number-key or tab navigation, causing printable keys to be swallowed. Also fixed card up/down navigation in Review view (`internal/tui/keys.go:167-186`) to reset `typingMode`/`showCardInfo` state so typed answers don't carry to adjacent cards.
+- [x] **Cram Session State Leaks:** Fixed `updateView` Cram entry (`internal/tui/handlers.go:64`) to reset `cramActive`, `cramRevealed`, `revealState`, and `revealProgress` so re-entering Cram via number keys doesn't land in a stale active session. Also fixed cram exit handler (`internal/tui/keys.go:1124`) to reset `cramRevealed`, `revealState`, and `revealProgress` when exiting via `q`/`esc`.
+- [x] **Practice Hub Numbers Trainer Mouse Click:** Added missing `case "numbers"` to the `practice-` hitbox handler in `internal/tui/hitboxes.go:93` so clicking the "Numbers & Time" button in the Practice Hub actually activates the trainer.
 - [x] **Dictionary UX & UI Enhancements:** Implemented a two-column layout for the Dictionary view (list + details), added support for scrolling through search results with PgUp/PgDn, and introduced a "Quick Add" feature (ctrl+a) to instantly save dictionary entries to a dedicated deck. Improved search robustness with a request ID mechanism to prevent race conditions.
 - [x] **Dictionary Audio & Find in Decks:** Added audio pronunciation to dictionary entries (`ctrl+p`), find in decks search (`ctrl+f`), and gender colorization (`{m}` blue, `{f}` pink, `{n}` green) for better visual parsing. Fixes to E2E tests included.
 - [x] **Local TUI Dictionary & Seeding:** Implemented a new "Local TUI" dictionary provider that integrates lookups directly into the terminal. Updated standard content seeding to populate the local dictionary from flashcard notes. Refined the Dictionary view with a styled search bar and better interactivity. Added a robust E2E test suite for verification.
@@ -61,8 +62,9 @@ None.
 
 ## Last Verified
 
-- `go test ./...` passed (14 packages, 0 failures) on 2026-06-10 (Scheduler bug fix, dead code removal, overlay panic fix).
+- `go test ./...` passed (14 packages, 0 failures) on 2026-06-10 (state leak fixes, overlay UTF-8 fix, numbers trainer hitbox).
 - `go vet ./...` passed.
+- `gofmt -l` clean (no unformatted files).
 - E2E tests not run (Go not on default PATH in this environment).
 
 ## Blockers

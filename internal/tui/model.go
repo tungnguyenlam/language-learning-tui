@@ -1433,13 +1433,14 @@ func (m *Model) applyOverlay(base, overlay string) string {
 		}
 		base := baseLines[startY+i]
 		lineLen := lipgloss.Width(line)
-		baseLen := len(base)
+		baseRunes := []rune(base)
+		baseLen := len(baseRunes)
 		clampedStart := minInt(startX, baseLen)
 		end := minInt(startX+lineLen, baseLen)
 		if end < clampedStart {
 			end = clampedStart
 		}
-		baseLines[startY+i] = base[:clampedStart] + line + base[end:]
+		baseLines[startY+i] = string(baseRunes[:clampedStart]) + line + string(baseRunes[end:])
 	}
 
 	return strings.Join(baseLines, "\n")

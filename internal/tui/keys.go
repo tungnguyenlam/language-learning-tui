@@ -171,6 +171,11 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 				m.resetMCQState()
 				m.clearReviewHistory()
 				m.showHint = false
+				m.showCardInfo = false
+				m.typingMode = false
+				m.typedAnswer = ""
+				m.typingChecked = false
+				m.typingCorrect = false
 			}
 			return m, nil
 		}
@@ -181,6 +186,11 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 				m.resetMCQState()
 				m.clearReviewHistory()
 				m.showHint = false
+				m.showCardInfo = false
+				m.typingMode = false
+				m.typedAnswer = ""
+				m.typingChecked = false
+				m.typingCorrect = false
 			}
 			return m, nil
 		}
@@ -1123,6 +1133,9 @@ func (m *Model) updateCramKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return m.gradeCramCard(core.GradeEasy), true
 		case "q", "esc":
 			m.cramActive = false
+			m.cramRevealed = false
+			m.revealState = RevealIdle
+			m.revealProgress = 0
 			return nil, true
 		}
 		return nil, false

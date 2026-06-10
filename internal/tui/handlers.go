@@ -45,6 +45,19 @@ func (m *Model) updateView(view View) tea.Cmd {
 	m.editingImportPath = false
 	m.editingExportTag = false
 	m.editingTemplate = false
+	m.typingMode = false
+	m.typedAnswer = ""
+	m.typingChecked = false
+	m.typingCorrect = false
+	m.showHint = false
+	m.showCardInfo = false
+	m.showGrammarHint = false
+	m.focusMode = false
+	m.fixProposal = nil
+	m.fixOldNote = nil
+	m.fixingCard = false
+	m.fixCardID = ""
+	m.fixError = ""
 
 	if view == ViewImport {
 		m.exportDeckID = m.deck.ID
@@ -66,6 +79,10 @@ func (m *Model) updateView(view View) tea.Cmd {
 		m.cramCursor = 0
 		m.cramReviewed = 0
 		m.cramCorrect = 0
+		m.cramActive = false
+		m.cramRevealed = false
+		m.revealState = RevealIdle
+		m.revealProgress = 0
 		return m.loadCramCards()
 	}
 	if view == ViewPractice {
