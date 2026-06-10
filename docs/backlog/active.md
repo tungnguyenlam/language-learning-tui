@@ -1,6 +1,6 @@
 # Active Backlog
 
-Last updated: 2026-06-06
+Last updated: 2026-06-10
 
 ## Current Milestone
 
@@ -8,6 +8,9 @@ Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
 
+- [x] **Scheduler Ease Bug Fix:** Fixed `stateFromFSRS` in `internal/srs/scheduler.go` that incorrectly mapped `card.Difficulty` to both `Difficulty` and `Ease` fields of `ReviewState`. Since the FSRS `Card` struct has no `Ease` field, the previous Ease value is now preserved from the prior `ReviewState` rather than being overwritten with the FSRS difficulty value. This prevented corruption of the display-only ease metric shown in the Review view.
+- [x] **Dead Code Removal:** Removed 18 lines of unreachable code in `NewModelWithOptions` (`internal/tui/model.go`) where a duplicate template initialization block could never execute because `templates` is always either nil (replaced with defaults above) or a user-provided non-empty map.
+- [x] **applyOverlay Panic Fix:** Fixed a potential string slice out-of-bounds panic in `applyOverlay` (`internal/tui/model.go`). When the overlay start position exceeded the length of a base line, slicing `baseLines[startY+i][:startX]` would panic. Added proper clamping of start and end positions to base line length bounds.
 - [x] **Dictionary UX & UI Enhancements:** Implemented a two-column layout for the Dictionary view (list + details), added support for scrolling through search results with PgUp/PgDn, and introduced a "Quick Add" feature (ctrl+a) to instantly save dictionary entries to a dedicated deck. Improved search robustness with a request ID mechanism to prevent race conditions.
 - [x] **Dictionary Audio & Find in Decks:** Added audio pronunciation to dictionary entries (`ctrl+p`), find in decks search (`ctrl+f`), and gender colorization (`{m}` blue, `{f}` pink, `{n}` green) for better visual parsing. Fixes to E2E tests included.
 - [x] **Local TUI Dictionary & Seeding:** Implemented a new "Local TUI" dictionary provider that integrates lookups directly into the terminal. Updated standard content seeding to populate the local dictionary from flashcard notes. Refined the Dictionary view with a styled search bar and better interactivity. Added a robust E2E test suite for verification.
@@ -58,7 +61,9 @@ None.
 
 ## Last Verified
 
-- `./scripts/verify.sh` passed with 0 test failures (345 passed) on 2026-06-06 (Local TUI Dictionary).
+- `go test ./...` passed (14 packages, 0 failures) on 2026-06-10 (Scheduler bug fix, dead code removal, overlay panic fix).
+- `go vet ./...` passed.
+- E2E tests not run (Go not on default PATH in this environment).
 
 ## Blockers
 

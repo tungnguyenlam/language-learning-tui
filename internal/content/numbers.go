@@ -105,12 +105,35 @@ func GetNumberExercises() []NumberExercise {
 		})
 	}
 
+	// Year exercises (1900-2025)
+	for i := 0; i < 15; i++ {
+		year := r.Intn(126) + 1900
+		exercises = append(exercises, NumberExercise{
+			Question: fmt.Sprintf("Year %d", year),
+			Answer:   formatGermanYear(year),
+			Help:     "Year pronunciation",
+		})
+	}
+
 	// Shuffle
 	r.Shuffle(len(exercises), func(i, j int) {
 		exercises[i], exercises[j] = exercises[j], exercises[i]
 	})
 
 	return exercises
+}
+
+func formatGermanYear(y int) string {
+	if y < 1100 || y >= 2000 {
+		return formatGermanNumber(y)
+	}
+	hundreds := y / 100
+	rem := y % 100
+	hStr := formatGermanNumber(hundreds) + "hundert"
+	if rem == 0 {
+		return hStr
+	}
+	return hStr + formatGermanNumber(rem)
 }
 
 func formatGermanNumber(n int) string {

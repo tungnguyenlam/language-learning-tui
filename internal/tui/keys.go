@@ -93,19 +93,15 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if m.textInputActive() {
 		m.logger.Debug("Text input active, trapping key: %s", key)
 		// Only allow certain keys to escape trapping
-		if key != "tab" && key != "shift+tab" {
+		if key != "tab" && key != "shift+tab" && key != "left" && key != "right" && key != "up" && key != "down" {
 			// If it's a view-specific key for the active editing view, handle it
 			if cmd, handled := m.updateActiveViewKey(msg); handled {
 				m.logger.Debug("Key %s handled by active view despite text input", key)
 				return m, cmd
 			}
 
-			if m.activeView == ViewDictionary && (key == "left" || key == "right") {
-				// Allow left/right to fall through for view navigation in Dictionary
-			} else {
-				m.logger.Debug("Key %s trapped by text input mode", key)
-				return m, nil // Trap everything else
-			}
+			m.logger.Debug("Key %s trapped by text input mode", key)
+			return m, nil // Trap everything else
 		}
 	}
 
@@ -121,14 +117,14 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		if cmd, handled := m.updateActiveViewKey(msg); handled {
 			return m, cmd
 		}
-		if !m.textInputActive() || m.activeView == ViewDictionary {
+		if !m.textInputActive() || (m.activeView == ViewDictionary && (key == "tab" || key == "right")) {
 			return m, m.nextViewCmd()
 		}
 	case "shift+tab", "left", "w":
 		if cmd, handled := m.updateActiveViewKey(msg); handled {
 			return m, cmd
 		}
-		if !m.textInputActive() || m.activeView == ViewDictionary {
+		if !m.textInputActive() || (m.activeView == ViewDictionary && (key == "shift+tab" || key == "left")) {
 			return m, m.previousViewCmd()
 		}
 	case "[":
@@ -1843,14 +1839,26 @@ func (m *Model) updateConjugationKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	key := msg.String()
 	switch key {
-	case "up", "k":
+	case "up":
 		if m.dictionaryCursor > 0 {
 			m.dictionaryCursor--
+			m.dictionaryDetailScroll = 0
 		}
 		return nil, true
-	case "down", "j":
+	case "down":
 		if m.dictionaryCursor < len(m.dictionaryResults)-1 {
 			m.dictionaryCursor++
+			m.dictionaryDetailScroll = 0
+		}
+		return nil, true
+	case "shift+up":
+		if m.dictionaryDetailScroll > 0 {
+			m.dictionaryDetailScroll--
+		}
+		return nil, true
+	case "shift+down":
+		if m.dictionaryDetailScroll < m.dictionaryDetailTotalLines-5 { // 5 is a safe buffer
+			m.dictionaryDetailScroll++
 		}
 		return nil, true
 	case "pgdown":
@@ -1861,12 +1869,14 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		if m.dictionaryCursor < 0 {
 			m.dictionaryCursor = 0
 		}
+		m.dictionaryDetailScroll = 0
 		return nil, true
 	case "pgup":
 		m.dictionaryCursor -= 10
 		if m.dictionaryCursor < 0 {
 			m.dictionaryCursor = 0
 		}
+		m.dictionaryDetailScroll = 0
 		return nil, true
 	case "ctrl+p":
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
@@ -1902,7 +1912,7 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return m.startDrafting(), true
 		}
 		return nil, true
-	case "backspace":
+	case "backspace", "\x7f", "\x08":
 		if len(m.dictionarySearch) > 0 {
 			m.dictionarySearch = trimLastRune(m.dictionarySearch)
 			return m.searchDictionary(), true
@@ -1918,11 +1928,11 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, false
 	}
 
-	if len(key) == 1 {
-		m.dictionarySearch += key
+	if ch, ok := singlePrintableInput(key); ok {
+		m.dictionarySearch += ch
 		return m.searchDictionary(), true
 	}
-	if key == "space" || key == " " {
+	if key == "space" {
 		m.dictionarySearch += " "
 		return m.searchDictionary(), true
 	}

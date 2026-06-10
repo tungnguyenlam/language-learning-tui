@@ -9,6 +9,7 @@ import (
 
 	"deutsch-tui/internal/app"
 	"deutsch-tui/internal/content"
+	"deutsch-tui/internal/core"
 	"deutsch-tui/internal/srs"
 	"deutsch-tui/internal/storage/sqlite"
 	"deutsch-tui/internal/tui"
@@ -64,10 +65,25 @@ func main() {
 
 	decks, err := store.Decks(context.Background())
 	if err == nil && len(decks) == 0 {
-		if err := store.UpsertDeck(context.Background(), content.StarterDeck()); err != nil {
+		starter := content.StarterDeck()
+		if err := store.UpsertDeck(context.Background(), starter); err != nil {
 			leveledLogger.Error("upsert starter deck: %v", err)
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
+		}
+
+		// Also seed dictionary with starter content
+		var dictEntries []core.DictionaryEntry
+		for _, note := range starter.Notes {
+			dictEntries = append(dictEntries, core.DictionaryEntry{
+				ID:          note.ID,
+				Word:        note.Front,
+				Translation: note.Back,
+				Tags:        note.Tags,
+			})
+		}
+		if err := store.ImportEntries(context.Background(), dictEntries); err != nil {
+			leveledLogger.Error("seed starter dictionary: %v", err)
 		}
 	}
 	if *smoke {

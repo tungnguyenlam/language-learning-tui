@@ -34,6 +34,7 @@ func renderGender(gender string) string {
 }
 
 func highlightQuery(text, query string, style lipgloss.Style) string {
+	query = strings.TrimSpace(query)
 	if query == "" {
 		return text
 	}
@@ -90,9 +91,9 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 	// Results
 	if len(m.dictionaryResults) == 0 {
 		if m.dictionarySearch != "" {
-			b.WriteString(mutedStyle.Render("No results found."))
+			b.WriteString(mutedStyle.Render("No results found. Hint: Seed standard content in Import view [5] by pressing 'S' to populate the local dictionary."))
 		} else {
-			b.WriteString(mutedStyle.Render("Search dictionary (local dict.cc)."))
+			b.WriteString(mutedStyle.Render("Search dictionary (local dict.cc). Use 'S' in Import view to seed standard content."))
 		}
 		return b.String()
 	}
@@ -102,7 +103,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		maxResults = 1
 	}
 
-	// Adjust scroll
+	// Adjust scroll for list
 	if m.dictionaryCursor < m.dictionaryScroll {
 		m.dictionaryScroll = m.dictionaryCursor
 	}
@@ -113,7 +114,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 	// Two-column layout if wide enough
 	if layout.Width > 80 {
 		listWidth := layout.Width / 2
-		detailWidth := layout.Width - listWidth - 4
+		detailWidth := layout.Width - listWidth - 6
 
 		var listBuilder strings.Builder
 		for i := m.dictionaryScroll; i < len(m.dictionaryResults) && i < m.dictionaryScroll+maxResults; i++ {
@@ -125,15 +126,31 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			highlightedWord := highlightQuery(res.Word, m.dictionarySearch, dictHighlightStyle)
 			line := fmt.Sprintf("%s%s", prefix, highlightedWord)
 			if i == m.dictionaryCursor {
-				listBuilder.WriteString(editStyle.Render(lipgloss.NewStyle().Width(listWidth).MaxHeight(1).Render(line)) + "\n")
+				listBuilder.WriteString(editStyle.Render(lipgloss.NewStyle().Width(listWidth-2).MaxHeight(1).Render(line)) + "\n")
 			} else {
-				listBuilder.WriteString(lipgloss.NewStyle().Width(listWidth).MaxHeight(1).Render(line) + "\n")
+				listBuilder.WriteString(lipgloss.NewStyle().Width(listWidth-2).MaxHeight(1).Render(line) + "\n")
 			}
 		}
 
 		// Fill remaining space in list
 		for i := len(m.dictionaryResults) - m.dictionaryScroll; i < maxResults; i++ {
 			listBuilder.WriteString("\n")
+		}
+
+		// List scrollbar
+		listWithScroll := listBuilder.String()
+		if len(m.dictionaryResults) > maxResults {
+			var sb strings.Builder
+			thumbStart, thumbHeight := scrollbarThumb(len(m.dictionaryResults), maxResults, m.dictionaryScroll)
+			lines := strings.Split(listBuilder.String(), "\n")
+			for i := 0; i < maxResults && i < len(lines); i++ {
+				char := "│"
+				if i >= thumbStart && i < thumbStart+thumbHeight {
+					char = "┃"
+				}
+				sb.WriteString(lines[i] + lipgloss.NewStyle().Foreground(colorPanel).Render(char) + "\n")
+			}
+			listWithScroll = sb.String()
 		}
 
 		var detailBuilder strings.Builder
@@ -168,14 +185,43 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			}
 		}
 
+		detailLines := strings.Split(detailBuilder.String(), "\n")
+		m.dictionaryDetailTotalLines = len(detailLines)
+
+		// Adjust detail scroll
+		if m.dictionaryDetailScroll > m.dictionaryDetailTotalLines-maxResults {
+			m.dictionaryDetailScroll = maxInt(0, m.dictionaryDetailTotalLines-maxResults)
+		}
+
+		var visibleDetail strings.Builder
+		for i := m.dictionaryDetailScroll; i < m.dictionaryDetailScroll+maxResults && i < len(detailLines); i++ {
+			visibleDetail.WriteString(detailLines[i] + "\n")
+		}
+
+		// Detail scrollbar
+		detailPanelContent := visibleDetail.String()
+		if m.dictionaryDetailTotalLines > maxResults {
+			var sb strings.Builder
+			thumbStart, thumbHeight := scrollbarThumb(m.dictionaryDetailTotalLines, maxResults, m.dictionaryDetailScroll)
+			lines := strings.Split(detailPanelContent, "\n")
+			for i := 0; i < maxResults && i < len(lines); i++ {
+				char := "│"
+				if i >= thumbStart && i < thumbStart+thumbHeight {
+					char = "┃"
+				}
+				sb.WriteString(lipgloss.NewStyle().Foreground(colorPanel).Render(char) + lines[i] + "\n")
+			}
+			detailPanelContent = sb.String()
+		}
+
 		detailPanel := lipgloss.NewStyle().
 			Border(lipgloss.NormalBorder(), false, false, false, true).
 			Padding(0, 2).
 			Width(detailWidth).
 			Height(maxResults).
-			Render(detailBuilder.String())
+			Render(detailPanelContent)
 
-		joined := lipgloss.JoinHorizontal(lipgloss.Top, listBuilder.String(), detailPanel)
+		joined := lipgloss.JoinHorizontal(lipgloss.Top, listWithScroll, detailPanel)
 		b.WriteString(joined)
 	} else {
 		// Single column layout

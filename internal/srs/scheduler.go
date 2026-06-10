@@ -34,7 +34,7 @@ func (s Scheduler) Review(state core.ReviewState, grade core.ReviewGrade, now ti
 
 	card := fsrsCardFromState(state, now)
 	info := s.fsrs.Next(card, now, rating)
-	next := stateFromFSRS(state.CardID, info.Card, now)
+	next := stateFromFSRS(state.CardID, info.Card, state.Ease, now)
 
 	if s.logger != nil {
 		s.logger.Debug("Review card=%s grade=%s interval=%v -> %v stability=%v -> %v difficulty=%v -> %v",
@@ -112,7 +112,7 @@ func fsrsCardFromState(state core.ReviewState, now time.Time) fsrs.Card {
 	return card
 }
 
-func stateFromFSRS(cardID string, card fsrs.Card, now time.Time) core.ReviewState {
+func stateFromFSRS(cardID string, card fsrs.Card, prevEase float64, now time.Time) core.ReviewState {
 	days := card.ScheduledDays
 	if days > 36500 { // clamp to 100 years to prevent time.Duration overflow
 		days = 36500
@@ -128,7 +128,7 @@ func stateFromFSRS(cardID string, card fsrs.Card, now time.Time) core.ReviewStat
 		Interval:   interval,
 		Stability:  card.Stability,
 		Difficulty: card.Difficulty,
-		Ease:       card.Difficulty,
+		Ease:       prevEase,
 		Reviews:    int(card.Reps),
 		Lapses:     int(card.Lapses),
 	}

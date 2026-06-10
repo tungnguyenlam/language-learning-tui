@@ -133,133 +133,136 @@ type numberItem struct {
 }
 
 type Model struct {
-	repo                  core.Repository
-	scheduler             core.Scheduler
-	width                 int
-	height                int
-	activeView            View
-	breakpoint            Breakpoint
-	decks                 []core.Deck
-	deckIndex             int
-	deck                  core.Deck
-	deckCursor            int
-	deckScroll            int
-	deckTotalLines        int
-	browserScroll         int
-	cramScroll            int
-	allDue                []core.Card
-	dueCards              []core.Card
-	cursor                int
-	revealState           RevealState
-	revealProgress        float64
-	lastReviewedCardID    string
-	lastReviewedGrade     core.ReviewGrade
-	status                string
-	mouseX                int
-	mouseY                int
-	hitboxes              []Hitbox
-	aiProvider            ai.Provider
-	aiProviderName        string
-	dictionaryProvider    string
-	aiTemplates           map[string]map[string]string
-	aiTemplateSets        []string
-	aiTemplateIndex       int
-	aiSecrets             app.Secrets
-	editingSecretKey      string // "" or "api_key"/"model"/"base_url"
-	editingSecretProvider string // "openai" or "anthropic"
-	originalSecretValue   string
-	onSecretsChange       func(app.Secrets)
-	autoPlayAudio         bool
-	speechSynthesizer     audio.Synthesizer
-	strictNormalization   bool
-	stats                 core.Statistics
-	settingsCursor        int
-	editingTemplate       bool
-	aiInput               string
-	draftSource           string
-	drafts                []ai.Draft
-	draftCursor           int
-	importPath            string
-	exportPath            string
-	exportDeckID          string
-	exportTag             string
-	exportFilter          string // e.g. "All", "Mature", "Learning"
-	importCursor          int    // 0: import path, 1: export path, 2: export deck, 3: export tag, 4: export filter
-	editingImportPath     bool
-	editingExportTag      bool
-	theme                 string
-	onConfigChange        func(string, string, string, map[string]map[string]string, bool, bool)
-	bookmarkFilter        bool
-	originalTemplateValue string
-	mcqChoice             int
-	mcqAnswered           bool
-	mcqCorrect            bool
-	browserCards          []core.Card
-	browserCursor         int
-	browserSearch         string
-	browserTag            string
-	browserSearchHistory  []string
-	browserDeckID         string
-	browserSelected       map[string]bool
-	dictionarySearch      string
-	dictionarySearchID    int
-	dictionaryResults     []core.DictionaryEntry
-	dictionaryCursor      int
-	dictionaryScroll      int
-	searchingTags         bool
-	sessionReviewed       int
-	sessionCorrect        int
-	lastSessionReviewed   int
-	lastSessionCorrect    int
-	sessionStartTime      time.Time
-	sessionGrades         map[core.ReviewGrade]int
-	showHelp              bool
-	cramCards             []core.Card
-	cramCursor            int
-	cramType              string
-	cramReviewed          int
-	cramCorrect           int
-	cramActive            bool
-	cramRevealed          bool
-	reviewsPerDay         map[string]int
-	recentDecks           []string
-	reviewHistory         []core.ReviewLog
-	reviewHistoryCard     string
-	showReviewHistory     bool
-	reviewPredictions     map[core.ReviewGrade]time.Duration
-	spinnerFrame          int
-	deckFilter            string
-	deckSelected          map[string]bool
-	drafting              bool
-	statsScroll           int
-	settingsScroll        int
-	statsTotalLines       int
-	settingsTotalLines    int
-	isDragging            bool
-	focusMode             bool
-	dragView              View
-	dragTrackStartY       int
-	dragVisible           int
-	dragTotal             int
-	searchingAI           bool
-	searchingBrowser      bool
-	searchingDecks        bool
-	taggingCards          bool
-	tagInput              string
-	statusSeq             int
-	confirmingDelete      bool
-	deleteAction          func() tea.Cmd
-	deleteIDs             []string
-	editingDeckLimits     bool
-	limitCursor           int                // 0: new limit, 1: review limit
-	gradingInProgress     bool               // Prevent double-grading
-	logger                *app.LeveledLogger // Add logger field
-	typingMode            bool               // Typing exercise mode
-	typedAnswer           string             // Current typed answer
-	typingChecked         bool               // Whether typing answer has been checked
-	typingCorrect         bool               // Whether typed answer was correct
-	showHint              bool               // Whether to show hint for the current card
-	showCardInfo          bool               // Whether to show card info overlay
+	repo                       core.Repository
+	scheduler                  core.Scheduler
+	width                      int
+	height                     int
+	activeView                 View
+	breakpoint                 Breakpoint
+	decks                      []core.Deck
+	deckIndex                  int
+	deck                       core.Deck
+	deckCursor                 int
+	deckScroll                 int
+	deckTotalLines             int
+	browserScroll              int
+	cramScroll                 int
+	allDue                     []core.Card
+	dueCards                   []core.Card
+	cursor                     int
+	revealState                RevealState
+	revealProgress             float64
+	lastReviewedCardID         string
+	lastReviewedGrade          core.ReviewGrade
+	status                     string
+	mouseX                     int
+	mouseY                     int
+	hitboxes                   []Hitbox
+	aiProvider                 ai.Provider
+	aiProviderName             string
+	dictionaryProvider         string
+	aiTemplates                map[string]map[string]string
+	aiTemplateSets             []string
+	aiTemplateIndex            int
+	aiSecrets                  app.Secrets
+	editingSecretKey           string // "" or "api_key"/"model"/"base_url"
+	editingSecretProvider      string // "openai" or "anthropic"
+	originalSecretValue        string
+	onSecretsChange            func(app.Secrets)
+	autoPlayAudio              bool
+	speechSynthesizer          audio.Synthesizer
+	strictNormalization        bool
+	stats                      core.Statistics
+	settingsCursor             int
+	editingTemplate            bool
+	aiInput                    string
+	draftSource                string
+	drafts                     []ai.Draft
+	draftCursor                int
+	importPath                 string
+	exportPath                 string
+	exportDeckID               string
+	exportTag                  string
+	exportFilter               string // e.g. "All", "Mature", "Learning"
+	importCursor               int    // 0: import path, 1: export path, 2: export deck, 3: export tag, 4: export filter
+	editingImportPath          bool
+	editingExportTag           bool
+	theme                      string
+	onConfigChange             func(string, string, string, map[string]map[string]string, bool, bool)
+	bookmarkFilter             bool
+	originalTemplateValue      string
+	mcqChoice                  int
+	mcqAnswered                bool
+	mcqCorrect                 bool
+	browserCards               []core.Card
+	browserCursor              int
+	browserSearch              string
+	browserTag                 string
+	browserSearchHistory       []string
+	browserDeckID              string
+	browserSelected            map[string]bool
+	dictionarySearch           string
+	dictionarySearchID         int
+	dictionaryResults          []core.DictionaryEntry
+	dictionaryCursor           int
+	dictionaryScroll           int
+	dictionaryDetailScroll     int
+	dictionaryDetailTotalLines int
+	isErrorStatus              bool
+	searchingTags              bool
+	sessionReviewed            int
+	sessionCorrect             int
+	lastSessionReviewed        int
+	lastSessionCorrect         int
+	sessionStartTime           time.Time
+	sessionGrades              map[core.ReviewGrade]int
+	showHelp                   bool
+	cramCards                  []core.Card
+	cramCursor                 int
+	cramType                   string
+	cramReviewed               int
+	cramCorrect                int
+	cramActive                 bool
+	cramRevealed               bool
+	reviewsPerDay              map[string]int
+	recentDecks                []string
+	reviewHistory              []core.ReviewLog
+	reviewHistoryCard          string
+	showReviewHistory          bool
+	reviewPredictions          map[core.ReviewGrade]time.Duration
+	spinnerFrame               int
+	deckFilter                 string
+	deckSelected               map[string]bool
+	drafting                   bool
+	statsScroll                int
+	settingsScroll             int
+	statsTotalLines            int
+	settingsTotalLines         int
+	isDragging                 bool
+	focusMode                  bool
+	dragView                   View
+	dragTrackStartY            int
+	dragVisible                int
+	dragTotal                  int
+	searchingAI                bool
+	searchingBrowser           bool
+	searchingDecks             bool
+	taggingCards               bool
+	tagInput                   string
+	statusSeq                  int
+	confirmingDelete           bool
+	deleteAction               func() tea.Cmd
+	deleteIDs                  []string
+	editingDeckLimits          bool
+	limitCursor                int                // 0: new limit, 1: review limit
+	gradingInProgress          bool               // Prevent double-grading
+	logger                     *app.LeveledLogger // Add logger field
+	typingMode                 bool               // Typing exercise mode
+	typedAnswer                string             // Current typed answer
+	typingChecked              bool               // Whether typing answer has been checked
+	typingCorrect              bool               // Whether typed answer was correct
+	showHint                   bool               // Whether to show hint for the current card
+	showCardInfo               bool               // Whether to show card info overlay
 
 	// Gender Trainer state
 	practiceItems      []practiceItem
@@ -416,26 +419,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		providerName = "offline"
 	}
 	templates := opts.AITemplates
-	if templates == nil {
-		templates = map[string]map[string]string{
-			"vocabulary": {
-				"front":   "{{.Topic}}",
-				"back":    "Translation: German prompt for {{.Topic}}.\nPlural: die {{.Topic}}e (example)\nGender: der/die/das",
-				"example": "Ich lerne {{.Topic}}.",
-			},
-			"phrases": {
-				"front":   "Common German phrase for {{.Topic}}",
-				"back":    "English translation",
-				"example": "Context sentence using the phrase.",
-			},
-			"grammar": {
-				"front":   "Ich {{c1::...}} {{.Topic}}.",
-				"back":    "Grammar: {{.Topic}}\nRule: Explanation of the rule for {{.Topic}}.",
-				"example": "Ich {{c1::bin}} {{.Topic}}.",
-			},
-		}
-	}
-	if len(templates) == 0 {
+	if templates == nil || len(templates) == 0 {
 		templates = map[string]map[string]string{
 			"vocabulary": {
 				"front":   "{{.Topic}}",
@@ -625,6 +609,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.dictionaryResults = msg.results
 		m.dictionaryCursor = 0
 		m.dictionaryScroll = 0
+		m.dictionaryDetailScroll = 0
 		if len(msg.results) > 0 {
 			m.status = fmt.Sprintf("Found %d dictionary results", len(msg.results))
 		} else {
@@ -657,6 +642,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case error:
 		m.drafting = false
 		m.gradingInProgress = false
+		m.isErrorStatus = true
 		m.status = friendlyError(msg)
 		m.logger.Error("Error occurred: %v", msg)
 	case decksMsg:
@@ -725,6 +711,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.setStatus(fmt.Sprintf("Imported %d notes from %s", msg.count, filepath.Base(msg.path)), 3*time.Second)
 	case statusMsg:
 		m.logger.Debug("Setting status: %s", msg.text)
+		m.isErrorStatus = false
 		return m, m.setStatus(msg.text, 3*time.Second)
 	case tagsUpdatedMsg:
 		m.taggingCards = false
@@ -845,6 +832,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case timedClearStatusMsg:
 		if msg.seq == m.statusSeq {
 			m.status = "Ready"
+			m.isErrorStatus = false
 		}
 		return m, nil
 
@@ -1143,7 +1131,11 @@ func (m *Model) View() tea.View {
 		helpHint = "| Generate: Enter | Approve: a"
 	}
 
-	statusLine := fmt.Sprintf("status: %s", singleLine(m.status))
+	statusText := singleLine(m.status)
+	if m.isErrorStatus {
+		statusText = lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Bold(true).Render(statusText)
+	}
+	statusLine := fmt.Sprintf("status: %s", statusText)
 	if m.sessionReviewed > 0 {
 		accuracy := float64(m.sessionCorrect) / float64(m.sessionReviewed) * 100
 		statusLine += fmt.Sprintf(" | session: %d/%d (%.0f%%)", m.sessionCorrect, m.sessionReviewed, accuracy)
@@ -1184,7 +1176,11 @@ func (m *Model) View() tea.View {
 			}))
 		helpView := lipgloss.Place(m.width, m.height-3, lipgloss.Center, lipgloss.Center, helpBox)
 
-		statusLine := fmt.Sprintf("status: %s", singleLine(m.status))
+		statusText := singleLine(m.status)
+		if m.isErrorStatus {
+			statusText = lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Bold(true).Render(statusText)
+		}
+		statusLine := fmt.Sprintf("status: %s", statusText)
 		footer := strings.Join([]string{
 			keyInfoStyle.Render("tab/arrows") + " views",
 			keyInfoStyle.Render("1-9") + " views",
@@ -1435,7 +1431,15 @@ func (m *Model) applyOverlay(base, overlay string) string {
 		if startY+i >= len(baseLines) {
 			break
 		}
-		baseLines[startY+i] = baseLines[startY+i][:startX] + line + baseLines[startY+i][minInt(len(baseLines[startY+i]), startX+lipgloss.Width(line)):]
+		base := baseLines[startY+i]
+		lineLen := lipgloss.Width(line)
+		baseLen := len(base)
+		clampedStart := minInt(startX, baseLen)
+		end := minInt(startX+lineLen, baseLen)
+		if end < clampedStart {
+			end = clampedStart
+		}
+		baseLines[startY+i] = base[:clampedStart] + line + base[end:]
 	}
 
 	return strings.Join(baseLines, "\n")

@@ -69,20 +69,21 @@ func TestRenderDictionary(t *testing.T) {
 
 	// Test wide layout (two columns)
 	m.width = 100
-	m.height = 30
+	m.height = 40
 	layout := m.activeViewContentLayout()
 	view := m.renderDictionary(layout)
+	plainView := stripANSI(view)
 
-	if !strings.Contains(view, "Apfel") {
+	if !strings.Contains(plainView, "Apfel") {
 		t.Errorf("expected view to contain Apfel")
 	}
-	if !strings.Contains(view, "Apple") {
+	if !strings.Contains(plainView, "Apple") {
 		t.Errorf("expected view to contain Apple")
 	}
-	if !strings.Contains(view, "Forms:") {
-		t.Errorf("expected view to contain detail panel with Forms")
+	if !strings.Contains(plainView, "Forms:") {
+		t.Errorf("expected view to contain detail panel with Forms. Plain view:\n%s", plainView)
 	}
-	if !strings.Contains(view, "Äpfel") {
+	if !strings.Contains(plainView, "Äpfel") {
 		t.Errorf("expected view to contain Äpfel")
 	}
 
@@ -90,8 +91,9 @@ func TestRenderDictionary(t *testing.T) {
 	m.width = 60
 	layout = m.activeViewContentLayout()
 	view = m.renderDictionary(layout)
+	plainView = stripANSI(view)
 
-	if strings.Contains(view, "Forms:") {
+	if strings.Contains(plainView, "Forms:") {
 		t.Errorf("expected compact view NOT to contain detail panel")
 	}
 }

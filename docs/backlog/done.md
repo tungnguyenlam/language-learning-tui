@@ -1,15 +1,25 @@
 # Done Backlog
 
-## 2026-06-07 (Dictionary Audio, Find in Decks & Polish)
+## 2026-06-07 (Dictionary Fixes & UX Polish)
 
 ### Dictionary Improvements
+- **Key Trapping Fix:** Resolved a critical bug where navigation keys ('s', 'w', 'k', 'j') were being intercepted while typing in the Dictionary search box. Now all printable characters are correctly captured while still allowing Tab/Shift-Tab and Arrow keys to navigate between views or results.
+- **Detail Panel Scrolling:** Added `Shift+Up` and `Shift+Down` shortcuts to scroll through long dictionary entry details.
+- **Visual Scrollbars:** Implemented styled vertical scrollbars for both the results list and the details panel to provide better orientation in large search result sets.
 - **Audio Pronunciation:** Added `ctrl+p` to play TTS audio for the currently selected dictionary entry, leveraging the existing speech synthesizer.
 - **Find in Decks:** Added `ctrl+f` to quickly search for the selected dictionary word within existing decks via the Browser view.
 - **Gender Colorization:** Updated dictionary rendering to color-code German noun genders (`{m}` in blue, `{f}` in pink, `{n}` in green) across both list and detail views for better visual parsing.
 - **UI Polish:** Corrected the help menu shortcut for Quick Add from `a` to `ctrl+a`.
 
+### Content & Practice
+- **Numbers Trainer Expansion:** Added support for German year pronunciations (e.g., "neunzehnhundertfünfundneunzig") to the Numbers & Time practice mode, including 15 new randomized year exercises.
+
+### UI & Polish
+- **Error-Aware Status Line:** The global status line now supports error highlighting. Messages resulting from errors (e.g., file not found, API failures) are displayed in bold red to differentiate them from standard status updates.
+
 ### Reliability & Testing
 - **E2E Test Stability:** Fixed navigation bugs related to WASD cycle falling through dictionary text input unexpectedly. Updated `test_wasd_navigation.py` to use `Tab`/`Shift-Tab` out of the dictionary view and corrected `test_dictionary_input_bug.py` to robustly test dictionary lookup functionality by bypassing unreliable seeding delays and fixing SQLite schema mismatches.
+- **Dictionary Unit Tests:** Updated `render_dictionary_test.go` to account for new scrollbar rendering and increased test terminal height to ensure all detail fields are visible during verification.
 
 ## 2026-06-06 (Dictionary UX & UI Enhancements)
 
