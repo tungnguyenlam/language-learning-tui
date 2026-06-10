@@ -8,6 +8,11 @@ Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
 
+- [x] **Dictionary Quick Add Card Generation Bugfix:** Resolved a critical bug where quick-adding a dictionary entry to a deck (`ctrl+a`) only created the Note record without generating its associated study/review Card, leaving it permanently inactive/unreviewable. Integrated `content.CardsForNote` and added unit test coverage in `render_dictionary_test.go`.
+- [x] **OpenAI & Anthropic Base URLs in Settings TUI:** Exposed both OpenAI and Anthropic Base URLs in the settings TUI list, allowing users to configure them directly (e.g. for offline Ollama or alternative API proxies). Updated settings navigation boundaries, cursor handlers, credential editing cases, Lip Gloss line info builders, and added `TestSettingsBaseURLEditing` unit test coverage.
+- [x] **Dictionary Search Bar Clear Button:** Added an interactive `[x]` clear button on the right side of the dictionary search bar when a query is entered. Registered a mouse click hitbox to clear the query, reset results/cursor/scroll, and added `TestDictionarySearchClearHitbox` unit test coverage.
+- [x] **Conjunctions & Word Order Trainer:** Implemented a new 9th practice mode in the Practice Hub to master German conjunction word order rules. Includes 15 detailed exercises with structural syntax validation, scoring, and clear grammar explanations.
+- [x] **Dictionary Search History:** Added recent search query tracking in the Offline Dictionary view. Keeps up to 5 unique recent searches, rendering them as interactive click-to-search hitboxes when the search input is empty.
 - [x] **Dictionary Unicode Highlighting Fix:** Reworked `highlightQuery` in `internal/tui/render_dictionary.go` to match and slice by runes instead of byte offsets, preserving German multi-byte characters like `Ä`, `ä`, and `ß` in styled Dictionary result highlights. Added regression coverage in `render_dictionary_test.go`.
 - [x] **Dictionary Detail Scroll Clamp:** Replaced the Dictionary detail panel's hardcoded `shift+down` scroll buffer with the actual visible row count derived from `activeViewContentLayout()`, preventing detail scroll state from drifting beyond the renderable panel. Added a unit test for the clamp.
 - [x] **B1 Email Phone Communication Deck:** Added a 40-note embedded TSV deck covering practical email, office message, and phone-call vocabulary/phrases. Added registry coverage to verify the deck loads with email and phone tagged notes.
@@ -72,9 +77,9 @@ None.
 
 ## Last Verified
 
-- `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` passed on 2026-06-10: Go tests, `go vet`, TUI smoke, binary build, and 346 E2E tests.
-- `/opt/homebrew/bin/go test ./internal/content` passed.
-- `/opt/homebrew/bin/go test ./internal/tui` passed.
+- `./scripts/verify.sh` passed on 2026-06-10: Go tests, `go vet`, TUI smoke, binary build, and 347 E2E tests.
+- `go test ./internal/content` passed.
+- `go test ./internal/tui` passed.
 
 ## Blockers
 

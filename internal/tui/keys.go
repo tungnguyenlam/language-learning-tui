@@ -871,7 +871,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "down", "j":
-		if m.settingsCursor < 11 {
+		if m.settingsCursor < 13 {
 			m.settingsCursor++
 		}
 		return nil, true
@@ -879,7 +879,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		m.settingsCursor = 0
 		return nil, true
 	case "G":
-		m.settingsCursor = 11
+		m.settingsCursor = 13
 		return nil, true
 	case "c":
 		return m.cycleTheme(), true
@@ -1399,6 +1399,8 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return m.enterPracticeMode(PracticeSubViewSeparable), true
 		case "8":
 			return m.enterPracticeMode(PracticeSubViewNumbers), true
+		case "9":
+			return m.enterPracticeMode(PracticeSubViewConjunctions), true
 		case "q", "esc":
 			return m.updateView(ViewDashboard), true
 		}
@@ -1701,6 +1703,8 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 
 	case PracticeSubViewNumbers:
 		return m.updateNumbersTrainerKey(msg)
+	case PracticeSubViewConjunctions:
+		return m.updateConjunctionsTrainerKey(msg)
 	}
 
 	return nil, false
@@ -1890,18 +1894,21 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, true
 	case "ctrl+p":
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			m.recordDictionarySearch(m.dictionarySearch)
 			entry := m.dictionaryResults[m.dictionaryCursor]
 			return m.playDictionaryAudio(entry.Word), true
 		}
 		return nil, true
 	case "ctrl+a":
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			m.recordDictionarySearch(m.dictionarySearch)
 			entry := m.dictionaryResults[m.dictionaryCursor]
 			return m.addDictionaryEntryCmd(entry), true
 		}
 		return nil, true
 	case "ctrl+f":
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			m.recordDictionarySearch(m.dictionarySearch)
 			entry := m.dictionaryResults[m.dictionaryCursor]
 			m.browserSearch = entry.Word
 			return tea.Batch(m.updateView(ViewBrowser), m.loadBrowserCards()), true
@@ -1915,6 +1922,7 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, true
 	case "enter":
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			m.recordDictionarySearch(m.dictionarySearch)
 			entry := m.dictionaryResults[m.dictionaryCursor]
 			m.aiInput = entry.Word + " - " + entry.Translation
 			m.updateView(ViewAI)
@@ -1945,6 +1953,62 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	if key == "space" {
 		m.dictionarySearch += " "
 		return m.searchDictionary(), true
+	}
+
+	return nil, false
+}
+
+func (m *Model) updateConjunctionsTrainerKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
+	if len(m.conjItems) == 0 {
+		return nil, false
+	}
+
+	key := msg.String()
+
+	if key == "esc" {
+		if m.conjInput != "" {
+			m.conjInput = ""
+		} else {
+			m.practiceSubView = PracticeSubViewHub
+		}
+		return nil, true
+	}
+
+	if m.conjRevealed {
+		m.conjRevealed = false
+		m.conjInput = ""
+		m.conjIndex = (m.conjIndex + 1) % len(m.conjItems)
+		return nil, true
+	}
+
+	switch key {
+	case "enter", "\r", "\n":
+		if m.conjInput == "" {
+			return nil, true
+		}
+		m.conjTotal++
+		m.conjRevealed = true
+		target := m.conjItems[m.conjIndex].Answer
+		if strings.TrimSpace(strings.ToLower(m.conjInput)) == strings.TrimSpace(strings.ToLower(target)) {
+			m.conjCorrect++
+			m.conjLastResult = true
+		} else {
+			m.conjLastResult = false
+		}
+		return nil, true
+	case "backspace":
+		if len(m.conjInput) > 0 {
+			m.conjInput = trimLastRune(m.conjInput)
+		}
+		return nil, true
+	case "ctrl+u":
+		m.conjInput = ""
+		return nil, true
+	}
+
+	if ch, ok := singlePrintableInput(key); ok {
+		m.conjInput += ch
+		return nil, true
 	}
 
 	return nil, false

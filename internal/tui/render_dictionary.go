@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"charm.land/lipgloss/v2"
+
+	tea "charm.land/bubbletea/v2"
 )
 
 var dictHighlightStyle = lipgloss.NewStyle().Bold(true).Foreground(colorYellow)
@@ -110,11 +112,38 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 	searchText := m.dictionarySearch
 	if searchText == "" {
 		searchText = mutedStyle.Render("Search German or English...")
+		b.WriteString(searchBar.Render("🔍 " + searchText))
 	} else {
-		searchText += editStyle.Render("█") // Cursor
-	}
+		// Render with an interactive [x] clear button on the right
+		contentLength := 3 + len([]rune(m.dictionarySearch)) + 1 // "🔍 " + query + cursor
+		spaces := searchBarWidth - contentLength - 3
+		clearText := lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Bold(true).Render("[x]")
+		var clearBtn string
+		if spaces > 0 {
+			clearBtn = strings.Repeat(" ", spaces) + clearText
+		} else {
+			clearBtn = " " + clearText
+		}
+		b.WriteString(searchBar.Render("🔍 " + searchText + editStyle.Render("█") + clearBtn))
 
-	b.WriteString(searchBar.Render("🔍 " + searchText))
+		// Register hitbox for clear button [x]
+		// Y coordinate is layout.Y + 3 (0: title, 1: empty line, 2: border top, 3: content)
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     "dict-search-clear",
+			View:   ViewDictionary,
+			X:      layout.X + 2 + searchBarWidth - 3,
+			Y:      layout.Y + 3,
+			Width:  3,
+			Height: 1,
+			Action: func() tea.Cmd {
+				m.dictionarySearch = ""
+				m.dictionaryResults = nil
+				m.dictionaryCursor = 0
+				m.dictionaryScroll = 0
+				return nil
+			},
+		})
+	}
 	b.WriteString("\n\n")
 
 	// Results
@@ -123,6 +152,28 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			b.WriteString(mutedStyle.Render("No results found. Hint: Seed standard content in Import view [5] by pressing 'S' to populate the local dictionary."))
 		} else {
 			b.WriteString(mutedStyle.Render("Search dictionary (local dict.cc). Use 'S' in Import view to seed standard content."))
+			if len(m.dictionarySearchHistory) > 0 {
+				b.WriteString("\n\n" + boldStyle.Render("Recent Searches:") + "\n")
+				for i, q := range m.dictionarySearchHistory {
+					// Retrieve the current line count to calculate Y coordinate dynamically
+					lineY := strings.Count(b.String(), "\n")
+					b.WriteString(fmt.Sprintf("  • %s\n", q))
+					// Save local variable q for the closure
+					queryText := q
+					m.hitboxes = append(m.hitboxes, Hitbox{
+						ID:     fmt.Sprintf("dict-history-%d", i),
+						View:   ViewDictionary,
+						X:      layout.X + 4,
+						Y:      layout.Y + lineY,
+						Width:  len([]rune(queryText)),
+						Height: 1,
+						Action: func() tea.Cmd {
+							m.dictionarySearch = queryText
+							return m.searchDictionary()
+						},
+					})
+				}
+			}
 		}
 		return b.String()
 	}

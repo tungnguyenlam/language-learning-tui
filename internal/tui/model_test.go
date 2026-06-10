@@ -701,6 +701,55 @@ func TestSettingsTemplateEditing(t *testing.T) {
 	}
 }
 
+func TestSettingsBaseURLEditing(t *testing.T) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	model.activeView = ViewSettings
+
+	// 1. Edit OpenAI Base URL (index 10)
+	model.settingsCursor = 10
+	model.Update(tea.KeyPressMsg{Code: '\r'}) // Enter to edit
+	if model.editingSecretKey != "base_url" || model.editingSecretProvider != "openai" {
+		t.Fatalf("expected editing openai base_url, got key=%q provider=%q", model.editingSecretKey, model.editingSecretProvider)
+	}
+
+	// Type a URL
+	for _, char := range "http://localhost:11434" {
+		model.Update(tea.KeyPressMsg{Code: char})
+	}
+
+	// Save
+	model.Update(tea.KeyPressMsg{Code: '\r'})
+	if model.editingSecretKey != "" {
+		t.Fatal("should not be editing secret after save")
+	}
+
+	if model.aiSecrets.OpenAI.BaseURL != "http://localhost:11434" {
+		t.Fatalf("expected openai BaseURL to be http://localhost:11434, got %q", model.aiSecrets.OpenAI.BaseURL)
+	}
+
+	// 2. Edit Anthropic Base URL (index 13)
+	model.settingsCursor = 13
+	model.Update(tea.KeyPressMsg{Code: '\r'}) // Enter to edit
+	if model.editingSecretKey != "base_url" || model.editingSecretProvider != "anthropic" {
+		t.Fatalf("expected editing anthropic base_url, got key=%q provider=%q", model.editingSecretKey, model.editingSecretProvider)
+	}
+
+	// Type a URL
+	for _, char := range "http://localhost:9000" {
+		model.Update(tea.KeyPressMsg{Code: char})
+	}
+
+	// Save
+	model.Update(tea.KeyPressMsg{Code: '\r'})
+	if model.editingSecretKey != "" {
+		t.Fatal("should not be editing secret after save")
+	}
+
+	if model.aiSecrets.Anthropic.BaseURL != "http://localhost:9000" {
+		t.Fatalf("expected anthropic BaseURL to be http://localhost:9000, got %q", model.aiSecrets.Anthropic.BaseURL)
+	}
+}
+
 func TestTrimLastRuneHandlesUnicode(t *testing.T) {
 	if got := trimLastRune("Käse"); got != "Käs" {
 		t.Fatalf("trimLastRune ascii+umlaut = %q, want %q", got, "Käs")
@@ -2474,5 +2523,67 @@ func TestPracticeMouseClicks(t *testing.T) {
 	}
 	if model.practiceIndex != 1 {
 		t.Fatalf("expected practiceIndex to advance to 1, got %d", model.practiceIndex)
+	}
+}
+
+func TestConjunctionsTrainer(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewPractice
+	m.practiceSubView = PracticeSubViewConjunctions
+
+	m.conjItems = []conjunctionItem{
+		{
+			Sentence:    "Ich bleibe heute zu Hause, {{...}} es regnet.",
+			Answer:      "weil",
+			Meaning:     "because",
+			Explanation: "weil is a subordinating conjunction",
+		},
+		{
+			Sentence:    "Es regnet, {{...}} ich gehe trotzdem spazieren.",
+			Answer:      "aber",
+			Meaning:     "but",
+			Explanation: "aber is coordinating",
+		},
+	}
+	m.conjIndex = 0
+
+	layout := viewportLayout{Width: 80, Height: 30}
+	view := m.renderConjunctionTrainer(layout)
+	if !strings.Contains(view, "Ich bleibe heute zu Hause") {
+		t.Fatalf("expected view to contain sentence: %s", view)
+	}
+
+	for _, char := range "weil" {
+		m.updatePracticeKey(tea.KeyPressMsg{Code: char})
+	}
+	if m.conjInput != "weil" {
+		t.Fatalf("expected conjInput to be 'weil', got '%s'", m.conjInput)
+	}
+
+	m.updatePracticeKey(tea.KeyPressMsg{Code: '\r'})
+	if !m.conjRevealed {
+		t.Fatal("expected trainer to be in revealed state")
+	}
+	if !m.conjLastResult {
+		t.Fatal("expected answer to be correct")
+	}
+	if m.conjCorrect != 1 || m.conjTotal != 1 {
+		t.Fatalf("expected score to be 1/1, got %d/%d", m.conjCorrect, m.conjTotal)
+	}
+
+	view = m.renderConjunctionTrainer(layout)
+	if !strings.Contains(view, "weil is a subordinating conjunction") {
+		t.Fatalf("expected explanation to be rendered, got: %s", view)
+	}
+
+	m.updatePracticeKey(tea.KeyPressMsg{Code: ' '})
+	if m.conjRevealed {
+		t.Fatal("expected trainer to reset revealed state on advance")
+	}
+	if m.conjIndex != 1 {
+		t.Fatalf("expected trainer to advance to next item, index=%d", m.conjIndex)
+	}
+	if m.conjInput != "" {
+		t.Fatalf("expected conjInput to reset, got '%s'", m.conjInput)
 	}
 }

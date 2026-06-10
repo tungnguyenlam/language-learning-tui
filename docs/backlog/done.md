@@ -1,5 +1,28 @@
 # Done Backlog
 
+## 2026-06-10 (Dictionary Quick Add Fix, Settings Base URLs, Dictionary Clear Button)
+
+### Dictionary UX
+- **Quick Add Note Card Generation:** Resolved a critical bug where quick-adding a dictionary entry to a deck (`ctrl+a`) only created the Note record without generating its associated study/review Card, leaving it permanently inactive/unreviewable. Integrated `content.CardsForNote` and added `TestDictionaryQuickAddCardsGenerated` unit test coverage.
+- **Search Bar Clear Button:** Added an interactive `[x]` clear button on the right side of the dictionary search bar when a query is entered. Registered a mouse click hitbox to clear the query, reset results/cursor/scroll, and added `TestDictionarySearchClearHitbox` unit test coverage.
+
+### Settings UI & API Configuration
+- **OpenAI & Anthropic Base URLs:** Exposed both OpenAI and Anthropic Base URLs in the settings TUI list. Updated settings navigation boundaries, cursor handlers, credential editing cases, Lip Gloss line info builders, and added `TestSettingsBaseURLEditing` unit test coverage.
+
+### Verification
+- `./scripts/verify.sh` passed successfully (all unit, smoke, and 347 E2E tests).
+
+## 2026-06-10 (Conjunctions Trainer & Dictionary Search History)
+
+### Practice Hub
+- **Conjunctions & Word Order Trainer:** Added a 9th practice mode to the Practice Hub. Includes 15 structured conjunction exercises covering coordinating, subordinating, and conjunctive adverbs, complete with score tracking, input verification, and detailed grammar explanation callouts. Added unit tests in `model_test.go` and E2E coverage in `test_practice_hub_extra.py`.
+
+### Dictionary UX
+- **Search History (Recent Searches):** Implemented tracking of up to 5 unique recent dictionary search queries. Displays them as interactive, clickable hitboxes under the search bar when the input is empty. Added unit test coverage in `render_dictionary_test.go`.
+
+### Verification
+- `./scripts/verify.sh` passed successfully (all unit, smoke, and 347 E2E tests).
+
 ## 2026-06-10 (Dictionary Reliability & Communication Content)
 
 ### Dictionary Reliability

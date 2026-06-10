@@ -54,6 +54,7 @@ const (
 	PracticeSubViewPlural
 	PracticeSubViewSeparable
 	PracticeSubViewNumbers
+	PracticeSubViewConjunctions
 )
 
 type RevealState int
@@ -132,6 +133,13 @@ type numberItem struct {
 	Help     string
 }
 
+type conjunctionItem struct {
+	Sentence    string
+	Answer      string
+	Meaning     string
+	Explanation string
+}
+
 type Model struct {
 	repo                       core.Repository
 	scheduler                  core.Scheduler
@@ -202,6 +210,7 @@ type Model struct {
 	browserDeckID              string
 	browserSelected            map[string]bool
 	dictionarySearch           string
+	dictionarySearchHistory    []string
 	dictionarySearchID         int
 	dictionaryResults          []core.DictionaryEntry
 	dictionaryCursor           int
@@ -336,6 +345,15 @@ type Model struct {
 	numberRevealed   bool
 	numberLastResult bool
 	numberInput      string
+
+	// Conjunction Trainer state
+	conjItems      []conjunctionItem
+	conjIndex      int
+	conjCorrect    int
+	conjTotal      int
+	conjRevealed   bool
+	conjLastResult bool
+	conjInput      string
 
 	practiceSubView PracticeSubView
 
@@ -829,6 +847,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.status = fmt.Sprintf("Loaded %d number exercises", len(m.numberItems))
 		}
 		return m, nil
+	case conjItemsMsg:
+		m.conjItems = []conjunctionItem(msg)
+		if len(m.conjItems) == 0 {
+			m.status = "No conjunction exercises found"
+		} else {
+			m.status = fmt.Sprintf("Loaded %d conjunction exercises", len(m.conjItems))
+		}
+		return m, nil
 	case timedClearStatusMsg:
 		if msg.seq == m.statusSeq {
 			m.status = "Ready"
@@ -1133,14 +1159,14 @@ func (m *Model) View() tea.View {
 		}
 	case ViewPractice:
 		if m.practiceSubView == PracticeSubViewHub {
-			helpHint = "| Trainer: 1-8 | Esc: back"
+			helpHint = "| Trainer: 1-9 | Esc: back"
 		} else {
 			switch m.practiceSubView {
 			case PracticeSubViewGender:
 				helpHint = "| der(1/d) die(2/i) das(3/a) | Next click | Esc: back"
 			case PracticeSubViewConjugation:
 				helpHint = "| Type answer | Enter check | Esc: back"
-			case PracticeSubViewCase, PracticeSubViewAdjective, PracticeSubViewPreposition, PracticeSubViewSeparable, PracticeSubViewNumbers:
+			case PracticeSubViewCase, PracticeSubViewAdjective, PracticeSubViewPreposition, PracticeSubViewSeparable, PracticeSubViewNumbers, PracticeSubViewConjunctions:
 				helpHint = "| Type answer | Enter check | Esc: back"
 			case PracticeSubViewPlural:
 				helpHint = "| Type plural | Enter check | Esc: back"

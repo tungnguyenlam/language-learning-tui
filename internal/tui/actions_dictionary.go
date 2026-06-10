@@ -1,10 +1,14 @@
 package tui
 
 import (
-	tea "charm.land/bubbletea/v2"
 	"context"
-	"deutsch-tui/internal/core"
 	"fmt"
+	"strings"
+
+	"deutsch-tui/internal/content"
+	"deutsch-tui/internal/core"
+
+	tea "charm.land/bubbletea/v2"
 )
 
 type dictionarySearchResultsMsg struct {
@@ -67,11 +71,30 @@ func (m *Model) addDictionaryEntryCmd(entry core.DictionaryEntry) tea.Cmd {
 		if entry.Gender != "" {
 			note.Extra += " {" + entry.Gender + "}"
 		}
+		note.Cards = content.CardsForNote(note)
 
 		if err := m.repo.UpsertNote(ctx, note); err != nil {
 			return err
 		}
 
 		return statusMsg{text: fmt.Sprintf("Added '%s' to Dictionary deck", entry.Word)}
+	}
+}
+
+func (m *Model) recordDictionarySearch(query string) {
+	query = strings.TrimSpace(query)
+	if query == "" {
+		return
+	}
+	for i, q := range m.dictionarySearchHistory {
+		if q == query {
+			m.dictionarySearchHistory = append(m.dictionarySearchHistory[:i], m.dictionarySearchHistory[i+1:]...)
+			m.dictionarySearchHistory = append(m.dictionarySearchHistory, query)
+			return
+		}
+	}
+	m.dictionarySearchHistory = append(m.dictionarySearchHistory, query)
+	if len(m.dictionarySearchHistory) > 5 {
+		m.dictionarySearchHistory = m.dictionarySearchHistory[1:]
 	}
 }

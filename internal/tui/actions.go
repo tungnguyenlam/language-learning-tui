@@ -732,7 +732,7 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		if m.onConfigChange != nil {
 			m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
 		}
-	case 8, 9, 10, 11:
+	case 8, 9, 10, 11, 12, 13:
 		var provider string
 		var key string
 		switch m.settingsCursor {
@@ -743,11 +743,17 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 			provider = "openai"
 			key = "model"
 		case 10:
-			provider = "anthropic"
-			key = "api_key"
+			provider = "openai"
+			key = "base_url"
 		case 11:
 			provider = "anthropic"
+			key = "api_key"
+		case 12:
+			provider = "anthropic"
 			key = "model"
+		case 13:
+			provider = "anthropic"
+			key = "base_url"
 		}
 		m.editingSecretProvider = provider
 		m.editingSecretKey = key
@@ -759,10 +765,12 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 
 func credKeyForCursor(cursor int) string {
 	switch cursor {
-	case 8, 10:
+	case 8, 11:
 		return "api_key"
-	case 9, 11:
+	case 9, 12:
 		return "model"
+	case 10, 13:
+		return "base_url"
 	}
 	return ""
 }

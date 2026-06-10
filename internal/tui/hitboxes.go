@@ -92,6 +92,8 @@ func (m *Model) activateHitboxByID(id string) tea.Cmd {
 			return m.enterPracticeMode(PracticeSubViewSeparable)
 		case "numbers":
 			return m.enterPracticeMode(PracticeSubViewNumbers)
+		case "conjunctions":
+			return m.enterPracticeMode(PracticeSubViewConjunctions)
 		}
 		return nil
 	case strings.HasPrefix(id, "dash-"):

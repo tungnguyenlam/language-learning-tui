@@ -149,10 +149,12 @@ func (m *Model) renderSettings(x, y int) string {
 		label    string
 		value    string
 	}{
-		{8, "openai", "OpenAI Key: ", app.MaskAPIKey(m.aiSecrets.OpenAI.APIKey)},
-		{9, "openai", "OpenAI Model: ", credValueOrDefault(m.aiSecrets.OpenAI.Model, "openai")},
-		{10, "anthropic", "Anthropic Key:", app.MaskAPIKey(m.aiSecrets.Anthropic.APIKey)},
-		{11, "anthropic", "Anthropic Mod:", credValueOrDefault(m.aiSecrets.Anthropic.Model, "anthropic")},
+		{8, "openai", "OpenAI Key:  ", app.MaskAPIKey(m.aiSecrets.OpenAI.APIKey)},
+		{9, "openai", "OpenAI Model:", credValueOrDefault(m.aiSecrets.OpenAI.Model, "openai")},
+		{10, "openai", "OpenAI URL:  ", credValueOrDefault(m.aiSecrets.OpenAI.BaseURL, "openai-url")},
+		{11, "anthropic", "Anthropic Key:", app.MaskAPIKey(m.aiSecrets.Anthropic.APIKey)},
+		{12, "anthropic", "Anthropic Mod:", credValueOrDefault(m.aiSecrets.Anthropic.Model, "anthropic")},
+		{13, "anthropic", "Anthropic URL:", credValueOrDefault(m.aiSecrets.Anthropic.BaseURL, "anthropic-url")},
 	}
 	for _, row := range credRows {
 		prefix = "  "

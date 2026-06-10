@@ -34,6 +34,9 @@ func (m *Model) previousViewCmd() tea.Cmd {
 }
 
 func (m *Model) updateView(view View) tea.Cmd {
+	if m.activeView == ViewDictionary && m.dictionarySearch != "" {
+		m.recordDictionarySearch(m.dictionarySearch)
+	}
 	m.activeView = view
 	m.isDragging = false
 	m.confirmingDelete = false
@@ -176,6 +179,14 @@ func (m *Model) enterPracticeMode(mode PracticeSubView) tea.Cmd {
 		m.numberInput = ""
 		m.status = "Loading number & time exercises..."
 		return m.loadNumberItems()
+	case PracticeSubViewConjunctions:
+		m.conjIndex = 0
+		m.conjCorrect = 0
+		m.conjTotal = 0
+		m.conjRevealed = false
+		m.conjInput = ""
+		m.status = "Loading conjunction & word order exercises..."
+		return m.loadConjItems()
 	}
 	return nil
 }

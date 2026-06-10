@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"strings"
 	"testing"
 
@@ -135,5 +136,132 @@ func TestDictionaryDetailScrollClampsToVisibleRows(t *testing.T) {
 
 	if m.dictionaryDetailScroll != maxScroll {
 		t.Fatalf("dictionaryDetailScroll = %d, want %d", m.dictionaryDetailScroll, maxScroll)
+	}
+}
+
+func TestDictionarySearchHistory(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.recordDictionarySearch("Apfel")
+	m.recordDictionarySearch("Birne")
+	m.recordDictionarySearch("Apfel") // Duplicate, should be moved to the end (most recent)
+
+	if len(m.dictionarySearchHistory) != 2 {
+		t.Fatalf("expected search history to have 2 items, got %d", len(m.dictionarySearchHistory))
+	}
+	if m.dictionarySearchHistory[0] != "Birne" || m.dictionarySearchHistory[1] != "Apfel" {
+		t.Errorf("unexpected history order: %v", m.dictionarySearchHistory)
+	}
+
+	// Navigate away to test recording search on view transition
+	m.activeView = ViewDictionary
+	m.dictionarySearch = "Banane"
+	m.updateView(ViewDashboard)
+
+	if len(m.dictionarySearchHistory) != 3 {
+		t.Fatalf("expected search history to have 3 items, got %d", len(m.dictionarySearchHistory))
+	}
+	if m.dictionarySearchHistory[2] != "Banane" {
+		t.Errorf("expected Banane at end of search history, got %v", m.dictionarySearchHistory)
+	}
+}
+
+type captureRepo struct {
+	mockRepo
+	upsertedNote *core.Note
+}
+
+func (r *captureRepo) UpsertNote(ctx context.Context, note core.Note) error {
+	r.upsertedNote = &note
+	return nil
+}
+
+func (r *captureRepo) UpsertDeck(ctx context.Context, deck core.Deck) error {
+	return nil
+}
+
+func (r *captureRepo) GetDeck(ctx context.Context, id string) (core.Deck, error) {
+	return core.Deck{ID: id, Name: "Dictionary"}, nil
+}
+
+func TestDictionaryQuickAddCardsGenerated(t *testing.T) {
+	repo := &captureRepo{}
+	m := NewModel(repo, &mockScheduler{})
+
+	entry := core.DictionaryEntry{
+		ID:          "test-1",
+		Word:        "Auto",
+		Translation: "Car",
+		Gender:      "n",
+	}
+
+	cmd := m.addDictionaryEntryCmd(entry)
+	if cmd == nil {
+		t.Fatal("expected command from addDictionaryEntryCmd")
+	}
+
+	msg := cmd()
+	status, ok := msg.(statusMsg)
+	if !ok {
+		t.Fatalf("expected statusMsg, got %T: %v", msg, msg)
+	}
+
+	if !strings.Contains(status.text, "Added") {
+		t.Errorf("expected status text to say Added, got %q", status.text)
+	}
+
+	if repo.upsertedNote == nil {
+		t.Fatal("expected note to be upserted")
+	}
+
+	note := repo.upsertedNote
+	if note.Front != "Auto" || note.Back != "Car" {
+		t.Errorf("unexpected note content: front=%q, back=%q", note.Front, note.Back)
+	}
+
+	if len(note.Cards) == 0 {
+		t.Fatal("expected cards to be generated for the quick-added dictionary entry")
+	}
+
+	card := note.Cards[0]
+	if card.Prompt != "Auto" || card.Answer != "Car" {
+		t.Errorf("unexpected card content: prompt=%q, answer=%q", card.Prompt, card.Answer)
+	}
+}
+
+func TestDictionarySearchClearHitbox(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.width = 100
+	m.height = 40
+	m.dictionarySearch = "Apfel"
+	m.dictionaryResults = []core.DictionaryEntry{
+		{ID: "1", Word: "Apfel", Translation: "Apple"},
+	}
+
+	layout := m.activeViewContentLayout()
+	_ = m.renderDictionary(layout)
+
+	// Check if clear button hitbox is registered
+	var foundClearHitbox bool
+	for _, hb := range m.hitboxes {
+		if hb.ID == "dict-search-clear" {
+			foundClearHitbox = true
+			if hb.Action == nil {
+				t.Fatal("expected clear hitbox action to be set")
+			}
+			hb.Action() // Execute clear
+			break
+		}
+	}
+
+	if !foundClearHitbox {
+		t.Fatal("expected dictionary clear button hitbox to be registered")
+	}
+
+	if m.dictionarySearch != "" {
+		t.Errorf("expected search query to be cleared, got %q", m.dictionarySearch)
+	}
+	if len(m.dictionaryResults) != 0 {
+		t.Errorf("expected results to be cleared, got %d items", len(m.dictionaryResults))
 	}
 }

@@ -357,6 +357,24 @@ func (m *Model) loadNumberItems() tea.Cmd {
 	}
 }
 
+func (m *Model) loadConjItems() tea.Cmd {
+	return func() tea.Msg {
+		exercises := content.GetConjunctionExercises()
+		items := make([]conjunctionItem, len(exercises))
+		for i, ex := range exercises {
+			items[i] = conjunctionItem{
+				Sentence:    ex.Sentence,
+				Answer:      ex.Answer,
+				Meaning:     ex.Meaning,
+				Explanation: ex.Explanation,
+			}
+		}
+		return conjItemsMsg(items)
+	}
+}
+
+type conjItemsMsg []conjunctionItem
+
 type separableItemsMsg []separableItem
 
 type pluralItemsMsg []pluralItem

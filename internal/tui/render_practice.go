@@ -27,6 +27,8 @@ func (m *Model) renderPractice(layout viewportLayout) string {
 		return m.renderSeparableTrainer(layout)
 	case PracticeSubViewNumbers:
 		return m.renderNumberTrainer(layout)
+	case PracticeSubViewConjunctions:
+		return m.renderConjunctionTrainer(layout)
 	}
 	return "Unknown Practice View"
 }
@@ -51,10 +53,11 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 		{"practice-plural", "6", "Plural Trainer", "Practice German noun plural forms", PracticeSubViewPlural},
 		{"practice-separable", "7", "Separable Verb Trainer", "Practice verb prefixes and word order", PracticeSubViewSeparable},
 		{"practice-numbers", "8", "Numbers & Time", "Practice German numbers and time", PracticeSubViewNumbers},
+		{"practice-conjunctions", "9", "Conjunctions & Word Order", "Practice German conjunctions & sentence structure", PracticeSubViewConjunctions},
 	}
 
 	spacing := 3
-	if layout.Height >= 32 {
+	if layout.Height >= 36 {
 		spacing = 4
 	}
 
@@ -76,6 +79,8 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 			return len(m.separableItems)
 		case PracticeSubViewNumbers:
 			return len(m.numberItems)
+		case PracticeSubViewConjunctions:
+			return len(m.conjItems)
 		}
 		return 0
 	}
