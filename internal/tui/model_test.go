@@ -2587,3 +2587,46 @@ func TestConjunctionsTrainer(t *testing.T) {
 		t.Fatalf("expected conjInput to reset, got '%s'", m.conjInput)
 	}
 }
+
+func TestPracticeHubScoresAndReset(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewPractice
+	m.practiceSubView = PracticeSubViewHub
+	m.width = 80
+	m.height = 30
+
+	// Mock some practice scores
+	m.practiceCorrect, m.practiceTotal = 4, 5
+	m.conjugationCorrect, m.conjugationTotal = 3, 3
+
+	layout := m.activeViewContentLayout()
+	view := m.renderPracticeHub(layout)
+	plainView := stripANSI(view)
+
+	// Verify that score info is rendered on the Practice Hub buttons
+	if !strings.Contains(plainView, "4/5 (80%)") {
+		t.Errorf("expected score 4/5 (80%%) to be displayed on gender trainer, got:\n%s", plainView)
+	}
+	if !strings.Contains(plainView, "3/3 (100%)") {
+		t.Errorf("expected score 3/3 (100%%) to be displayed on conjugation trainer, got:\n%s", plainView)
+	}
+
+	// Press 'r' to reset scores
+	cmd, handled := m.updatePracticeKey(tea.KeyPressMsg{Code: 'r'})
+	if !handled || cmd != nil {
+		t.Fatal("expected 'r' keypress to be handled in Practice Hub")
+	}
+
+	// Verify scores are reset to 0
+	if m.practiceCorrect != 0 || m.practiceTotal != 0 || m.conjugationCorrect != 0 || m.conjugationTotal != 0 {
+		t.Errorf("expected practice scores to be reset, got: gender=%d/%d, conj=%d/%d",
+			m.practiceCorrect, m.practiceTotal, m.conjugationCorrect, m.conjugationTotal)
+	}
+
+	// Re-render and check that score info is gone
+	view = m.renderPracticeHub(layout)
+	plainView = stripANSI(view)
+	if strings.Contains(plainView, "4/5") || strings.Contains(plainView, "80%") {
+		t.Errorf("expected scores to be cleared from view after reset, got:\n%s", plainView)
+	}
+}

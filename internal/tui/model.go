@@ -218,6 +218,7 @@ type Model struct {
 	dictionaryScroll           int
 	dictionaryDetailScroll     int
 	dictionaryDetailTotalLines int
+	dictionaryDetailView       bool
 	isErrorStatus              bool
 	searchingTags              bool
 	sessionReviewed            int
@@ -1130,7 +1131,11 @@ func (m *Model) View() tea.View {
 		if m.dictionarySearch != "" {
 			helpHint = "| Nav: j/k | Shift+↑/↓ details | ctrl+a add | Enter draft | ctrl+f find"
 		} else {
-			helpHint = "| Search: type | Nav: j/k | Esc: back"
+			if len(m.dictionarySearchHistory) > 0 {
+				helpHint = "| Search: type | ctrl+x: clear history | Esc: back"
+			} else {
+				helpHint = "| Search: type | Nav: j/k | Esc: back"
+			}
 		}
 	case ViewReview:
 		if len(m.dueCards) > 0 {
@@ -1160,7 +1165,7 @@ func (m *Model) View() tea.View {
 		}
 	case ViewPractice:
 		if m.practiceSubView == PracticeSubViewHub {
-			helpHint = "| Trainer: 1-9 | Esc: back"
+			helpHint = "| Trainer: 1-9 | r: reset scores | Esc: back"
 		} else {
 			switch m.practiceSubView {
 			case PracticeSubViewGender:

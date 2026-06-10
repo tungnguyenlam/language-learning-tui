@@ -43,3 +43,47 @@ def test_dictionary_lookup_no_crash():
             assert "🔍" in screen
         finally:
             agent.close()
+
+def test_dictionary_single_column_details():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Pre-seed the database using -smoke flag
+        app_path = "./cmd/deutsch-tui/main.go"
+        subprocess.run(["go", "run", app_path, "-data-dir", tmpdir, "-smoke"], check=True)
+        
+        # Start agent with narrow terminal columns=70 to force single-column layout
+        app_cmd = os.getenv('DEUTSCH_TUI_BIN', f'go run {app_path}')
+        agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir}', columns=70, lines=30)
+        try:
+            agent.wait_for_text("DASHBOARD", timeout=15.0)
+            agent.wait_until_stable()
+            
+            # Go to Dictionary view
+            agent.act("/")
+            agent.wait_for_text("Dictionary", timeout=10.0)
+            agent.wait_until_stable()
+            
+            # Type 'Kaffee' to search
+            agent.act("Kaffee")
+            time.sleep(2.0)
+            
+            screen = agent.observe()
+            assert "Kaffee" in screen
+            # Should have the single column hint at the bottom
+            assert "Press ctrl+d/click selected to view details" in screen
+            
+            # Press ctrl+d to toggle detail view
+            agent.act("<C-d>")
+            time.sleep(1.0)
+            
+            screen_details = agent.observe()
+            assert "Translations:" in screen_details
+            assert "Press esc/ctrl+d to return to list" in screen_details
+            
+            # Press esc to exit details
+            agent.act("<Esc>")
+            time.sleep(1.0)
+            
+            screen_list = agent.observe()
+            assert "Press ctrl+d/click selected to view details" in screen_list
+        finally:
+            agent.close()

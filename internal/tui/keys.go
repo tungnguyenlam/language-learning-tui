@@ -63,6 +63,11 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case "ctrl+c":
 		return m, tea.Quit
 	case "ctrl+d":
+		if m.activeView == ViewDictionary {
+			if cmd, handled := m.updateActiveViewKey(msg); handled {
+				return m, cmd
+			}
+		}
 		if m.activeView == ViewDebug {
 			m.activeView = ViewDashboard
 		} else {
@@ -1401,6 +1406,18 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return m.enterPracticeMode(PracticeSubViewNumbers), true
 		case "9":
 			return m.enterPracticeMode(PracticeSubViewConjunctions), true
+		case "r":
+			m.practiceCorrect, m.practiceTotal = 0, 0
+			m.conjugationCorrect, m.conjugationTotal = 0, 0
+			m.caseCorrect, m.caseTotal = 0, 0
+			m.adjCorrect, m.adjTotal = 0, 0
+			m.prepCorrect, m.prepTotal = 0, 0
+			m.pluralCorrect, m.pluralTotal = 0, 0
+			m.separableCorrect, m.separableTotal = 0, 0
+			m.numberCorrect, m.numberTotal = 0, 0
+			m.conjCorrect, m.conjTotal = 0, 0
+			m.status = "Reset all practice session scores"
+			return nil, true
 		case "q", "esc":
 			return m.updateView(ViewDashboard), true
 		}
@@ -1853,12 +1870,25 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	key := msg.String()
 	switch key {
 	case "up":
+		if m.dictionaryDetailView {
+			if m.dictionaryDetailScroll > 0 {
+				m.dictionaryDetailScroll--
+			}
+			return nil, true
+		}
 		if m.dictionaryCursor > 0 {
 			m.dictionaryCursor--
 			m.dictionaryDetailScroll = 0
 		}
 		return nil, true
 	case "down":
+		if m.dictionaryDetailView {
+			maxScroll := maxInt(0, m.dictionaryDetailTotalLines-dictionaryVisibleRows(m.activeViewContentLayout()))
+			if m.dictionaryDetailScroll < maxScroll {
+				m.dictionaryDetailScroll++
+			}
+			return nil, true
+		}
 		if m.dictionaryCursor < len(m.dictionaryResults)-1 {
 			m.dictionaryCursor++
 			m.dictionaryDetailScroll = 0
@@ -1876,6 +1906,14 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "pgdown":
+		if m.dictionaryDetailView {
+			maxScroll := maxInt(0, m.dictionaryDetailTotalLines-dictionaryVisibleRows(m.activeViewContentLayout()))
+			m.dictionaryDetailScroll += 10
+			if m.dictionaryDetailScroll > maxScroll {
+				m.dictionaryDetailScroll = maxScroll
+			}
+			return nil, true
+		}
 		m.dictionaryCursor += 10
 		if m.dictionaryCursor >= len(m.dictionaryResults) {
 			m.dictionaryCursor = len(m.dictionaryResults) - 1
@@ -1886,11 +1924,24 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		m.dictionaryDetailScroll = 0
 		return nil, true
 	case "pgup":
+		if m.dictionaryDetailView {
+			m.dictionaryDetailScroll -= 10
+			if m.dictionaryDetailScroll < 0 {
+				m.dictionaryDetailScroll = 0
+			}
+			return nil, true
+		}
 		m.dictionaryCursor -= 10
 		if m.dictionaryCursor < 0 {
 			m.dictionaryCursor = 0
 		}
 		m.dictionaryDetailScroll = 0
+		return nil, true
+	case "ctrl+d":
+		if len(m.dictionaryResults) > 0 {
+			m.dictionaryDetailView = !m.dictionaryDetailView
+			m.dictionaryDetailScroll = 0
+		}
 		return nil, true
 	case "ctrl+p":
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
@@ -1919,6 +1970,10 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		m.dictionaryResults = nil
 		m.dictionaryCursor = 0
 		m.dictionaryScroll = 0
+		m.dictionaryDetailView = false
+		return nil, true
+	case "ctrl+x":
+		m.dictionarySearchHistory = nil
 		return nil, true
 	case "enter":
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
@@ -1931,12 +1986,19 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "backspace", "\x7f", "\x08":
+		if m.dictionaryDetailView {
+			return nil, true // Swallowed while viewing details
+		}
 		if len(m.dictionarySearch) > 0 {
 			m.dictionarySearch = trimLastRune(m.dictionarySearch)
 			return m.searchDictionary(), true
 		}
 		return nil, true
 	case "esc":
+		if m.dictionaryDetailView {
+			m.dictionaryDetailView = false
+			return nil, true
+		}
 		m.dictionarySearch = ""
 		m.dictionaryResults = nil
 		m.dictionaryCursor = 0

@@ -322,3 +322,101 @@ func TestDictionaryHeaderResultsCount(t *testing.T) {
 		t.Errorf("expected header to contain 50+ results, got: %q", view)
 	}
 }
+
+func TestDictionarySingleColumnDetailView(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.dictionaryResults = []core.DictionaryEntry{
+		{
+			ID:          "1",
+			Word:        "Auto",
+			Translation: "Car",
+			WordClass:   "Noun",
+			Gender:      "n",
+			Forms:       "Autos",
+			Examples:    []string{"Ein schnelles Auto."},
+		},
+	}
+	m.dictionaryCursor = 0
+
+	// compact layout (width <= 80)
+	m.width = 60
+	m.height = 40
+	m.dictionaryDetailView = false
+
+	// Verify that details are not shown initially
+	view := m.renderDictionary(m.activeViewContentLayout())
+	plainView := stripANSI(view)
+	if strings.Contains(plainView, "Forms:") {
+		t.Error("expected compact view not to contain detail panel details initially")
+	}
+
+	// Toggle details view using key or directly
+	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'd', Mod: tea.ModCtrl})
+	if !handled || cmd != nil {
+		t.Fatal("expected ctrl+d to be handled without cmd")
+	}
+
+	if !m.dictionaryDetailView {
+		t.Error("expected dictionaryDetailView to be true after ctrl+d")
+	}
+
+	// Verify detail panel is now displayed in the single column
+	view = m.renderDictionary(m.activeViewContentLayout())
+	plainView = stripANSI(view)
+	if !strings.Contains(plainView, "Word Forms:") || !strings.Contains(plainView, "Autos") {
+		t.Errorf("expected view to display detail view contents, got:\n%s", plainView)
+	}
+
+	// Exit detail view with esc
+	cmd, handled = m.updateDictionaryKey(tea.KeyPressMsg{Code: tea.KeyEsc})
+	if !handled || cmd != nil {
+		t.Fatal("expected esc to be handled without cmd")
+	}
+	if m.dictionaryDetailView {
+		t.Error("expected dictionaryDetailView to be false after esc")
+	}
+}
+
+func TestDictionaryClearSearchHistory(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.width = 100
+	m.height = 40
+	m.dictionarySearchHistory = []string{"Apfel", "Birne"}
+
+	layout := m.activeViewContentLayout()
+	_ = m.renderDictionary(layout)
+
+	// Check if clear button hitbox is registered
+	var foundClearHitbox bool
+	for _, hb := range m.hitboxes {
+		if hb.ID == "dict-history-clear" {
+			foundClearHitbox = true
+			if hb.Action == nil {
+				t.Fatal("expected clear history hitbox action to be set")
+			}
+			hb.Action() // Execute clear
+			break
+		}
+	}
+
+	if !foundClearHitbox {
+		t.Fatal("expected dictionary clear history hitbox to be registered")
+	}
+
+	if len(m.dictionarySearchHistory) != 0 {
+		t.Errorf("expected search history to be cleared, got %v", m.dictionarySearchHistory)
+	}
+
+	// Re-populate and test via ctrl+x keypress
+	m.dictionarySearchHistory = []string{"Banane"}
+	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'x', Mod: tea.ModCtrl})
+	if !handled || cmd != nil {
+		t.Fatal("expected ctrl+x to be handled in updateDictionaryKey")
+	}
+
+	if len(m.dictionarySearchHistory) != 0 {
+		t.Errorf("expected search history to be cleared via ctrl+x, got %v", m.dictionarySearchHistory)
+	}
+}

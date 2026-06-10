@@ -161,7 +161,24 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		} else {
 			b.WriteString(mutedStyle.Render("Search dictionary (local dict.cc). Use 'S' in Import view to seed standard content."))
 			if len(m.dictionarySearchHistory) > 0 {
-				b.WriteString("\n\n" + boldStyle.Render("Recent Searches:") + "\n")
+				clearHistoryText := lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Render("[Clear]")
+				b.WriteString("\n\n" + boldStyle.Render("Recent Searches:") + "  " + clearHistoryText + " " + mutedStyle.Render("(ctrl+x)") + "\n")
+
+				// Hitbox for "[Clear]" button
+				clearHistoryY := strings.Count(b.String(), "\n") - 1
+				m.hitboxes = append(m.hitboxes, Hitbox{
+					ID:     "dict-history-clear",
+					View:   ViewDictionary,
+					X:      layout.X + 18,
+					Y:      layout.Y + clearHistoryY,
+					Width:  7,
+					Height: 1,
+					Action: func() tea.Cmd {
+						m.dictionarySearchHistory = nil
+						return nil
+					},
+				})
+
 				for i, q := range m.dictionarySearchHistory {
 					// Retrieve the current line count to calculate Y coordinate dynamically
 					lineY := strings.Count(b.String(), "\n")
@@ -196,6 +213,103 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		m.dictionaryScroll = m.dictionaryCursor - maxResults + 1
 	}
 
+	// Single column detail view
+	if m.dictionaryDetailView && m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+		res := m.dictionaryResults[m.dictionaryCursor]
+		detailWidth := layout.Width
+
+		var detailBuilder strings.Builder
+		detailBuilder.WriteString(titleStyle.Render(res.Word) + "\n")
+
+		meta := ""
+		if res.WordClass != "" {
+			meta += mutedStyle.Render("["+strings.ToUpper(res.WordClass)+"]") + " "
+		}
+		if res.Gender != "" {
+			meta += renderGender(res.Gender) + " "
+		}
+		if meta != "" {
+			detailBuilder.WriteString(meta + "\n")
+		}
+
+		detailBuilder.WriteString(mutedStyle.Render(strings.Repeat("─", maxInt(10, detailWidth-6))) + "\n\n")
+
+		if res.Translation != "" {
+			detailBuilder.WriteString(boldStyle.Render("Translations:") + "\n")
+			translations := strings.Split(res.Translation, ";")
+			for _, t := range translations {
+				trimmed := strings.TrimSpace(t)
+				highlightedT := highlightQuery(trimmed, m.dictionarySearch, dictHighlightStyle)
+				detailBuilder.WriteString("  " + highlightedT + "\n")
+			}
+			detailBuilder.WriteString("\n")
+		}
+
+		if res.Forms != "" {
+			detailBuilder.WriteString(boldStyle.Render("Word Forms:") + "\n")
+			highlightedForms := highlightQuery(res.Forms, m.dictionarySearch, dictHighlightStyle)
+			detailBuilder.WriteString("  " + highlightedForms + "\n\n")
+		}
+
+		if len(res.Examples) > 0 {
+			detailBuilder.WriteString(boldStyle.Render("Examples:") + "\n")
+			for _, ex := range res.Examples {
+				highlightedEx := highlightQuery(ex, m.dictionarySearch, dictHighlightStyle)
+				detailBuilder.WriteString("  • " + highlightedEx + "\n")
+			}
+		}
+
+		detailLines := strings.Split(detailBuilder.String(), "\n")
+		if len(detailLines) > 0 && detailLines[len(detailLines)-1] == "" {
+			detailLines = detailLines[:len(detailLines)-1]
+		}
+		m.dictionaryDetailTotalLines = len(detailLines)
+
+		maxResultsDetail := dictionaryVisibleRows(layout)
+		if m.dictionaryDetailScroll > m.dictionaryDetailTotalLines-maxResultsDetail {
+			m.dictionaryDetailScroll = maxInt(0, m.dictionaryDetailTotalLines-maxResultsDetail)
+		}
+
+		detailContentWidth := detailWidth - 5
+		if detailContentWidth < 10 {
+			detailContentWidth = 10
+		}
+
+		var visibleDetailBuilder strings.Builder
+		for i := m.dictionaryDetailScroll; i < m.dictionaryDetailScroll+maxResultsDetail && i < len(detailLines); i++ {
+			visibleDetailBuilder.WriteString(padString(detailLines[i], detailContentWidth) + "\n")
+		}
+		for i := len(detailLines) - m.dictionaryDetailScroll; i < maxResultsDetail; i++ {
+			visibleDetailBuilder.WriteString(strings.Repeat(" ", detailContentWidth) + "\n")
+		}
+
+		detailPanelContent := visibleDetailBuilder.String()
+		if m.dictionaryDetailTotalLines > maxResultsDetail {
+			var sb strings.Builder
+			thumbStart, thumbHeight := scrollbarThumb(m.dictionaryDetailTotalLines, maxResultsDetail, m.dictionaryDetailScroll)
+			lines := strings.Split(detailPanelContent, "\n")
+			for i := 0; i < maxResultsDetail && i < len(lines); i++ {
+				char := "│"
+				if i >= thumbStart && i < thumbStart+thumbHeight {
+					char = "┃"
+				}
+				sb.WriteString(lines[i] + lipgloss.NewStyle().Foreground(colorPanel).Render(char) + "\n")
+			}
+			detailPanelContent = sb.String()
+		} else {
+			var sb strings.Builder
+			lines := strings.Split(detailPanelContent, "\n")
+			for i := 0; i < maxResultsDetail && i < len(lines); i++ {
+				sb.WriteString(lines[i] + " \n")
+			}
+			detailPanelContent = sb.String()
+		}
+
+		b.WriteString(detailPanelContent)
+		b.WriteString("\n" + mutedStyle.Render("Press esc/ctrl+d to return to list | Enter to draft | ctrl+a to add | ctrl+p to play"))
+		return b.String()
+	}
+
 	// Two-column layout if wide enough
 	if layout.Width > 80 {
 		listWidth := maxInt(30, minInt(50, layout.Width*4/10))
@@ -203,6 +317,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 
 		var listBuilder strings.Builder
 		contentWidth := listWidth - 2
+		listStartLine := strings.Count(b.String(), "\n")
 		for i := m.dictionaryScroll; i < len(m.dictionaryResults) && i < m.dictionaryScroll+maxResults; i++ {
 			res := m.dictionaryResults[i]
 			prefix := "  "
@@ -227,6 +342,22 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			} else {
 				listBuilder.WriteString(line + "\n")
 			}
+
+			// Click hitbox to select item
+			idx := i
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID:     fmt.Sprintf("dict-result-%d", idx),
+				View:   ViewDictionary,
+				X:      layout.X,
+				Y:      layout.Y + listStartLine + (idx - m.dictionaryScroll),
+				Width:  listWidth,
+				Height: 1,
+				Action: func() tea.Cmd {
+					m.dictionaryCursor = idx
+					m.dictionaryDetailScroll = 0
+					return nil
+				},
+			})
 		}
 
 		// Fill remaining space in list
@@ -371,30 +502,90 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		b.WriteString(joined)
 	} else {
 		// Single column layout
+		listStartLine := strings.Count(b.String(), "\n")
+		contentWidth := layout.Width - 4
+		if contentWidth < 10 {
+			contentWidth = 10
+		}
+
+		var listBuilder strings.Builder
 		for i := m.dictionaryScroll; i < len(m.dictionaryResults) && i < m.dictionaryScroll+maxResults; i++ {
 			res := m.dictionaryResults[i]
 			prefix := "  "
 			if i == m.dictionaryCursor {
 				prefix = "> "
 			}
-			highlightedWord := highlightQuery(res.Word, m.dictionarySearch, dictHighlightStyle)
-			highlightedTranslation := highlightQuery(res.Translation, m.dictionarySearch, dictHighlightStyle)
-			line := fmt.Sprintf("%s%s - %s", prefix, highlightedWord, highlightedTranslation)
+
+			plainLine := fmt.Sprintf("%s - %s", res.Word, res.Translation)
 			if res.WordClass != "" {
-				line += " " + mutedStyle.Render("["+res.WordClass+"]")
+				plainLine += " [" + res.WordClass + "]"
 			}
 			if res.Gender != "" {
-				line += " " + renderGender(res.Gender)
+				plainLine += " {" + res.Gender + "}"
 			}
+
+			padded := padString(plainLine, contentWidth)
+			highlighted := highlightQuery(padded, m.dictionarySearch, dictHighlightStyle)
+			line := prefix + highlighted
+
 			if i == m.dictionaryCursor {
-				b.WriteString(editStyle.Render(line) + "\n")
+				listBuilder.WriteString(editStyle.Render(line) + "\n")
 			} else {
-				b.WriteString(line + "\n")
+				listBuilder.WriteString(line + "\n")
 			}
+
+			// Hitbox for click-to-select and click-again-to-details
+			idx := i
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID:     fmt.Sprintf("dict-result-%d", idx),
+				View:   ViewDictionary,
+				X:      layout.X,
+				Y:      layout.Y + listStartLine + (idx - m.dictionaryScroll),
+				Width:  layout.Width,
+				Height: 1,
+				Action: func() tea.Cmd {
+					if m.dictionaryCursor == idx {
+						m.dictionaryDetailView = true
+						m.dictionaryDetailScroll = 0
+					} else {
+						m.dictionaryCursor = idx
+						m.dictionaryDetailScroll = 0
+					}
+					return nil
+				},
+			})
 		}
-		if len(m.dictionaryResults) > m.dictionaryScroll+maxResults {
-			b.WriteString(mutedStyle.Render(fmt.Sprintf("+ %d more...", len(m.dictionaryResults)-(m.dictionaryScroll+maxResults))))
+
+		// Fill remaining space
+		for i := len(m.dictionaryResults) - m.dictionaryScroll; i < maxResults; i++ {
+			listBuilder.WriteString(strings.Repeat(" ", layout.Width) + "\n")
 		}
+
+		// List scrollbar
+		listWithScroll := listBuilder.String()
+		if len(m.dictionaryResults) > maxResults {
+			var sb strings.Builder
+			thumbStart, thumbHeight := scrollbarThumb(len(m.dictionaryResults), maxResults, m.dictionaryScroll)
+			lines := strings.Split(listBuilder.String(), "\n")
+			for i := 0; i < maxResults && i < len(lines); i++ {
+				char := "│"
+				if i >= thumbStart && i < thumbStart+thumbHeight {
+					char = "┃"
+				}
+				sb.WriteString(lines[i] + lipgloss.NewStyle().Foreground(colorPanel).Render(char) + "\n")
+			}
+			listWithScroll = sb.String()
+		} else {
+			var sb strings.Builder
+			lines := strings.Split(listWithScroll, "\n")
+			for i := 0; i < maxResults && i < len(lines); i++ {
+				sb.WriteString(lines[i] + " \n")
+			}
+			listWithScroll = sb.String()
+		}
+		b.WriteString(listWithScroll)
+
+		b.WriteString("\n" + mutedStyle.Render("Press ctrl+d/click selected to view details | Enter to draft | ctrl+a to add | ctrl+p to play"))
 	}
 
 	return b.String()

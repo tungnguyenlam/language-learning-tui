@@ -1,12 +1,16 @@
 # Active Backlog
 
-Last updated: 2026-06-10
+Last updated: 2026-06-11
 
 ## Current Milestone
 
 Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
+
+- [x] **Dictionary Search History Clear:** Added a clear button `[Clear]` (with mouse hitbox and `ctrl+x` keybinding) to clear recent search queries when the dictionary search bar is empty. Included `TestDictionaryClearSearchHistory` unit test coverage.
+- [x] **Practice Hub Session Scores:** Enhanced the Practice Hub view to display the current session score (e.g. `• 4/5 (80%)`) next to each practice trainer button.
+- [x] **Practice Hub Reset Scores:** Added an `r` keybinding to reset all practice session scores in the Practice Hub view. Included unit and E2E coverage for scores display and score resetting.
 
 - [x] **Dictionary Quick Add Card Generation Bugfix:** Resolved a critical bug where quick-adding a dictionary entry to a deck (`ctrl+a`) only created the Note record without generating its associated study/review Card, leaving it permanently inactive/unreviewable. Integrated `content.CardsForNote` and added unit test coverage in `render_dictionary_test.go`.
 - [x] **OpenAI & Anthropic Base URLs in Settings TUI:** Exposed both OpenAI and Anthropic Base URLs in the settings TUI list, allowing users to configure them directly (e.g. for offline Ollama or alternative API proxies). Updated settings navigation boundaries, cursor handlers, credential editing cases, Lip Gloss line info builders, and added `TestSettingsBaseURLEditing` unit test coverage.
@@ -77,7 +81,7 @@ None.
 
 ## Last Verified
 
-- `./scripts/verify.sh` passed on 2026-06-11: Go tests, `go vet`, TUI smoke, binary build, and 347 E2E tests.
+- `./scripts/verify.sh` passed on 2026-06-11: Go tests, `go vet`, TUI smoke, binary build, and 348 E2E tests.
 - `go test ./internal/content` passed.
 - `go test ./internal/tui` passed.
 

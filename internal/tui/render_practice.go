@@ -85,11 +85,50 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 		return 0
 	}
 
+	getScoreStr := func(sub PracticeSubView) string {
+		var correct, total int
+		switch sub {
+		case PracticeSubViewGender:
+			correct, total = m.practiceCorrect, m.practiceTotal
+		case PracticeSubViewConjugation:
+			correct, total = m.conjugationCorrect, m.conjugationTotal
+		case PracticeSubViewCase:
+			correct, total = m.caseCorrect, m.caseTotal
+		case PracticeSubViewAdjective:
+			correct, total = m.adjCorrect, m.adjTotal
+		case PracticeSubViewPreposition:
+			correct, total = m.prepCorrect, m.prepTotal
+		case PracticeSubViewPlural:
+			correct, total = m.pluralCorrect, m.pluralTotal
+		case PracticeSubViewSeparable:
+			correct, total = m.separableCorrect, m.separableTotal
+		case PracticeSubViewNumbers:
+			correct, total = m.numberCorrect, m.numberTotal
+		case PracticeSubViewConjunctions:
+			correct, total = m.conjCorrect, m.conjTotal
+		}
+		if total > 0 {
+			pct := float64(correct) / float64(total) * 100
+			return fmt.Sprintf(" • %d/%d (%.0f%%)", correct, total, pct)
+		}
+		return ""
+	}
+
+	btnWidth := 46
+	if layout.Width >= 56 {
+		btnWidth = 52
+	} else if layout.Width < 50 {
+		btnWidth = layout.Width - 4
+	}
+	if btnWidth < 20 {
+		btnWidth = 20
+	}
+
 	for i, mode := range modes {
 		btnStyle := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			Padding(0, 2).
-			Width(40).
+			Width(btnWidth).
 			BorderForeground(lipgloss.Color("81"))
 
 		count := getItemCount(mode.sub)
@@ -98,10 +137,16 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 			countStr = fmt.Sprintf(" (%d)", count)
 		}
 
+		scoreStr := getScoreStr(mode.sub)
+		scoreRendered := ""
+		if scoreStr != "" {
+			scoreRendered = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Render(scoreStr)
+		}
+
 		keyHint := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212")).Render("[" + mode.key + "]")
-		content := fmt.Sprintf("%s %s%s\n%s", keyHint, mode.label, countStr, mutedStyle.Render(mode.desc))
+		content := fmt.Sprintf("%s %s%s%s\n%s", keyHint, mode.label, countStr, scoreRendered, mutedStyle.Render(mode.desc))
 		if spacing == 3 {
-			content = fmt.Sprintf("%s %s%s - %s", keyHint, mode.label, countStr, mutedStyle.Render(mode.desc))
+			content = fmt.Sprintf("%s %s%s%s - %s", keyHint, mode.label, countStr, scoreRendered, mutedStyle.Render(mode.desc))
 			btnStyle = btnStyle.Padding(0, 1)
 		}
 
@@ -111,9 +156,9 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 		m.hitboxes = append(m.hitboxes, Hitbox{
 			ID:     mode.id,
 			View:   ViewPractice,
-			X:      layout.X + (layout.Width-40)/2,
+			X:      layout.X + (layout.Width-btnWidth)/2,
 			Y:      layout.Y + 3 + (i * spacing),
-			Width:  40,
+			Width:  btnWidth,
 			Height: spacing - 1,
 		})
 	}

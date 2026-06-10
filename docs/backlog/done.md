@@ -1,15 +1,30 @@
 # Done Backlog
 
+## 2026-06-11 (Dictionary History Clear, Practice Hub Scores & Reset)
+
+### Dictionary UX
+- **Clear Dictionary Search History:** Added a clear button `[Clear]` (with mouse hitbox and `ctrl+x` keybinding) to clear recent search queries when the dictionary search bar is empty. Included `TestDictionaryClearSearchHistory` unit test coverage.
+
+### Practice Hub
+- **Session Scores Display:** Enhanced the Practice Hub view to display the current session score (e.g. `• 4/5 (80%)`) next to each practice trainer button.
+- **Reset Scores:** Added an `r` keybinding to reset all practice session scores in the Practice Hub view. Included unit and E2E coverage for scores display and score resetting.
+
+### Verification
+- `./scripts/verify.sh` passed successfully (all unit, smoke, and 349 E2E tests).
+
 ## 2026-06-11 (Dictionary UX Enhancements & View State Preservation)
 
 ### Dictionary UX
+- **Single-Column Detail View:** Implemented a full-height details screen toggle (`ctrl+d` or click selected result) in single-column view mode (terminal width <= 80), providing narrow screen users with word forms, translation lists, and examples.
+- **Safe Truncation & List Scrollbars:** Prevented ANSI escape code corruption by padding/truncating search result strings to the active panel width before highlighting matching queries. Added visual list scrollbars for single-column layouts.
 - **Search Results Count:** Displayed the total search matches count (e.g. `(5 results)` or `(50+ results)`) next to the "Dictionary" title in the header to give the user immediate feedback on their query matching.
 - **Detailed Query Highlighting:** Enhanced detail panel view to highlight search query matches in translations, word forms, and example sentences.
 - **Esc Key Navigation Return:** Captured the previous view before navigating to the Dictionary (e.g. from Browser or Review), allowing the `Esc` key in Dictionary to return to that view instead of always resetting to the Dashboard.
 - **Enhanced Help Hints:** Updated the Dictionary footer help hints to include detail scrolling, adding, drafting, and finding shortcuts.
+- **Result List Mouse Support:** Registered mouse click hitboxes for all dictionary search results. Clicking selects the entry, and clicking an already-selected entry in compact mode opens its details.
 
 ### Verification
-- `./scripts/verify.sh` passed successfully (all unit, smoke, and 347 E2E tests).
+- `./scripts/verify.sh` passed successfully (all unit, smoke, and 348 E2E tests).
 
 ## 2026-06-10 (Dictionary Quick Add Fix, Settings Base URLs, Dictionary Clear Button)
 

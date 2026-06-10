@@ -157,5 +157,55 @@ def test_conjunctions_trainer():
         finally:
             agent.close()
 
+def test_practice_hub_scores_and_reset():
+    """Test session scores are displayed in Practice Hub and can be reset."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir, lines=45)
+        try:
+            # Go to Practice Hub (key 0)
+            agent.act('0')
+            agent.wait_for_text("PRACTICE HUB", timeout=5.0)
+            
+            # Select Conjunctions Trainer (key 9)
+            agent.act('9')
+            agent.wait_for_text("CONJUNCTIONS & WORD ORDER", timeout=5.0)
+            
+            # Type correct answer ("weil") and press enter
+            agent.act('w')
+            agent.act('e')
+            agent.act('i')
+            agent.act('l')
+            agent.act('<Enter>')
+            agent.wait_until_stable()
+            
+            # Verify correct state (Score: 1/1)
+            screen = agent.observe()
+            assert "Score: 1/1" in screen
+            
+            # Press any key to advance
+            agent.act(' ')
+            agent.wait_until_stable()
+
+            # Press Esc to return to Practice Hub
+            agent.act('<Esc>')
+            agent.wait_for_text("PRACTICE HUB", timeout=5.0)
+            
+            # Verify Conjunctions Trainer displays the score "1/1"
+            screen = agent.observe()
+            assert "1/1" in screen
+            assert "100%" in screen
+            
+            # Press 'r' to reset scores
+            agent.act('r')
+            agent.wait_until_stable()
+            
+            # Verify score "1/1" is reset and no longer on the screen
+            screen = agent.observe()
+            assert "1/1" not in screen
+            assert "100%" not in screen
+            
+        finally:
+            agent.close()
+
 if __name__ == "__main__":
     pytest.main(["-v", __file__])

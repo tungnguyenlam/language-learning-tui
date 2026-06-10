@@ -39,6 +39,7 @@ func (m *Model) updateView(view View) tea.Cmd {
 	}
 	if view == ViewDictionary && m.activeView != ViewDictionary {
 		m.dictionaryPreviousView = m.activeView
+		m.dictionaryDetailView = false
 	}
 	m.activeView = view
 	m.isDragging = false
