@@ -811,6 +811,34 @@ func TestAIGenerateEmptyTopicDoesNotCallProvider(t *testing.T) {
 	}
 }
 
+func TestAIEscapeClearsStarterTopic(t *testing.T) {
+	model := NewModelWithOptions(&mockRepo{}, &mockScheduler{}, ModelOptions{
+		AIProviderName: "disabled",
+		AIProvider:     nil,
+	})
+	model.activeView = ViewAI
+	model.aiInput = "der Kaffee"
+
+	cmd, handled := model.updateAIKey(tea.KeyPressMsg{Code: tea.KeyEsc})
+	if !handled {
+		t.Fatal("expected escape to be handled in AI view")
+	}
+	if cmd != nil {
+		t.Fatal("expected no command when clearing AI topic")
+	}
+	if model.aiInput != "" {
+		t.Fatalf("expected escape to clear AI topic, got %q", model.aiInput)
+	}
+
+	cmd = model.startDrafting()
+	if cmd != nil {
+		t.Fatal("expected empty topic guard to return no command")
+	}
+	if !strings.Contains(model.status, "Enter a topic") {
+		t.Fatalf("status = %q, want topic guidance", model.status)
+	}
+}
+
 func TestAIDraftCursorGuardsInvalidSelection(t *testing.T) {
 	model := NewModelWithAI(&mockRepo{}, &mockScheduler{}, ai.OfflineProvider{})
 	model.activeView = ViewAI

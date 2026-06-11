@@ -631,10 +631,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.dictionaryCursor = 0
 		m.dictionaryScroll = 0
 		m.dictionaryDetailScroll = 0
-		if len(msg.results) > 0 {
+		query := strings.TrimSpace(m.dictionarySearch)
+		if query == "" {
+			m.status = "Dictionary search cleared"
+		} else if len(msg.results) > 0 {
 			m.status = fmt.Sprintf("Found %d dictionary results", len(msg.results))
 		} else {
-			m.status = "No results"
+			m.status = fmt.Sprintf("No dictionary results for %q", query)
 		}
 	case spinnerTickMsg:
 		if m.drafting {

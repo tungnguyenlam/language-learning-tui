@@ -1,5 +1,24 @@
 # Done Backlog
 
+## 2026-06-11 (Maintenance Content & Dictionary Feedback)
+
+### Content Expansion
+- **B1 Household Maintenance Deck:** Added a 40-note embedded TSV deck for practical home maintenance vocabulary: tools, small repairs, plumbing/electrical issues, and tradesperson/service interactions.
+
+### Dictionary UX
+- **Precise Empty Search Status:** Dictionary search result handling now distinguishes a cleared search from a real no-match search and includes the query in the status line for zero results.
+- **Spotlight Result Count:** The Spotlight dictionary overlay title now shows `(1 result)`, `(N results)`, or `(50+ results)` when a search has matches.
+
+### AI UX
+- **Escape Clears Topic Reliably:** Fixed a regression where the AI empty-topic guard E2E path could keep the starter topic (`der Kaffee`) after Escape, causing Enter to hit disabled-provider guidance instead of the empty-topic guard.
+
+### Verification
+- `PATH="/opt/homebrew/bin:$PATH" go test ./internal/content` passed.
+- `PATH="/opt/homebrew/bin:$PATH" go test ./internal/tui -run 'TestDictionarySearchResultsStatus|TestSpotlightDictionaryOverlayResultCount|TestSpotlightDictionaryOverlayRendering'` passed.
+- `PATH="/opt/homebrew/bin:$PATH" go test ./internal/tui -run 'TestAIEscapeClearsStarterTopic|TestAIGenerateEmptyTopicDoesNotCallProvider|TestDictionarySearchResultsStatus|TestSpotlightDictionaryOverlayResultCount'` passed.
+- `PATH="/opt/homebrew/bin:$PATH" ./tui_tester/venv/bin/pytest e2e_tests/test_batch6_end_to_end.py::test_ai_empty_topic_guard_is_visible -q` passed.
+- `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` passed: Go tests, smoke test, binary build, and 349 E2E tests.
+
 ## 2026-06-11 (Spotlight Dictionary Overlay Reliability)
 
 ### Dictionary UX

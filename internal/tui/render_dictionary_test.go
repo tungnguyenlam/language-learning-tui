@@ -165,6 +165,29 @@ func TestDictionarySearchHistory(t *testing.T) {
 	}
 }
 
+func TestDictionarySearchResultsStatus(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.dictionarySearchID = 1
+	m.dictionarySearch = "zzzz"
+
+	updated, cmd := m.Update(dictionarySearchResultsMsg{id: 1, results: nil})
+	if cmd != nil {
+		t.Fatal("expected no command for dictionary results message")
+	}
+	got := updated.(*Model)
+	if got.status != `No dictionary results for "zzzz"` {
+		t.Fatalf("unexpected empty-results status: %q", got.status)
+	}
+
+	got.dictionarySearchID = 2
+	got.dictionarySearch = ""
+	updated, _ = got.Update(dictionarySearchResultsMsg{id: 2, results: nil})
+	got = updated.(*Model)
+	if got.status != "Dictionary search cleared" {
+		t.Fatalf("unexpected cleared-search status: %q", got.status)
+	}
+}
+
 type captureRepo struct {
 	mockRepo
 	upsertedNote *core.Note
@@ -460,6 +483,24 @@ func TestSpotlightDictionaryOverlayRendering(t *testing.T) {
 	}
 	if !strings.Contains(output, "Search German or English") {
 		t.Fatal("expected spotlight overlay to contain placeholder text")
+	}
+}
+
+func TestSpotlightDictionaryOverlayResultCount(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.width = 120
+	m.height = 40
+	m.activeView = ViewDashboard
+	m.dictionaryOverlayActive = true
+	m.dictionarySearch = "Apfel"
+	m.dictionaryResults = []core.DictionaryEntry{
+		{ID: "1", Word: "Apfel", Translation: "apple"},
+		{ID: "2", Word: "Apfelbaum", Translation: "apple tree"},
+	}
+
+	output := stripANSI(m.renderSpotlightDictionary())
+	if !strings.Contains(output, "SPOTLIGHT DICTIONARY (2 results)") {
+		t.Fatalf("expected overlay title to include result count, got:\n%s", output)
 	}
 }
 

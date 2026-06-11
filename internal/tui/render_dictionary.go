@@ -627,7 +627,17 @@ func (m *Model) renderSpotlightDictionary() string {
 
 	var b strings.Builder
 
-	titleStr := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).Render(" 🔍 SPOTLIGHT DICTIONARY ")
+	title := " 🔍 SPOTLIGHT DICTIONARY "
+	if m.dictionarySearch != "" && len(m.dictionaryResults) > 0 {
+		if len(m.dictionaryResults) >= 50 {
+			title = " 🔍 SPOTLIGHT DICTIONARY (50+ results) "
+		} else if len(m.dictionaryResults) == 1 {
+			title = " 🔍 SPOTLIGHT DICTIONARY (1 result) "
+		} else {
+			title = fmt.Sprintf(" 🔍 SPOTLIGHT DICTIONARY (%d results) ", len(m.dictionaryResults))
+		}
+	}
+	titleStr := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).Render(title)
 	closeHint := mutedStyle.Render("Press = or Esc to close")
 	b.WriteString(titleStr + "  " + closeHint + "\n\n")
 

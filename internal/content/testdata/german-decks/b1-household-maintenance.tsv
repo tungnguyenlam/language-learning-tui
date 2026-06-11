@@ -1,0 +1,43 @@
+#separator:tab
+#html:false
+#deck:B1 Household Maintenance
+b1-maintenance-werkzeug	das Werkzeug	tool or tools	Plural often unchanged: die Werkzeuge	b1,home,maintenance,noun
+b1-maintenance-hammer	der Hammer	hammer	Plural: die Hämmer	b1,home,maintenance,noun
+b1-maintenance-schraube	die Schraube	screw	Plural: die Schrauben	b1,home,maintenance,noun
+b1-maintenance-nagel	der Nagel	nail	Plural: die Nägel	b1,home,maintenance,noun
+b1-maintenance-bohrmaschine	die Bohrmaschine	drill	Plural: die Bohrmaschinen	b1,home,maintenance,noun
+b1-maintenance-leiter	die Leiter	ladder	Plural: die Leitern	b1,home,maintenance,noun
+b1-maintenance-kleber	der Kleber	glue or adhesive	Plural: die Kleber	b1,home,maintenance,noun
+b1-maintenance-farbe	die Farbe	paint or color	Plural: die Farben	b1,home,maintenance,noun
+b1-maintenance-pinsel	der Pinsel	paintbrush	Plural: die Pinsel	b1,home,maintenance,noun
+b1-maintenance-rolle	die Farbrolle	paint roller	Plural: die Farbrollen	b1,home,maintenance,noun
+b1-maintenance-steckdose	die Steckdose	power outlet	Plural: die Steckdosen	b1,home,maintenance,noun
+b1-maintenance-schalter	der Schalter	switch	Plural: die Schalter	b1,home,maintenance,noun
+b1-maintenance-sicherung	die Sicherung	fuse or circuit breaker	Plural: die Sicherungen	b1,home,maintenance,noun
+b1-maintenance-lampe	die Lampe	lamp	Plural: die Lampen	b1,home,maintenance,noun
+b1-maintenance-gluehbirne	die Glühbirne	light bulb	Plural: die Glühbirnen	b1,home,maintenance,noun
+b1-maintenance-wasserhahn	der Wasserhahn	faucet or tap	Plural: die Wasserhähne	b1,home,maintenance,noun
+b1-maintenance-abfluss	der Abfluss	drain	Plural: die Abflüsse	b1,home,maintenance,noun
+b1-maintenance-rohr	das Rohr	pipe	Plural: die Rohre	b1,home,maintenance,noun
+b1-maintenance-dichtung	die Dichtung	seal or gasket	Plural: die Dichtungen	b1,home,maintenance,noun
+b1-maintenance-heizung	die Heizung	heating or radiator	Plural: die Heizungen	b1,home,maintenance,noun
+b1-maintenance-lueften	lüften	to air out a room	Wir lüften die Wohnung jeden Morgen.	b1,home,maintenance,verb
+b1-maintenance-reparieren	etwas reparieren	to repair something	Ich muss den Wasserhahn reparieren.	b1,home,maintenance,verb
+b1-maintenance-austauschen	etwas austauschen	to replace something	Wir tauschen die Glühbirne aus.	b1,home,maintenance,verb
+b1-maintenance-festziehen	etwas festziehen	to tighten something	Ziehen Sie die Schraube bitte fest.	b1,home,maintenance,verb
+b1-maintenance-lockern	etwas lockern	to loosen something	Lockern Sie zuerst die alte Mutter.	b1,home,maintenance,verb
+b1-maintenance-bohren	ein Loch bohren	to drill a hole	Ich bohre ein Loch in die Wand.	b1,home,maintenance,verb
+b1-maintenance-streichen	eine Wand streichen	to paint a wall	Am Samstag streichen wir das Wohnzimmer.	b1,home,maintenance,verb
+b1-maintenance-kleben	etwas kleben	to glue or stick something	Ich klebe die lose Kante wieder fest.	b1,home,maintenance,verb
+b1-maintenance-messen	etwas messen	to measure something	Messen Sie die Breite des Fensters.	b1,home,maintenance,verb
+b1-maintenance-pruefen	etwas prüfen	to check or inspect something	Bitte prüfen Sie die Sicherung.	b1,home,maintenance,verb
+b1-maintenance-undicht	undicht	leaking or not sealed	Das Rohr unter der Spüle ist undicht.	b1,home,maintenance,adjective
+b1-maintenance-kaputt	kaputt	broken	Der Lichtschalter ist kaputt.	b1,home,maintenance,adjective
+b1-maintenance-locker	locker	loose	Der Griff an der Tür ist locker.	b1,home,maintenance,adjective
+b1-maintenance-verstopft	verstopft	clogged	Der Abfluss im Bad ist verstopft.	b1,home,maintenance,adjective
+b1-maintenance-feucht	feucht	damp or moist	Die Wand neben dem Fenster ist feucht.	b1,home,maintenance,adjective
+b1-maintenance-stromausfall	der Stromausfall	power outage	Plural: die Stromausfälle	b1,home,maintenance,noun
+b1-maintenance-schaden	der Schaden	damage	Plural: die Schäden	b1,home,maintenance,noun
+b1-maintenance-rechnung	die Rechnung	invoice or bill	Plural: die Rechnungen	b1,home,maintenance,noun
+b1-maintenance-hausmeister	der Hausmeister	building superintendent or caretaker	Plural: die Hausmeister	b1,home,maintenance,noun
+b1-maintenance-handwerker	der Handwerker	tradesperson	Plural: die Handwerker	b1,home,maintenance,noun

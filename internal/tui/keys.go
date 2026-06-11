@@ -1187,8 +1187,9 @@ func (m *Model) updateAIKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		case "enter", "\r", "\n":
 			m.searchingAI = false
 			return m.startDrafting(), true
-		case "esc":
+		case "esc", "escape":
 			m.searchingAI = false
+			m.aiInput = ""
 			return nil, true
 		case "backspace":
 			if len(m.aiInput) > 0 {
@@ -1207,7 +1208,7 @@ func (m *Model) updateAIKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	case "/":
 		m.searchingAI = true
 		return nil, true
-	case "esc":
+	case "esc", "escape":
 		m.aiInput = ""
 		return nil, true
 	case "[":
