@@ -1149,3 +1149,11 @@ Improved terminal audio playback selection across operating systems. macOS now p
 ### Verification
 - `go test ./...` passed.
 - `./deutsch-tui-bin -data-dir /tmp/deutsch-tui-audio-player-smoke -smoke` passed.
+
+## 2026-06-11 (Practical Life Content Decks)
+
+Added three 40-note embedded TSV decks for everyday learner scenarios: A2 Banking Errands, A2 School & Childcare, and B1 Insurance Claims. Each deck includes practical nouns and production-oriented reverse phrase cards for tasks like opening an account, reporting a claim, signing school forms, and coordinating pickup times.
+
+### Verification
+- `PATH="/opt/homebrew/bin:$PATH" go test ./internal/content` passed.
+- `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` passed with 349 E2E tests.

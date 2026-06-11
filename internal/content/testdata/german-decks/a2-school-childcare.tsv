@@ -1,0 +1,44 @@
+#separator:tab
+#html:false
+#deck:A2 School & Childcare
+front	back	extra	tags	notetype
+die Schule	school	die Schule, die Schulen	a2 school nouns	Basic
+der Kindergarten	kindergarten	der Kindergarten, die Kindergärten	a2 school childcare	Basic
+die Kita	daycare	die Kita, die Kitas	a2 school childcare	Basic
+die Grundschule	primary school	die Grundschule, die Grundschulen	a2 school nouns	Basic
+die Klasse	class	die Klasse, die Klassen	a2 school nouns	Basic
+der Klassenraum	classroom	der Klassenraum, die Klassenräume	a2 school places	Basic
+die Lehrerin	teacher	die Lehrerin, die Lehrerinnen	a2 school people	Basic
+der Lehrer	teacher	der Lehrer, die Lehrer	a2 school people	Basic
+die Erzieherin	childcare educator	die Erzieherin, die Erzieherinnen	a2 school people	Basic
+der Elternabend	parent evening	der Elternabend, die Elternabende	a2 school events	Basic
+zum Elternabend gehen	to go to the parent evening	ist zum Elternabend gegangen	a2 school events	Reverse
+das Elterngespräch	parent-teacher meeting	das Elterngespräch, die Elterngespräche	a2 school events	Basic
+einen Termin vereinbaren	to arrange an appointment	hat einen Termin vereinbart	a2 school phrases	Reverse
+die Hausaufgaben	homework	die Hausaufgaben	a2 school learning	Basic
+Hausaufgaben machen	to do homework	hat Hausaufgaben gemacht	a2 school learning	Reverse
+der Stundenplan	timetable	der Stundenplan, die Stundenpläne	a2 school schedule	Basic
+die Pause	break	die Pause, die Pausen	a2 school schedule	Basic
+der Unterricht	lesson or instruction	der Unterricht	a2 school learning	Basic
+der Ausflug	field trip	der Ausflug, die Ausflüge	a2 school events	Basic
+die Einverständniserklärung	consent form	die Einverständniserklärung, die Einverständniserklärungen	a2 school paperwork	Basic
+ein Formular unterschreiben	to sign a form	hat ein Formular unterschrieben	a2 school paperwork	Reverse
+die Entschuldigung	excuse note	die Entschuldigung, die Entschuldigungen	a2 school absence	Basic
+eine Entschuldigung schreiben	to write an excuse note	hat eine Entschuldigung geschrieben	a2 school absence	Reverse
+krankmelden	to report sick	hat das Kind krankgemeldet	a2 school absence	Reverse
+die Abholung	pickup	die Abholung, die Abholungen	a2 school logistics	Basic
+das Kind abholen	to pick up the child	hat das Kind abgeholt	a2 school logistics	Reverse
+die Bringzeit	drop-off time	die Bringzeit, die Bringzeiten	a2 school logistics	Basic
+die Abholzeit	pickup time	die Abholzeit, die Abholzeiten	a2 school logistics	Basic
+pünktlich sein	to be on time	ist pünktlich gewesen	a2 school logistics	Reverse
+zu spät kommen	to arrive late	ist zu spät gekommen	a2 school logistics	Reverse
+das Pausenbrot	packed snack	das Pausenbrot, die Pausenbrote	a2 school food	Basic
+die Trinkflasche	water bottle	die Trinkflasche, die Trinkflaschen	a2 school food	Basic
+die Wechselkleidung	change of clothes	die Wechselkleidung	a2 school childcare	Basic
+die Regenjacke	rain jacket	die Regenjacke, die Regenjacken	a2 school clothing	Basic
+die Sportsachen	sports clothes	die Sportsachen	a2 school clothing	Basic
+die Turnhalle	gymnasium	die Turnhalle, die Turnhallen	a2 school places	Basic
+der Schulranzen	school backpack	der Schulranzen, die Schulranzen	a2 school objects	Basic
+die Brotdose	lunch box	die Brotdose, die Brotdosen	a2 school food	Basic
+der Notfallkontakt	emergency contact	der Notfallkontakt, die Notfallkontakte	a2 school safety	Basic
+die Telefonnummer hinterlassen	to leave a phone number	hat die Telefonnummer hinterlassen	a2 school safety	Reverse

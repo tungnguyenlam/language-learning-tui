@@ -8,6 +8,7 @@ Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
 
+- [x] **Practical Life Content Decks:** Added three new embedded TSV decks with 40 notes each: A2 Banking Errands, A2 School & Childcare, and B1 Insurance Claims. Added registry tests to verify they load, generate cards, and include key real-life phrases.
 - [x] **B1 Household Maintenance Deck:** Added a 40-note embedded TSV deck covering tools, small repairs, plumbing/electrical issues, and repair-service vocabulary. Added registry coverage to verify the deck loads and generates cards.
 - [x] **Dictionary Empty Search Feedback:** Updated dictionary search result handling to distinguish cleared searches from real zero-result searches, including the searched query in the status line when no matches are found.
 - [x] **Spotlight Dictionary Result Count:** Added result-count feedback to the Spotlight dictionary overlay title, matching the full Dictionary view's count/capped-count behavior. Added unit coverage for the rendered overlay title.
@@ -89,6 +90,7 @@ None.
 ## Last Verified
 
 - `PATH="/opt/homebrew/bin:$PATH" go test ./internal/content` passed on 2026-06-11.
+- `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` passed on 2026-06-11: Go tests, smoke test, binary build, and 349 E2E tests all passed.
 - `PATH="/opt/homebrew/bin:$PATH" go test ./internal/tui -run 'TestDictionarySearchResultsStatus|TestSpotlightDictionaryOverlayResultCount|TestSpotlightDictionaryOverlayRendering'` passed on 2026-06-11.
 - `PATH="/opt/homebrew/bin:$PATH" go test ./internal/tui -run 'TestAIEscapeClearsStarterTopic|TestAIGenerateEmptyTopicDoesNotCallProvider|TestDictionarySearchResultsStatus|TestSpotlightDictionaryOverlayResultCount'` passed on 2026-06-11.
 - `PATH="/opt/homebrew/bin:$PATH" ./tui_tester/venv/bin/pytest e2e_tests/test_batch6_end_to_end.py::test_ai_empty_topic_guard_is_visible -q` passed on 2026-06-11.

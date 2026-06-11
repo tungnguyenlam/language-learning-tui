@@ -1,0 +1,44 @@
+#separator:tab
+#html:false
+#deck:A2 Banking Errands
+front	back	extra	tags	notetype
+das Konto	bank account	das Konto, die Konten	a2 banking nouns	Basic
+ein Konto eröffnen	to open an account	hat ein Konto eröffnet	a2 banking phrases	Reverse
+die Bankkarte	bank card	die Bankkarte, die Bankkarten	a2 banking nouns	Basic
+die Geheimzahl	PIN	die Geheimzahl, die Geheimzahlen	a2 banking security	Basic
+die Überweisung	bank transfer	die Überweisung, die Überweisungen	a2 banking payments	Basic
+Geld überweisen	to transfer money	hat Geld überwiesen	a2 banking payments	Reverse
+der Dauerauftrag	standing order	der Dauerauftrag, die Daueraufträge	a2 banking payments	Basic
+die Lastschrift	direct debit	die Lastschrift, die Lastschriften	a2 banking payments	Basic
+die Rechnung bezahlen	to pay the bill	hat die Rechnung bezahlt	a2 banking payments	Reverse
+der Geldautomat	ATM	der Geldautomat, die Geldautomaten	a2 banking cash	Basic
+Geld abheben	to withdraw money	hat Geld abgehoben	a2 banking cash	Reverse
+Geld einzahlen	to deposit money	hat Geld eingezahlt	a2 banking cash	Basic
+der Kontostand	account balance	der Kontostand, die Kontostände	a2 banking account	Basic
+den Kontostand prüfen	to check the account balance	hat den Kontostand geprüft	a2 banking account	Reverse
+der Kontoauszug	bank statement	der Kontoauszug, die Kontoauszüge	a2 banking account	Basic
+die Gebühr	fee	die Gebühr, die Gebühren	a2 banking costs	Basic
+kostenlos	free of charge	kostenlose Kontoführung	a2 banking costs	Basic
+die Filiale	branch	die Filiale, die Filialen	a2 banking places	Basic
+am Schalter	at the counter	Ich zahle das Geld am Schalter ein.	a2 banking places	Basic
+die App der Bank	banking app	Ich nutze die App der Bank für Überweisungen.	a2 banking digital	Basic
+die Online-Banking-Zugangsdaten	online banking login details	die Zugangsdaten	a2 banking digital	Basic
+das Passwort ändern	to change the password	hat das Passwort geändert	a2 banking security	Reverse
+die Karte sperren lassen	to have the card blocked	hat die Karte sperren lassen	a2 banking security	Reverse
+die Karte ist weg	the card is missing	Meine Karte ist weg.	a2 banking emergency	Basic
+eine neue Karte beantragen	to apply for a new card	hat eine neue Karte beantragt	a2 banking emergency	Reverse
+die Unterschrift	signature	die Unterschrift, die Unterschriften	a2 banking paperwork	Basic
+das Formular ausfüllen	to fill out the form	hat das Formular ausgefüllt	a2 banking paperwork	Reverse
+der Ausweis	identity document	der Ausweis, die Ausweise	a2 banking paperwork	Basic
+die Adresse ändern	to change the address	hat die Adresse geändert	a2 banking account	Reverse
+die IBAN	IBAN	die IBAN, die IBANs	a2 banking payments	Basic
+der Empfänger	recipient	der Empfänger, die Empfänger	a2 banking payments	Basic
+der Verwendungszweck	payment reference	der Verwendungszweck, die Verwendungszwecke	a2 banking payments	Basic
+das Limit	limit	das Limit, die Limits	a2 banking security	Basic
+das Tageslimit	daily limit	das Tageslimit, die Tageslimits	a2 banking security	Basic
+die Zinsen	interest	die Zinsen	a2 banking money	Basic
+das Sparkonto	savings account	das Sparkonto, die Sparkonten	a2 banking account	Basic
+der Kredit	loan	der Kredit, die Kredite	a2 banking money	Basic
+eine Rate zahlen	to pay an installment	hat eine Rate gezahlt	a2 banking money	Reverse
+die Mahnung	reminder notice	die Mahnung, die Mahnungen	a2 banking paperwork	Basic
+rechtzeitig zahlen	to pay on time	hat rechtzeitig gezahlt	a2 banking payments	Reverse

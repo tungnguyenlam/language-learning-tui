@@ -1,0 +1,44 @@
+#separator:tab
+#html:false
+#deck:B1 Insurance Claims
+front	back	extra	tags	notetype
+die Versicherung	insurance	die Versicherung, die Versicherungen	b1 insurance nouns	Basic
+die Krankenversicherung	health insurance	die Krankenversicherung, die Krankenversicherungen	b1 insurance health	Basic
+die Haftpflichtversicherung	liability insurance	die Haftpflichtversicherung, die Haftpflichtversicherungen	b1 insurance liability	Basic
+die Hausratversicherung	home contents insurance	die Hausratversicherung, die Hausratversicherungen	b1 insurance home	Basic
+die Reiseversicherung	travel insurance	die Reiseversicherung, die Reiseversicherungen	b1 insurance travel	Basic
+der Versicherungsvertrag	insurance contract	der Versicherungsvertrag, die Versicherungsverträge	b1 insurance contract	Basic
+die Police	policy	die Police, die Policen	b1 insurance contract	Basic
+die Kundennummer	customer number	die Kundennummer, die Kundennummern	b1 insurance paperwork	Basic
+die Schadennummer	claim number	die Schadennummer, die Schadennummern	b1 insurance claims	Basic
+der Schaden	damage or claim	der Schaden, die Schäden	b1 insurance claims	Basic
+einen Schaden melden	to report a claim	hat einen Schaden gemeldet	b1 insurance claims	Reverse
+die Schadensmeldung	claim report	die Schadensmeldung, die Schadensmeldungen	b1 insurance claims	Basic
+das Formular einreichen	to submit the form	hat das Formular eingereicht	b1 insurance paperwork	Reverse
+die Frist	deadline	die Frist, die Fristen	b1 insurance paperwork	Basic
+fristgerecht melden	to report within the deadline	hat den Schaden fristgerecht gemeldet	b1 insurance claims	Reverse
+der Kostenvoranschlag	cost estimate	der Kostenvoranschlag, die Kostenvoranschläge	b1 insurance repair	Basic
+die Rechnungskopie	copy of the invoice	die Rechnungskopie, die Rechnungskopien	b1 insurance paperwork	Basic
+der Beleg	receipt	der Beleg, die Belege	b1 insurance paperwork	Basic
+Fotos beifügen	to attach photos	hat Fotos beigefügt	b1 insurance paperwork	Reverse
+die Erstattung	reimbursement	die Erstattung, die Erstattungen	b1 insurance money	Basic
+die Kosten erstatten	to reimburse the costs	hat die Kosten erstattet	b1 insurance money	Reverse
+der Eigenanteil	deductible or co-payment	der Eigenanteil, die Eigenanteile	b1 insurance money	Basic
+die Selbstbeteiligung	deductible	die Selbstbeteiligung, die Selbstbeteiligungen	b1 insurance money	Basic
+die Deckung	coverage	die Deckung	b1 insurance contract	Basic
+versichert sein	to be insured	ist versichert	b1 insurance contract	Reverse
+nicht gedeckt sein	not to be covered	ist nicht gedeckt	b1 insurance contract	Reverse
+der Versicherungsfall	insured event	der Versicherungsfall, die Versicherungsfälle	b1 insurance claims	Basic
+die Ursache	cause	die Ursache, die Ursachen	b1 insurance claims	Basic
+den Hergang beschreiben	to describe what happened	hat den Hergang beschrieben	b1 insurance claims	Reverse
+der Zeuge	witness	der Zeuge, die Zeugen	b1 insurance claims	Basic
+die Bestätigung	confirmation	die Bestätigung, die Bestätigungen	b1 insurance paperwork	Basic
+eine Bestätigung erhalten	to receive a confirmation	hat eine Bestätigung erhalten	b1 insurance paperwork	Reverse
+die Bearbeitung	processing	die Bearbeitung	b1 insurance process	Basic
+in Bearbeitung sein	to be in progress	ist in Bearbeitung	b1 insurance process	Reverse
+die Ablehnung	rejection	die Ablehnung, die Ablehnungen	b1 insurance process	Basic
+der Widerspruch	objection	der Widerspruch, die Widersprüche	b1 insurance process	Basic
+Widerspruch einlegen	to file an objection	hat Widerspruch eingelegt	b1 insurance process	Reverse
+die Hotline	hotline	die Hotline, die Hotlines	b1 insurance service	Basic
+den Vertrag kündigen	to cancel the contract	hat den Vertrag gekündigt	b1 insurance contract	Reverse
+die Kündigungsfrist	cancellation period	die Kündigungsfrist, die Kündigungsfristen	b1 insurance contract	Basic
