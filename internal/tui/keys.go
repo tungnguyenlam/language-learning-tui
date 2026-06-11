@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -532,15 +531,7 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return m.reportCardWrong(), true
 	case "delete", "backspace":
 		if len(m.dueCards) > 0 {
-			card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
-			return func() tea.Msg {
-				ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-				defer cancel()
-				if err := m.repo.DeleteCard(ctx, card.ID); err != nil {
-					return err
-				}
-				return m.loadDueCards()
-			}, true
+			return m.deleteReviewCard(), true
 		}
 	}
 	return nil, false
@@ -553,6 +544,12 @@ func (m *Model) updateStatisticsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, true
 	case "down", "j":
 		m.scrollStats(1)
+		return nil, true
+	case "pgup":
+		m.scrollStats(-10)
+		return nil, true
+	case "pgdown":
+		m.scrollStats(10)
 		return nil, true
 	case "x":
 		return m.exportStatsCSV(), true

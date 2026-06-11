@@ -1,5 +1,22 @@
 # Done Backlog
 
+## 2026-06-11 (Reliability & UX Polish)
+
+### Bug Fixes
+- **Review Card Deletion Confirmation**: Added confirmation flow when deleting a card from the Review view (`delete` or `backspace`), protecting users from accidental data loss.
+- **Heatmap Date Mismatch Fix**: Switched the statistics heatmap date calculations from UTC to local time, aligning with the 7-day charts and SQLite database formatting to eliminate date drift.
+- **Settings Mouse Scroll Clamp**: Clamped `settingsScroll` on mouse wheel down to settings total lines to prevent unbounded scroll values.
+- **Safe Deck Cursor Clamping**: Added clamping guards to `deckCursor` inside `handleDeckDelete` and `handleDeckMerge` to eliminate potential out-of-bound panics.
+- **Race Condition Fix in approveAllDrafts**: Removed concurrent model modifications (`m.drafts = nil`, `m.draftCursor = 0`) from the background goroutine returned by `approveAllDrafts()`, routing the cleanup through the thread-safe `importDoneMsg` handler in the main `Update` loop.
+- **De-duplicate Note ID in TSV**: Resolved a duplicate note ID constraint violation in standard content deck `"A2 Work & Office"` by renaming the duplicate `"die Einstellung"` (setting) to `"die Einstellung (System)"`.
+
+### UX & Feature Polish
+- **Statistics PgUp/PgDn Scroll**: Enabled fast viewport scrolling using `pgup` and `pgdown` keys in the statistics screen.
+- **Dynamic Review Footer Hint**: Dynamically swap `h hint` for `a/h/g/e grade` in the Review view footer when the card is revealed, resolving the keybind conflict and making the UI intuitive.
+
+### Verification
+- `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` passed: all Go unit tests, smoke tests, binary builds, and 349 pytest E2E tests successfully completed.
+
 ## 2026-06-11 (Maintenance Content & Dictionary Feedback)
 
 ### Content Expansion

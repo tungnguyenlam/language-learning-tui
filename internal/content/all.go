@@ -71,6 +71,7 @@ func StandardDecks() []core.Deck {
 		B2LogisticsDeck(),
 		B2BusinessMeetingsDeck(),
 		A2MedicalAppointmentDeck(),
+		A2WorkOfficeDeck(),
 		C1SocialIssuesDeck(),
 		FalseFriendsDeck(),
 		C2FinanceDeck(),

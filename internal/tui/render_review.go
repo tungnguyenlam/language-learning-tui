@@ -509,8 +509,15 @@ func (m *Model) renderReview(x, y int) string {
 	}
 
 	// Add Interactive Footer
-	footerActions := fmt.Sprintf("%s hint | %s grammar | %s explain | %s bookmark | %s suspend | %s undo | %s history | %s info | %s focus | %s audio",
-		keyStyle.Render("h"), keyStyle.Render("G"), keyStyle.Render("H"), keyStyle.Render("b"), keyStyle.Render("x"),
+	var hintAction string
+	if m.revealState == RevealRevealed {
+		hintAction = fmt.Sprintf("%s/%s/%s/%s grade", keyStyle.Render("a"), keyStyle.Render("h"), keyStyle.Render("g"), keyStyle.Render("e"))
+	} else {
+		hintAction = fmt.Sprintf("%s hint", keyStyle.Render("h"))
+	}
+
+	footerActions := fmt.Sprintf("%s | %s grammar | %s explain | %s bookmark | %s suspend | %s undo | %s history | %s info | %s focus | %s audio",
+		hintAction, keyStyle.Render("G"), keyStyle.Render("H"), keyStyle.Render("b"), keyStyle.Render("x"),
 		keyStyle.Render("u"), keyStyle.Render("r"), keyStyle.Render("i"),
 		keyStyle.Render("f"), keyStyle.Render("p"))
 	if m.bookmarkFilter {

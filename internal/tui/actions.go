@@ -640,6 +640,33 @@ func (m *Model) executeDeleteSelectedCard() tea.Cmd {
 	}
 }
 
+func (m *Model) deleteReviewCard() tea.Cmd {
+	if len(m.dueCards) == 0 {
+		return nil
+	}
+	card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
+	m.confirmingDelete = true
+	m.deleteAction = m.executeDeleteReviewCard
+	m.status = fmt.Sprintf("Delete card '%s'? (y/n)", strings.Split(card.Prompt, "\n")[0])
+	return nil
+}
+
+func (m *Model) executeDeleteReviewCard() tea.Cmd {
+	if len(m.dueCards) == 0 {
+		return nil
+	}
+	card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
+	m.status = "Deleting card..."
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if err := m.repo.DeleteCard(ctx, card.ID); err != nil {
+			return err
+		}
+		return m.loadDueCards()
+	}
+}
+
 func (m *Model) setCramFilter(idx int) tea.Cmd {
 	types := []string{"bookmarked", "suspended", "leech", "flagged", "all"}
 	if idx < 1 || idx > len(types) {
@@ -869,8 +896,6 @@ func (m *Model) approveAllDrafts() tea.Cmd {
 				return err
 			}
 		}
-		m.drafts = nil
-		m.draftCursor = 0
 		cards, err := m.repo.DueCards(ctx, time.Now(), 0)
 		if err != nil {
 			return err

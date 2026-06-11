@@ -728,6 +728,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.status = "Draft saved"
 		m.logger.Info("Approved AI draft %s", msg.noteID)
 	case importDoneMsg:
+		if msg.path == "AI Drafts" {
+			m.drafts = nil
+			m.draftCursor = 0
+		}
 		m.syncDecks(msg.decks)
 		m.allDue = msg.cards
 		m.applyDeckFilter()
@@ -1091,7 +1095,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				case ViewCram:
 					m.moveCramCursor(1)
 				case ViewSettings:
-					m.settingsScroll++
+					maxScroll := maxInt(0, m.settingsTotalLines-1)
+					if m.settingsScroll < maxScroll {
+						m.settingsScroll++
+					}
 				}
 			}
 		}

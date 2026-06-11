@@ -118,7 +118,7 @@ func (m *Model) renderAI(x, y int) string {
 			{"A2 giving directions", "navigation"},
 			{"B2 car & driving", "vehicle vocabulary"},
 			{"B1 phone & internet", "communication tech"},
-			{"grammar breakdown", "detailed analysis"},
+			{"A2 doctor & health", "medical German"},
 			{"sentence analysis", "structure & grammar"},
 		}
 		visibleSuggestions := len(suggestions)

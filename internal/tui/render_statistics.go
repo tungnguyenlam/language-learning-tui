@@ -354,7 +354,7 @@ func (m *Model) renderStatistics(layout viewportLayout) string {
 	if len(m.reviewsPerDay) == 0 {
 		content.WriteString("  (no review data yet)\n")
 	} else {
-		now := time.Now().UTC()
+		now := time.Now().Local()
 		// Start 13 weeks ago
 		startDate := now.AddDate(0, 0, -13*7)
 		// Align to Sunday (0)

@@ -449,7 +449,7 @@ func (m *Model) handleDeckDelete() tea.Cmd {
 	if len(ids) == 0 {
 		filtered := m.filteredDecks()
 		if len(filtered) > 0 {
-			deck := filtered[m.deckCursor]
+			deck := filtered[clampInt(m.deckCursor, 0, len(filtered)-1)]
 			if deck.ID != "" {
 				ids = []string{deck.ID}
 				names = []string{deck.Name}
@@ -504,7 +504,7 @@ func (m *Model) handleDeckMerge() tea.Cmd {
 	if len(filtered) == 0 {
 		return nil
 	}
-	targetID := filtered[m.deckCursor].ID
+	targetID := filtered[clampInt(m.deckCursor, 0, len(filtered)-1)].ID
 
 	// Remove target from sources if present
 	var cleanSources []string

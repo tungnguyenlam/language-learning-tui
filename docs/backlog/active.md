@@ -89,12 +89,7 @@ None.
 
 ## Last Verified
 
-- `PATH="/opt/homebrew/bin:$PATH" go test ./internal/content` passed on 2026-06-11.
-- `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` passed on 2026-06-11: Go tests, smoke test, binary build, and 349 E2E tests all passed.
-- `PATH="/opt/homebrew/bin:$PATH" go test ./internal/tui -run 'TestDictionarySearchResultsStatus|TestSpotlightDictionaryOverlayResultCount|TestSpotlightDictionaryOverlayRendering'` passed on 2026-06-11.
-- `PATH="/opt/homebrew/bin:$PATH" go test ./internal/tui -run 'TestAIEscapeClearsStarterTopic|TestAIGenerateEmptyTopicDoesNotCallProvider|TestDictionarySearchResultsStatus|TestSpotlightDictionaryOverlayResultCount'` passed on 2026-06-11.
-- `PATH="/opt/homebrew/bin:$PATH" ./tui_tester/venv/bin/pytest e2e_tests/test_batch6_end_to_end.py::test_ai_empty_topic_guard_is_visible -q` passed on 2026-06-11.
-- `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` passed on 2026-06-11: Go tests, smoke test, binary build, and 349 E2E tests all passed.
+- `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` passed on 2026-06-11: all Go unit tests, smoke tests, binary builds, and 349 E2E tests successfully completed.
 
 ## Blockers
 
