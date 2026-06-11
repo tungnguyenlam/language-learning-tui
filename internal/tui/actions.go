@@ -993,7 +993,15 @@ type fixAppliedMsg struct {
 // explainCard starts the AI-powered pedagogical explanation flow for the
 // currently focused review card.
 func (m *Model) explainCard() tea.Cmd {
-	if m.activeView != ViewReview || len(m.dueCards) == 0 || m.explainingCard {
+	if m.activeView != ViewReview || len(m.dueCards) == 0 {
+		return nil
+	}
+	if m.explanation != "" {
+		m.explanation = ""
+		m.status = "Explanation hidden"
+		return nil
+	}
+	if m.explainingCard {
 		return nil
 	}
 	card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]

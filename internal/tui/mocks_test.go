@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"strings"
+	"sync"
 	"time"
 
 	"deutsch-tui/internal/core"
@@ -20,6 +21,8 @@ type mockRepo struct {
 	errDueCards  error
 	errDecks     error
 	errCards     error
+	settings     map[string]string
+	mu           sync.Mutex
 }
 
 func (m *mockRepo) UpsertDeck(ctx context.Context, deck core.Deck) error {
@@ -387,6 +390,25 @@ func (m *mockRepo) UpsertNote(ctx context.Context, note core.Note) error {
 			m.dueCards[i].Extra = note.Extra
 		}
 	}
+	return nil
+}
+
+func (m *mockRepo) GetSetting(ctx context.Context, key string) (string, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.settings == nil {
+		return "", nil
+	}
+	return m.settings[key], nil
+}
+
+func (m *mockRepo) SetSetting(ctx context.Context, key string, value string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.settings == nil {
+		m.settings = make(map[string]string)
+	}
+	m.settings[key] = value
 	return nil
 }
 

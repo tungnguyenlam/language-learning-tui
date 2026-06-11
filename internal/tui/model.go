@@ -137,6 +137,7 @@ type conjunctionItem struct {
 	Sentence    string
 	Answer      string
 	Meaning     string
+	Hint        string
 	Explanation string
 }
 
@@ -212,6 +213,7 @@ type Model struct {
 	browserSelected            map[string]bool
 	dictionarySearch           string
 	dictionarySearchHistory    []string
+	deckSearchHistory          []string
 	dictionarySearchID         int
 	dictionaryResults          []core.DictionaryEntry
 	dictionaryCursor           int
@@ -350,15 +352,17 @@ type Model struct {
 	numberInput      string
 
 	// Conjunction Trainer state
-	conjItems      []conjunctionItem
-	conjIndex      int
-	conjCorrect    int
-	conjTotal      int
-	conjRevealed   bool
-	conjLastResult bool
-	conjInput      string
+	conjItems        []conjunctionItem
+	conjIndex        int
+	conjCorrect      int
+	conjTotal        int
+	conjRevealed     bool
+	practiceShowHint bool
+	conjLastResult   bool
+	conjInput        string
 
-	practiceSubView PracticeSubView
+	practiceSubView   PracticeSubView
+	practiceHubCursor int
 
 	// Card-explanation flow: AI provides a brief pedagogical explanation.
 	explainingCard bool
@@ -614,9 +618,11 @@ type caseItemsMsg []caseItem
 type adjItemsMsg []adjectiveItem
 type prepItemsMsg []prepositionItem
 type numberItemsMsg []numberItem
+type dictHistoryLoadedMsg []string
+type deckHistoryLoadedMsg []string
 
 func (m *Model) Init() tea.Cmd {
-	return tea.Sequence(m.loadDueCards, m.loadDecks, m.loadStatistics(), m.loadReviewsPerDay(), m.loadRecentDecks())
+	return tea.Sequence(m.loadDueCards, m.loadDecks, m.loadStatistics(), m.loadReviewsPerDay(), m.loadRecentDecks(), m.loadDictionaryHistory(), m.loadDeckHistory())
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -639,6 +645,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.status = fmt.Sprintf("No dictionary results for %q", query)
 		}
+	case dictHistoryLoadedMsg:
+		m.dictionarySearchHistory = msg
+	case deckHistoryLoadedMsg:
+		m.deckSearchHistory = msg
 	case spinnerTickMsg:
 		if m.drafting {
 			m.spinnerFrame++
@@ -1176,15 +1186,19 @@ func (m *Model) View() tea.View {
 		}
 	case ViewPractice:
 		if m.practiceSubView == PracticeSubViewHub {
-			helpHint = "| Trainer: 1-9 | r: reset scores | Esc: back"
+			helpHint = "| Nav: j/k | Select: Enter | Trainer: 1-9 | Reset: r | Esc: back"
 		} else {
 			switch m.practiceSubView {
 			case PracticeSubViewGender:
 				helpHint = "| der(1/d) die(2/i) das(3/a) | Next click | Esc: back"
 			case PracticeSubViewConjugation:
 				helpHint = "| Type answer | Enter check | Esc: back"
-			case PracticeSubViewCase, PracticeSubViewAdjective, PracticeSubViewPreposition, PracticeSubViewSeparable, PracticeSubViewNumbers, PracticeSubViewConjunctions:
+			case PracticeSubViewCase, PracticeSubViewAdjective, PracticeSubViewPreposition:
+				helpHint = "| Type answer | h: hint | Enter check | Esc: back"
+			case PracticeSubViewSeparable, PracticeSubViewNumbers:
 				helpHint = "| Type answer | Enter check | Esc: back"
+			case PracticeSubViewConjunctions:
+				helpHint = "| Type answer | h: hint | Enter check | Esc: back"
 			case PracticeSubViewPlural:
 				helpHint = "| Type plural | Enter check | Esc: back"
 			}

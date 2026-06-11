@@ -156,7 +156,7 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		}
 		truncatedPrompt := truncateLine(card.Prompt, promptWidth)
 		highlightStyle := lipgloss.NewStyle().Foreground(colorPink).Bold(true)
-		highlightedPrompt := highlightMatch(truncatedPrompt, m.browserSearch, highlightStyle)
+		highlightedPrompt := highlightQuery(truncatedPrompt, m.browserSearch, highlightStyle)
 
 		styledTags := ""
 		if truncatedTags != "" {

@@ -162,6 +162,8 @@ type Repository interface {
 	SetCardsTags(ctx context.Context, cardIDs []string, tags []string) error
 	CleanupTags(ctx context.Context, deckID string) error
 	Reset(ctx context.Context) error
+	GetSetting(ctx context.Context, key string) (string, error)
+	SetSetting(ctx context.Context, key string, value string) error
 }
 
 type Scheduler interface {

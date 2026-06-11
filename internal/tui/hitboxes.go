@@ -60,6 +60,15 @@ func (m *Model) activateHitboxByID(id string) tea.Cmd {
 		return m.gradeCard(core.GradeGood)
 	case id == "grade-easy":
 		return m.gradeCard(core.GradeEasy)
+	case id == "review-bookmark":
+		return m.toggleBookmark()
+	case id == "review-suspend":
+		return m.suspendCard()
+	case id == "review-audio":
+		if len(m.dueCards) > 0 {
+			return m.playCardAudio(m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)])
+		}
+		return nil
 	case strings.HasPrefix(id, "draft-approve-"):
 		idx, err := strconv.Atoi(strings.TrimPrefix(id, "draft-approve-"))
 		if err == nil && idx >= 0 && idx < len(m.drafts) {
@@ -84,22 +93,31 @@ func (m *Model) activateHitboxByID(id string) tea.Cmd {
 		mode := strings.TrimPrefix(id, "practice-")
 		switch mode {
 		case "gender":
+			m.practiceHubCursor = 0
 			return m.enterPracticeMode(PracticeSubViewGender)
 		case "conjugation":
+			m.practiceHubCursor = 1
 			return m.enterPracticeMode(PracticeSubViewConjugation)
 		case "case":
+			m.practiceHubCursor = 2
 			return m.enterPracticeMode(PracticeSubViewCase)
 		case "adjective":
+			m.practiceHubCursor = 3
 			return m.enterPracticeMode(PracticeSubViewAdjective)
 		case "preposition":
+			m.practiceHubCursor = 4
 			return m.enterPracticeMode(PracticeSubViewPreposition)
 		case "plural":
+			m.practiceHubCursor = 5
 			return m.enterPracticeMode(PracticeSubViewPlural)
 		case "separable":
+			m.practiceHubCursor = 6
 			return m.enterPracticeMode(PracticeSubViewSeparable)
 		case "numbers":
+			m.practiceHubCursor = 7
 			return m.enterPracticeMode(PracticeSubViewNumbers)
 		case "conjunctions":
+			m.practiceHubCursor = 8
 			return m.enterPracticeMode(PracticeSubViewConjunctions)
 		}
 		return nil

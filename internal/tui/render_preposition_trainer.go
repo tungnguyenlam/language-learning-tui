@@ -48,7 +48,14 @@ func (m *Model) renderPrepositionTrainer(layout viewportLayout) string {
 			Width(30).
 			Align(lipgloss.Center).
 			Render(m.prepInput + "▌")
-		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, inputBox) + "\n")
+		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, inputBox) + "\n\n")
+
+		if m.practiceShowHint && item.Context != "" {
+			hintStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("86")).Italic(true)
+			b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, hintStyle.Render("Hint: "+item.Context)) + "\n")
+		} else {
+			b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, mutedStyle.Render("Press 'h' for a hint")) + "\n")
+		}
 	} else {
 		var resultStyle lipgloss.Style
 		resultText := ""
@@ -85,6 +92,7 @@ func (m *Model) renderPrepositionTrainer(layout viewportLayout) string {
 			Height: layout.Height,
 			Action: func() tea.Cmd {
 				m.prepRevealed = false
+				m.practiceShowHint = false
 				m.prepInput = ""
 				m.prepIndex = (m.prepIndex + 1) % len(m.prepItems)
 				return nil

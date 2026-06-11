@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"strings"
 
@@ -90,12 +91,44 @@ func (m *Model) recordDictionarySearch(query string) {
 		if q == query {
 			m.dictionarySearchHistory = append(m.dictionarySearchHistory[:i], m.dictionarySearchHistory[i+1:]...)
 			m.dictionarySearchHistory = append(m.dictionarySearchHistory, query)
+			m.saveDictionaryHistory()
 			return
 		}
 	}
 	m.dictionarySearchHistory = append(m.dictionarySearchHistory, query)
 	if len(m.dictionarySearchHistory) > 5 {
 		m.dictionarySearchHistory = m.dictionarySearchHistory[1:]
+	}
+	m.saveDictionaryHistory()
+}
+
+func (m *Model) saveDictionaryHistory() {
+	ctx := context.Background()
+	data, err := json.Marshal(m.dictionarySearchHistory)
+	if err == nil {
+		_ = m.repo.SetSetting(ctx, "dict_search_history", string(data))
+	}
+}
+
+func (m *Model) loadDictionaryHistory() tea.Cmd {
+	return func() tea.Msg {
+		ctx := context.Background()
+		raw, err := m.repo.GetSetting(ctx, "dict_search_history")
+		if err != nil || raw == "" {
+			return dictHistoryLoadedMsg{}
+		}
+		var history []string
+		if err := json.Unmarshal([]byte(raw), &history); err != nil {
+			history = strings.Split(raw, "\n")
+		}
+		var clean []string
+		for _, s := range history {
+			s = strings.TrimSpace(s)
+			if s != "" {
+				clean = append(clean, s)
+			}
+		}
+		return dictHistoryLoadedMsg(clean)
 	}
 }
 

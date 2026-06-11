@@ -1,5 +1,41 @@
 # Done Backlog
 
+## 2026-06-11 (Conjunctions Trainer Expansion & Hint Feature)
+
+### Practice Hub & Content
+- **Conjunctions & Word Order Trainer Expansion:** Expanded the Conjunctions & Word Order trainer from 15 to 35 exercises. Added a variety of coordinating, subordinating, and conjunctive adverb exercises with detailed pedagogical explanations and word-order rules.
+- **Practice Trainer Hint Feature:** Implemented a new "Hint" feature (`h` key) across multiple practice trainers (Case, Adjective, Preposition, and Conjunctions). Users can now toggle a contextual grammar hint before revealing the answer, improving the learning experience for difficult grammar concepts.
+- **Improved Practice Navigation Footer:** Updated help hints in the Practice Hub and sub-views to include the new `h: hint` shortcut and ensure consistent guidance across all 9 practice modes.
+
+### Verification
+- Added unit test `TestConjunctionsHint` in `model_test.go` verifying hint toggle, display, and reset behavior.
+- Added E2E test `test_conjunctions_trainer_hint` in `test_practice_hub_extra.py` verifying end-to-end interactivity.
+- `PATH="/opt/homebrew/bin:$PATH" go test ./internal/tui/... ./internal/content/...` passed.
+- `PYTHONPATH="." PATH="/opt/homebrew/bin:$PATH" pytest e2e_tests/test_practice_hub_extra.py` passed with 5 tests.
+- `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` passed successfully.
+
+## 2026-06-11 (AI Explanation toggles, Input query clipping, Review metadata click hitboxes)
+
+### UX & Feature Polish
+- **Review AI Explanation Toggle**: Enabled toggling the AI tutor card explanation in the Review view. Pressing `H` (Shift+H) while the explanation is already visible now hides it and sets status to "Explanation hidden".
+- **Clipped Text Inputs**: Added query clipping to the search bars in both the full Dictionary view and Spotlight Dictionary overlay view, as well as the topic input field in the AI View. If the text exceeds the boundaries of the text box, it clips the start and shows an ellipsis (`...`) instead of wrapping the layout.
+- **Review Card Metadata Click Hitboxes**: Added interactive mouse click hitboxes for the review metadata line in non-focus review mode. Users can now click the `Bookmark: off`/`on` text to toggle the bookmark, click the `Suspend`/`SUSPENDED` text to toggle card suspension, or click the `[Audio]`/`[TTS]` badges to trigger audio playback/synthesis.
+
+### Verification
+- Added unit tests `TestReviewExplanationToggle`, `TestScrollableClippedInputs`, and `TestReviewMetadataClickHitboxes` in `improvement_test.go` covering all new behaviors.
+- `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` passed: Go unit tests, smoke tests, binary builds, and 350 E2E tests successfully completed.
+
+## 2026-06-11 (Practice navigation, Review undo aliases, Spotlight narrow scrollbar)
+
+### UX & Feature Polish
+- **Practice Hub Keyboard & Mouse Navigation**: Added support for standard keyboard navigation (`up`/`down` or `j`/`k`) to move the cursor through the 9 practice modes. Visually highlighted the selected trainer with a pink border and a `▶` arrow prefix. Added support for pressing `Enter` to open the highlighted trainer.
+- **Review Undo Shortcuts**: Added `z` and `ctrl+z` aliases to trigger `undoLastReview()` in the Review view, providing muscle-memory parity for Anki users. Updated help screens and review footer to mention `u/z`.
+- **Spotlight Dictionary Scrollbar**: Added scrollbar rendering to the single-column (narrow) Spotlight Dictionary overlay layout, ensuring consistent UX with the wide layout.
+
+### Verification
+- Added unit tests `TestPracticeHubKeyboardNavigation`, `TestReviewUndoAliases`, and `TestSpotlightDictionaryNarrowScrollbar` in `improvement_test.go` covering all new behaviors.
+- `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` passed: all Go unit tests, smoke tests, binary builds, and 350 E2E tests successfully completed.
+
 ## 2026-06-11 (Reliability & UX Polish)
 
 ### Bug Fixes

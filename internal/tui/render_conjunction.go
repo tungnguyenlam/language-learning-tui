@@ -48,7 +48,15 @@ func (m *Model) renderConjunctionTrainer(layout viewportLayout) string {
 			Width(30).
 			Align(lipgloss.Center).
 			Render(m.conjInput + "▌")
-		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, inputBox) + "\n")
+		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, inputBox) + "\n\n")
+
+		// Display hint if requested
+		if m.practiceShowHint && item.Hint != "" {
+			hintStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("86")).Italic(true)
+			b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, hintStyle.Render("Hint: "+item.Hint)) + "\n")
+		} else {
+			b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, mutedStyle.Render("Press 'h' for a hint")) + "\n")
+		}
 	} else {
 		var resultStyle lipgloss.Style
 		resultText := ""
@@ -89,6 +97,7 @@ func (m *Model) renderConjunctionTrainer(layout viewportLayout) string {
 			Height: layout.Height,
 			Action: func() tea.Cmd {
 				m.conjRevealed = false
+				m.practiceShowHint = false
 				m.conjInput = ""
 				m.conjIndex = (m.conjIndex + 1) % len(m.conjItems)
 				return nil

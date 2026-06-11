@@ -686,3 +686,47 @@ func TestSpotlightDictionaryHistoryHitboxesAreOverlayScoped(t *testing.T) {
 		t.Fatalf("expected history clear action to empty history, got %v", m.dictionarySearchHistory)
 	}
 }
+
+func TestDictionaryPersistentSearchHistory(t *testing.T) {
+	repo := &mockRepo{}
+	m := NewModel(repo, &mockScheduler{})
+
+	// 1. Record search history
+	m.recordDictionarySearch("Käse")
+	m.recordDictionarySearch("Brot")
+
+	val, err := repo.GetSetting(context.Background(), "dict_search_history")
+	if err != nil {
+		t.Fatalf("failed to get setting: %v", err)
+	}
+	if !strings.Contains(val, "Käse") || !strings.Contains(val, "Brot") {
+		t.Fatalf("expected saved history to contain Käse and Brot, got %q", val)
+	}
+
+	// 2. Load search history
+	m2 := NewModel(repo, &mockScheduler{})
+	cmd := m2.loadDictionaryHistory()
+	if cmd == nil {
+		t.Fatal("expected loadDictionaryHistory cmd to be returned")
+	}
+	msg := cmd()
+	loadedMsg, ok := msg.(dictHistoryLoadedMsg)
+	if !ok {
+		t.Fatalf("expected dictHistoryLoadedMsg, got %T", msg)
+	}
+	if len(loadedMsg) != 2 || loadedMsg[0] != "Käse" || loadedMsg[1] != "Brot" {
+		t.Fatalf("unexpected loaded history: %v", loadedMsg)
+	}
+
+	// 3. Clear history
+	m.activeView = ViewDictionary
+	m.Update(tea.KeyPressMsg{Code: 'x', Mod: tea.ModCtrl}) // ctrl+x
+
+	val, err = repo.GetSetting(context.Background(), "dict_search_history")
+	if err != nil {
+		t.Fatalf("failed to get setting: %v", err)
+	}
+	if val != "[]" && val != "" && val != "null" {
+		t.Fatalf("expected cleared history to be empty, got %q", val)
+	}
+}

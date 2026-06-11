@@ -2616,6 +2616,60 @@ func TestConjunctionsTrainer(t *testing.T) {
 	}
 }
 
+func TestConjunctionsHint(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewPractice
+	m.practiceSubView = PracticeSubViewConjunctions
+
+	m.conjItems = []conjunctionItem{
+		{
+			Sentence:    "Sentence",
+			Answer:      "weil",
+			Meaning:     "meaning",
+			Hint:        "THIS IS A HINT",
+			Explanation: "explanation",
+		},
+	}
+	m.conjIndex = 0
+
+	layout := viewportLayout{Width: 80, Height: 30}
+	view := m.renderConjunctionTrainer(layout)
+	if strings.Contains(view, "THIS IS A HINT") {
+		t.Fatal("hint should not be visible initially")
+	}
+
+	m.updatePracticeKey(tea.KeyPressMsg{Code: 'h'})
+	if !m.practiceShowHint {
+		t.Fatal("expected practiceShowHint to be true")
+	}
+	view = m.renderConjunctionTrainer(layout)
+	if !strings.Contains(view, "THIS IS A HINT") {
+		t.Fatal("hint should be visible after pressing 'h'")
+	}
+
+	m.updatePracticeKey(tea.KeyPressMsg{Code: 'h'})
+	if m.practiceShowHint {
+		t.Fatal("expected practiceShowHint to be false after toggle")
+	}
+
+	// Reveal answer should hide hint input prompt but hint itself?
+	// The current implementation hides the hint prompt when revealed.
+	m.updatePracticeKey(tea.KeyPressMsg{Code: 'h'})
+	for _, char := range "weil" {
+		m.updatePracticeKey(tea.KeyPressMsg{Code: char})
+	}
+	m.updatePracticeKey(tea.KeyPressMsg{Code: '\r'})
+	if !m.conjRevealed {
+		t.Fatal("expected trainer to be revealed")
+	}
+
+	// Advance should reset hint
+	m.updatePracticeKey(tea.KeyPressMsg{Code: ' '})
+	if m.practiceShowHint {
+		t.Fatal("expected hint to reset on advance")
+	}
+}
+
 func TestPracticeHubScoresAndReset(t *testing.T) {
 	m := NewModel(&mockRepo{}, &mockScheduler{})
 	m.activeView = ViewPractice

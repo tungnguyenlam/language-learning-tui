@@ -125,11 +125,18 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 	}
 
 	for i, mode := range modes {
+		borderCol := "81"
+		prefix := "  "
+		if i == m.practiceHubCursor {
+			borderCol = "212"
+			prefix = "▶ "
+		}
+
 		btnStyle := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			Padding(0, 2).
 			Width(btnWidth).
-			BorderForeground(lipgloss.Color("81"))
+			BorderForeground(lipgloss.Color(borderCol))
 
 		count := getItemCount(mode.sub)
 		countStr := ""
@@ -144,9 +151,9 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 		}
 
 		keyHint := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212")).Render("[" + mode.key + "]")
-		content := fmt.Sprintf("%s %s%s%s\n%s", keyHint, mode.label, countStr, scoreRendered, mutedStyle.Render(mode.desc))
+		content := fmt.Sprintf("%s%s %s%s%s\n%s", prefix, keyHint, mode.label, countStr, scoreRendered, mutedStyle.Render(mode.desc))
 		if spacing == 3 {
-			content = fmt.Sprintf("%s %s%s%s - %s", keyHint, mode.label, countStr, scoreRendered, mutedStyle.Render(mode.desc))
+			content = fmt.Sprintf("%s%s %s%s%s - %s", prefix, keyHint, mode.label, countStr, scoreRendered, mutedStyle.Render(mode.desc))
 			btnStyle = btnStyle.Padding(0, 1)
 		}
 

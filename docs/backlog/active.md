@@ -8,6 +8,8 @@ Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
 
+- [x] **Persistent Dictionary Search History:** Implemented persistent search history for Offline Dictionary searches, storing recent searches in the SQLite `app_settings` table using key `'dict_search_history'`. The history is retrieved asynchronously on startup and saved on additions and clearing (`ctrl+x`), maintaining state across application sessions. Added unit coverage `TestDictionaryPersistentSearchHistory`.
+- [x] **Spotlight Dictionary Overlay Enhancements:** Improved the Spotlight Dictionary overlay (`=`) with scrollbar support in its detail panel (both in narrow and wide layouts), persistent status/toast messages at the bottom, and colored status/shortcut indicators. Removed `ctrl+a` overlay dismissal, allowing users to add dictionary cards to their collection without closing the overlay search interface.
 - [x] **Practical Life Content Decks:** Added three new embedded TSV decks with 40 notes each: A2 Banking Errands, A2 School & Childcare, and B1 Insurance Claims. Added registry tests to verify they load, generate cards, and include key real-life phrases.
 - [x] **B1 Household Maintenance Deck:** Added a 40-note embedded TSV deck covering tools, small repairs, plumbing/electrical issues, and repair-service vocabulary. Added registry coverage to verify the deck loads and generates cards.
 - [x] **Dictionary Empty Search Feedback:** Updated dictionary search result handling to distinguish cleared searches from real zero-result searches, including the searched query in the status line when no matches are found.
@@ -19,6 +21,7 @@ Polish and Reliability - IN PROGRESS.
 - [x] **Dictionary Search History Clear:** Added a clear button `[Clear]` (with mouse hitbox and `ctrl+x` keybinding) to clear recent search queries when the dictionary search bar is empty. Included `TestDictionaryClearSearchHistory` unit test coverage.
 - [x] **Practice Hub Session Scores:** Enhanced the Practice Hub view to display the current session score (e.g. `• 4/5 (80%)`) next to each practice trainer button.
 - [x] **Practice Hub Reset Scores:** Added an `r` keybinding to reset all practice session scores in the Practice Hub view. Included unit and E2E coverage for scores display and score resetting.
+- [x] **Conjunctions Trainer Expansion & Hint Feature:** Expanded the Conjunctions trainer from 15 to 35 exercises. Added an optional grammar hint (`h` key) to Conjunctions, Case, Adjective, and Preposition trainers. Updated help hints and added unit/E2E test coverage.
 
 - [x] **Dictionary Quick Add Card Generation Bugfix:** Resolved a critical bug where quick-adding a dictionary entry to a deck (`ctrl+a`) only created the Note record without generating its associated study/review Card, leaving it permanently inactive/unreviewable. Integrated `content.CardsForNote` and added unit test coverage in `render_dictionary_test.go`.
 - [x] **OpenAI & Anthropic Base URLs in Settings TUI:** Exposed both OpenAI and Anthropic Base URLs in the settings TUI list, allowing users to configure them directly (e.g. for offline Ollama or alternative API proxies). Updated settings navigation boundaries, cursor handlers, credential editing cases, Lip Gloss line info builders, and added `TestSettingsBaseURLEditing` unit test coverage.
@@ -78,6 +81,8 @@ Polish and Reliability - IN PROGRESS.
 - [x] **Separable Verb Trainer:** Added a seventh practice mode to the Practice Hub for mastering German separable verbs and their prefixes in sentences.
 - [x] **Review Focus Mode Polish:** Enhanced the 'Shift+F' Focus Mode in the Review view with a centered, distraction-free layout and clearer visual feedback, while maintaining compatibility with E2E tests.
 - [x] **Practice Hub Navigation & Badge Counts:** Standardized the `esc` key behavior across all 7 practice modes (always clears current input or gracefully returns to the Hub, rather than the dashboard). Added dynamic, parallel-loaded item counts next to each trainer in the Practice Hub to display the number of practice items available.
+- [x] **AI Suggestion Duplicate Fix:** Removed duplicate `{"grammar breakdown", "explain German grammar"}` entry from the AI suggestions slice in `internal/tui/render_ai.go`, replacing the second occurrence with a new `{"A2 doctor & health", "medical German"}` suggestion to expand the suggestion list.
+- [x] **A2 Work & Office Deck:** Added a new practical A2 deck with 200+ cards covering workplace vocabulary, office communication, business terminology, HR concepts, and professional interactions. Includes both a Go deck (`a2_work_office.go`) and an embedded TSV deck (`a2-work-office.tsv`) with full registry coverage. Added E2E test `test_a2_work_office_deck.py` to verify deck loading and search functionality.
 
 ## Exact Next Action
 
@@ -89,7 +94,8 @@ None.
 
 ## Last Verified
 
-- `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` passed on 2026-06-11: all Go unit tests, smoke tests, binary builds, and 349 E2E tests successfully completed.
+- `PATH="/opt/homebrew/bin:$PATH" go test ./internal/...` passed on 2026-06-11.
+- `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` passed on 2026-06-11: Go unit tests, smoke tests, binary builds, and 350+ E2E tests all passed (including conjunction trainer expansion, practice hints, practice navigation, review undo aliases, spotlight narrow scrollbar, explanation toggles, input query clipping, and review header click hitboxes).
 
 ## Blockers
 

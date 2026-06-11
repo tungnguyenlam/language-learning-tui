@@ -768,6 +768,26 @@ func (s *Store) SetDailyGoal(ctx context.Context, goal int) error {
 	return err
 }
 
+func (s *Store) GetSetting(ctx context.Context, key string) (string, error) {
+	var val string
+	err := s.db.QueryRowContext(ctx, `SELECT value FROM app_settings WHERE key = ?`, key).Scan(&val)
+	if errors.Is(err, sql.ErrNoRows) {
+		return "", nil
+	}
+	return val, err
+}
+
+func (s *Store) SetSetting(ctx context.Context, key string, value string) error {
+	_, err := s.db.ExecContext(ctx, `
+		INSERT INTO app_settings (key, value, updated_at)
+		VALUES (?, ?, ?)
+		ON CONFLICT(key) DO UPDATE SET
+			value = excluded.value,
+			updated_at = excluded.updated_at
+	`, key, value, time.Now().UTC())
+	return err
+}
+
 func (s *Store) SetDeckLimits(ctx context.Context, deckID string, newLimit, reviewLimit int) error {
 	if deckID == "" {
 		return errors.New("deck id is required")

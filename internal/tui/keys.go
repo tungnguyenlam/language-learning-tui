@@ -465,7 +465,7 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		if m.revealState == RevealRevealed {
 			return m.gradeCard(core.GradeEasy), true
 		}
-	case "u":
+	case "u", "z", "ctrl+z":
 		return m.undoLastReview(), true
 	case "r":
 		return m.toggleReviewHistory(), true
@@ -561,6 +561,7 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	if m.searchingDecks {
 		switch msg.String() {
 		case "enter", "\r", "\n":
+			m.recordDeckSearch(m.deckFilter)
 			m.searchingDecks = false
 			m.applyDeckFilter()
 			filtered := m.filteredDecks()
@@ -571,6 +572,10 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		case "esc", "\x1b":
 			m.searchingDecks = false
 			m.applyDeckFilter()
+			return nil, true
+		case "ctrl+x":
+			m.deckSearchHistory = nil
+			m.saveDeckHistory()
 			return nil, true
 		case "backspace":
 			if len(m.deckFilter) > 0 {
@@ -1397,29 +1402,72 @@ func (m *Model) handleSecretEditKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	return nil, true
 }
 
+func (m *Model) enterPracticeModeByIndex(idx int) tea.Cmd {
+	modes := []PracticeSubView{
+		PracticeSubViewGender,
+		PracticeSubViewConjugation,
+		PracticeSubViewCase,
+		PracticeSubViewAdjective,
+		PracticeSubViewPreposition,
+		PracticeSubViewPlural,
+		PracticeSubViewSeparable,
+		PracticeSubViewNumbers,
+		PracticeSubViewConjunctions,
+	}
+	if idx >= 0 && idx < len(modes) {
+		return m.enterPracticeMode(modes[idx])
+	}
+	return nil
+}
+
 func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	key := msg.String()
 
 	switch m.practiceSubView {
 	case PracticeSubViewHub:
 		switch key {
+		case "up", "k":
+			if m.practiceHubCursor > 0 {
+				m.practiceHubCursor--
+			} else {
+				m.practiceHubCursor = 8
+			}
+			return nil, true
+		case "down", "j":
+			if m.practiceHubCursor < 8 {
+				m.practiceHubCursor++
+			} else {
+				m.practiceHubCursor = 0
+			}
+			return nil, true
+		case "enter":
+			return m.enterPracticeModeByIndex(m.practiceHubCursor), true
 		case "1":
+			m.practiceHubCursor = 0
 			return m.enterPracticeMode(PracticeSubViewGender), true
 		case "2":
+			m.practiceHubCursor = 1
 			return m.enterPracticeMode(PracticeSubViewConjugation), true
 		case "3":
+			m.practiceHubCursor = 2
 			return m.enterPracticeMode(PracticeSubViewCase), true
 		case "4":
+			m.practiceHubCursor = 3
 			return m.enterPracticeMode(PracticeSubViewAdjective), true
 		case "5":
+			m.practiceHubCursor = 4
 			return m.enterPracticeMode(PracticeSubViewPreposition), true
 		case "6":
+			m.practiceHubCursor = 5
 			return m.enterPracticeMode(PracticeSubViewPlural), true
 		case "7":
+			m.practiceHubCursor = 6
 			return m.enterPracticeMode(PracticeSubViewSeparable), true
 		case "8":
+			m.practiceHubCursor = 7
 			return m.enterPracticeMode(PracticeSubViewNumbers), true
 		case "9":
+			m.practiceHubCursor = 8
 			return m.enterPracticeMode(PracticeSubViewConjunctions), true
 		case "r":
 			m.practiceCorrect, m.practiceTotal = 0, 0
@@ -1501,11 +1549,15 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		if m.caseRevealed {
 			m.caseRevealed = false
+			m.practiceShowHint = false
 			m.caseInput = ""
 			m.caseIndex = (m.caseIndex + 1) % len(m.caseItems)
 			return nil, true
 		}
 		switch key {
+		case "h":
+			m.practiceShowHint = !m.practiceShowHint
+			return nil, true
 		case "enter", "\r", "\n":
 			if m.caseInput == "" {
 				return nil, true
@@ -1548,11 +1600,15 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		if m.adjRevealed {
 			m.adjRevealed = false
+			m.practiceShowHint = false
 			m.adjInput = ""
 			m.adjIndex = (m.adjIndex + 1) % len(m.adjItems)
 			return nil, true
 		}
 		switch key {
+		case "h":
+			m.practiceShowHint = !m.practiceShowHint
+			return nil, true
 		case "enter", "\r", "\n":
 			if m.adjInput == "" {
 				return nil, true
@@ -1595,11 +1651,15 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		if m.prepRevealed {
 			m.prepRevealed = false
+			m.practiceShowHint = false
 			m.prepInput = ""
 			m.prepIndex = (m.prepIndex + 1) % len(m.prepItems)
 			return nil, true
 		}
 		switch key {
+		case "h":
+			m.practiceShowHint = !m.practiceShowHint
+			return nil, true
 		case "enter", "\r", "\n":
 			if m.prepInput == "" {
 				return nil, true
@@ -1985,6 +2045,7 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, true
 	case "ctrl+x":
 		m.dictionarySearchHistory = nil
+		m.saveDictionaryHistory()
 		return nil, true
 	case "enter":
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
@@ -2050,12 +2111,16 @@ func (m *Model) updateConjunctionsTrainerKey(msg tea.KeyPressMsg) (tea.Cmd, bool
 
 	if m.conjRevealed {
 		m.conjRevealed = false
+		m.practiceShowHint = false
 		m.conjInput = ""
 		m.conjIndex = (m.conjIndex + 1) % len(m.conjItems)
 		return nil, true
 	}
 
 	switch key {
+	case "h":
+		m.practiceShowHint = !m.practiceShowHint
+		return nil, true
 	case "enter", "\r", "\n":
 		if m.conjInput == "" {
 			return nil, true
@@ -2100,10 +2165,6 @@ func (m *Model) updateDictionaryOverlayKey(msg tea.KeyPressMsg) (tea.Cmd, bool) 
 	// Intercept keys that navigate away or perform overlay-closing actions
 	switch key {
 	case "enter":
-		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
-			m.dictionaryOverlayActive = false
-		}
-	case "ctrl+a":
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 			m.dictionaryOverlayActive = false
 		}

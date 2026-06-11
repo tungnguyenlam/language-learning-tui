@@ -32,6 +32,36 @@ See `GOAL.md` for the intended final state of the app. All work should move towa
 - **Updating the Database**: Read `internal/storage/AGENTS.md` (migration rules).
 - **Adding an AI feature**: Read `internal/ai/AGENTS.md` (mocking, validation).
 - **Fixing a scheduling bug**: Read `internal/srs/AGENTS.md` (encapsulation).
+- **Running E2E / visual tests**: Read `tui_tester/AGENTS.md` first (see below).
+
+## E2E Testing with tui-tester
+
+For visual/incremental testing of the TUI, use `tui-tester` (Python CLI at `tui_tester/`).
+
+**Before running E2E tests, you MUST read `tui_tester/AGENTS.md`.**
+
+Quick reference:
+```bash
+# Start app with unique data dir (required for SQLite apps)
+tui-tester start "./language-learning-tui --data-dir /tmp/test-$RANDOM"
+
+# Check what's on screen
+tui-tester observe
+
+# Send input (keys, mouse clicks, drags)
+tui-tester act "<Enter>"
+tui-tester act "<Tab>"
+tui-tester click 15 3
+
+# Wait for specific text before next action (NEVER skip this!)
+tui-tester wait-for "DASHBOARD"
+tui-tester wait-stable
+
+# Cleanup when done
+tui-tester stop
+```
+
+**The loop:** Observe → Reason → Act → Synchronize (repeat). Never skip synchronization — TUI updates are async.
 
 ## Search Hints
 

@@ -49,7 +49,13 @@ func (m *Model) renderAI(x, y int) string {
 	ctx.NewLine()
 	ctx.NewLine()
 	ctx.WriteLine(fmt.Sprintf("Deck: %s\nTemplate: %s (use [ / ])", m.deckLabel(), templateName))
-	displayText := m.aiInput + "_"
+	displayText := m.aiInput
+	searchBarWidth := maxInt(30, width-20)
+	availableWidth := searchBarWidth - 11
+	if len([]rune(displayText)) > availableWidth && availableWidth > 5 {
+		displayText = "..." + string([]rune(displayText)[len([]rune(displayText))-availableWidth+3:])
+	}
+	displayText = displayText + "_"
 	if m.aiInput == "" && !m.searchingAI {
 		displayText = mutedStyle.Render("(e.g., business email, doctor visit, apartment viewing)") + "_"
 	}
@@ -130,43 +136,35 @@ func (m *Model) renderAI(x, y int) string {
 
 		suggestionStyle := lipgloss.NewStyle().
 			Foreground(colorCyan).
-			Underline(true).
-			MarginRight(1)
-		descStyle := lipgloss.NewStyle().Foreground(colorMuted)
+			Underline(true)
+		descStyle := lipgloss.NewStyle().Foreground(colorMuted).Underline(false)
 
-		maxLineWidth := maxInt(24, layout.Width-2)
-
+		var wrappedItems []WrappedItem
 		for i, s := range suggestions[:visibleSuggestions] {
-			separator := ""
-			if ctx.currX > layout.X {
-				separator = "  "
-			}
-			label := s.topic
-			labelWidth := lipgloss.Width(separator) + lipgloss.Width(label)
-
-			if ctx.currX > layout.X && ctx.currX-layout.X+labelWidth > maxLineWidth {
-				ctx.NewLine()
-				separator = ""
-				labelWidth = lipgloss.Width(label)
-			}
-
-			ctx.Write(separator)
 			topic := s.topic
-			ctx.RegisterHitboxWithAction("ai-topic-"+s.topic, lipgloss.Width(s.topic), 1, func() tea.Cmd {
-				m.aiInput = topic
-				m.drafts = nil
-				m.draftCursor = 0
-				return m.startDrafting()
-			})
-			ctx.Write(suggestionStyle.Render(s.topic))
+			label := s.topic
+			text := suggestionStyle.Render(s.topic)
 
 			if layout.Width >= 118 && i < 8 {
-				desc := descStyle.Render(" (" + s.desc + ")")
-				if ctx.currX-layout.X+lipgloss.Width(desc) <= maxLineWidth {
-					ctx.Write(desc)
-				}
+				desc := " (" + s.desc + ")"
+				label += desc
+				text += descStyle.Render(desc)
 			}
+
+			wrappedItems = append(wrappedItems, WrappedItem{
+				ID:    "ai-topic-" + s.topic,
+				Label: label,
+				Text:  text,
+				Action: func() tea.Cmd {
+					m.aiInput = topic
+					m.drafts = nil
+					m.draftCursor = 0
+					return m.startDrafting()
+				},
+			})
 		}
+
+		ctx.WriteWrapped(wrappedItems, 2)
 		ctx.NewLine()
 		if visibleSuggestions < len(suggestions) {
 			ctx.WriteLine(mutedStyle.Render(fmt.Sprintf("Showing %d of %d suggestions. Type any topic for a custom draft.", visibleSuggestions, len(suggestions))))

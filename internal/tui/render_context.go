@@ -122,6 +122,52 @@ func (c *RenderContext) WriteAction(id string, label string, style lipgloss.Styl
 	c.Write(style.Render(label))
 }
 
+// WriteWrapped writes multiple items that wrap to the next line if they exceed the layout width.
+type WrappedItem struct {
+	ID     string
+	Label  string // Plain text for width calculation
+	Text   string // Styled text for rendering (optional, falls back to Style.Render(Label))
+	Style  lipgloss.Style
+	Action func() tea.Cmd
+}
+
+func (c *RenderContext) WriteWrapped(items []WrappedItem, spacing int) {
+	for _, item := range items {
+		separator := ""
+		if c.currX > c.layout.X {
+			separator = strings.Repeat(" ", spacing)
+		}
+
+		displayLabel := item.Label
+		if displayLabel == "" {
+			displayLabel = item.Text // Fallback to Text but strip ANSI for width if needed
+			// Actually, better to just use Label.
+		}
+
+		itemWidth := lipgloss.Width(separator) + lipgloss.Width(displayLabel)
+
+		if c.currX > c.layout.X && c.currX-c.layout.X+itemWidth > c.layout.Width {
+			c.NewLine()
+			separator = ""
+			itemWidth = lipgloss.Width(displayLabel)
+		}
+
+		c.Write(separator)
+
+		renderText := item.Text
+		if renderText == "" {
+			renderText = item.Style.Render(item.Label)
+		}
+
+		if item.Action != nil {
+			c.RegisterAction(item.ID, lipgloss.Width(displayLabel), 1, item.Action)
+			c.Write(renderText)
+		} else {
+			c.Write(renderText)
+		}
+	}
+}
+
 // String returns the accumulated rendered content.
 func (c *RenderContext) String() string {
 	return c.buffer.String()

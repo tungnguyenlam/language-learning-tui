@@ -366,6 +366,7 @@ func (m *Model) loadConjItems() tea.Cmd {
 				Sentence:    ex.Sentence,
 				Answer:      ex.Answer,
 				Meaning:     ex.Meaning,
+				Hint:        ex.Hint,
 				Explanation: ex.Explanation,
 			}
 		}

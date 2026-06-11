@@ -113,10 +113,6 @@ func (m *Model) renderReview(x, y int) string {
 	}
 	cursor := clampInt(m.cursor, 0, len(m.dueCards)-1)
 	card := m.dueCards[cursor]
-	bookmark := "Bookmark: off"
-	if card.Bookmarked {
-		bookmark = "Bookmark: on"
-	}
 	leechBadge := ""
 	if card.Leech {
 		leechBadge = " " + lipgloss.NewStyle().
@@ -126,10 +122,6 @@ func (m *Model) renderReview(x, y int) string {
 			Padding(0, 1).
 			Render("LEECH")
 	}
-	suspended := ""
-	if card.Suspended {
-		suspended = " | SUSPENDED"
-	}
 	filterBanner := ""
 	if m.bookmarkFilter {
 		filterBanner = " (Bookmarked)"
@@ -137,12 +129,6 @@ func (m *Model) renderReview(x, y int) string {
 
 	// Enhanced keyboard shortcut display with visual highlighting
 	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-	audioIndicator := ""
-	if card.Audio != "" {
-		audioIndicator = " [Audio]"
-	} else if m.ttsAvailable() {
-		audioIndicator = " [TTS]"
-	}
 	deckMeta := fmt.Sprintf("Deck: %s", m.deckNameByID(card.DeckID))
 	if len(card.Tags) > 0 {
 		deckMeta += " | Tags: #" + strings.Join(card.Tags, " #")
@@ -230,9 +216,70 @@ func (m *Model) renderReview(x, y int) string {
 		cardBorderColor = "208"
 	}
 
-	headerSection := fmt.Sprintf("%s%s %s%s\n%s | Type: %s\n%s%s%s", header, sessionProgress, stateBadge.Render(), leechBadge, deckMeta, cardTypeLabel, bookmark, suspended, audioIndicator)
+	var headerSection string
 	if m.focusMode {
 		headerSection = lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Italic(true).Render("Focus Mode Active (f to exit)")
+	} else {
+		bookmarkText := "Bookmark: off"
+		if card.Bookmarked {
+			bookmarkText = "Bookmark: on"
+		}
+
+		suspendText := "Suspend"
+		var suspendStyle lipgloss.Style
+		if card.Suspended {
+			suspendText = "SUSPENDED"
+			suspendStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Bold(true)
+		} else {
+			suspendStyle = mutedStyle
+		}
+
+		audioText := ""
+		var audioStyle lipgloss.Style
+		if card.Audio != "" {
+			audioText = "[Audio]"
+			audioStyle = lipgloss.NewStyle().Foreground(colorCyan).Bold(true)
+		} else if m.ttsAvailable() {
+			audioText = "[TTS]"
+			audioStyle = lipgloss.NewStyle().Foreground(colorCyan)
+		}
+
+		// Register hitboxes for Line 3 (Y = y + 2)
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     "review-bookmark",
+			View:   ViewReview,
+			X:      x,
+			Y:      y + 2,
+			Width:  len(bookmarkText),
+			Height: 1,
+		})
+
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     "review-suspend",
+			View:   ViewReview,
+			X:      x + len(bookmarkText) + 3,
+			Y:      y + 2,
+			Width:  len(suspendText),
+			Height: 1,
+		})
+
+		if audioText != "" {
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID:     "review-audio",
+				View:   ViewReview,
+				X:      x + len(bookmarkText) + 3 + len(suspendText) + 3,
+				Y:      y + 2,
+				Width:  len(audioText),
+				Height: 1,
+			})
+		}
+
+		metaLine := fmt.Sprintf("%s | %s", bookmarkText, suspendStyle.Render(suspendText))
+		if audioText != "" {
+			metaLine += fmt.Sprintf(" | %s", audioStyle.Render(audioText))
+		}
+
+		headerSection = fmt.Sprintf("%s%s %s%s\n%s | Type: %s\n%s", header, sessionProgress, stateBadge.Render(), leechBadge, deckMeta, cardTypeLabel, metaLine)
 	}
 	headerLines := strings.Count(headerSection, "\n") + 1
 
@@ -518,7 +565,7 @@ func (m *Model) renderReview(x, y int) string {
 
 	footerActions := fmt.Sprintf("%s | %s grammar | %s explain | %s bookmark | %s suspend | %s undo | %s history | %s info | %s focus | %s audio",
 		hintAction, keyStyle.Render("G"), keyStyle.Render("H"), keyStyle.Render("b"), keyStyle.Render("x"),
-		keyStyle.Render("u"), keyStyle.Render("r"), keyStyle.Render("i"),
+		keyStyle.Render("u/z"), keyStyle.Render("r"), keyStyle.Render("i"),
 		keyStyle.Render("f"), keyStyle.Render("p"))
 	if m.bookmarkFilter {
 		footerActions += " | " + keyStyle.Render("B") + " all"

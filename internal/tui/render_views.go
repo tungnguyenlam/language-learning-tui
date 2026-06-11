@@ -90,10 +90,89 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 
 	// Show filter if active or searching
 	if m.searchingDecks || m.deckFilter != "" {
+		searchBarWidth := layout.Width - 4
+		if searchBarWidth < 20 {
+			searchBarWidth = 20
+		}
+		searchBar := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("62")).
+			Padding(0, 1).
+			Width(searchBarWidth)
+
 		if m.searchingDecks {
-			b.WriteString(fmt.Sprintf("Search: %s_ (name or tag)\n\n", m.deckFilter))
+			displaySearch := m.deckFilter
+			clearText := lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Bold(true).Render("[x]")
+
+			// Calculate how many spaces to put between search and clear button
+			contentLength := 8 + len([]rune(displaySearch)) + 1 // "Search: " + query + "_"
+			spaces := searchBarWidth - contentLength - 3
+			var clearBtn string
+			if spaces > 0 {
+				clearBtn = strings.Repeat(" ", spaces) + clearText
+			} else {
+				clearBtn = " " + clearText
+			}
+
+			searchBarText := searchBar.Render("Search: " + displaySearch + "_" + clearBtn)
+
+			// Register hitbox for clear button [x]
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID:     "deck-search-clear",
+				View:   ViewDecks,
+				X:      layout.X + 2 + searchBarWidth - 3,
+				Y:      layout.Y + strings.Count(b.String(), "\n") + 1, // +1 for the top border
+				Width:  3,
+				Height: 1,
+				Action: func() tea.Cmd {
+					m.deckFilter = ""
+					return nil
+				},
+			})
+			b.WriteString(searchBarText + "\n\n")
+
+			if m.deckFilter == "" && len(m.deckSearchHistory) > 0 {
+				clearHistoryText := lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Render("[Clear]")
+				b.WriteString(boldStyle.Render("Recent Searches:") + "  " + clearHistoryText + " " + mutedStyle.Render("(ctrl+x)") + "\n")
+
+				// Hitbox for "[Clear]" button
+				clearHistoryY := layout.Y + strings.Count(b.String(), "\n") - 1
+				m.hitboxes = append(m.hitboxes, Hitbox{
+					ID:     "deck-history-clear",
+					View:   ViewDecks,
+					X:      layout.X + 18,
+					Y:      clearHistoryY,
+					Width:  7,
+					Height: 1,
+					Action: func() tea.Cmd {
+						m.deckSearchHistory = nil
+						m.saveDeckHistory()
+						return nil
+					},
+				})
+
+				for i := len(m.deckSearchHistory) - 1; i >= 0; i-- {
+					q := m.deckSearchHistory[i]
+					lineY := layout.Y + strings.Count(b.String(), "\n")
+					b.WriteString(fmt.Sprintf("  • %s\n", q))
+					m.hitboxes = append(m.hitboxes, Hitbox{
+						ID:     fmt.Sprintf("deck-history-%d", i),
+						View:   ViewDecks,
+						X:      layout.X + 4,
+						Y:      lineY,
+						Width:  lipgloss.Width(q),
+						Height: 1,
+						Action: func() tea.Cmd {
+							m.deckFilter = q
+							m.applyDeckFilter()
+							return nil
+						},
+					})
+				}
+				b.WriteString("\n")
+			}
 		} else {
-			b.WriteString(fmt.Sprintf("Filter: %s (Press / to edit)\n\n", m.deckFilter))
+			b.WriteString(searchBar.Render(fmt.Sprintf("Filter: %s (Press / to edit)", m.deckFilter)) + "\n\n")
 		}
 	}
 
@@ -250,14 +329,14 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 			statsStr = padLine(statsStr, statsWidth)
 		}
 
-		highlightStyle := lipgloss.NewStyle().Foreground(colorPink).Bold(true)
 		nameText := truncateLine(deck.Name, nameWidth)
-		nameTextPadded := padLine(nameText, nameWidth)
-
-		resDeckName := nameTextPadded
-		if m.deckFilter != "" {
-			resDeckName = highlightMatch(resDeckName, m.deckFilter, highlightStyle)
-		}
+		resDeckName := nameText
+		/*
+			if m.deckFilter != "" {
+				resDeckName = highlightQuery(resDeckName, m.deckFilter, highlightStyle)
+			}
+		*/
+		resDeckName = padLine(resDeckName, nameWidth)
 
 		label := fmt.Sprintf("%s%s%s %s%s%s",
 			prefix, selectMark, resDeckName, miniBar, counts, statsStr)
@@ -285,12 +364,15 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		}
 		if len(deck.Tags) > 0 {
 			tags := strings.Join(deck.Tags, ", ")
-			resTags := mutedStyle.Render(truncateLine(tags, layout.Width-15))
-			if m.deckFilter != "" {
-				resTags = highlightMatch(resTags, m.deckFilter, highlightStyle)
-			}
+			resTags := truncateLine(tags, layout.Width-15)
+			/*
+				if m.deckFilter != "" {
+					resTags = highlightQuery(resTags, m.deckFilter, highlightStyle)
+				}
+			*/
+			resTagsStyled := mutedStyle.Render(resTags)
 			lines = append(lines, lineInfo{deckIdx: i, kind: "tags"})
-			content.WriteString(fmt.Sprintf("     Tags: %s\n", resTags))
+			content.WriteString(fmt.Sprintf("     Tags: %s\n", resTagsStyled))
 		}
 		lines = append(lines, lineInfo{deckIdx: i, kind: "spacer"})
 		content.WriteString("\n")

@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"image/color"
 	"strings"
 	"time"
 
@@ -288,30 +289,32 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 	// Compact Quick Actions
 	if remainingHeight >= 3 {
 		actions := []struct {
-			id    string
-			label string
-			key   string
+			id       string
+			label    string
+			key      string
+			category string
+			color    color.Color
 		}{
-			{"nav-review", "Review", "3"},
-			{"nav-practice", "Practice", "0"},
-			{"nav-dictionary", "Dictionary", "/"},
-			{"nav-cram", "Cram", "9"},
-			{"nav-decks", "Decks", "2"},
-			{"nav-browser", "Browser", "8"},
-			{"nav-statistics", "Stats", "4"},
-			{"nav-import", "Import", "5"},
-			{"nav-ai", "AI Draft", "6"},
-			{"nav-settings", "Settings", "7"},
+			{"nav-review", "Review", "3", "study", colorGreen},
+			{"nav-practice", "Practice", "0", "study", colorGreen},
+			{"nav-cram", "Cram", "9", "study", colorGreen},
+			{"nav-dictionary", "Dictionary", "/", "tools", colorBlue},
+			{"nav-decks", "Decks", "2", "tools", colorBlue},
+			{"nav-browser", "Browser", "8", "tools", colorBlue},
+			{"nav-statistics", "Stats", "4", "progress", colorGold},
+			{"nav-ai", "AI Draft", "6", "progress", colorGold},
+			{"nav-import", "Import", "5", "content", colorPurple},
+			{"nav-settings", "Settings", "7", "content", colorPurple},
 		}
 
 		actionsBoxWidth := layout.Width - 2
-		contentWidth := actionsBoxWidth - 4 // border + padding
+		contentWidth := actionsBoxWidth - 6 // border(2) + padding(4)
 		if contentWidth < 10 {
 			contentWidth = 10
 		}
 
-		prefix := lipgloss.NewStyle().Foreground(colorBlue).Bold(true).Render("Quick Actions") + "  •  "
-		prefixWidth := 17 // printed width of "Quick Actions  •  "
+		prefix := lipgloss.NewStyle().Foreground(colorBlue).Bold(true).Render("Quick Actions") + "  "
+		prefixWidth := lipgloss.Width("Quick Actions  ")
 
 		var lines []string
 		var currentLine string
@@ -334,9 +337,20 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		}
 		var relHitboxes []relativeHitbox
 
+		lastCategory := ""
 		for _, action := range actions {
-			keyStr := keyStyle.Render("[" + action.key + "]")
-			item := fmt.Sprintf("%s %s  ", keyStr, action.label)
+			if action.category != lastCategory && lastCategory != "" {
+				if currentLine != "" {
+					lines = append(lines, currentLine)
+				}
+				currentLine = ""
+				currentLineWidth = 0
+			}
+			lastCategory = action.category
+
+			keyStr := lipgloss.NewStyle().Foreground(action.color).Bold(true).Render("[" + action.key + "]")
+			labelStr := lipgloss.NewStyle().Foreground(lipgloss.Color("255")).Render(action.label)
+			item := fmt.Sprintf("%s %s  ", keyStr, labelStr)
 			itemWidth := lipgloss.Width(item)
 
 			if currentLineWidth+itemWidth > contentWidth {

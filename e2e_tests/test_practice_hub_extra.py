@@ -157,6 +157,41 @@ def test_conjunctions_trainer():
         finally:
             agent.close()
 
+def test_conjunctions_trainer_hint():
+    """Test the hint feature in Conjunctions Trainer."""
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir)
+        try:
+            # Go to Practice Hub (key 0)
+            agent.act('0')
+            agent.wait_for_text("PRACTICE HUB", timeout=5.0)
+            
+            # Select Conjunctions Trainer (key 9)
+            agent.act('9')
+            agent.wait_for_text("CONJUNCTIONS & WORD ORDER", timeout=5.0)
+            
+            # Initially should show hint prompt
+            screen = agent.observe()
+            assert "Press 'h' for a hint" in screen
+            assert "Subordinating" not in screen # First exercise hint
+            
+            # Press 'h' to show hint
+            agent.act('h')
+            agent.wait_until_stable()
+            
+            screen = agent.observe()
+            assert "Hint: Subordinating" in screen
+            
+            # Press 'h' again to hide hint
+            agent.act('h')
+            agent.wait_until_stable()
+            screen = agent.observe()
+            assert "Hint: Subordinating" not in screen
+            assert "Press 'h' for a hint" in screen
+            
+        finally:
+            agent.close()
+
 def test_practice_hub_scores_and_reset():
     """Test session scores are displayed in Practice Hub and can be reset."""
     with tempfile.TemporaryDirectory() as tmpdir:

@@ -154,15 +154,42 @@ func truncateLine(s string, maxWidth int) string {
 		return strings.Repeat(".", maxWidth)
 	}
 
+	var b strings.Builder
+	currW := 0
+	inEsc := false
 	runes := []rune(s)
-	res := ""
-	for _, r := range runes {
-		if lipgloss.Width(res+string(r)+"...") > maxWidth {
+
+	for i := 0; i < len(runes); i++ {
+		r := runes[i]
+
+		if r == '\x1b' {
+			inEsc = true
+			b.WriteRune(r)
+			continue
+		}
+
+		if inEsc {
+			b.WriteRune(r)
+			// ANSI sequences end with a letter (for CSI sequences like colors)
+			// or other characters for other sequences. This is a common heuristic.
+			if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') {
+				inEsc = false
+			}
+			continue
+		}
+
+		rw := lipgloss.Width(string(r))
+		if currW+rw+3 > maxWidth {
+			b.WriteString("...")
+			// Make sure we close any open ANSI sequences if possible?
+			// For simplicity, just append a reset sequence if we were highlighting.
+			b.WriteString("\x1b[0m")
 			break
 		}
-		res += string(r)
+		b.WriteRune(r)
+		currW += rw
 	}
-	return res + "..."
+	return b.String()
 }
 
 func progressBar(width int, percentage float64, filledColor, emptyColor string) string {
@@ -329,23 +356,46 @@ func normalizeUmlauts(s string) string {
 	return s
 }
 
-func highlightMatch(text, query string, style lipgloss.Style) string {
+func highlightQuery(text, query string, style lipgloss.Style) string {
+	query = strings.TrimSpace(query)
 	if query == "" {
 		return text
 	}
-	lowerText := strings.ToLower(text)
-	lowerQuery := strings.ToLower(query)
-	start := strings.Index(lowerText, lowerQuery)
-	if start == -1 {
+	textRunes := []rune(text)
+	lowerTextRunes := []rune(strings.ToLower(text))
+	lowerQueryRunes := []rune(strings.ToLower(query))
+	if len(lowerQueryRunes) == 0 || len(lowerQueryRunes) > len(lowerTextRunes) {
 		return text
 	}
 
-	// Found a match
-	before := text[:start]
-	match := text[start : start+len(query)]
-	after := text[start+len(query):]
+	var result strings.Builder
+	pos := 0
+	for pos < len(lowerTextRunes) {
+		matchStart := -1
+		for i := pos; i <= len(lowerTextRunes)-len(lowerQueryRunes); i++ {
+			matched := true
+			for j := range lowerQueryRunes {
+				if lowerTextRunes[i+j] != lowerQueryRunes[j] {
+					matched = false
+					break
+				}
+			}
+			if matched {
+				matchStart = i
+				break
+			}
+		}
+		if matchStart == -1 {
+			result.WriteString(string(textRunes[pos:]))
+			break
+		}
 
-	return before + style.Render(match) + highlightMatch(after, query, style)
+		result.WriteString(string(textRunes[pos:matchStart]))
+		matchEnd := matchStart + len(lowerQueryRunes)
+		result.WriteString(style.Render(string(textRunes[matchStart:matchEnd])))
+		pos = matchEnd
+	}
+	return result.String()
 }
 
 func renderTypingDiff(typed, expected string) string {
