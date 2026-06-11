@@ -140,7 +140,7 @@ def test_mouse_click_side_navigation_opens_ai_view():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
-            agent.click(5, 11)
+            agent.click(5, 10)
             agent.wait_for_text("Topic:")
             agent.assert_text("B2 digital privacy")
         finally:

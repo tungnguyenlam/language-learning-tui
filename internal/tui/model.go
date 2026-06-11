@@ -219,6 +219,7 @@ type Model struct {
 	dictionaryDetailScroll     int
 	dictionaryDetailTotalLines int
 	dictionaryDetailView       bool
+	dictionaryOverlayActive    bool
 	isErrorStatus              bool
 	searchingTags              bool
 	sessionReviewed            int
@@ -1258,6 +1259,10 @@ func (m *Model) View() tea.View {
 
 	if m.confirmingDelete {
 		finalContent = m.applyOverlay(finalContent, m.renderConfirmation())
+	}
+
+	if m.dictionaryOverlayActive {
+		finalContent = m.applyOverlay(finalContent, m.renderSpotlightDictionary())
 	}
 
 	return tea.View{

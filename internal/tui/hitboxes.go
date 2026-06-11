@@ -41,6 +41,13 @@ func (m *Model) activateHitbox(h Hitbox) tea.Cmd {
 
 func (m *Model) activateHitboxByID(id string) tea.Cmd {
 	switch {
+	case id == "nav-dictionary" || id == "tab-dictionary":
+		if m.dictionaryOverlayActive {
+			m.closeDictionaryOverlay()
+		} else {
+			m.openDictionaryOverlay()
+		}
+		return nil
 	case strings.HasPrefix(id, "nav-"):
 		return m.updateView(View(strings.TrimPrefix(id, "nav-")))
 	case strings.HasPrefix(id, "tab-"):

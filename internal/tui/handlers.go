@@ -14,7 +14,7 @@ import (
 )
 
 func (m *Model) nextViewCmd() tea.Cmd {
-	views := []View{ViewDashboard, ViewDictionary, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser, ViewCram, ViewPractice}
+	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser, ViewCram, ViewPractice}
 	for i, view := range views {
 		if m.activeView == view {
 			return m.updateView(views[(i+1)%len(views)])
@@ -24,7 +24,7 @@ func (m *Model) nextViewCmd() tea.Cmd {
 }
 
 func (m *Model) previousViewCmd() tea.Cmd {
-	views := []View{ViewDashboard, ViewDictionary, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser, ViewCram, ViewPractice}
+	views := []View{ViewDashboard, ViewDecks, ViewReview, ViewStatistics, ViewImport, ViewAI, ViewSettings, ViewBrowser, ViewCram, ViewPractice}
 	for i, view := range views {
 		if m.activeView == view {
 			return m.updateView(views[(i-1+len(views))%len(views)])

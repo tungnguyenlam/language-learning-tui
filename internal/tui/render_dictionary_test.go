@@ -420,3 +420,228 @@ func TestDictionaryClearSearchHistory(t *testing.T) {
 		t.Errorf("expected search history to be cleared via ctrl+x, got %v", m.dictionarySearchHistory)
 	}
 }
+
+func TestSpotlightDictionaryOverlayActivation(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.width = 120
+	m.height = 40
+	m.activeView = ViewDashboard
+
+	// Verify overlay is inactive by default
+	if m.dictionaryOverlayActive {
+		t.Fatal("expected overlay to be inactive by default")
+	}
+
+	// Press '=' to activate overlay
+	_, cmd := m.updateKey(tea.KeyPressMsg{Code: '='})
+	_ = cmd
+
+	if !m.dictionaryOverlayActive {
+		t.Fatal("expected overlay to be active after pressing '='")
+	}
+	if m.dictionarySearch != "" {
+		t.Fatal("expected search to be empty on overlay open")
+	}
+	if m.activeView != ViewDashboard {
+		t.Fatalf("expected active view to remain Dashboard, got %v", m.activeView)
+	}
+}
+
+func TestSpotlightDictionaryOverlayRendering(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.width = 120
+	m.height = 40
+	m.activeView = ViewDashboard
+	m.dictionaryOverlayActive = true
+
+	output := m.renderSpotlightDictionary()
+	if !strings.Contains(output, "SPOTLIGHT DICTIONARY") {
+		t.Fatal("expected spotlight overlay to contain title")
+	}
+	if !strings.Contains(output, "Search German or English") {
+		t.Fatal("expected spotlight overlay to contain placeholder text")
+	}
+}
+
+func TestSpotlightDictionaryOverlayDeactivation(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.width = 120
+	m.height = 40
+	m.activeView = ViewReview
+	m.dictionaryOverlayActive = true
+
+	// Press Esc to deactivate overlay
+	cmd, handled := m.updateDictionaryOverlayKey(tea.KeyPressMsg{Code: tea.KeyEsc})
+	if !handled {
+		t.Fatal("expected Esc to be handled")
+	}
+	_ = cmd
+	if m.dictionaryOverlayActive {
+		t.Fatal("expected overlay to be deactivated after Esc")
+	}
+	if m.activeView != ViewReview {
+		t.Fatalf("expected active view to remain ViewReview, got %v", m.activeView)
+	}
+}
+
+func TestSpotlightDictionaryOverlaySearchInput(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.width = 120
+	m.height = 40
+	m.activeView = ViewStatistics
+	m.dictionaryOverlayActive = true
+
+	// Type a character — the overlay delegates to updateDictionaryKey which handles text input
+	// Since dictionaryOverlayActive is true, textInputActive() returns true, blocking number-key navigation
+	if !m.textInputActive() {
+		t.Fatal("expected textInputActive() to return true when overlay is active")
+	}
+}
+
+func TestSpotlightDictionaryOverlayToggleOff(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.width = 120
+	m.height = 40
+	m.activeView = ViewBrowser
+	m.dictionaryOverlayActive = true
+
+	// Press '=' again to toggle off
+	cmd, handled := m.updateDictionaryOverlayKey(tea.KeyPressMsg{Code: '='})
+	if !handled {
+		t.Fatal("expected '=' to be handled in overlay mode")
+	}
+	_ = cmd
+	if m.dictionaryOverlayActive {
+		t.Fatal("expected overlay to be toggled off by '='")
+	}
+}
+
+func TestSpotlightDictionaryNavHitboxResetsState(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewReview
+	m.dictionaryOverlayActive = true
+	m.dictionarySearch = "Apfel"
+	m.dictionaryResults = []core.DictionaryEntry{{ID: "1", Word: "Apfel", Translation: "Apple"}}
+	m.dictionaryCursor = 1
+	m.dictionaryScroll = 1
+	m.dictionaryDetailScroll = 2
+	m.dictionaryDetailTotalLines = 10
+	m.dictionaryDetailView = true
+
+	cmd := m.activateHitboxByID("tab-dictionary")
+	if cmd != nil {
+		t.Fatal("dictionary tab overlay toggle should not return a command")
+	}
+	if m.dictionaryOverlayActive {
+		t.Fatal("expected dictionary overlay to close")
+	}
+	if m.activeView != ViewReview {
+		t.Fatalf("active view = %s, want review", m.activeView)
+	}
+	if m.dictionarySearch != "" || len(m.dictionaryResults) != 0 || m.dictionaryDetailView {
+		t.Fatalf("expected dictionary state to reset, search=%q results=%d detail=%v", m.dictionarySearch, len(m.dictionaryResults), m.dictionaryDetailView)
+	}
+	if m.dictionaryCursor != 0 || m.dictionaryScroll != 0 || m.dictionaryDetailScroll != 0 || m.dictionaryDetailTotalLines != 0 {
+		t.Fatalf("expected dictionary indexes to reset, cursor=%d scroll=%d detailScroll=%d detailLines=%d", m.dictionaryCursor, m.dictionaryScroll, m.dictionaryDetailScroll, m.dictionaryDetailTotalLines)
+	}
+
+	cmd = m.activateHitboxByID("tab-dictionary")
+	if cmd != nil {
+		t.Fatal("dictionary tab overlay toggle should not return a command")
+	}
+	if !m.dictionaryOverlayActive {
+		t.Fatal("expected dictionary overlay to reopen")
+	}
+	if m.activeView != ViewReview {
+		t.Fatalf("active view = %s, want review", m.activeView)
+	}
+}
+
+func TestSpotlightDictionaryClearHitboxIsOverlayScoped(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewStatistics
+	m.width = 120
+	m.height = 40
+	m.dictionaryOverlayActive = true
+	m.dictionarySearch = "Apfel"
+	m.dictionaryResults = []core.DictionaryEntry{{ID: "1", Word: "Apfel", Translation: "Apple"}}
+	m.dictionaryCursor = 1
+	m.dictionaryScroll = 1
+	m.dictionaryDetailScroll = 1
+	m.dictionaryDetailTotalLines = 5
+	m.dictionaryDetailView = true
+
+	_ = m.renderSpotlightDictionary()
+
+	var clearHitbox *Hitbox
+	for i := range m.hitboxes {
+		if m.hitboxes[i].ID == "dict-overlay-search-clear" {
+			clearHitbox = &m.hitboxes[i]
+			break
+		}
+	}
+	if clearHitbox == nil {
+		t.Fatal("expected overlay clear hitbox to be registered")
+	}
+	if clearHitbox.View != ViewStatistics {
+		t.Fatalf("clear hitbox view = %s, want statistics", clearHitbox.View)
+	}
+	if clearHitbox.Action == nil {
+		t.Fatal("expected overlay clear hitbox to use an action")
+	}
+	if cmd := clearHitbox.Action(); cmd != nil {
+		t.Fatal("overlay clear action should not return a command")
+	}
+	if m.dictionarySearch != "" || len(m.dictionaryResults) != 0 || m.dictionaryDetailView {
+		t.Fatalf("expected clear action to reset search/results/detail, search=%q results=%d detail=%v", m.dictionarySearch, len(m.dictionaryResults), m.dictionaryDetailView)
+	}
+	if m.dictionaryCursor != 0 || m.dictionaryScroll != 0 || m.dictionaryDetailScroll != 0 || m.dictionaryDetailTotalLines != 0 {
+		t.Fatalf("expected clear action to reset indexes, cursor=%d scroll=%d detailScroll=%d detailLines=%d", m.dictionaryCursor, m.dictionaryScroll, m.dictionaryDetailScroll, m.dictionaryDetailTotalLines)
+	}
+}
+
+func TestSpotlightDictionaryHistoryHitboxesAreOverlayScoped(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewBrowser
+	m.width = 120
+	m.height = 40
+	m.dictionaryOverlayActive = true
+	m.dictionarySearchHistory = []string{"Apfel", "Birne"}
+
+	_ = m.renderSpotlightDictionary()
+
+	foundClear := false
+	foundHistory := false
+	for _, hb := range m.hitboxes {
+		switch hb.ID {
+		case "dict-overlay-history-clear":
+			foundClear = true
+			if hb.View != ViewBrowser {
+				t.Fatalf("history clear hitbox view = %s, want browser", hb.View)
+			}
+			if hb.Action == nil {
+				t.Fatal("expected history clear hitbox to use an action")
+			}
+			if cmd := hb.Action(); cmd != nil {
+				t.Fatal("history clear action should not return a command")
+			}
+		case "dict-overlay-history-0":
+			foundHistory = true
+			if hb.View != ViewBrowser {
+				t.Fatalf("history hitbox view = %s, want browser", hb.View)
+			}
+			if hb.Action == nil {
+				t.Fatal("expected history hitbox to use an action")
+			}
+		}
+	}
+	if !foundClear {
+		t.Fatal("expected overlay history clear hitbox")
+	}
+	if !foundHistory {
+		t.Fatal("expected overlay history query hitbox")
+	}
+	if len(m.dictionarySearchHistory) != 0 {
+		t.Fatalf("expected history clear action to empty history, got %v", m.dictionarySearchHistory)
+	}
+}

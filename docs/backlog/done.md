@@ -1,5 +1,19 @@
 # Done Backlog
 
+## 2026-06-11 (Spotlight Dictionary Overlay Reliability)
+
+### Dictionary UX
+- **Shared Overlay State Reset:** Centralized dictionary search/detail reset behavior and used it for `=` key toggles, Dictionary tab/nav hitboxes, `ctrl+u`, and Dictionary `Esc` exits. This prevents stale search results, cursors, and detail scroll from leaking between overlay sessions.
+- **Overlay-Scoped Mouse Hitboxes:** Gave Spotlight overlay search, history, and result hitboxes distinct IDs (`dict-overlay-*`) and verified they stay scoped to the active underlying view instead of colliding with full Dictionary view hitboxes.
+
+### E2E Stability
+- **Navigation Coordinate Recertification:** Updated mouse-tab/sidebar coordinates and Browser tab counts after Dictionary became a Spotlight overlay outside the tab cycle. Re-ran the previously failing E2E subset before full verification.
+
+### Verification
+- `/opt/homebrew/bin/go test ./internal/tui` passed.
+- `/opt/homebrew/bin/go test ./...` passed.
+- `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` passed: Go tests, smoke test, binary build, and 349 E2E tests.
+
 ## 2026-06-11 (Dictionary History Clear, Practice Hub Scores & Reset)
 
 ### Dictionary UX

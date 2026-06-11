@@ -26,23 +26,23 @@ def test_mouse_navigation_tabs():
             # Dashboard is default
             agent.assert_text("DASHBOARD")
 
-            # Click Decks (Tab 3 now)
-            agent.click(28, 3)
+            # Click Decks
+            agent.click(13, 3)
             agent.wait_for_text("DECK LIST")
             agent.assert_text("German A1 Survival")
 
-            # Click Statistics (Tab 5 now)
-            agent.click(48, 3)
+            # Click Statistics
+            agent.click(31, 3)
             agent.wait_for_text("Statistics")
             agent.assert_text("Total Cards:")
 
-            # Click Browser (Tab 9 now)
-            agent.click(84, 3)
+            # Click Browser
+            agent.click(68, 3)
             agent.wait_for_text("Browser")
             agent.assert_text("52 cards found")
 
-            # Click Dashboard again (Tab 1)
-            agent.click(5, 3)
+            # Click Dashboard again
+            agent.click(4, 3)
             agent.wait_for_text("DASHBOARD")
         finally:
             agent.close()

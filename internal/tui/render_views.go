@@ -591,7 +591,6 @@ func (m *Model) renderNav(x, y int) string {
 		text string
 	}{
 		{"nav-dashboard", ViewDashboard, "Dashboard"},
-		{"nav-dictionary", ViewDictionary, "Dictionary"},
 		{"nav-decks", ViewDecks, "Decks"},
 		{"nav-review", ViewReview, "Review"},
 		{"nav-statistics", ViewStatistics, "Statistics"},
@@ -631,7 +630,6 @@ func (m *Model) renderTabs(x, y int) string {
 		text string
 	}{
 		{"tab-dashboard", ViewDashboard, "Dashboard"},
-		{"tab-dictionary", ViewDictionary, "Dictionary"},
 		{"tab-decks", ViewDecks, "Decks"},
 		{"tab-review", ViewReview, "Review"},
 		{"tab-statistics", ViewStatistics, "Statistics"},

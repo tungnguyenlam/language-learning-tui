@@ -25,6 +25,7 @@ Last updated: 2026-06-11
 - `docs/agent/notices/2026-05-02-parallel-e2e-tests.md`: E2E tests are parallelized with pytest-xdist for 8x speedup.
 - `docs/agent/notices/2026-05-12-headered-tsv-decks.md`: headered embedded TSV decks must not leak headers or literal explanations into review answers.
 - `docs/agent/notices/2026-05-16-edge-tts-provider.md`: Edge TTS is an optional unofficial online CLI provider and must fail gracefully.
+- `docs/agent/notices/2026-06-11-spotlight-dictionary-overlay.md`: Dictionary is a Spotlight-like overlay (`=` key), not a tab. Removed from nav cycle.
 
 ## Verification Status
 

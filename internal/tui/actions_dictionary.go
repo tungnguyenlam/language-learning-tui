@@ -98,3 +98,25 @@ func (m *Model) recordDictionarySearch(query string) {
 		m.dictionarySearchHistory = m.dictionarySearchHistory[1:]
 	}
 }
+
+func (m *Model) resetDictionarySearchState() {
+	m.dictionarySearch = ""
+	m.dictionaryResults = nil
+	m.dictionaryCursor = 0
+	m.dictionaryScroll = 0
+	m.dictionaryDetailScroll = 0
+	m.dictionaryDetailTotalLines = 0
+	m.dictionaryDetailView = false
+}
+
+func (m *Model) openDictionaryOverlay() {
+	m.dictionaryOverlayActive = true
+	m.resetDictionarySearchState()
+	m.status = "Spotlight dictionary open"
+}
+
+func (m *Model) closeDictionaryOverlay() {
+	m.dictionaryOverlayActive = false
+	m.resetDictionarySearchState()
+	m.status = "Spotlight dictionary closed"
+}

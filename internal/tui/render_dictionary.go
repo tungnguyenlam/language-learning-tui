@@ -590,3 +590,367 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 
 	return b.String()
 }
+
+func (m *Model) renderSpotlightDictionary() string {
+	boxWidth := 86
+	if m.width < 92 {
+		boxWidth = m.width - 6
+	}
+	if boxWidth < 30 {
+		boxWidth = 30
+	}
+
+	boxHeight := 16
+	if m.height < 22 {
+		boxHeight = m.height - 6
+	}
+	if boxHeight < 8 {
+		boxHeight = 8
+	}
+
+	startX := (m.width - boxWidth) / 2
+	startY := (m.height - boxHeight) / 2
+	if startX < 0 {
+		startX = 0
+	}
+	if startY < 0 {
+		startY = 0
+	}
+
+	boxStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("205")). // Vibrant pink/magenta spotlight border
+		Background(lipgloss.Color("233")).       // Deep dark backdrop
+		Padding(0, 1).
+		Width(boxWidth).
+		Height(boxHeight)
+
+	var b strings.Builder
+
+	titleStr := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).Render(" 🔍 SPOTLIGHT DICTIONARY ")
+	closeHint := mutedStyle.Render("Press = or Esc to close")
+	b.WriteString(titleStr + "  " + closeHint + "\n\n")
+
+	searchBarWidth := boxWidth - 6
+	if searchBarWidth < 10 {
+		searchBarWidth = 10
+	}
+
+	searchBar := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		BorderForeground(lipgloss.Color("62")).
+		Padding(0, 1).
+		Width(searchBarWidth)
+
+	searchText := m.dictionarySearch
+	if searchText == "" {
+		searchText = mutedStyle.Render("Search German or English...")
+		b.WriteString(searchBar.Render("🔍 "+searchText) + "\n\n")
+	} else {
+		contentLength := 3 + len([]rune(m.dictionarySearch)) + 1
+		spaces := searchBarWidth - contentLength - 3
+		clearText := lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Bold(true).Render("[x]")
+		var clearBtn string
+		if spaces > 0 {
+			clearBtn = strings.Repeat(" ", spaces) + clearText
+		} else {
+			clearBtn = " " + clearText
+		}
+		b.WriteString(searchBar.Render("🔍 "+searchText+editStyle.Render("█")+clearBtn) + "\n\n")
+
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     "dict-overlay-search-clear",
+			View:   m.activeView,
+			X:      startX + searchBarWidth - 2,
+			Y:      startY + 3,
+			Width:  3,
+			Height: 1,
+			Action: func() tea.Cmd {
+				m.resetDictionarySearchState()
+				return nil
+			},
+		})
+	}
+
+	usedLines := 7
+	interiorHeight := boxHeight - usedLines - 2
+	if interiorHeight < 1 {
+		interiorHeight = 1
+	}
+
+	interiorWidth := boxWidth - 4
+	if interiorWidth < 10 {
+		interiorWidth = 10
+	}
+
+	if len(m.dictionaryResults) == 0 {
+		if m.dictionarySearch != "" {
+			b.WriteString(mutedStyle.Render("No results found."))
+		} else {
+			b.WriteString(mutedStyle.Render("Type to search local dict.cc dictionary."))
+			if len(m.dictionarySearchHistory) > 0 {
+				clearHistoryText := lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Render("[Clear]")
+				b.WriteString("\n\n" + boldStyle.Render("Recent Searches:") + "  " + clearHistoryText + " " + mutedStyle.Render("(ctrl+x)") + "\n")
+
+				clearHistoryLineY := strings.Count(b.String(), "\n") - 1
+				m.hitboxes = append(m.hitboxes, Hitbox{
+					ID:     "dict-overlay-history-clear",
+					View:   m.activeView,
+					X:      startX + 20,
+					Y:      startY + clearHistoryLineY + 2,
+					Width:  7,
+					Height: 1,
+					Action: func() tea.Cmd {
+						m.dictionarySearchHistory = nil
+						return nil
+					},
+				})
+
+				for i, q := range m.dictionarySearchHistory {
+					lineY := strings.Count(b.String(), "\n")
+					b.WriteString(fmt.Sprintf("  • %s\n", q))
+					queryText := q
+					m.hitboxes = append(m.hitboxes, Hitbox{
+						ID:     fmt.Sprintf("dict-overlay-history-%d", i),
+						View:   m.activeView,
+						X:      startX + 4,
+						Y:      startY + lineY + 2,
+						Width:  len([]rune(queryText)),
+						Height: 1,
+						Action: func() tea.Cmd {
+							m.dictionarySearch = queryText
+							m.dictionaryResults = nil
+							m.dictionaryCursor = 0
+							m.dictionaryScroll = 0
+							m.dictionaryDetailScroll = 0
+							m.dictionaryDetailTotalLines = 0
+							m.dictionaryDetailView = false
+							return m.searchDictionary()
+						},
+					})
+				}
+			}
+		}
+		return boxStyle.Render(b.String())
+	}
+
+	maxResults := interiorHeight
+	if m.dictionaryCursor < m.dictionaryScroll {
+		m.dictionaryScroll = m.dictionaryCursor
+	}
+	if m.dictionaryCursor >= m.dictionaryScroll+maxResults {
+		m.dictionaryScroll = m.dictionaryCursor - maxResults + 1
+	}
+
+	if m.dictionaryDetailView && m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+		res := m.dictionaryResults[m.dictionaryCursor]
+
+		var detailBuilder strings.Builder
+		detailBuilder.WriteString(titleStyle.Render(res.Word) + "\n")
+		meta := ""
+		if res.WordClass != "" {
+			meta += mutedStyle.Render("["+strings.ToUpper(res.WordClass)+"]") + " "
+		}
+		if res.Gender != "" {
+			meta += renderGender(res.Gender) + " "
+		}
+		if meta != "" {
+			detailBuilder.WriteString(meta + "\n")
+		}
+		detailBuilder.WriteString(mutedStyle.Render(strings.Repeat("─", maxInt(10, interiorWidth-6))) + "\n")
+
+		if res.Translation != "" {
+			detailBuilder.WriteString(boldStyle.Render("Translations:") + "\n")
+			translations := strings.Split(res.Translation, ";")
+			for _, t := range translations {
+				trimmed := strings.TrimSpace(t)
+				highlightedT := highlightQuery(trimmed, m.dictionarySearch, dictHighlightStyle)
+				detailBuilder.WriteString("  " + highlightedT + "\n")
+			}
+		}
+		if res.Forms != "" {
+			detailBuilder.WriteString(boldStyle.Render("Forms: ") + highlightQuery(res.Forms, m.dictionarySearch, dictHighlightStyle) + "\n")
+		}
+		if len(res.Examples) > 0 {
+			detailBuilder.WriteString(boldStyle.Render("Examples:") + "\n")
+			for _, ex := range res.Examples {
+				detailBuilder.WriteString("  • " + highlightQuery(ex, m.dictionarySearch, dictHighlightStyle) + "\n")
+			}
+		}
+
+		detailLines := strings.Split(detailBuilder.String(), "\n")
+		m.dictionaryDetailTotalLines = len(detailLines)
+		if m.dictionaryDetailScroll > m.dictionaryDetailTotalLines-maxResults {
+			m.dictionaryDetailScroll = maxInt(0, m.dictionaryDetailTotalLines-maxResults)
+		}
+
+		var visibleDetailBuilder strings.Builder
+		for i := m.dictionaryDetailScroll; i < m.dictionaryDetailScroll+maxResults && i < len(detailLines); i++ {
+			visibleDetailBuilder.WriteString(padString(detailLines[i], interiorWidth) + "\n")
+		}
+
+		b.WriteString(visibleDetailBuilder.String())
+		return boxStyle.Render(b.String())
+	}
+
+	if interiorWidth > 70 {
+		listWidth := maxInt(25, minInt(40, interiorWidth*4/10))
+		detailWidth := interiorWidth - listWidth - 3
+
+		var listBuilder strings.Builder
+		for i := m.dictionaryScroll; i < len(m.dictionaryResults) && i < m.dictionaryScroll+maxResults; i++ {
+			res := m.dictionaryResults[i]
+			prefix := "  "
+			if i == m.dictionaryCursor {
+				prefix = "> "
+			}
+			wordText := res.Word
+			if res.Gender != "" {
+				wordText += " {" + res.Gender + "}"
+			} else if res.WordClass != "" {
+				wordText += " [" + res.WordClass + "]"
+			}
+			padded := padString(wordText, listWidth-2)
+			highlighted := highlightQuery(padded, m.dictionarySearch, dictHighlightStyle)
+			line := prefix + highlighted
+			if i == m.dictionaryCursor {
+				listBuilder.WriteString(editStyle.Render(line) + "\n")
+			} else {
+				listBuilder.WriteString(line + "\n")
+			}
+
+			idx := i
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID:     fmt.Sprintf("dict-overlay-result-%d", idx),
+				View:   m.activeView,
+				X:      startX + 2,
+				Y:      startY + usedLines + (idx - m.dictionaryScroll),
+				Width:  listWidth,
+				Height: 1,
+				Action: func() tea.Cmd {
+					m.dictionaryCursor = idx
+					m.dictionaryDetailScroll = 0
+					return nil
+				},
+			})
+		}
+		for i := len(m.dictionaryResults) - m.dictionaryScroll; i < maxResults; i++ {
+			listBuilder.WriteString(strings.Repeat(" ", listWidth) + "\n")
+		}
+
+		listWithScroll := listBuilder.String()
+		if len(m.dictionaryResults) > maxResults {
+			var sb strings.Builder
+			thumbStart, thumbHeight := scrollbarThumb(len(m.dictionaryResults), maxResults, m.dictionaryScroll)
+			lines := strings.Split(listBuilder.String(), "\n")
+			for i := 0; i < maxResults && i < len(lines); i++ {
+				char := "│"
+				if i >= thumbStart && i < thumbStart+thumbHeight {
+					char = "┃"
+				}
+				sb.WriteString(lines[i] + lipgloss.NewStyle().Foreground(colorPanel).Render(char) + "\n")
+			}
+			listWithScroll = sb.String()
+		} else {
+			var sb strings.Builder
+			lines := strings.Split(listBuilder.String(), "\n")
+			for i := 0; i < maxResults && i < len(lines); i++ {
+				sb.WriteString(lines[i] + " \n")
+			}
+			listWithScroll = sb.String()
+		}
+
+		var detailBuilder strings.Builder
+		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			res := m.dictionaryResults[m.dictionaryCursor]
+			detailBuilder.WriteString(titleStyle.Render(res.Word) + "\n")
+			meta := ""
+			if res.WordClass != "" {
+				meta += mutedStyle.Render("["+strings.ToUpper(res.WordClass)+"]") + " "
+			}
+			if res.Gender != "" {
+				meta += renderGender(res.Gender) + " "
+			}
+			if meta != "" {
+				detailBuilder.WriteString(meta + "\n")
+			}
+			detailBuilder.WriteString(mutedStyle.Render(strings.Repeat("─", detailWidth-4)) + "\n")
+
+			if res.Translation != "" {
+				translations := strings.Split(res.Translation, ";")
+				for _, t := range translations {
+					detailBuilder.WriteString("  " + highlightQuery(strings.TrimSpace(t), m.dictionarySearch, dictHighlightStyle) + "\n")
+				}
+			}
+		}
+
+		detailLines := strings.Split(detailBuilder.String(), "\n")
+		m.dictionaryDetailTotalLines = len(detailLines)
+		if m.dictionaryDetailScroll > m.dictionaryDetailTotalLines-maxResults {
+			m.dictionaryDetailScroll = maxInt(0, m.dictionaryDetailTotalLines-maxResults)
+		}
+
+		var visibleDetailBuilder strings.Builder
+		for i := m.dictionaryDetailScroll; i < m.dictionaryDetailScroll+maxResults && i < len(detailLines); i++ {
+			visibleDetailBuilder.WriteString(padString(detailLines[i], detailWidth-2) + "\n")
+		}
+		for i := len(detailLines) - m.dictionaryDetailScroll; i < maxResults; i++ {
+			visibleDetailBuilder.WriteString(strings.Repeat(" ", detailWidth-2) + "\n")
+		}
+
+		detailPanel := lipgloss.NewStyle().
+			Border(lipgloss.NormalBorder(), false, false, false, true).
+			BorderForeground(colorPanel).
+			Padding(0, 1).
+			Width(detailWidth).
+			Height(maxResults).
+			Render(visibleDetailBuilder.String())
+
+		joined := lipgloss.JoinHorizontal(lipgloss.Top, listWithScroll, detailPanel)
+		b.WriteString(joined)
+	} else {
+		var listBuilder strings.Builder
+		for i := m.dictionaryScroll; i < len(m.dictionaryResults) && i < m.dictionaryScroll+maxResults; i++ {
+			res := m.dictionaryResults[i]
+			prefix := "  "
+			if i == m.dictionaryCursor {
+				prefix = "> "
+			}
+			plainLine := fmt.Sprintf("%s - %s", res.Word, res.Translation)
+			padded := padString(plainLine, interiorWidth-2)
+			highlighted := highlightQuery(padded, m.dictionarySearch, dictHighlightStyle)
+			line := prefix + highlighted
+			if i == m.dictionaryCursor {
+				listBuilder.WriteString(editStyle.Render(line) + "\n")
+			} else {
+				listBuilder.WriteString(line + "\n")
+			}
+
+			idx := i
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID:     fmt.Sprintf("dict-overlay-result-%d", idx),
+				View:   m.activeView,
+				X:      startX + 2,
+				Y:      startY + usedLines + (idx - m.dictionaryScroll),
+				Width:  interiorWidth,
+				Height: 1,
+				Action: func() tea.Cmd {
+					if m.dictionaryCursor == idx {
+						m.dictionaryDetailView = true
+						m.dictionaryDetailScroll = 0
+					} else {
+						m.dictionaryCursor = idx
+						m.dictionaryDetailScroll = 0
+					}
+					return nil
+				},
+			})
+		}
+		for i := len(m.dictionaryResults) - m.dictionaryScroll; i < maxResults; i++ {
+			listBuilder.WriteString(strings.Repeat(" ", interiorWidth) + "\n")
+		}
+		b.WriteString(listBuilder.String())
+	}
+
+	return boxStyle.Render(b.String())
+}

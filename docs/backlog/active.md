@@ -8,6 +8,9 @@ Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
 
+- [x] **Spotlight Dictionary State Reset:** Centralized dictionary search/detail reset behavior and routed `=`/Dictionary tab overlay open-close through shared helpers so stale search results, detail scroll, and detail mode do not leak between overlay sessions.
+- [x] **Spotlight Dictionary Mouse Hitbox Scope:** Gave overlay-only search, history, and result hitboxes distinct IDs and active-view scope, with unit coverage for tab toggling, clear actions, and history mouse targets.
+- [x] **E2E Navigation Recertification:** Updated mouse-tab/sidebar coordinates and Browser tab count in E2E tests after Dictionary was removed from the tab cycle and converted to a Spotlight overlay.
 - [x] **Dictionary Search History Clear:** Added a clear button `[Clear]` (with mouse hitbox and `ctrl+x` keybinding) to clear recent search queries when the dictionary search bar is empty. Included `TestDictionaryClearSearchHistory` unit test coverage.
 - [x] **Practice Hub Session Scores:** Enhanced the Practice Hub view to display the current session score (e.g. `• 4/5 (80%)`) next to each practice trainer button.
 - [x] **Practice Hub Reset Scores:** Added an `r` keybinding to reset all practice session scores in the Practice Hub view. Included unit and E2E coverage for scores display and score resetting.
@@ -81,9 +84,7 @@ None.
 
 ## Last Verified
 
-- `./scripts/verify.sh` passed on 2026-06-11: Go tests, `go vet`, TUI smoke, binary build, and 348 E2E tests.
-- `go test ./internal/content` passed.
-- `go test ./internal/tui` passed.
+- `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` passed on 2026-06-11: Go tests, smoke test, binary build, and 349 E2E tests all passed.
 
 ## Blockers
 

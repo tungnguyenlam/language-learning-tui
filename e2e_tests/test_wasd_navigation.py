@@ -28,13 +28,8 @@ def test_wasd_view_switching():
             agent.assert_text("DASHBOARD")
 
             # Forward cycle
-            # Dashboard -> Dictionary
+            # Dashboard -> Decks
             agent.act("s")
-            agent.wait_for_text("Dictionary", timeout=5.0)
-
-            # Dictionary absorbs 's' for text input, so we use '<Tab>' to get past it
-            # Dictionary -> Decks
-            agent.act("<Tab>")
             agent.wait_for_text("Decks", timeout=5.0)
 
             # Decks -> Review
@@ -58,21 +53,13 @@ def test_wasd_view_switching():
             agent.act("w")
             agent.wait_for_text("Review", timeout=5.0)
 
-            # Review -> Decks
-            agent.act("w")
-            agent.wait_for_text("Review", timeout=5.0) # Might still be Review due to previous act("w") order
-            # Actually, I know the exact order now: Dashboard, Dictionary, Decks, Review, Statistics, Import...
-            
-            # Let's just do a clean verification based on the confirmed order in handlers.go
-            # Cycle: Dashboard(1) -> Dictionary -> Decks(2) -> Review(3) -> Statistics(4) -> Import(5) -> AI(6) -> Settings(7) -> Browser(8) -> Cram(9) -> Practice(0)
+            # Clean verification based on the confirmed order in handlers.go
+            # Cycle: Dashboard(1) -> Decks(2) -> Review(3) -> Statistics(4) -> Import(5) -> AI(6) -> Settings(7) -> Browser(8) -> Cram(9) -> Practice(0)
             
             agent.act("1")
             agent.wait_for_text("DASHBOARD")
             
-            agent.act("s") # Dashboard -> Dictionary
-            agent.wait_for_text("Dictionary")
-            
-            agent.act("<Right>") # Dictionary -> Decks
+            agent.act("s") # Dashboard -> Decks
             agent.wait_for_text("Decks")
             
             agent.act("s") # Decks -> Review
@@ -81,10 +68,7 @@ def test_wasd_view_switching():
             agent.act("w") # Review -> Decks
             agent.wait_for_text("Decks")
             
-            agent.act("<Left>") # Decks -> Dictionary
-            agent.wait_for_text("Dictionary")
-            
-            agent.act("<Left>") # Dictionary -> Dashboard
+            agent.act("<Left>") # Decks -> Dashboard
             agent.wait_for_text("DASHBOARD")
 
         finally:

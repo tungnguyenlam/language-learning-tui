@@ -19,6 +19,22 @@ import (
 func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	key := msg.String()
 
+	// Intercept keys when the spotlight dictionary overlay is active
+	if m.dictionaryOverlayActive {
+		if key == "ctrl+c" {
+			return m, tea.Quit
+		}
+		if cmd, handled := m.updateDictionaryOverlayKey(msg); handled {
+			return m, cmd
+		}
+	}
+
+	// Toggle dictionary overlay on '='
+	if key == "=" && !m.textInputActive() {
+		m.openDictionaryOverlay()
+		return m, nil
+	}
+
 	// 0. High-priority learning mode trapping
 	if m.typingMode || (m.activeView == ViewCram && m.cramActive) {
 		if key != "tab" && key != "shift+tab" && key != "ctrl+c" && key != "q" {
@@ -218,6 +234,7 @@ func (m *Model) textInputActive() bool {
 		m.searchingDecks ||
 		m.searchingAI ||
 		m.activeView == ViewDictionary ||
+		m.dictionaryOverlayActive ||
 		m.drafting // AI drafting also uses input
 }
 
@@ -1966,11 +1983,7 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "ctrl+u":
-		m.dictionarySearch = ""
-		m.dictionaryResults = nil
-		m.dictionaryCursor = 0
-		m.dictionaryScroll = 0
-		m.dictionaryDetailView = false
+		m.resetDictionarySearchState()
 		return nil, true
 	case "ctrl+x":
 		m.dictionarySearchHistory = nil
@@ -1999,10 +2012,7 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.dictionaryDetailView = false
 			return nil, true
 		}
-		m.dictionarySearch = ""
-		m.dictionaryResults = nil
-		m.dictionaryCursor = 0
-		m.dictionaryScroll = 0
+		m.resetDictionarySearchState()
 		destView := ViewDashboard
 		if m.dictionaryPreviousView != "" && m.dictionaryPreviousView != ViewDictionary {
 			destView = m.dictionaryPreviousView
@@ -2078,4 +2088,33 @@ func (m *Model) updateConjunctionsTrainerKey(msg tea.KeyPressMsg) (tea.Cmd, bool
 	}
 
 	return nil, false
+}
+
+func (m *Model) updateDictionaryOverlayKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
+	key := msg.String()
+
+	// Toggle off on esc (if details not open) or =
+	if key == "=" || (key == "esc" && !m.dictionaryDetailView) {
+		m.closeDictionaryOverlay()
+		return nil, true
+	}
+
+	// Intercept keys that navigate away or perform overlay-closing actions
+	switch key {
+	case "enter":
+		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			m.dictionaryOverlayActive = false
+		}
+	case "ctrl+a":
+		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			m.dictionaryOverlayActive = false
+		}
+	case "ctrl+f":
+		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			m.dictionaryOverlayActive = false
+		}
+	}
+
+	// Delegate all other key events to the standard dictionary view key handler
+	return m.updateDictionaryKey(msg)
 }

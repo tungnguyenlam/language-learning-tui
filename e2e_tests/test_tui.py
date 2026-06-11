@@ -312,20 +312,20 @@ def test_mouse_tabs_open_import_ai_and_settings_views():
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
             # Stats tab
-            agent.click(48, 3)
+            agent.click(31, 3)
             agent.wait_for_text("Statistics")
 
             # Import tab
-            agent.click(58, 3)
+            agent.click(43, 3)
             agent.wait_for_text("Import / Export")
             agent.assert_text("[i] Import TSV")
 
             # AI tab
-            agent.click(65, 3)
+            agent.click(52, 3)
             agent.wait_for_text("Topic:")
 
             # Settings tab
-            agent.click(73, 3)
+            agent.click(57, 3)
             agent.wait_for_text("SETTINGS")
         finally:
             agent.close()
@@ -360,7 +360,7 @@ def test_mouse_tab_navigation_and_grade_button():
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
             # Medium layout tab row starts on terminal row 3
-            agent.click(36, 3)
+            agent.click(21, 3)
             agent.wait_for_text("Review 1/52")
             agent.act("<Enter>")
             agent.wait_for_text("Grade: a Again")
@@ -386,10 +386,6 @@ def test_view_navigation_with_arrow_keys():
             agent.assert_text("DASHBOARD")
 
             agent.act("<Right>")
-            agent.wait_for_text("Dictionary")
-            agent.wait_until_stable()
-
-            agent.act("<Right>")
             agent.wait_for_text("Press enter to select deck.")
             agent.wait_until_stable()
 
@@ -399,10 +395,6 @@ def test_view_navigation_with_arrow_keys():
 
             agent.act("<Left>")
             agent.wait_for_text("Press enter to select deck.")
-            agent.wait_until_stable()
-
-            agent.act("<Left>")
-            agent.wait_for_text("Dictionary")
             agent.wait_until_stable()
 
             agent.act("<Left>")

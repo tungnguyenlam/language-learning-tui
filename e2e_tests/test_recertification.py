@@ -22,7 +22,6 @@ def test_tab_cycles_through_all_primary_views_and_wraps():
         agent = start_agent(tmpdir)
         try:
             for text in [
-                "Dictionary",
                 "Press enter to select deck.",
                 "Review 1/52",
                 "Statistics",

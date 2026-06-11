@@ -21,11 +21,7 @@ def test_view_navigation_cycle():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
-            # Dashboard -> Dictionary
-            agent.act("tab")
-            agent.wait_for_text("Dictionary")
-
-            # Dictionary -> Decks
+            # Dashboard -> Decks
             agent.act("tab")
             agent.wait_for_text("Decks")
 

@@ -28,7 +28,7 @@ def test_tab_to_browser_loads_cards():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
-            tab_to(agent, "Card Browser", 8)
+            tab_to(agent, "Card Browser", 7)
             agent.wait_for_text("blau")
             agent.assert_text("[FC] blau")
             agent.assert_text("52 cards found")

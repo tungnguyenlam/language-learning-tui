@@ -60,9 +60,7 @@ def test_statistics_view_navigation():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
-            # Tab navigation: Dashboard -> Dictionary -> Decks -> Review -> Statistics
-            agent.act("<Tab>")  # Dictionary
-            agent.wait_until_stable()
+            # Tab navigation: Dashboard -> Decks -> Review -> Statistics
             agent.act("<Tab>")  # Decks
             agent.wait_until_stable()
             agent.act("<Tab>")  # Review
