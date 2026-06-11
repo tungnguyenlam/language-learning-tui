@@ -1,5 +1,21 @@
 # Done Backlog
 
+## 2026-06-11 (Practice Hub Visuals, Dashboard Session Stats, Reveal Speed)
+
+### UI & UX Improvements
+- **Practice Hub Visuals**: Enhanced the Practice Hub with distinct colors and icons for each of the 9 practice modes, making navigation more intuitive and visually engaging.
+- **Dashboard Session Stats**: Added detailed speed statistics to the last session summary on the Dashboard. Learners can now see their review speed in "cards/min" alongside their accuracy.
+- **Configurable Reveal Speed**: Introduced a new `RevealSpeed` setting (0-10) in the TUI Settings. This allows users to customize the card reveal animation speed or disable it entirely (Instant) for faster review sessions.
+
+### Reliability & Compatibility
+- **Backward Compatibility**: Carefully placed new settings and updated keybindings to ensure all 350+ existing E2E tests remain passing. Restored default behavior for `+`/`-` keys to affect the Daily Goal unless the `RevealSpeed` row is explicitly selected.
+- **Regression Fixes**: Fixed several unit and E2E test regressions caused by initial index shifts in the settings view.
+
+### Verification
+- Added unit tests `TestPracticeHubVisuals`, `TestDashboardSessionStats`, and `TestRevealSpeedSetting` in `improvement_test.go` covering all new behaviors.
+- `PATH="/opt/homebrew/bin:$PATH" go test ./internal/tui/...` passed.
+- `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` passed with 351 E2E tests.
+
 ## 2026-06-11 (Conjunctions Trainer Expansion & Hint Feature)
 
 ### Practice Hub & Content

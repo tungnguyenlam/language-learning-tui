@@ -154,11 +154,16 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 
 	if m.lastSessionReviewed > 0 {
 		accuracy := 0.0
-		if m.lastSessionCorrect > 0 {
+		if m.lastSessionReviewed > 0 {
 			accuracy = float64(m.lastSessionCorrect) / float64(m.lastSessionReviewed) * 100
 		}
+		speedStr := ""
+		if m.lastSessionDuration.Minutes() > 0 {
+			speed := float64(m.lastSessionReviewed) / m.lastSessionDuration.Minutes()
+			speedStr = fmt.Sprintf(", %.1f cards/min", speed)
+		}
 		summaryStyle := lipgloss.NewStyle().Foreground(colorGreen).Italic(true)
-		db.WriteString(summaryStyle.Render(fmt.Sprintf("Last Session: %d cards, %.1f%% accuracy", m.lastSessionReviewed, accuracy)) + "\n")
+		db.WriteString(summaryStyle.Render(fmt.Sprintf("Last Session: %d cards, %.1f%% accuracy%s", m.lastSessionReviewed, accuracy, speedStr)) + "\n")
 	}
 
 	activeDeckText := lipgloss.NewStyle().Foreground(colorCyan).Render("Active Deck: " + m.deckLabel())
@@ -411,10 +416,10 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 
 		tipBox := dashTipStyle.
 			Width(boxWidth).
-			Render(tipLabelStyle.Render("Grammar Tip: [g] "+tip.Title) + "\n" +
+			Render(tipLabelStyle.Render("Grammar Tip: [g/G] "+tip.Title) + "\n" +
 				fmt.Sprintf("  %s", tip.Tip) + exampleText)
 
-		verbHeader := verbLabelStyle.Render("Verb: [v] "+verb.German) +
+		verbHeader := verbLabelStyle.Render("Verb: [v/V] "+verb.German) +
 			lipgloss.NewStyle().Foreground(colorMuted).Render(" — "+verb.English)
 		verbBox := dashVerbStyle.
 			Width(boxWidth).
@@ -422,7 +427,7 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 				fmt.Sprintf("  ich %-8s wir %-8s\n  du  %-8s ihr %-8s\n  er/sie/es %-4s sie/Sie %-5s",
 					verb.Ich, verb.Wir, verb.Du, verb.Ihr, verb.ErSieEs, verb.SieSie))
 
-		wordHeader := wordLabelStyle.Render("Word: [w] "+word.German) +
+		wordHeader := wordLabelStyle.Render("Word: [w/W] "+word.German) +
 			lipgloss.NewStyle().Foreground(colorMuted).Render(" — "+word.English)
 		wordContent := ""
 		if word.Plural != "" {
@@ -449,7 +454,7 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		} else if layout.Width > 110 && remainingHeight >= 5 {
 			// Three column row for wide terminals
 			thirdWidth := (layout.Width - 4) / 3
-			tipBox = dashTipStyle.Width(thirdWidth).Render(tipLabelStyle.Render("Grammar: [g] "+tip.Title) + "\n" + tip.Tip)
+			tipBox = dashTipStyle.Width(thirdWidth).Render(tipLabelStyle.Render("Grammar: [g/G] "+tip.Title) + "\n" + tip.Tip)
 			verbBox = dashVerbStyle.Width(thirdWidth).Render(verbHeader + "\n" + fmt.Sprintf("  ich %-8s wir %-8s\n  du  %-8s ihr %-8s", verb.Ich, verb.Wir, verb.Du, verb.Ihr))
 			wordBox = dashWordStyle.Width(thirdWidth).Render(wordHeader + "\n" + wordContent)
 

@@ -3,6 +3,7 @@ package tui
 import (
 	"strings"
 	"testing"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"deutsch-tui/internal/core"
@@ -216,5 +217,75 @@ func TestReviewMetadataClickHitboxes(t *testing.T) {
 	}
 	if !foundAudio {
 		t.Error("Expected review-audio hitbox to be registered")
+	}
+}
+
+func TestPracticeHubVisuals(t *testing.T) {
+	repo := &mockRepo{}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewPractice
+	model.practiceSubView = PracticeSubViewHub
+
+	view := model.renderPracticeHub(viewportLayout{Width: 80, Height: 24})
+
+	// Check for some icons and colors in the view (using substrings)
+	icons := []string{"🚻", "🔄", "📐", "🎨", "📍", "👥", "✂️", "🔢", "🔗"}
+	for _, icon := range icons {
+		if !strings.Contains(view, icon) {
+			t.Errorf("Expected icon %s in Practice Hub view", icon)
+		}
+	}
+}
+
+func TestDashboardSessionStats(t *testing.T) {
+	repo := &mockRepo{}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewDashboard
+
+	// Mock a finished session
+	model.lastSessionReviewed = 10
+	model.lastSessionCorrect = 8
+	model.lastSessionDuration = 2 * time.Minute
+
+	view := model.renderDashboard(viewportLayout{Width: 80, Height: 24})
+
+	if !strings.Contains(view, "Last Session: 10 cards") {
+		t.Error("Expected last session card count in Dashboard")
+	}
+	if !strings.Contains(view, "80.0% accuracy") {
+		t.Error("Expected accuracy in Dashboard")
+	}
+	if !strings.Contains(view, "5.0 cards/min") {
+		t.Error("Expected cards per minute in Dashboard")
+	}
+}
+
+func TestRevealSpeedSetting(t *testing.T) {
+	repo := &mockRepo{}
+	model := NewModel(repo, &mockScheduler{})
+
+	// Test instant reveal (0)
+	model.revealSpeed = 0
+	card := core.Card{ID: "c1", Answer: "test"}
+	model.startRevealAnimation(card)
+
+	if model.revealState != RevealRevealed {
+		t.Error("Expected instant reveal when speed is 0")
+	}
+	if model.revealProgress != 100 {
+		t.Error("Expected 100% progress when speed is 0")
+	}
+
+	// Test animated reveal (5)
+	model.revealSpeed = 5
+	model.revealState = RevealIdle
+	model.revealProgress = 0
+	model.startRevealAnimation(card)
+
+	if model.revealState != RevealRevealing {
+		t.Error("Expected revealing state when speed is 5")
+	}
+	if model.revealProgress != 0 {
+		t.Error("Expected 0% initial progress when speed is 5")
 	}
 }

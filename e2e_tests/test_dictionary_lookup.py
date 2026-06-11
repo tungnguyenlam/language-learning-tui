@@ -32,15 +32,20 @@ def test_dictionary_lookup_no_crash():
             # Press 'd' to trigger dictionary lookup
             agent.act("d")
             
-            # It should switch to Dictionary view
-            agent.wait_for_text("Dictionary", timeout=10.0)
+            # It should open the Spotlight Dictionary overlay
+            agent.wait_for_text("SPOTLIGHT DICTIONARY", timeout=10.0)
             
             # The search should be pre-filled with the word from Review
             time.sleep(2.0) # Wait for search to complete
             screen = agent.observe()
-            assert "Dictionary" in screen
+            assert "SPOTLIGHT DICTIONARY" in screen
             # Check for the search bar UI we added
             assert "🔍" in screen
+
+            # Close it with Esc
+            agent.act("<Esc>")
+            agent.wait_for_text("REVIEW", timeout=5.0)
+            assert "SPOTLIGHT DICTIONARY" not in agent.observe()
         finally:
             agent.close()
 

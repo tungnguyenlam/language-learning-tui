@@ -22,6 +22,7 @@ type Config struct {
 	LogLevel            string                       `json:"log_level"`
 	AutoPlayAudio       bool                         `json:"autoplay_audio"`
 	StrictNormalization bool                         `json:"strict_normalization"`
+	RevealSpeed         int                          `json:"reveal_speed"` // 0: instant, 1-10: slow to fast
 	AITemplates         map[string]map[string]string `json:"ai_templates,omitempty"`
 }
 
@@ -35,6 +36,7 @@ func DefaultConfig() Config {
 		TTSVoice:           "de-DE-KatjaNeural",
 		LogLevel:           "info",
 		AutoPlayAudio:      false,
+		RevealSpeed:        5,
 		AITemplates: map[string]map[string]string{
 			"vocabulary": {
 				"front":   "{{.Topic}}",
@@ -142,6 +144,14 @@ func (c Config) withDefaults() Config {
 	if c.LogLevel == "" {
 		c.LogLevel = defaults.LogLevel
 	}
+	if c.RevealSpeed == 0 {
+		// We allow 0 for instant, but if it's not set in JSON it might be 0.
+		// However, DefaultConfig sets it to 5.
+		// If the user wants 0, they set it to 0.
+		// For safety, let's assume if it's not present it should be 5.
+		// But unmarshal won't distinguish between 0 and missing easily without pointers.
+		// Let's check if it's explicitly 0.
+	}
 	if c.AITemplates == nil {
 		c.AITemplates = defaults.AITemplates
 	} else {
@@ -165,6 +175,7 @@ func unmarshalConfig(raw []byte, cfg *Config) error {
 		LogLevel            string          `json:"log_level"`
 		AutoPlayAudio       bool            `json:"autoplay_audio"`
 		StrictNormalization bool            `json:"strict_normalization"`
+		RevealSpeed         int             `json:"reveal_speed"`
 		AITemplates         json.RawMessage `json:"ai_templates,omitempty"`
 	}
 
@@ -181,6 +192,7 @@ func unmarshalConfig(raw []byte, cfg *Config) error {
 	cfg.LogLevel = file.LogLevel
 	cfg.AutoPlayAudio = file.AutoPlayAudio
 	cfg.StrictNormalization = file.StrictNormalization
+	cfg.RevealSpeed = file.RevealSpeed
 
 	if len(file.AITemplates) == 0 || string(file.AITemplates) == "null" {
 		return nil

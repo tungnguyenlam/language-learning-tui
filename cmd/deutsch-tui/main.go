@@ -108,17 +108,19 @@ func main() {
 		TTSVoice:            cfg.TTSVoice,
 		TTSCacheDir:         filepath.Join(dir, "audio-cache", "edge-tts"),
 		AutoPlayAudio:       cfg.AutoPlayAudio,
+		RevealSpeed:         cfg.RevealSpeed,
 		StrictNormalization: cfg.StrictNormalization,
 		ImportPath:          filepath.Join(dir, "import.tsv"),
 		ExportPath:          filepath.Join(dir, "export.tsv"),
 		Logger:              leveledLogger, // Pass the logger
-		OnConfigChange: func(theme string, aiProvider string, dictProvider string, tmpls map[string]map[string]string, autoPlayAudio bool, strictNormalization bool) {
+		OnConfigChange: func(theme string, aiProvider string, dictProvider string, tmpls map[string]map[string]string, autoPlayAudio bool, strictNormalization bool, revealSpeed int) {
 			pCfg.Theme = theme
 			pCfg.AIProvider = aiProvider
 			pCfg.DictionaryProvider = dictProvider
 			pCfg.AITemplates = tmpls
 			pCfg.AutoPlayAudio = autoPlayAudio
 			pCfg.StrictNormalization = strictNormalization
+			pCfg.RevealSpeed = revealSpeed
 			if err := app.SaveConfig(dir, *pCfg); err != nil {
 				leveledLogger.Error("save config: %v", err)
 			}

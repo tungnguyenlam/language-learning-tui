@@ -142,14 +142,57 @@ func (m *Model) resetDictionarySearchState() {
 	m.dictionaryDetailView = false
 }
 
-func (m *Model) openDictionaryOverlay() {
+func (m *Model) openDictionaryOverlay() tea.Cmd {
+	return m.openDictionaryOverlayWithQuery("")
+}
+
+func (m *Model) openDictionaryOverlayWithQuery(query string) tea.Cmd {
 	m.dictionaryOverlayActive = true
 	m.resetDictionarySearchState()
+	if query != "" {
+		m.dictionarySearch = query
+		m.status = fmt.Sprintf("Spotlight lookup: %s", query)
+		return m.searchDictionary()
+	}
 	m.status = "Spotlight dictionary open"
+	return nil
 }
 
 func (m *Model) closeDictionaryOverlay() {
 	m.dictionaryOverlayActive = false
 	m.resetDictionarySearchState()
 	m.status = "Spotlight dictionary closed"
+}
+
+func (m *Model) lookupWordOfTheDayInDictionary() tea.Cmd {
+	word := content.GetWordOfTheDay()
+	return m.openDictionaryOverlayWithQuery(word.German)
+}
+
+func (m *Model) lookupVerbOfTheDayInDictionary() tea.Cmd {
+	verb := content.GetVerbOfTheDay()
+	return m.openDictionaryOverlayWithQuery(verb.German)
+}
+
+func (m *Model) lookupGrammarTipInDictionary() tea.Cmd {
+	tip := content.GetDailyGrammarTip()
+	return m.openDictionaryOverlayWithQuery(tip.Title)
+}
+
+func (m *Model) lookupReviewCardInDictionary() tea.Cmd {
+	if len(m.dueCards) == 0 {
+		return nil
+	}
+	card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
+	word := strings.Split(card.Prompt, "\n")[0]
+	return m.openDictionaryOverlayWithQuery(word)
+}
+
+func (m *Model) lookupBrowserCardInDictionary() tea.Cmd {
+	if len(m.browserCards) == 0 {
+		return nil
+	}
+	card := m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)]
+	word := strings.Split(card.Prompt, "\n")[0]
+	return m.openDictionaryOverlayWithQuery(word)
 }

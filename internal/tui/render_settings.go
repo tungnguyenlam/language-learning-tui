@@ -179,6 +179,32 @@ func (m *Model) renderSettings(x, y int) string {
 		addContent(itemStyle.Render(fmt.Sprintf("%s%s%s", prefix, row.label, displayValue)), &lineInfo{itemIdx: row.idx, kind: "item"})
 	}
 
+	revealIdx := 14
+	prefix = "  "
+	itemStyle = lipgloss.NewStyle()
+	if revealIdx == m.settingsCursor {
+		prefix = "> "
+		itemStyle = itemStyle.Bold(true).Foreground(lipgloss.Color("212"))
+	}
+	revealValue := fmt.Sprintf("%d", m.revealSpeed)
+	if m.revealSpeed == 0 {
+		revealValue = "Instant"
+	}
+	revealLabel := fmt.Sprintf("%sReveal Speed: %s ", prefix, revealValue)
+	var revealLine strings.Builder
+	revealLine.WriteString(itemStyle.Render(revealLabel))
+	if m.revealSpeed <= 0 {
+		revealLine.WriteString(disabledBtnStyle.Render(minusBtn))
+	} else {
+		revealLine.WriteString(btnStyle.Render(minusBtn))
+	}
+	if m.revealSpeed >= 10 {
+		revealLine.WriteString(disabledBtnStyle.Render(plusBtn))
+	} else {
+		revealLine.WriteString(btnStyle.Render(plusBtn))
+	}
+	addContent(revealLine.String(), &lineInfo{itemIdx: revealIdx, kind: "reveal"})
+
 	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 	addContent("", nil)
 	addContent(fmt.Sprintf("Color Theme: %s (Press %s to cycle)", m.theme, keyStyle.Render("c")), nil)
@@ -230,6 +256,17 @@ func (m *Model) renderSettings(x, y int) string {
 				})
 				lineCtx.RegisterHitboxAtWithAction("settings-goal-plus", lipgloss.Width(goalLabel)+lipgloss.Width(minusBtn), 0, lipgloss.Width(plusBtn), 1, func() tea.Cmd {
 					return m.setDailyGoal(m.stats.DailyGoal + 1)
+				})
+			} else if info.kind == "reveal" {
+				lineCtx.RegisterHitboxWithAction(fmt.Sprintf("settings-%d", info.itemIdx), lipgloss.Width(revealLabel), 1, func() tea.Cmd {
+					m.settingsCursor = info.itemIdx
+					return m.handleSettingsEnter()
+				})
+				lineCtx.RegisterHitboxAtWithAction("settings-reveal-minus", lipgloss.Width(revealLabel), 0, lipgloss.Width(minusBtn), 1, func() tea.Cmd {
+					return m.setRevealSpeed(m.revealSpeed - 1)
+				})
+				lineCtx.RegisterHitboxAtWithAction("settings-reveal-plus", lipgloss.Width(revealLabel)+lipgloss.Width(minusBtn), 0, lipgloss.Width(plusBtn), 1, func() tea.Cmd {
+					return m.setRevealSpeed(m.revealSpeed + 1)
 				})
 			} else if info.kind == "item" {
 				lineCtx.RegisterHitboxWithAction(fmt.Sprintf("settings-%d", info.itemIdx), layout.Width-2, 1, func() tea.Cmd {

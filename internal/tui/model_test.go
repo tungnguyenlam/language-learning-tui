@@ -1080,7 +1080,7 @@ func TestSettingsDailyGoalAdjustsAndRenders(t *testing.T) {
 	model.height = 50
 	model.Update(statsMsg(core.Statistics{DailyGoal: 10, Grades: map[core.ReviewGrade]int{}}))
 	model.activeView = ViewSettings
-	model.settingsCursor = 2
+	model.settingsCursor = 5
 
 	if !strings.Contains(model.renderSettings(0, 0), "Daily Goal: 10") {
 		t.Fatalf("settings should show daily goal: %s", model.renderSettings(0, 0))

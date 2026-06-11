@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"image/color"
 	"strings"
 
 	"charm.land/lipgloss/v2"
@@ -44,16 +45,18 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 		label string
 		desc  string
 		sub   PracticeSubView
+		color color.Color
+		icon  string
 	}{
-		{"practice-gender", "1", "Gender Trainer", "Practice der/die/das noun genders", PracticeSubViewGender},
-		{"practice-conjugation", "2", "Conjugation Trainer", "Practice German verb forms", PracticeSubViewConjugation},
-		{"practice-case", "3", "Case Ending Trainer", "Practice Nom/Acc/Dat/Gen endings", PracticeSubViewCase},
-		{"practice-adjective", "4", "Adjective Ending Trainer", "Practice Nom/Acc/Dat/Gen endings", PracticeSubViewAdjective},
-		{"practice-preposition", "5", "Preposition Trainer", "Practice two-way prepositions & cases", PracticeSubViewPreposition},
-		{"practice-plural", "6", "Plural Trainer", "Practice German noun plural forms", PracticeSubViewPlural},
-		{"practice-separable", "7", "Separable Verb Trainer", "Practice verb prefixes and word order", PracticeSubViewSeparable},
-		{"practice-numbers", "8", "Numbers & Time", "Practice German numbers and time", PracticeSubViewNumbers},
-		{"practice-conjunctions", "9", "Conjunctions & Word Order", "Practice German conjunctions & sentence structure", PracticeSubViewConjunctions},
+		{"practice-gender", "1", "Gender Trainer", "Practice der/die/das noun genders", PracticeSubViewGender, colorBlue, "🚻"},
+		{"practice-conjugation", "2", "Conjugation Trainer", "Practice German verb forms", PracticeSubViewConjugation, colorPink, "🔄"},
+		{"practice-case", "3", "Case Ending Trainer", "Practice Nom/Acc/Dat/Gen endings", PracticeSubViewCase, colorGold, "📐"},
+		{"practice-adjective", "4", "Adjective Ending Trainer", "Practice weak/strong/mixed endings", PracticeSubViewAdjective, colorYellow, "🎨"},
+		{"practice-preposition", "5", "Preposition Trainer", "Practice two-way prepositions & cases", PracticeSubViewPreposition, colorPurple, "📍"},
+		{"practice-plural", "6", "Plural Trainer", "Practice German noun plural forms", PracticeSubViewPlural, colorSecondary, "👥"},
+		{"practice-separable", "7", "Separable Verb Trainer", "Practice verb prefixes and word order", PracticeSubViewSeparable, colorOrange, "✂️"},
+		{"practice-numbers", "8", "Numbers & Time", "Practice German numbers and time", PracticeSubViewNumbers, colorCyan, "🔢"},
+		{"practice-conjunctions", "9", "Conjunctions & Word Order", "Practice conjunctions & sentence structure", PracticeSubViewConjunctions, colorGreen, "🔗"},
 	}
 
 	spacing := 3
@@ -125,10 +128,10 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 	}
 
 	for i, mode := range modes {
-		borderCol := "81"
+		borderCol := lipgloss.Color("240") // Default border
 		prefix := "  "
 		if i == m.practiceHubCursor {
-			borderCol = "212"
+			borderCol = colorPink
 			prefix = "▶ "
 		}
 
@@ -136,7 +139,7 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 			Border(lipgloss.RoundedBorder()).
 			Padding(0, 2).
 			Width(btnWidth).
-			BorderForeground(lipgloss.Color(borderCol))
+			BorderForeground(borderCol)
 
 		count := getItemCount(mode.sub)
 		countStr := ""
@@ -150,10 +153,11 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 			scoreRendered = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Render(scoreStr)
 		}
 
-		keyHint := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212")).Render("[" + mode.key + "]")
-		content := fmt.Sprintf("%s%s %s%s%s\n%s", prefix, keyHint, mode.label, countStr, scoreRendered, mutedStyle.Render(mode.desc))
+		keyHint := lipgloss.NewStyle().Bold(true).Foreground(mode.color).Render("[" + mode.key + "]")
+		iconStr := mode.icon + " "
+		content := fmt.Sprintf("%s%s %s%s %s%s\n%s", prefix, keyHint, iconStr, lipgloss.NewStyle().Foreground(mode.color).Bold(true).Render(mode.label), countStr, scoreRendered, mutedStyle.Render(mode.desc))
 		if spacing == 3 {
-			content = fmt.Sprintf("%s%s %s%s%s - %s", prefix, keyHint, mode.label, countStr, scoreRendered, mutedStyle.Render(mode.desc))
+			content = fmt.Sprintf("%s%s %s%s %s%s%s - %s", prefix, keyHint, iconStr, lipgloss.NewStyle().Foreground(mode.color).Bold(true).Render(mode.label), countStr, scoreRendered, "", mutedStyle.Render(mode.desc))
 			btnStyle = btnStyle.Padding(0, 1)
 		}
 

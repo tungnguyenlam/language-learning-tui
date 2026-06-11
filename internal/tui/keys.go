@@ -30,8 +30,7 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 	// Toggle dictionary overlay on '='
 	if key == "=" && !m.textInputActive() {
-		m.openDictionaryOverlay()
-		return m, nil
+		return m, m.openDictionaryOverlay()
 	}
 
 	// 0. High-priority learning mode trapping
@@ -325,10 +324,16 @@ func (m *Model) updateDashboardKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, true
 	case "g":
 		return m.searchGrammarTipInBrowser(), true
+	case "G":
+		return m.lookupGrammarTipInDictionary(), true
 	case "v":
 		return m.practiceVerbOfTheDay(), true
+	case "V":
+		return m.lookupVerbOfTheDayInDictionary(), true
 	case "w":
 		return m.addWordOfTheDayToCollection(), true
+	case "W":
+		return m.lookupWordOfTheDayInDictionary(), true
 	case "/":
 		return m.updateView(ViewDictionary), true
 	}
@@ -518,11 +523,7 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	case "b":
 		return m.toggleBookmark(), true
 	case "d":
-		if len(m.dueCards) > 0 {
-			card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
-			word := strings.Split(card.Prompt, "\n")[0] // Use first line in case of multiline
-			return m.openDictionary(word), true
-		}
+		return m.lookupReviewCardInDictionary(), true
 	case "B":
 		return m.toggleBookmarkFilter(), true
 	case "x":
@@ -848,7 +849,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 				}
 			}
 			if m.onConfigChange != nil {
-				m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
+				m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
 			}
 			return nil, true
 		case "esc":
@@ -864,7 +865,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 				}
 			}
 			if m.onConfigChange != nil {
-				m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
+				m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
 			}
 			return nil, true
 		case "backspace":
@@ -895,7 +896,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "down", "j":
-		if m.settingsCursor < 13 {
+		if m.settingsCursor < 14 {
 			m.settingsCursor++
 		}
 		return nil, true
@@ -903,15 +904,21 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		m.settingsCursor = 0
 		return nil, true
 	case "G":
-		m.settingsCursor = 13
+		m.settingsCursor = 14
 		return nil, true
 	case "c":
 		return m.cycleTheme(), true
 	case "enter":
 		return m.handleSettingsEnter(), true
 	case "+":
+		if m.settingsCursor == 14 {
+			return m.setRevealSpeed(m.revealSpeed + 1), true
+		}
 		return m.setDailyGoal(m.stats.DailyGoal + 1), true
 	case "-":
+		if m.settingsCursor == 14 {
+			return m.setRevealSpeed(m.revealSpeed - 1), true
+		}
 		return m.setDailyGoal(m.stats.DailyGoal - 1), true
 	case "[":
 		m.previousAITemplate()
@@ -1033,11 +1040,7 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "d":
-		if len(m.browserCards) > 0 {
-			card := m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)]
-			word := strings.Split(card.Prompt, "\n")[0]
-			return m.openDictionary(word), true
-		}
+		return m.lookupBrowserCardInDictionary(), true
 	case "b":
 		if len(m.getSelectedCardIDs()) > 0 {
 			return m.bulkBrowserBookmark(true), true
@@ -1265,6 +1268,7 @@ func (m *Model) updateSessionSummaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	// Any key returns to dashboard and resets session stats
 	m.lastSessionReviewed = m.sessionReviewed
 	m.lastSessionCorrect = m.sessionCorrect
+	m.lastSessionDuration = time.Since(m.sessionStartTime)
 	m.sessionReviewed = 0
 	m.sessionCorrect = 0
 	return m.updateView(ViewDashboard), true
@@ -1365,7 +1369,7 @@ func (m *Model) handleSecretEditKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.onSecretsChange(m.aiSecrets)
 		}
 		if m.onConfigChange != nil {
-			m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization)
+			m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
 		}
 	}
 

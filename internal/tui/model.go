@@ -180,6 +180,7 @@ type Model struct {
 	originalSecretValue        string
 	onSecretsChange            func(app.Secrets)
 	autoPlayAudio              bool
+	revealSpeed                int // 0: instant, 1-10
 	speechSynthesizer          audio.Synthesizer
 	strictNormalization        bool
 	stats                      core.Statistics
@@ -198,7 +199,7 @@ type Model struct {
 	editingImportPath          bool
 	editingExportTag           bool
 	theme                      string
-	onConfigChange             func(string, string, string, map[string]map[string]string, bool, bool)
+	onConfigChange             func(string, string, string, map[string]map[string]string, bool, bool, int)
 	bookmarkFilter             bool
 	originalTemplateValue      string
 	mcqChoice                  int
@@ -229,6 +230,7 @@ type Model struct {
 	lastSessionReviewed        int
 	lastSessionCorrect         int
 	sessionStartTime           time.Time
+	lastSessionDuration        time.Duration
 	sessionGrades              map[core.ReviewGrade]int
 	showHelp                   bool
 	cramCards                  []core.Card
@@ -416,6 +418,7 @@ func NewModelWithAI(repo core.Repository, scheduler core.Scheduler, provider ai.
 	return NewModelWithOptions(repo, scheduler, ModelOptions{
 		AIProvider:     provider,
 		AIProviderName: "offline",
+		RevealSpeed:    5,
 	})
 }
 
@@ -430,10 +433,11 @@ type ModelOptions struct {
 	TTSVoice            string
 	TTSCacheDir         string
 	AutoPlayAudio       bool
+	RevealSpeed         int
 	StrictNormalization bool
 	ImportPath          string
 	ExportPath          string
-	OnConfigChange      func(string, string, string, map[string]map[string]string, bool, bool)
+	OnConfigChange      func(string, string, string, map[string]map[string]string, bool, bool, int)
 	OnSecretsChange     func(app.Secrets)
 	Logger              *app.LeveledLogger
 }
@@ -525,6 +529,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		aiTemplateSets:      sets,
 		aiTemplateIndex:     aiTemplateIndex,
 		autoPlayAudio:       autoPlayAudio,
+		revealSpeed:         opts.RevealSpeed,
 		speechSynthesizer:   speechSynthesizer,
 		strictNormalization: strictNormalization,
 		width:               80,
@@ -657,7 +662,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case revealTickMsg:
 		if m.revealState == RevealRevealing {
-			m.revealProgress += 10
+			step := 10
+			if m.revealSpeed > 0 {
+				step = m.revealSpeed * 2
+			}
+			m.revealProgress += float64(step)
 			if m.revealProgress >= 100 {
 				m.revealProgress = 100
 				m.revealState = RevealRevealed
@@ -1578,6 +1587,14 @@ type spinnerTickMsg struct{}
 type revealTickMsg struct{}
 
 func (m *Model) startRevealAnimation(card core.Card) tea.Cmd {
+	if m.revealSpeed == 0 {
+		m.revealState = RevealRevealed
+		m.revealProgress = 100
+		if m.autoPlayAudio {
+			return m.playCardAudio(card)
+		}
+		return nil
+	}
 	m.revealState = RevealRevealing
 	m.revealProgress = 0
 	cmds := []tea.Cmd{m.tickReveal()}
