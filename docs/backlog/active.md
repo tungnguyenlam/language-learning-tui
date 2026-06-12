@@ -94,7 +94,17 @@ Polish and Reliability - IN PROGRESS.
 
 ## Exact Next Action
 
-Await next user feedback or feature request.
+Run `@prompt/improve.md` to fix bugs discovered in TTY exploratory testing (see `prompt/tty_test_results.md`).
+
+## Top Issues (from TTY Testing 2026-06-12)
+
+1. **CRITICAL - BUG-001:** Dictionary Spotlight overlay keystroke capture broken — typed characters leak to underlying view instead of Spotlight search bar.
+2. **MAJOR - BUG-002:** ANSI escape sequences leak into visible UI (status line, Dashboard, Statistics).
+3. **MINOR - BUG-003:** Help overlay text wrapping artifacts (Cram/Practice word breaks).
+4. **MINOR - BUG-004:** Dashboard Daily Digest text clipping.
+5. **MINOR - BUG-005:** Browser status line content bleed from help overlay.
+6. **MINOR - BUG-006:** `/` key context-dependent behavior inconsistency.
+7. **MINOR - BUG-007:** tui-tester stability detection incompatible with timer views.
 
 ## Top Issues / Priorities
 

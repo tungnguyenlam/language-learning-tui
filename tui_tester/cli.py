@@ -67,6 +67,29 @@ def cmd_act(args):
         print("Error: Could not connect to daemon. Is it running?")
         sys.exit(1)
 
+def cmd_click(args):
+    try:
+        client = get_client(args.port)
+        # Note: TUIAgent.click uses 1-based coordinates.
+        # Bubble Tea mouse events are 0-based, but xterm SGR is 1-based.
+        # TUIAgent.click handles the SGR protocol.
+        res = client.click(args.x, args.y, args.button)
+        if res != "OK":
+            print(res)
+    except ConnectionRefusedError:
+        print("Error: Could not connect to daemon. Is it running?")
+        sys.exit(1)
+
+def cmd_drag(args):
+    try:
+        client = get_client(args.port)
+        res = client.drag_mouse(args.x1, args.y1, args.x2, args.y2, args.button)
+        if res != "OK":
+            print(res)
+    except ConnectionRefusedError:
+        print("Error: Could not connect to daemon. Is it running?")
+        sys.exit(1)
+
 def cmd_stop(args):
     try:
         client = get_client(args.port)
@@ -93,6 +116,22 @@ def main():
     act_p.add_argument("keys", help="Keys to send")
     act_p.add_argument("--port", type=int, default=8765, help="Port for the daemon")
 
+    # Click
+    click_p = subparsers.add_parser("click", help="Send a mouse click")
+    click_p.add_argument("x", type=int, help="X coordinate (1-based)")
+    click_p.add_argument("y", type=int, help="Y coordinate (1-based)")
+    click_p.add_argument("--button", type=int, default=0, help="Mouse button (0=Left)")
+    click_p.add_argument("--port", type=int, default=8765, help="Port for the daemon")
+
+    # Drag
+    drag_p = subparsers.add_parser("drag", help="Simulate a mouse drag")
+    drag_p.add_argument("x1", type=int)
+    drag_p.add_argument("y1", type=int)
+    drag_p.add_argument("x2", type=int)
+    drag_p.add_argument("y2", type=int)
+    drag_p.add_argument("--button", type=int, default=0)
+    drag_p.add_argument("--port", type=int, default=8765, help="Port for the daemon")
+
     # Stop
     stop_p = subparsers.add_parser("stop", help="Stop the TUI daemon")
     stop_p.add_argument("--port", type=int, default=8765, help="Port for the daemon")
@@ -112,6 +151,10 @@ def main():
         cmd_observe(args)
     elif args.action == "act":
         cmd_act(args)
+    elif args.action == "click":
+        cmd_click(args)
+    elif args.action == "drag":
+        cmd_drag(args)
     elif args.action == "stop":
         cmd_stop(args)
 

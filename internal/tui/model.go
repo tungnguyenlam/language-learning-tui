@@ -691,6 +691,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.revealProgress >= 100 {
 				m.revealProgress = 100
 				m.revealState = RevealRevealed
+				if m.activeView == ViewCram {
+					m.cramRevealed = true
+				}
 				m.logger.Debug("Card fully revealed")
 			} else {
 				return m, m.tickReveal()
@@ -1343,10 +1346,10 @@ func (m *Model) renderConfirmation() string {
 
 func (m *Model) renderWide() string {
 	if m.focusMode && m.activeView == ViewReview {
-		return "\n" + m.renderActiveView(0, 1)
+		return "\n" + m.renderActiveView(0, 2)
 	}
 	if m.width < 120 {
-		nav := m.renderNav(0, 2)
+		nav := m.renderNav(0, 1)
 		content := m.renderActiveView(20, 1)
 
 		navLines := strings.Split(nav, "\n")
@@ -1372,7 +1375,7 @@ func (m *Model) renderWide() string {
 		return b.String()
 	}
 
-	nav := m.renderNav(0, 2)
+	nav := m.renderNav(0, 1)
 	content := m.renderActiveView(20, 1)
 
 	// Create a more informative sidebar
@@ -1424,16 +1427,16 @@ func (m *Model) renderWide() string {
 
 func (m *Model) renderMedium() string {
 	if m.focusMode && m.activeView == ViewReview {
-		return "\n" + m.renderActiveView(0, 1)
+		return "\n" + m.renderActiveView(0, 2)
 	}
-	return m.renderTabs(0, 2) + "\n" + m.renderActiveView(0, 2)
+	return m.renderTabs(0, 1) + "\n" + m.renderActiveView(0, 2)
 }
 
 func (m *Model) renderCompact() string {
 	if m.focusMode && m.activeView == ViewReview {
-		return "\n" + m.renderActiveView(0, 1)
+		return "\n" + m.renderActiveView(0, 2)
 	}
-	return m.renderTabs(0, 2) + "\n" + m.renderActiveView(0, 2)
+	return m.renderTabs(0, 1) + "\n" + m.renderActiveView(0, 2)
 }
 
 func (m *Model) renderActiveView(x, y int) string {

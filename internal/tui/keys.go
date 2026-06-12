@@ -1153,9 +1153,22 @@ func (m *Model) updateCramKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 				m.revealState = RevealIdle
 				m.revealProgress = 0
 			} else {
-				m.cramRevealed = true
-				m.revealState = RevealRevealed
-				m.revealProgress = 100
+				switch m.revealState {
+				case RevealIdle:
+					if len(m.cramCards) > 0 {
+						card := m.cramCards[clampInt(m.cramCursor, 0, len(m.cramCards)-1)]
+						return m.startRevealAnimation(card), true
+					}
+				case RevealRevealing:
+					m.revealProgress += 15
+					if m.revealProgress >= 100 {
+						m.revealProgress = 100
+						m.revealState = RevealRevealed
+						m.cramRevealed = true
+					}
+				case RevealRevealed:
+					m.cramRevealed = true
+				}
 			}
 			return nil, true
 

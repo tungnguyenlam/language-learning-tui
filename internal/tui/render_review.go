@@ -352,8 +352,26 @@ func (m *Model) renderReview(x, y int) string {
 		}
 	}
 
-	// Typing mode display
-	if m.typingMode && m.revealState != RevealRevealing {
+	if m.revealState == RevealRevealing {
+		// Show gradual reveal animation with blocks for all card types
+		progress := int(m.revealProgress)
+		if progress > 100 {
+			progress = 100
+		}
+		// Calculate how many characters to reveal
+		fullText := card.Answer
+		numChars := len([]rune(fullText))
+		revealedChars := (numChars * progress) / 100
+		if revealedChars < 0 {
+			revealedChars = 0
+		}
+		if revealedChars > numChars {
+			revealedChars = numChars
+		}
+		revealedRunes := []rune(fullText)[:revealedChars]
+		remainingBlocks := numChars - revealedChars
+		answer = string(revealedRunes) + "▌" + strings.Repeat("▌", maxInt(0, remainingBlocks-1))
+	} else if m.typingMode {
 		typingBoxStyle := lipgloss.NewStyle().
 			Border(lipgloss.NormalBorder()).
 			BorderForeground(lipgloss.Color("81")).
@@ -434,8 +452,6 @@ func (m *Model) renderReview(x, y int) string {
 				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: cardX + lipgloss.Width(labelGood), Y: answerYOffset, Width: ggW, Height: 1})
 				m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: cardX + lipgloss.Width(labelEasy), Y: answerYOffset, Width: geW, Height: 1})
 			}
-		} else if m.revealState == RevealRevealing {
-			answer = fmt.Sprintf("1-4 select answer\n\n%s", renderMCQChoices(card.Choices, m.mcqChoice))
 		} else {
 			answer = "Press Space or Enter to reveal choices."
 		}
@@ -467,25 +483,6 @@ func (m *Model) renderReview(x, y int) string {
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: cardX + lipgloss.Width(labelHard), Y: answerYOffset, Width: ghW, Height: 1})
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: cardX + lipgloss.Width(labelGood), Y: answerYOffset, Width: ggW, Height: 1})
 		m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: cardX + lipgloss.Width(labelEasy), Y: answerYOffset, Width: geW, Height: 1})
-	} else if m.revealState == RevealRevealing {
-		// Show gradual reveal animation with blocks
-		progress := int(m.revealProgress)
-		if progress > 100 {
-			progress = 100
-		}
-		// Calculate how many characters to reveal
-		fullText := card.Answer
-		numChars := len([]rune(fullText))
-		revealedChars := (numChars * progress) / 100
-		if revealedChars < 0 {
-			revealedChars = 0
-		}
-		if revealedChars > numChars {
-			revealedChars = numChars
-		}
-		revealedRunes := []rune(fullText)[:revealedChars]
-		remainingBlocks := numChars - revealedChars
-		answer = string(revealedRunes) + "▌" + strings.Repeat("▌", maxInt(0, remainingBlocks-1))
 	} else {
 		answer = "Press space or enter to reveal."
 	}

@@ -740,7 +740,7 @@ func (m *Model) renderTabs(x, y int) string {
 			Width:  lipgloss.Width(item),
 			Height: 1,
 		})
-		currentX += lipgloss.Width(item) + 1
+		currentX += lipgloss.Width(item)
 	}
 
 	return lipgloss.JoinHorizontal(lipgloss.Top, renderedTabs...)

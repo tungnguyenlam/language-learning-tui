@@ -63,24 +63,7 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		promptDisplay := promptStyle.Render(card.Prompt) + audioIndicator
 
 		var answer string
-		if m.cramRevealed {
-			answerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
-
-			extraDisplay := ""
-			if card.Extra != "" {
-				extraStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("159")).Italic(true)
-				extraDisplay = "\n\n" + extraStyle.Render("💡 CONTEXT: "+card.Extra)
-			}
-			if hint := renderGrammarHint(card); hint != "" {
-				extraDisplay = "\n\n" + hint + extraDisplay
-			}
-
-			answer = answerStyle.Render(card.Answer) + extraDisplay
-
-			keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-			answer += fmt.Sprintf("\n\nGrade: %s Again | %s Hard | %s Good | %s Easy",
-				keyStyle.Render("a"), keyStyle.Render("h"), keyStyle.Render("g"), keyStyle.Render("e"))
-		} else if m.revealState == RevealRevealing {
+		if m.revealState == RevealRevealing {
 			// Show gradual reveal animation with blocks
 			progress := int(m.revealProgress)
 			if progress > 100 {
@@ -102,6 +85,23 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 				animationText += strings.Repeat("▌", remainingBlocks)
 			}
 			answer = animationText + "\n\nPress Space or Enter to finish reveal."
+		} else if m.cramRevealed {
+			answerStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
+
+			extraDisplay := ""
+			if card.Extra != "" {
+				extraStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("159")).Italic(true)
+				extraDisplay = "\n\n" + extraStyle.Render("💡 CONTEXT: "+card.Extra)
+			}
+			if hint := renderGrammarHint(card); hint != "" {
+				extraDisplay = "\n\n" + hint + extraDisplay
+			}
+
+			answer = answerStyle.Render(card.Answer) + extraDisplay
+
+			keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
+			answer += fmt.Sprintf("\n\nGrade: %s Again | %s Hard | %s Good | %s Easy",
+				keyStyle.Render("a"), keyStyle.Render("h"), keyStyle.Render("g"), keyStyle.Render("e"))
 		} else {
 			answer = "Press Space or Enter to reveal."
 		}

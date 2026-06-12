@@ -39,6 +39,31 @@ class TUIServer:
         except Exception as e:
             return f"Error: {str(e)}"
 
+    def act_fast(self, keys: str) -> str:
+        try:
+            self.agent.act(keys)
+            # Very short stability check - just needs one frame of non-change
+            self.agent.wait_until_stable(timeout=2.0, min_stable_duration=0.10)
+            return "OK"
+        except Exception as e:
+            return f"Error: {str(e)}"
+
+    def click(self, x: int, y: int, button: int = 0) -> str:
+        try:
+            self.agent.click(x, y, button)
+            self.agent.wait_until_stable()
+            return "OK"
+        except Exception as e:
+            return f"Error: {str(e)}"
+
+    def drag_mouse(self, x1: int, y1: int, x2: int, y2: int, button: int = 0) -> str:
+        try:
+            self.agent.drag_mouse(x1, y1, x2, y2, button)
+            self.agent.wait_until_stable()
+            return "OK"
+        except Exception as e:
+            return f"Error: {str(e)}"
+
     def wait_for_text(self, text: str, timeout: float) -> str:
         try:
             self.agent.wait_for_text(text, timeout)

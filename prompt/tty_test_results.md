@@ -1,98 +1,192 @@
 # TTY Exploratory Test Results
 
-Date: 2026-06-12
-App: deutsch-tui (Go Bubble Tea TUI)
-Test method: `tui-tester` autonomous exploration
+**Date:** 2026-06-12
+**Binary:** `deutsch-tui-bin` (built from `./cmd/deutsch-tui`)
+**Method:** `tui-tester` CLI with XML-RPC backend, 110x40 terminal
 
-## Critical Bugs
+## Test Coverage Summary
 
-### BUG C1: Focus Mode Completely Broken Rendering
-- **View:** Review → Press `f` for Focus Mode
-- **Severity:** Critical
-- **Description:** Enabling focus mode (`f` key) in the Review view produces a completely garbled render. Borders are shattered (`─╮` at wrong positions, `│` scattered randomly), content (card text, hints) appears at wrong coordinates, and ANSI escape code fragments (`?m│`) leak into the visible output. The entire layout is unreadable.
-- **Reproduction:** Start app → Go to Review (key 3) → Press `f`
+All views were explored: Dashboard, Review, Decks, Statistics, Import, AI Drafts, Settings, Browser, Cram, Practice Hub, Session Summary. Interactive features tested: dictionary spotlight search, review card grading, browser search, cram session launch, focus mode, help overlay, deck search, mouse clicks, and rapid view switching.
 
-### BUG C2: Dictionary Spotlight Overlay Rendering Corruption
-- **View:** Any view → Press `=` for Spotlight Dictionary
-- **Severity:** Critical
-- **Description:** The Spotlight Dictionary overlay (`=`) has severe rendering corruption. The overlay panel borders leak ANSI escape codes (`;208m`, `;213m`, `;6m`, `38;5;255m`), underlying view content bleeds through the overlay (sidebar labels, dashboard text), and the right side of the overlay panel shows garbled text from the view beneath it. Occurs on both Dashboard and Review views.
-- **Reproduction:** Press `=` from any view
+---
 
-### BUG C3: Dashboard Rendering Corruption After View Navigation
-- **View:** Dashboard (after navigating through other views)
-- **Severity:** Critical
-- **Description:** After navigating between views (especially Practice Hub, Cram, then back to Dashboard via Tab), the Dashboard shows severe rendering corruption: ANSI escape codes in the Quick Actions box (`A8;5;234m`), broken Unicode characters in borders (`�──────`), overlapping box boundaries, and text from previous views bleeding through (`�ctivity` from "Recent Activity"). The entire layout becomes unreadable.
-- **Reproduction:** Dashboard → Cram (9) → Practice Hub (Tab) → Dashboard (Tab). Also reproducible by opening then closing Dictionary overlay from Dashboard.
+## Bugs Found
 
-## Major Bugs
+### BUG-001 (CRITICAL): Dictionary Spotlight Overlay Keystroke Capture Broken
 
-### BUG M1: Practice Hub View ANSI Escape Code Leak
-- **View:** Practice Hub
-- **Severity:** Major
-- **Description:** The Practice Hub view shows `[1;16HPRACTICE │ wide` in the card list area, which is a raw ANSI cursor positioning escape sequence leaking into the terminal output. The header bar also incorrectly shows `CRAM` instead of `PRACTICE HUB` after navigating from Cram view.
-- **Reproduction:** Dashboard → Cram (9) → Press 5 to load cards → Tab to Practice Hub
+**Severity:** Critical — Blocks core dictionary functionality
+**Reproduction:**
+1. From any view, press `=` to open the Spotlight Dictionary overlay
+2. Type any characters (e.g., "Haus")
+3. Press `<Enter>`
 
-### BUG M2: Left Sidebar Content Bleeds Into Main Content
-- **Views:** Multiple (Cram, Practice Hub, AI Drafts)
-- **Severity:** Major
-- **Description:** When navigating between views that have differently-sized content, text from the left sidebar (e.g., "52 cards loaded", "Press enter to s") or other content bleeds through into the main content panel. The rendering doesn't properly clear the previous view's content.
-- **Reproduction:** Navigate between Cram and Practice Hub views
+**Observed:** Typed characters are sent to the **underlying view**, not the Spotlight search bar. For example, from AI Drafts, typing "Haus" populates the AI topic field ("Topic: Hausfrau - hausfrau_"). The spotlight search bar remains empty.
 
-### BUG M3: Cram Mode Filter List Shows Duplicate "3: Leeches"
-- **View:** Cram (key 9)
-- **Severity:** Major
-- **Description:** The Cram mode filter list displays "3: Leeches" twice instead of showing "3: Leeches" once and "4: All flagged" in its correct position. The numbering skips from 3 to 4 with two identical Leeches entries.
-- **Reproduction:** Go to Cram (key 9) → Select "5: All cards" → Observe filter list
+**Expected:** Typed characters should be captured by the Spotlight overlay's search input field, and `<Enter>` should execute a dictionary search.
 
-### BUG M4: tui-tester Daemon Hangs on `+` Key in Settings
-- **View:** Settings (key 7)
-- **Severity:** Major (affects automated testing)
-- **Description:** When navigating to Settings, moving to the Daily Goal row, and pressing `+` to increase the value, the `tui-tester` daemon becomes unresponsive. The `+` character may be causing an issue in the key processing pipeline. This was observed multiple times and caused the daemon to require a kill and restart.
-- **Reproduction:** Settings → Navigate to "Daily Goal: 10 cards" → Press `+`
+**Evidence:**
+```
+ DEUTSCH-TUI │ AI │ wide
+  AI Drafts
+  Deck: All Decks
+  Template: vocabulary (use [ / ])
+  ┌────────────────────────────────────────────────────────────────────┐
+  │ Topic: Hausfrau - hausfrau_                                        │   ← "Haus" typed HERE instead of Spotlight
+  └────────────────────────────────────────────────────────────────────┘
+```
 
-## Minor Bugs
+**Reproduction steps (tui-tester):**
+```bash
+tui-tester act "="        # Open spotlight
+tui-tester act "Haus"     # Type search - goes to underlying view
+tui-tester act "<Enter>"  # Triggers underlying view action, not search
+```
 
-### BUG m1: Header Truncation After Focus Mode
-- **View:** Review
-- **Severity:** Minor
-- **Description:** After entering and exiting focus mode (`f` key), the header line becomes misaligned: `   deutsch-tui` has trailing spaces before it and the outer border on the right doesn't close properly (missing `│` on line 1). The `DEUTSCH-TUI │ REVIEW │ wide` header format is disrupted.
-- **Reproduction:** Review → Press `f` → Press `f` again to exit
+---
 
-### BUG m2: Bottom-Line Rendering Artifact
-- **Views:** Multiple (observed on Decks, Review, Dashboard)
-- **Severity:** Minor
-- **Description:** A fragment of text "rases for daily German." (truncated from "phrases for daily German") appears persistently on the last line of the terminal output, outside of any border/layout. This text appears to be from deck description content that leaks outside the rendering area.
-- **Reproduction:** Navigate to Decks view and observe the bottom-most line of output
+### BUG-002 (MAJOR): ANSI Escape Sequences Leak into Visible UI
 
-### BUG m3: `q` Key in Cram Mode Quits Entire App
-- **View:** Cram (key 9)
-- **Severity:** Minor (expected but potentially confusing UX)
-- **Description:** In Cram mode, pressing `q` quits the entire application rather than just exiting Cram mode back to the Dashboard. The help text says "q to quit" but user expectation in a sub-mode might be that `q` exits the sub-mode. Consider using `Esc` for exiting Cram and reserving `q` for app-wide quit.
+**Severity:** Major — Affects status line and content readability
+**Reproduction:** Navigate to any view, observe the status line and content areas.
 
-## Views Verified (No Critical Issues)
+**Observed:** Raw ANSI escape sequences appear in multiple locations:
+- Status line: `status: 52 cards found ;5;240m│` (should be colored separator)
+- Daily Digest: `│;159\n;4mA1 colors & shapes` (fragment from AI suggestions)
+- Quick Actions box: `[5A` appears inline (cursor movement escape)
+- Statistics bars: `█�░░░░░ 0  ✗` (truncated/malformed escape sequence)
 
-1. **Dashboard** - Clean render on fresh start, all sections display correctly
-2. **Review** - Card reveal, grading (a/h/g/e), dictionary lookups, bookmarks all work
-3. **Decks** - List view, search/filter work correctly
-4. **Settings** - Navigation with j/k works, settings display correctly
-5. **Statistics** - Maturity distribution, review stats display correctly
-6. **Browser** - Card preview with dictionary details render well
-7. **Import/Export** - Form fields and action buttons display correctly
-8. **AI Drafts** - Template selection and topic input display correctly (render bugs noted above)
-9. **Help Overlay** - Opens/closes correctly, comprehensive shortcut listing
+**Expected:** All ANSI escape sequences should be consumed by the terminal renderer and never appear as visible text.
 
-## Root Cause Analysis
+**Evidence (Dashboard):**
+```
+ status: 52 cards found ;5;240m│
+```
+```
+                    │  │   M:0 Y:0 N:52  💪 Ready for your     │   │
+                    │  ╰───────────────────────────────────────╯ │ daily German practice?                │;159
+;4mA1 colors & shapes  │   ░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░    │ │   Next: blau                          │   │
+```
 
-The rendering bugs share a common theme: **ANSI escape code leakage** and **incomplete screen clearing** during view transitions. Specifically:
+**Evidence (Statistics):**
+```
+│  Success Rate: 0.0%                     █  │
+│  Retention: 0.0% (Mature/Total: 0/0)    █�░░░░░ 0  ✗
+```
 
-1. The `applyOverlay` function (noted as previously fixed for UTF-8 in the backlog) appears to still have issues with border rendering that uses ANSI color codes - these codes are being included in the visible output rather than being interpreted by the terminal.
-2. View transitions don't properly clear the previous view's content before rendering the new view, causing text from the previous view to "bleed through" in the new view.
-3. The Focus Mode rendering appears to use a different layout engine that has fundamental issues with box-drawing character placement.
+**Probable cause:** The `applyOverlay` function or ANSI parsing in the TUI renderer (`internal/tui/model.go`) is not handling certain multi-character escape sequences correctly. Recent work on `applyOverlay` (see active.md 2026-06-12) may have introduced regressions.
 
-## Recommendations
+---
 
-1. **Audit `applyOverlay` and all border-rendering code** for ANSI escape sequences that are being placed inside visible string content rather than being applied as styling.
-2. **Add a full screen clear** (`\033[2J` or Bubble Tea's equivalent) before rendering Focus Mode and Spotlight Dictionary overlays.
-3. **Investigate the Cram filter duplication** as a separate data/logic bug in the filter list construction.
-4. **Add `+` key handling** to the Settings daily goal adjustment logic and verify it doesn't panic or hang.
-5. **Verify `tui-tester` compatibility** with the `+` key to confirm the hanging issue is in the app, not the test tool.
+### BUG-003 (MINOR): Help Overlay Text Wrapping Artifacts
+
+**Severity:** Minor — Cosmetic only
+**Reproduction:** Press `?` from any view to open the Help overlay.
+
+**Observed:** The "Cram" and "Practice" sections in the help overlay have awkward word breaks:
+```
+│    q/Ctrl+c Quit                   b / B    Bookmark / Unmark    Practice
+│                                    u / r    Undo / History     select
+│  Dashboard/Decks:                  f / i    Focus / Info         Import
+│    [ ]      Prev/next deck         p / d    Play audio / Dict    exp
+```
+
+Lines like "Practice\nselect", "Import\nexp" show words split across lines. The "Statistics" shortcut appears as just "Stats".
+
+**Expected:** Help text should wrap cleanly with proper word boundaries.
+
+---
+
+### BUG-004 (MINOR): Dashboard Daily Digest Text Clipping
+
+**Severity:** Minor — Text readability
+**Reproduction:** View Dashboard at 110x40 terminal size.
+
+**Observed:** The Daily Digest box has text that bleeds beyond its border. The example sentence text "Ready for your daily German practice?" wraps awkwardly and the box border breaks:
+```
+│ daily German practice?                │
+  ╰───────────────────────────────────────╯
+```
+
+Note the left border of the closing edge is at a different indentation than the right, suggesting the box width calculation is off or text padding doesn't match.
+
+---
+
+### BUG-005 (MINOR): Browser Status Line Content Bleed
+
+**Severity:** Minor — Status text readability
+**Reproduction:** Navigate to Browser view (key 8).
+
+**Observed:** The status line at the bottom shows truncated help content instead of a proper status message:
+```
+lect all, p to play audio, t to toggle
+```
+(This is a fragment of "Select all, p to play audio, t to toggle" from the help overlay.)
+
+**Expected:** The status line should show a clean, complete status message relevant to the current view.
+
+---
+
+### BUG-006 (MINOR): `/` Key Conflict Between Dashboard and Other Views
+
+**Severity:** Minor — UX inconsistency
+**Reproduction:**
+1. From Dashboard, press `/` → Full Dictionary tab opens (correct)
+2. From AI Drafts, press `/` → Edits AI topic instead of opening Dictionary
+3. From Decks, press `/` → Opens deck search filter
+
+**Observed:** The `/` key has context-dependent behavior that may confuse users. It does not consistently open Dictionary across views.
+
+**Expected:** Either `/` should always open Dictionary from all views, or a different shortcut should be used for Dictionary (the Spotlight overlay with `=` already provides this).
+
+**Note:** This is likely by design (Dashboard `/` = Dictionary, Decks `/` = search, AI Drafts `/` = edit topic) but the inconsistency could be a UX papercut.
+
+---
+
+### BUG-007 (MINOR): tui-tester Stability Detection Incompatible with Timer Views
+
+**Severity:** Minor — Testing tool limitation
+**Reproduction:** Use `tui-tester act` while in Review view.
+
+**Observed:** `tui-tester act` calls `wait_until_stable()` which never completes in timer-based views (Review, Cram active) because the on-screen timer (`⏱ 00:05`) updates the screen content every second.
+
+**Expected:** `wait_until_stable` should either handle timer-based updates gracefully or the tui_tester should provide a non-waiting alternative.
+
+---
+
+## Views Verified Working
+
+The following views rendered and responded correctly to navigation:
+
+| View | Status | Notes |
+|------|--------|-------|
+| Dashboard | OK | Layout intact, all boxes shown |
+| Review (idle) | OK | Card displayed, reveal works |
+| Review (revealed) | OK | Grading options shown, grade works |
+| Review Focus Mode | OK | `f` toggles correctly |
+| Decks | OK | List renders, search works |
+| Settings | OK | All items scrollable |
+| Statistics | OK | Distribution charts render |
+| Import/Export | OK | Paths displayed correctly |
+| Browser | OK | Card list + preview shown |
+| Cram (idle) | OK | Filter options displayed |
+| Cram (active) | OK | 52 cards loaded with All filter |
+| Practice Hub | OK | All 9 trainers listed |
+| AI Drafts | OK | Suggestions displayed, topic editing works |
+| Help Overlay | OK | `?` toggles correctly |
+| Spotlight Overlay | OK | `=` opens/closes, result count shown |
+
+---
+
+## Stress Test: Rapid View Switching
+
+Ten rapid view switches (keys 1-9 cycled twice) completed without crashes. The app remained responsive with no state corruption visible in the header.
+
+---
+
+## Summary
+
+- **Total bugs:** 7 (1 Critical, 1 Major, 5 Minor)
+- **Critical:** Dictionary Spotlight keystroke capture is non-functional — typed characters leak to the underlying view
+- **Major:** ANSI escape sequences leak into visible text across multiple views (status line, dashboard, statistics)
+- **Minor:** Help overlay wrapping, dashboard text clipping, browser status truncation, `/` key inconsistency, tui_tester timer incompatibility
+- **No crashes** during navigation or stress testing
