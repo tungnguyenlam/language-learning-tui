@@ -968,12 +968,21 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			if len(m.browserTag) > 0 {
 				m.browserTag = trimLastRune(m.browserTag)
 			}
-			return m.loadBrowserCards(), true
+			m.browserSearchTimerID++
+			id := m.browserSearchTimerID
+			return tea.Tick(time.Millisecond*250, func(t time.Time) tea.Msg {
+				return debounceSearchMsg{id: id, view: ViewBrowser}
+			}), true
 		}
 		if ch, ok := singlePrintableInput(msg.String()); ok {
 			m.browserTag += ch
-			return m.loadBrowserCards(), true
+			m.browserSearchTimerID++
+			id := m.browserSearchTimerID
+			return tea.Tick(time.Millisecond*250, func(t time.Time) tea.Msg {
+				return debounceSearchMsg{id: id, view: ViewBrowser}
+			}), true
 		}
+
 		return nil, true
 	}
 
@@ -999,11 +1008,19 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			if len(m.browserSearch) > 0 {
 				m.browserSearch = trimLastRune(m.browserSearch)
 			}
-			return m.loadBrowserCards(), true
+			m.browserSearchTimerID++
+			id := m.browserSearchTimerID
+			return tea.Tick(time.Millisecond*250, func(t time.Time) tea.Msg {
+				return debounceSearchMsg{id: id, view: ViewBrowser}
+			}), true
 		}
 		if ch, ok := singlePrintableInput(msg.String()); ok {
 			m.browserSearch += ch
-			return m.loadBrowserCards(), true
+			m.browserSearchTimerID++
+			id := m.browserSearchTimerID
+			return tea.Tick(time.Millisecond*250, func(t time.Time) tea.Msg {
+				return debounceSearchMsg{id: id, view: ViewBrowser}
+			}), true
 		}
 		return nil, true
 	}
@@ -2067,7 +2084,11 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		if len(m.dictionarySearch) > 0 {
 			m.dictionarySearch = trimLastRune(m.dictionarySearch)
-			return m.searchDictionary(), true
+			m.dictionarySearchTimerID++
+			id := m.dictionarySearchTimerID
+			return tea.Tick(time.Millisecond*250, func(t time.Time) tea.Msg {
+				return debounceSearchMsg{id: id, view: ViewDictionary}
+			}), true
 		}
 		return nil, true
 	case "esc":
@@ -2087,11 +2108,19 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 
 	if ch, ok := singlePrintableInput(key); ok {
 		m.dictionarySearch += ch
-		return m.searchDictionary(), true
+		m.dictionarySearchTimerID++
+		id := m.dictionarySearchTimerID
+		return tea.Tick(time.Millisecond*250, func(t time.Time) tea.Msg {
+			return debounceSearchMsg{id: id, view: ViewDictionary}
+		}), true
 	}
 	if key == "space" {
 		m.dictionarySearch += " "
-		return m.searchDictionary(), true
+		m.dictionarySearchTimerID++
+		id := m.dictionarySearchTimerID
+		return tea.Tick(time.Millisecond*250, func(t time.Time) tea.Msg {
+			return debounceSearchMsg{id: id, view: ViewDictionary}
+		}), true
 	}
 
 	return nil, false

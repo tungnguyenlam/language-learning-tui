@@ -111,11 +111,7 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 		ctx.WriteLine(fmt.Sprintf("\n%s play audio | %s to exit cram review.", keyStyle.Render("p"), keyStyle.Render("q")))
 
-		res := ctx.String()
-		if m.cramRevealed {
-			res += "\x1b[8mcramRevealed\x1b[0m"
-		}
-		return res
+		return ctx.String()
 	}
 
 	filterTitleStyle := lipgloss.NewStyle().Bold(true).Foreground(colorCyan)

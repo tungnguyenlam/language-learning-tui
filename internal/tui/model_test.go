@@ -2712,3 +2712,104 @@ func TestPracticeHubScoresAndReset(t *testing.T) {
 		t.Errorf("expected scores to be cleared from view after reset, got:\n%s", plainView)
 	}
 }
+
+func TestSpliceVisual(t *testing.T) {
+	tests := []struct {
+		name        string
+		line        string
+		startCol    int
+		width       int
+		replacement string
+		want        string
+	}{
+		{
+			name:        "plain text",
+			line:        "Hello World",
+			startCol:    6,
+			width:       5,
+			replacement: "DEUTSCH",
+			want:        "Hello DEUTSCH",
+		},
+		{
+			name:        "ANSI at start",
+			line:        "\x1b[31mRedText\x1b[0m here",
+			startCol:    7,
+			width:       4,
+			replacement: "OVER",
+			want:        "\x1b[31mRedText\x1b[0mOVERe",
+		},
+		{
+			name:        "ANSI in prefix preserved",
+			line:        "\x1b[38;5;81mBoldLabel\x1b[0m rest",
+			startCol:    9,
+			width:       5,
+			replacement: "REPL",
+			want:        "\x1b[38;5;81mBoldLabel\x1b[0mREPL",
+		},
+		{
+			name:        "full replacement with ANSI",
+			line:        "\x1b[32mGreen\x1b[0mText",
+			startCol:    0,
+			width:       10,
+			replacement: "ALLNEW",
+			want:        "ALLNEW",
+		},
+		{
+			name:        "wide chars",
+			line:        "Hallo 世界",
+			startCol:    6,
+			width:       2,
+			replacement: "DE",
+			want:        "Hallo DE界",
+		},
+		{
+			name:        "start beyond line length",
+			line:        "Short",
+			startCol:    20,
+			width:       4,
+			replacement: "NEW",
+			want:        "ShortNEW",
+		},
+		{
+			name:        "zero width replacement",
+			line:        "Hello World",
+			startCol:    5,
+			width:       1,
+			replacement: "",
+			want:        "HelloWorld",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := spliceVisual(tt.line, tt.startCol, tt.width, tt.replacement)
+			if got != tt.want {
+				t.Errorf("spliceVisual(%q, %d, %d, %q)\n= %q\nwant %q", tt.line, tt.startCol, tt.width, tt.replacement, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestApplyOverlay(t *testing.T) {
+	m := &Model{width: 80, height: 24}
+	simpleBase := "Line 1\nLine 2\nLine 3"
+	overlay := "\x1b[31mOVERLAY\x1b[0m"
+	result := m.applyOverlay(simpleBase, overlay)
+	stripped := ansi.Strip(result)
+	if !strings.Contains(stripped, "OVERLAY") {
+		t.Errorf("applyOverlay should contain OVERLAY, got:\n%s", stripped)
+	}
+	if !strings.Contains(stripped, "Line 1") {
+		t.Errorf("applyOverlay should preserve Line 1, got:\n%s", stripped)
+	}
+
+	ansiBase := "\x1b[38;5;81mDashboard\x1b[0m content\n\x1b[32mMore\x1b[0m text"
+	result = m.applyOverlay(ansiBase, overlay)
+	stripped = ansi.Strip(result)
+	if !strings.Contains(stripped, "Dashboard") {
+		t.Errorf("applyOverlay should preserve Dashboard, got:\n%s", stripped)
+	}
+	if !strings.Contains(stripped, "OVERLAY") {
+		t.Errorf("applyOverlay should contain OVERLAY, got:\n%s", stripped)
+	}
+}

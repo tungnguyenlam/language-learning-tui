@@ -216,6 +216,8 @@ type Model struct {
 	dictionarySearchHistory    []string
 	deckSearchHistory          []string
 	dictionarySearchID         int
+	dictionarySearchTimerID    int
+	browserSearchTimerID       int
 	dictionaryResults          []core.DictionaryEntry
 	dictionaryCursor           int
 	dictionaryScroll           int
@@ -617,6 +619,12 @@ type explainErrorMsg struct {
 	cardID string
 	err    error
 }
+
+type debounceSearchMsg struct {
+	id   int
+	view View
+}
+
 type deckDeletedMsg struct{}
 
 type caseItemsMsg []caseItem
@@ -634,6 +642,19 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.logger.Debug("Processing message: %T", msg)
 
 	switch msg := msg.(type) {
+	case debounceSearchMsg:
+		switch msg.view {
+		case ViewDictionary:
+			if msg.id == m.dictionarySearchTimerID {
+				return m, m.searchDictionary()
+			}
+		case ViewBrowser:
+			if msg.id == m.browserSearchTimerID {
+				return m, m.loadBrowserCards()
+			}
+		}
+		return m, nil
+
 	case dictionarySearchResultsMsg:
 		if msg.id != m.dictionarySearchID {
 			return m, nil
@@ -1521,7 +1542,8 @@ func (m *Model) applyOverlay(base, overlay string) string {
 	if startY < 0 {
 		startY = 0
 	}
-	startX := (m.width - lipgloss.Width(overlayLines[0])) / 2
+	overlayWidth := lipgloss.Width(overlayLines[0])
+	startX := (m.width - overlayWidth) / 2
 	if startX < 0 {
 		startX = 0
 	}
@@ -1530,19 +1552,132 @@ func (m *Model) applyOverlay(base, overlay string) string {
 		if startY+i >= len(baseLines) {
 			break
 		}
-		base := baseLines[startY+i]
+		baseLine := baseLines[startY+i]
 		lineLen := lipgloss.Width(line)
-		baseRunes := []rune(base)
-		baseLen := len(baseRunes)
-		clampedStart := minInt(startX, baseLen)
-		end := minInt(startX+lineLen, baseLen)
-		if end < clampedStart {
-			end = clampedStart
-		}
-		baseLines[startY+i] = string(baseRunes[:clampedStart]) + line + string(baseRunes[end:])
+		baseLines[startY+i] = spliceVisual(baseLine, startX, lineLen, line)
 	}
 
 	return strings.Join(baseLines, "\n")
+}
+
+// spliceVisual replaces the visual columns [startCol, startCol+width) in
+// line (which may contain ANSI escape sequences) with replacement.
+// ANSI escape sequences in the line are preserved: those entirely before
+// startCol stay in the prefix, those entirely after startCol+width stay in
+// the suffix, and any escape that spans a boundary is kept intact on the
+// side that contains more of it.
+func spliceVisual(line string, startCol int, width int, replacement string) string {
+	prefix, _ := visualPrefix(line, startCol)
+	remaining := line[len(prefix):]
+	_, afterWidth := visualPrefix(remaining, width)
+	return prefix + replacement + afterWidth
+}
+
+// visualPrefix splits s at the given visual column boundary.
+// It returns (prefix, suffix) where prefix contains all of s up to (but not
+// including) visual column col, preserving any ANSI escape sequences that
+// start in the prefix. The suffix starts at the visual column boundary.
+// ANSI escape sequences that appear immediately after the last visual
+// character are included in the prefix to properly close styling.
+func visualPrefix(s string, col int) (prefix, suffix string) {
+	var buf strings.Builder
+	visualCol := 0
+	i := 0
+	runes := []rune(s)
+	consumedVisual := false
+	for i < len(runes) && visualCol < col {
+		r := runes[i]
+		if r == '\x1b' {
+			end := findAnsiEnd(runes, i)
+			buf.WriteString(string(runes[i:end]))
+			i = end
+			continue
+		}
+		w := runeVisualWidth(r)
+		if visualCol+w > col {
+			break
+		}
+		buf.WriteRune(r)
+		visualCol += w
+		consumedVisual = true
+		i++
+	}
+	// Consume any trailing ANSI escape sequences immediately after the boundary,
+	// but only if we've consumed at least one visual character
+	if consumedVisual {
+		for i < len(runes) && runes[i] == '\x1b' {
+			end := findAnsiEnd(runes, i)
+			buf.WriteString(string(runes[i:end]))
+			i = end
+		}
+	}
+	return buf.String(), string(runes[i:])
+}
+
+// findAnsiEnd returns the index after the end of the ANSI escape sequence
+// starting at runes[start].
+func findAnsiEnd(runes []rune, start int) int {
+	if start >= len(runes) || runes[start] != '\x1b' {
+		return start + 1
+	}
+	i := start + 1
+	if i >= len(runes) {
+		return i
+	}
+	switch runes[i] {
+	case '[':
+		i++
+		for i < len(runes) {
+			r := runes[i]
+			if r >= '0' && r <= '9' || r == ';' || r == '?' || r == ':' || r == ' ' {
+				i++
+			} else if (r >= 'A' && r <= 'Z') || (r >= 'a' && r <= 'z') || r == '@' {
+				i++
+				return i
+			} else {
+				i++
+				return i
+			}
+		}
+		return i
+	case ']':
+		i++
+		for i < len(runes) {
+			if runes[i] == '\x07' {
+				return i + 1
+			}
+			if runes[i] == '\x1b' && i+1 < len(runes) && runes[i+1] == '\\' {
+				return i + 2
+			}
+			i++
+		}
+		return i
+	case '(', ')', '*', '+':
+		if i+1 < len(runes) {
+			return i + 2
+		}
+		return i + 1
+	default:
+		return i + 1
+	}
+}
+
+func runeVisualWidth(r rune) int {
+	switch {
+	case r >= 0x1100 && (r <= 0x115F || r == 0x2329 || r == 0x232A ||
+		(r >= 0x2E80 && r <= 0xA4CF) ||
+		(r >= 0xAC00 && r <= 0xD7A3) ||
+		(r >= 0xF900 && r <= 0xFAFF) ||
+		(r >= 0xFE10 && r <= 0xFE19) ||
+		(r >= 0xFE30 && r <= 0xFE6F) ||
+		(r >= 0xFF01 && r <= 0xFF60) ||
+		(r >= 0xFFE0 && r <= 0xFFE6) ||
+		(r >= 0x20000 && r <= 0x2FFFD) ||
+		(r >= 0x30000 && r <= 0x3FFFD)):
+		return 2
+	default:
+		return 1
+	}
 }
 
 func (m *Model) syncDecks(newDecks []core.Deck) {

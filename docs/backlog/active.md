@@ -1,12 +1,15 @@
 # Active Backlog
 
-Last updated: 2026-06-11
+Last updated: 2026-06-12
 
 ## Current Milestone
 
 Polish and Reliability - IN PROGRESS.
 
 ## Completed Work
+
+- [x] **applyOverlay ANSI-Aware Rendering Fix:** Rewrote `applyOverlay` (`internal/tui/model.go:1537`) to properly handle ANSI escape sequences in both base and overlay content. Added `spliceVisual`, `visualPrefix`, `findAnsiEnd`, and `runeVisualWidth` helper functions that map visual column positions to rune offsets while preserving ANSI styling codes. This fixes critical rendering corruption in Dictionary Spotlight overlay, Focus Mode, and Dashboard after view navigation. Added comprehensive unit tests `TestSpliceVisual` and `TestApplyOverlay`.
+- [x] **Cram Invisible Text Removal:** Removed problematic `\x1b[8mcramRevealed\x1b[0m` invisible text sequence from `render_cram.go:116` that was causing rendering artifacts and potential overlay corruption. The invisible rendition mode was interfering with proper screen clearing during view transitions.
 
 - [x] **Dashboard Dictionary Shortcuts:** Added `Shift+G`, `Shift+V`, and `Shift+W` shortcuts to the Dashboard for instant dictionary lookup of the daily Grammar Tip, Verb of the Day, and Word of the Day. Updated Dashboard labels to `[g/G]`, `[v/V]`, and `[w/W]` for better discoverability.
 - [x] **Non-disruptive Dictionary Lookups:** Updated the `d` key in both Review and Browser views to use the Spotlight Dictionary overlay instead of switching to the full Dictionary tab. This allows for fast, context-preserving lookups without breaking the user's flow.

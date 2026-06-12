@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"time"
 
 	"deutsch-tui/internal/content"
 	"deutsch-tui/internal/core"
@@ -31,7 +32,9 @@ func (m *Model) searchDictionary() tea.Cmd {
 			return fmt.Errorf("repository does not support dictionary search")
 		}
 
-		results, err := dictRepo.Search(context.Background(), query, 50)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		results, err := dictRepo.Search(ctx, query, 50)
 		if err != nil {
 			return err
 		}
