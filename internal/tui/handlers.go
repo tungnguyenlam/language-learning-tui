@@ -42,6 +42,14 @@ func (m *Model) updateView(view View) tea.Cmd {
 		m.dictionaryDetailView = false
 		m.dictionaryFocusResults = false
 	}
+
+	// Start view transition animation
+	if m.activeView != view && m.activeView != "" {
+		m.prevView = m.activeView
+		m.viewTransitioning = true
+		m.viewTransitionProgress = 0
+		m.viewTransitionFrame = 0
+	}
 	m.activeView = view
 	m.isDragging = false
 	m.confirmingDelete = false
@@ -667,6 +675,8 @@ func (m *Model) resetMCQState() {
 func (m *Model) resetReviewState() {
 	m.revealState = RevealIdle
 	m.revealProgress = 0
+	m.flipProgress = 0
+	m.flipFrame = 0
 	m.typingMode = false
 	m.typedAnswer = ""
 	m.typingChecked = false

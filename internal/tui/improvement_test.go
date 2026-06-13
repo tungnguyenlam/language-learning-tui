@@ -276,16 +276,18 @@ func TestRevealSpeedSetting(t *testing.T) {
 		t.Error("Expected 100% progress when speed is 0")
 	}
 
-	// Test animated reveal (5)
+	// Test animated reveal (5) - now starts with flip animation
 	model.revealSpeed = 5
 	model.revealState = RevealIdle
 	model.revealProgress = 0
+	model.flipProgress = 0
+	model.flipFrame = 0
 	model.startRevealAnimation(card)
 
-	if model.revealState != RevealRevealing {
-		t.Error("Expected revealing state when speed is 5")
+	if model.revealState != RevealFlipping {
+		t.Error("Expected flipping state when speed is 5")
 	}
-	if model.revealProgress != 0 {
-		t.Error("Expected 0% initial progress when speed is 5")
+	if model.flipProgress != 0 {
+		t.Error("Expected 0% initial flip progress when speed is 5")
 	}
 }

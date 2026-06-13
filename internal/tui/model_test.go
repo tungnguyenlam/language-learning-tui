@@ -211,15 +211,18 @@ func TestReviewFlow(t *testing.T) {
 
 	// Reveal using space
 	model.Update(tea.KeyPressMsg{Code: ' '})
-	if model.revealState != RevealRevealing {
-		t.Fatal("should be revealing after space")
+	if model.revealState != RevealFlipping {
+		t.Fatal("should be flipping after space")
 	}
 
-	// Grade should be blocked while reveal animation is in progress.
+	// Grade should be blocked while flip animation is in progress.
 	if cmd := model.gradeCard(core.GradeGood); cmd != nil {
-		t.Fatal("gradeCard should return nil while reveal is still animating")
+		t.Fatal("gradeCard should return nil while flip is still animating")
 	}
 
+	// Complete flip and reveal
+	model.revealState = RevealRevealing
+	model.revealProgress = 0
 	// Grade after reveal.
 	model.revealState = RevealRevealed
 	model.revealProgress = 100
@@ -1538,8 +1541,8 @@ func TestMCQFlashcardFlowUnchanged(t *testing.T) {
 	}
 
 	model.Update(tea.KeyPressMsg{Code: ' '})
-	if model.revealState != RevealRevealing {
-		t.Fatalf("flashcard should be revealing after space, revealState=%v", model.revealState)
+	if model.revealState != RevealFlipping {
+		t.Fatalf("flashcard should be flipping after space, revealState=%v", model.revealState)
 	}
 }
 

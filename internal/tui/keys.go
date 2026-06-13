@@ -196,16 +196,26 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case "up", "k":
 		if m.activeView == ViewReview {
 			if m.cursor > 0 {
+				m.cardTransitioning = true
+				m.cardTransitionProgress = 0
+				m.cardTransitionFrame = 0
+				m.cardTransitionDir = -1
 				m.cursor--
 				m.resetReviewState()
+				return m, m.tickCardTransition()
 			}
 			return m, nil
 		}
 	case "down", "j":
 		if m.activeView == ViewReview {
 			if m.cursor < len(m.dueCards)-1 {
+				m.cardTransitioning = true
+				m.cardTransitionProgress = 0
+				m.cardTransitionFrame = 0
+				m.cardTransitionDir = 1
 				m.cursor++
 				m.resetReviewState()
+				return m, m.tickCardTransition()
 			}
 			return m, nil
 		}
@@ -428,6 +438,11 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		switch m.revealState {
 		case RevealIdle:
 			return tea.Batch(m.startRevealAnimation(card), m.loadReviewPredictions(card.ID)), true
+		case RevealFlipping:
+			m.flipProgress = 100
+			m.revealState = RevealRevealing
+			m.revealProgress = 0
+			return m.loadReviewPredictions(card.ID), true
 		case RevealRevealing:
 			m.revealProgress += 15
 			if m.revealProgress >= 100 {
@@ -1152,6 +1167,8 @@ func (m *Model) updateCramKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 				m.cramRevealed = false
 				m.revealState = RevealIdle
 				m.revealProgress = 0
+				m.flipProgress = 0
+				m.flipFrame = 0
 			} else {
 				switch m.revealState {
 				case RevealIdle:
@@ -1159,6 +1176,10 @@ func (m *Model) updateCramKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 						card := m.cramCards[clampInt(m.cramCursor, 0, len(m.cramCards)-1)]
 						return m.startRevealAnimation(card), true
 					}
+				case RevealFlipping:
+					m.flipProgress = 100
+					m.revealState = RevealRevealing
+					m.revealProgress = 0
 				case RevealRevealing:
 					m.revealProgress += 15
 					if m.revealProgress >= 100 {
@@ -1189,6 +1210,8 @@ func (m *Model) updateCramKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.cramRevealed = false
 			m.revealState = RevealIdle
 			m.revealProgress = 0
+			m.flipProgress = 0
+			m.flipFrame = 0
 			return nil, true
 		}
 		return nil, false

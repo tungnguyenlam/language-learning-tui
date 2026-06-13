@@ -165,6 +165,16 @@ func (m *Model) renderReview(x, y int) string {
 
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
 	header := fmt.Sprintf("%s%s %d/%d", titleStyle.Render("Review"), filterBanner, cursor+1, len(m.dueCards))
+	if m.cardTransitioning {
+		spinFrames := []string{"←", "↖", "↑", "↗", "→", "↘", "↓", "↙"}
+		spin := spinFrames[m.cardTransitionFrame%len(spinFrames)]
+		dirStr := "↑"
+		if m.cardTransitionDir > 0 {
+			dirStr = "↓"
+		}
+		transStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("212")).Bold(true)
+		header += " " + transStyle.Render(fmt.Sprintf("%s %s", spin, dirStr))
+	}
 
 	// Session progress bar and timer
 	sessionTotal := m.sessionReviewed + len(m.dueCards)
@@ -352,7 +362,9 @@ func (m *Model) renderReview(x, y int) string {
 		}
 	}
 
-	if m.revealState == RevealRevealing {
+	if m.revealState == RevealFlipping {
+		answer = renderFlipAnimation(m, card, cardWidth)
+	} else if m.revealState == RevealRevealing {
 		// Show gradual reveal animation with blocks for all card types
 		progress := int(m.revealProgress)
 		if progress > 100 {
@@ -642,6 +654,54 @@ func renderMCQChoices(choices []string, selected int) string {
 		b.WriteString(fmt.Sprintf("%s%d: %s%s\n", prefix, i+1, mark, choice))
 	}
 	return strings.TrimRight(b.String(), "\n")
+}
+
+func renderFlipAnimation(m *Model, card core.Card, cardWidth int) string {
+	progress := int(m.flipProgress)
+	frame := m.flipFrame
+
+	frontStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color("159"))
+
+	backStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("212"))
+
+	spinFrames := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
+	spin := spinFrames[frame%len(spinFrames)]
+
+	if progress < 50 {
+		shrinkProgress := progress * 2
+		visibleWidth := maxInt(1, (cardWidth-4)*(100-shrinkProgress)/100)
+		frontContent := frontStyle.Render(card.Prompt)
+		if visibleWidth < lipgloss.Width(frontContent) {
+			runes := []rune(card.Prompt)
+			visibleRunes := runes[:maxInt(1, len(runes)*(100-shrinkProgress)/100)]
+			frontContent = frontStyle.Render(string(visibleRunes))
+		}
+		return lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("39")).
+			Width(cardWidth).
+			Align(lipgloss.Center).
+			Render(frontContent + " " + spin)
+	} else {
+		expandProgress := (progress - 50) * 2
+		fullText := card.Answer
+		runes := []rune(fullText)
+		visibleRunes := runes[:maxInt(1, len(runes)*expandProgress/100)]
+		backContent := backStyle.Render(string(visibleRunes))
+		if expandProgress < 100 {
+			remaining := len(runes) - len(visibleRunes)
+			backContent += " " + strings.Repeat("▌", maxInt(1, remaining))
+		}
+		return lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("81")).
+			Width(cardWidth).
+			Align(lipgloss.Center).
+			Render(backContent + " " + spin)
+	}
 }
 
 func (m *Model) renderCardInfo(card core.Card) string {

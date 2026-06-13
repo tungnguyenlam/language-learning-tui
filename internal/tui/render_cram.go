@@ -63,7 +63,9 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		promptDisplay := promptStyle.Render(card.Prompt) + audioIndicator
 
 		var answer string
-		if m.revealState == RevealRevealing {
+		if m.revealState == RevealFlipping {
+			answer = renderFlipAnimation(m, card, cardWidth)
+		} else if m.revealState == RevealRevealing {
 			// Show gradual reveal animation with blocks
 			progress := int(m.revealProgress)
 			if progress > 100 {

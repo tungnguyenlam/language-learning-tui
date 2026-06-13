@@ -61,6 +61,7 @@ type RevealState int
 
 const (
 	RevealIdle RevealState = iota
+	RevealFlipping
 	RevealRevealing
 	RevealRevealed
 )
@@ -162,12 +163,22 @@ type Model struct {
 	cursor                     int
 	revealState                RevealState
 	revealProgress             float64
+	flipProgress               float64
+	flipFrame                  int
 	lastReviewedCardID         string
 	lastReviewedGrade          core.ReviewGrade
 	status                     string
 	mouseX                     int
 	mouseY                     int
 	hitboxes                   []Hitbox
+	prevView                   View
+	viewTransitionProgress     float64
+	viewTransitionFrame        int
+	viewTransitioning          bool
+	cardTransitionProgress     float64
+	cardTransitionFrame        int
+	cardTransitioning          bool
+	cardTransitionDir          int // -1 for up, 1 for down
 	aiProvider                 ai.Provider
 	aiProviderName             string
 	dictionaryProvider         string
@@ -698,6 +709,45 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.logger.Debug("Card fully revealed")
 			} else {
 				return m, m.tickReveal()
+			}
+		}
+	case flipTickMsg:
+		if m.revealState == RevealFlipping {
+			m.flipFrame++
+			m.flipProgress += 10
+			if m.flipProgress >= 100 {
+				m.flipProgress = 100
+				m.revealState = RevealRevealing
+				m.revealProgress = 0
+				m.logger.Debug("Flip complete, starting reveal")
+				return m, m.tickReveal()
+			}
+			return m, m.tickFlip()
+		}
+	case viewTransitionTickMsg:
+		if m.viewTransitioning {
+			m.viewTransitionFrame++
+			m.viewTransitionProgress += 10
+			if m.viewTransitionProgress >= 100 {
+				m.viewTransitionProgress = 100
+				m.viewTransitioning = false
+				m.prevView = ""
+				m.logger.Debug("View transition complete")
+			} else {
+				return m, m.tickViewTransition()
+			}
+		}
+	case cardTransitionTickMsg:
+		if m.cardTransitioning {
+			m.cardTransitionFrame++
+			m.cardTransitionProgress += 15
+			if m.cardTransitionProgress >= 100 {
+				m.cardTransitionProgress = 100
+				m.cardTransitioning = false
+				m.cardTransitionDir = 0
+				m.logger.Debug("Card transition complete")
+			} else {
+				return m, m.tickCardTransition()
 			}
 		}
 	case tea.WindowSizeMsg:
@@ -1724,6 +1774,9 @@ func (m *Model) tickSpinner() tea.Cmd {
 
 type spinnerTickMsg struct{}
 type revealTickMsg struct{}
+type flipTickMsg struct{}
+type viewTransitionTickMsg struct{}
+type cardTransitionTickMsg struct{}
 
 func (m *Model) startRevealAnimation(card core.Card) tea.Cmd {
 	if m.revealSpeed == 0 {
@@ -1737,9 +1790,10 @@ func (m *Model) startRevealAnimation(card core.Card) tea.Cmd {
 		}
 		return nil
 	}
-	m.revealState = RevealRevealing
-	m.revealProgress = 0
-	cmds := []tea.Cmd{m.tickReveal()}
+	m.revealState = RevealFlipping
+	m.flipProgress = 0
+	m.flipFrame = 0
+	cmds := []tea.Cmd{m.tickFlip()}
 	if m.autoPlayAudio {
 		cmds = append(cmds, m.playCardAudio(card))
 	}
@@ -1749,6 +1803,24 @@ func (m *Model) startRevealAnimation(card core.Card) tea.Cmd {
 func (m *Model) tickReveal() tea.Cmd {
 	return tea.Tick(time.Millisecond*60, func(t time.Time) tea.Msg {
 		return revealTickMsg{}
+	})
+}
+
+func (m *Model) tickFlip() tea.Cmd {
+	return tea.Tick(time.Millisecond*30, func(t time.Time) tea.Msg {
+		return flipTickMsg{}
+	})
+}
+
+func (m *Model) tickViewTransition() tea.Cmd {
+	return tea.Tick(time.Millisecond*30, func(t time.Time) tea.Msg {
+		return viewTransitionTickMsg{}
+	})
+}
+
+func (m *Model) tickCardTransition() tea.Cmd {
+	return tea.Tick(time.Millisecond*30, func(t time.Time) tea.Msg {
+		return cardTransitionTickMsg{}
 	})
 }
 

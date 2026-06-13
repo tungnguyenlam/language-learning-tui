@@ -311,21 +311,21 @@ def test_mouse_tabs_open_import_ai_and_settings_views():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
-            # Stats tab (Middle approx X=33)
-            agent.click(34, 3)
+            # Stats tab - tab bar is at y=2 in medium breakpoint
+            agent.click(29, 2)
             agent.wait_for_text("Statistics")
 
-            # Import tab (Middle approx X=44)
-            agent.click(45, 3)
+            # Import tab
+            agent.click(39, 2)
             agent.wait_for_text("Import / Export")
             agent.assert_text("[i] Import TSV")
 
-            # AI tab (Middle approx X=50)
-            agent.click(51, 3)
+            # AI tab
+            agent.click(47, 2)
             agent.wait_for_text("Topic:")
 
-            # Settings tab (Middle approx X=57)
-            agent.click(58, 3)
+            # Settings tab
+            agent.click(51, 2)
             agent.wait_for_text("SETTINGS")
         finally:
             agent.close()
@@ -359,8 +359,8 @@ def test_mouse_tab_navigation_and_grade_button():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
-            # Medium layout tab row starts on terminal row 3
-            agent.click(22, 3)
+            # Medium layout tab row is at terminal row 2 (1-based)
+            agent.click(22, 2)
             agent.wait_for_text("Review 1/52")
             agent.act("<Enter>")
             agent.wait_for_text("Grade: a Again")
