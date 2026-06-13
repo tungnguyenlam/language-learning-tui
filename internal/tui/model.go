@@ -224,6 +224,7 @@ type Model struct {
 	dictionaryDetailScroll     int
 	dictionaryDetailTotalLines int
 	dictionaryDetailView       bool
+	dictionaryFocusResults     bool
 	dictionaryOverlayActive    bool
 	isErrorStatus              bool
 	searchingTags              bool
@@ -1728,6 +1729,9 @@ func (m *Model) startRevealAnimation(card core.Card) tea.Cmd {
 	if m.revealSpeed == 0 {
 		m.revealState = RevealRevealed
 		m.revealProgress = 100
+		if m.activeView == ViewCram {
+			m.cramRevealed = true
+		}
 		if m.autoPlayAudio {
 			return m.playCardAudio(card)
 		}

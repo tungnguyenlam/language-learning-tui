@@ -40,6 +40,7 @@ func (m *Model) updateView(view View) tea.Cmd {
 	if view == ViewDictionary && m.activeView != ViewDictionary {
 		m.dictionaryPreviousView = m.activeView
 		m.dictionaryDetailView = false
+		m.dictionaryFocusResults = false
 	}
 	m.activeView = view
 	m.isDragging = false
@@ -96,16 +97,7 @@ func (m *Model) updateView(view View) tea.Cmd {
 		m.practiceSubView = PracticeSubViewHub
 		m.practiceHubCursor = 0
 		m.status = "Practice Hub: Choose a trainer"
-		return tea.Batch(
-			m.loadPracticeItems(),
-			m.loadConjugationItems(),
-			m.loadCaseItems(),
-			m.loadAdjectiveItems(),
-			m.loadPrepositionItems(),
-			m.loadPluralItems(),
-			m.loadSeparableItems(),
-			m.loadNumberItems(),
-		)
+		return nil // Loaders are called when entering specific modes
 	}
 
 	if view == ViewDashboard || view == ViewReview {

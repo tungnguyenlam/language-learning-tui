@@ -231,7 +231,7 @@ func (m *Model) textInputActive() bool {
 		m.searchingTags ||
 		m.searchingDecks ||
 		m.searchingAI ||
-		m.activeView == ViewDictionary ||
+		(m.activeView == ViewDictionary && !m.dictionaryFocusResults) ||
 		m.dictionaryOverlayActive ||
 		m.drafting // AI drafting also uses input
 }
@@ -1978,19 +1978,33 @@ func (m *Model) updateConjugationKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	key := msg.String()
 	switch key {
-	case "up":
-		if m.dictionaryDetailView {
-			if m.dictionaryDetailScroll > 0 {
-				m.dictionaryDetailScroll--
+	case "up", "k":
+		if m.dictionaryFocusResults {
+			if m.dictionaryCursor == 0 {
+				m.dictionaryFocusResults = false
+				return nil, true
+			}
+			if m.dictionaryDetailView {
+				if m.dictionaryDetailScroll > 0 {
+					m.dictionaryDetailScroll--
+				}
+				return nil, true
+			}
+			if m.dictionaryCursor > 0 {
+				m.dictionaryCursor--
+				m.dictionaryDetailScroll = 0
 			}
 			return nil, true
 		}
-		if m.dictionaryCursor > 0 {
-			m.dictionaryCursor--
-			m.dictionaryDetailScroll = 0
+		return nil, false
+	case "down", "j":
+		if !m.dictionaryFocusResults {
+			if len(m.dictionaryResults) > 0 {
+				m.dictionaryFocusResults = true
+				return nil, true
+			}
+			return nil, false
 		}
-		return nil, true
-	case "down":
 		if m.dictionaryDetailView {
 			maxScroll := maxInt(0, m.dictionaryDetailTotalLines-dictionaryVisibleRows(m.activeViewContentLayout()))
 			if m.dictionaryDetailScroll < maxScroll {
@@ -2115,7 +2129,13 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			destView = m.dictionaryPreviousView
 		}
 		return m.updateView(destView), true
-	case "tab", "shift+tab", "left", "right":
+	case "tab":
+		if len(m.dictionaryResults) > 0 {
+			m.dictionaryFocusResults = !m.dictionaryFocusResults
+			return nil, true
+		}
+		return nil, false
+	case "shift+tab", "left", "right":
 		return nil, false
 	}
 

@@ -98,6 +98,26 @@ def cmd_stop(args):
     except ConnectionRefusedError:
         print("Daemon is not running.")
 
+def cmd_wait_stable(args):
+    try:
+        client = get_client(args.port)
+        res = client.wait_until_stable(args.timeout, args.min_stable)
+        if res != "OK":
+            print(res)
+    except ConnectionRefusedError:
+        print("Error: Could not connect to daemon. Is it running?")
+        sys.exit(1)
+
+def cmd_wait_for(args):
+    try:
+        client = get_client(args.port)
+        res = client.wait_for_text(args.text, args.timeout)
+        if res != "OK":
+            print(res)
+    except ConnectionRefusedError:
+        print("Error: Could not connect to daemon. Is it running?")
+        sys.exit(1)
+
 def main():
     parser = argparse.ArgumentParser(description="TUI Tester CLI")
     subparsers = parser.add_subparsers(dest="action", required=True)
@@ -132,6 +152,18 @@ def main():
     drag_p.add_argument("--button", type=int, default=0)
     drag_p.add_argument("--port", type=int, default=8765, help="Port for the daemon")
 
+    # Wait Stable
+    wait_s_p = subparsers.add_parser("wait-stable", help="Wait until the UI stops changing")
+    wait_s_p.add_argument("--timeout", type=float, default=5.0)
+    wait_s_p.add_argument("--min-stable", type=float, default=0.5)
+    wait_s_p.add_argument("--port", type=int, default=8765)
+
+    # Wait For
+    wait_f_p = subparsers.add_parser("wait-for", help="Wait for specific text to appear")
+    wait_f_p.add_argument("text", help="Text to wait for")
+    wait_f_p.add_argument("--timeout", type=float, default=5.0)
+    wait_f_p.add_argument("--port", type=int, default=8765)
+
     # Stop
     stop_p = subparsers.add_parser("stop", help="Stop the TUI daemon")
     stop_p.add_argument("--port", type=int, default=8765, help="Port for the daemon")
@@ -155,6 +187,10 @@ def main():
         cmd_click(args)
     elif args.action == "drag":
         cmd_drag(args)
+    elif args.action == "wait-stable":
+        cmd_wait_stable(args)
+    elif args.action == "wait-for":
+        cmd_wait_for(args)
     elif args.action == "stop":
         cmd_stop(args)
 

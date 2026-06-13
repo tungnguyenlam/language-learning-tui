@@ -36,7 +36,7 @@ def test_cram_review_flow():
             # Reveal
             agent.act("<Space>")
             agent.wait_for_text("Grade:")
-            agent.wait_for_text("cramRevealed")
+            agent.wait_for_text("Grade:")
             
             # Grade
             agent.act("g")

@@ -79,6 +79,7 @@ def test_browser_finds_bureaucracy_vocabulary():
             agent.act("/")
             type_text(agent, "Meldebescheinigung")
             agent.wait_for_text("Meldebescheinigung")
+            agent.wait_until_stable()
             agent.assert_text("registration certificate")
         finally:
             agent.close()
@@ -95,6 +96,7 @@ def test_browser_finds_digital_privacy_vocabulary():
             agent.act("/")
             type_text(agent, "Datenschutz")
             agent.wait_for_text("Datenschutz")
+            agent.wait_until_stable()
             agent.assert_text("data protection")
         finally:
             agent.close()
@@ -140,7 +142,7 @@ def test_mouse_click_side_navigation_opens_ai_view():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
-            agent.click(5, 10)
+            agent.click(5, 9)
             agent.wait_for_text("Topic:")
             agent.assert_text("B2 digital privacy")
         finally:

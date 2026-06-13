@@ -1841,6 +1841,7 @@ func TestCramReviewFlow(t *testing.T) {
 		},
 	}
 	model := NewModel(repo, &mockScheduler{})
+	model.revealSpeed = 0
 	model.activeView = ViewCram
 	model.cramCards = repo.dueCards
 	model.cramType = "bookmarked"

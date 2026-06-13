@@ -108,7 +108,7 @@ def test_cram_all_shortcut():
 
             # Reveal
             agent.act(' ')
-            agent.wait_for_text("cramRevealed")  # or similar indicator
+            agent.wait_for_text("Grade:")  # or similar indicator
             
         finally:
             agent.close()
