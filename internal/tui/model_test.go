@@ -14,6 +14,7 @@ import (
 	"deutsch-tui/internal/core"
 
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
 	"github.com/charmbracelet/x/ansi"
 )
 
@@ -2815,5 +2816,37 @@ func TestApplyOverlay(t *testing.T) {
 	}
 	if !strings.Contains(stripped, "OVERLAY") {
 		t.Errorf("applyOverlay should contain OVERLAY, got:\n%s", stripped)
+	}
+
+	wideBase := strings.Repeat("X", 40) + "GHOST" + strings.Repeat("Y", 20)
+	overlayBox := strings.Repeat(" ", 10) + "BOX" + strings.Repeat(" ", 7)
+	result = m.applyOverlay(wideBase, overlayBox)
+	stripped = ansi.Strip(result)
+	if strings.Contains(stripped, "GHOST") {
+		t.Errorf("applyOverlay should clear underlying content in overlay region, got:\n%s", stripped)
+	}
+	if !strings.Contains(stripped, "BOX") {
+		t.Errorf("applyOverlay should contain overlay content, got:\n%s", stripped)
+	}
+}
+
+func TestFillViewportContent(t *testing.T) {
+	layout := viewportLayout{Width: 10, Height: 3}
+	filled := fillViewportContent("short\nline", layout)
+	lines := strings.Split(filled, "\n")
+	if len(lines) != 3 {
+		t.Fatalf("expected 3 lines, got %d: %q", len(lines), filled)
+	}
+	if lipgloss.Width(lines[0]) != 10 {
+		t.Fatalf("expected padded width 10, got %d for %q", lipgloss.Width(lines[0]), lines[0])
+	}
+	if lines[2] != strings.Repeat(" ", 10) {
+		t.Fatalf("expected blank padded line, got %q", lines[2])
+	}
+
+	tall := strings.Join([]string{strings.Repeat("W", 20), strings.Repeat("X", 20), strings.Repeat("Y", 20)}, "\n")
+	filled = fillViewportContent(tall, layout)
+	if filled != tall {
+		t.Fatalf("expected tall content to pass through unchanged, got %q", filled)
 	}
 }

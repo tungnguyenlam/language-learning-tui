@@ -229,7 +229,7 @@ func TestPracticeHubVisuals(t *testing.T) {
 	view := model.renderPracticeHub(viewportLayout{Width: 80, Height: 24})
 
 	// Check for some icons and colors in the view (using substrings)
-	icons := []string{"🚻", "🔄", "📐", "🎨", "📍", "👥", "✂️", "🔢", "🔗"}
+	icons := []string{"🚻", "🔄", "📐", "🎨", "📍", "👥", "S/", "🔢", "🔗"}
 	for _, icon := range icons {
 		if !strings.Contains(view, icon) {
 			t.Errorf("Expected icon %s in Practice Hub view", icon)

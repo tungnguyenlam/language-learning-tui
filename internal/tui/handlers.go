@@ -75,6 +75,8 @@ func (m *Model) updateView(view View) tea.Cmd {
 	m.fixCardID = ""
 	m.fixError = ""
 
+	m.refreshViewStatus()
+
 	if view == ViewImport {
 		m.exportDeckID = m.deck.ID
 	}
@@ -116,6 +118,50 @@ func (m *Model) updateView(view View) tea.Cmd {
 	}
 
 	return nil
+}
+
+func (m *Model) refreshViewStatus() {
+	m.isErrorStatus = false
+	switch m.activeView {
+	case ViewReview:
+		if len(m.dueCards) > 0 {
+			m.status = fmt.Sprintf("%d cards due in %s", len(m.dueCards), m.deckLabel())
+		} else {
+			m.status = "No cards due"
+		}
+	case ViewBrowser:
+		if len(m.browserCards) > 0 {
+			m.status = fmt.Sprintf("%d cards found", len(m.browserCards))
+		} else {
+			m.status = "No cards found"
+		}
+	case ViewStatistics:
+		if m.stats.TotalCards > 0 {
+			m.status = fmt.Sprintf("%d cards in collection", m.stats.TotalCards)
+		} else {
+			m.status = "Ready"
+		}
+	case ViewCram:
+		if len(m.cramCards) > 0 {
+			m.status = fmt.Sprintf("%d cards in cram mode", len(m.cramCards))
+		} else {
+			m.status = "No cards found for this filter"
+		}
+	case ViewPractice:
+		if m.practiceSubView == PracticeSubViewHub {
+			m.status = "Practice Hub: Choose a trainer"
+		}
+	case ViewDictionary:
+		if m.dictionarySearch != "" && len(m.dictionaryResults) > 0 {
+			m.status = fmt.Sprintf("Found %d dictionary results", len(m.dictionaryResults))
+		} else if m.dictionarySearch != "" {
+			m.status = fmt.Sprintf("No dictionary results for %q", m.dictionarySearch)
+		} else {
+			m.status = "Ready"
+		}
+	default:
+		m.status = "Ready"
+	}
 }
 
 func (m *Model) enterPracticeMode(mode PracticeSubView) tea.Cmd {

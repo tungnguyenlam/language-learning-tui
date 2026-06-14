@@ -252,6 +252,26 @@ func padLine(line string, width int) string {
 	return line + strings.Repeat(" ", padding)
 }
 
+// fillViewportContent pads content to the viewport height and width when the
+// rendered view is shorter than the panel interior, preventing stale
+// characters from prior frames bleeding through. Content taller than the
+// viewport is left intact so scrollable views keep list layout and hitboxes.
+func fillViewportContent(content string, layout viewportLayout) string {
+	lines := strings.Split(strings.TrimSuffix(content, "\n"), "\n")
+	if len(lines) >= layout.Height {
+		return content
+	}
+	filled := make([]string, layout.Height)
+	for i := 0; i < layout.Height; i++ {
+		line := ""
+		if i < len(lines) {
+			line = lines[i]
+		}
+		filled[i] = padLine(truncateLine(line, layout.Width), layout.Width)
+	}
+	return strings.Join(filled, "\n")
+}
+
 func scrollbarThumb(totalLines, visibleLines, offset int) (int, int) {
 	if totalLines <= 0 || visibleLines <= 0 || totalLines <= visibleLines {
 		return 0, 0

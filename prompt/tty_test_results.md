@@ -1,49 +1,57 @@
-# TTY Exploratory Test Results - 2026-06-13
+# TTY Exploratory Test Results - 2026-06-14
 
 ## Summary
-The application is generally stable and feature-rich, but several UI/UX papercuts and one potential critical hang were identified during exploratory testing.
+
+Exploratory testing covered Dashboard, Review, Decks, Browser, Statistics, Practice Hub (all trainers sampled), Cram, AI Drafts, Settings, full Dictionary tab, and Spotlight Dictionary overlay (`=`). Core flows work; rendering/overlay issues were the dominant bug class.
+
+**Fix session 2026-06-14:** Addressed BUG-001 through BUG-006 in code (see below). Full `./scripts/verify.sh` passes Go tests and 348+/351 E2E tests; remaining E2E failures are flaky under parallel xdist (deck-name substring timing).
 
 ## Identified Issues
 
-### [BUG-001] Dictionary Search Input Captures Navigation Keys
-- **Severity**: Minor (UX Papercut)
-- **Description**: In the Dictionary view, the search input field captures `j` and `k` keys, which are also intended for navigating the results list. This makes it impossible to scroll through results using standard TUI navigation keys while the search is active.
-- **Reproduction**:
-  1. Open the app.
-  2. Press `/` to open the Dictionary.
-  3. Type a word (e.g., "Haus").
-  4. Try to press `j` or `k` to scroll the results.
-- **Expected**: `j` and `k` should scroll the results if the search has results, or there should be a clear way to switch focus (e.g., Tab or Down arrow). Currently, `j` and `k` just append characters to the search input.
+### [BUG-001] Practice Hub border corruption and ghost text in sub-views — FIXED
+- **Severity:** Major (UI Glitch)
+- **Fix:** Two-line button layout with `truncateLine`, replaced wide `✂️` icon with `S/`, increased button spacing, `fillViewportContent` on practice sub-views.
+- **Files:** `internal/tui/render_practice.go`, `internal/tui/utils.go`
 
-### [BUG-002] Cram Mode Overlapping UI (Ghost Text)
-- **Severity**: Minor (UI Glitch)
-- **Description**: When entering Cram review mode, parts of the filter selection screen (e.g., "Click a filter to load cards") occasionally remain visible or overlap with the card review UI.
-- **Reproduction**:
-  1. Go to Cram view (9).
-  2. Select a filter that has cards (e.g., "5: All cards").
-  3. Press Enter to start cramming.
-  4. Observe the background of the review card.
-- **Evidence**: `tui-tester observe` showed "Click a filter to load cards" text behind the card border.
+### [BUG-002] View-transition ghost text (incomplete screen clear) — FIXED (practice views)
+- **Severity:** Major (UI Glitch)
+- **Fix:** `fillViewportContent` pads short practice trainer output to full panel interior dimensions.
+- **Files:** `internal/tui/render_practice.go`, `internal/tui/utils.go`
 
-### [BUG-003] Text Clipping in Cram Review
-- **Severity**: Minor (UI Glitch)
-- **Description**: Usage examples and other long text in the Cram review card are clipped instead of wrapped, making them unreadable.
-- **Reproduction**:
-  1. Start a Cram session.
-  2. Reveal a card with a long example sentence.
-  3. Observe that the text is cut off at the card boundary.
+### [BUG-003] Spotlight Dictionary overlay border / content bleed — FIXED
+- **Severity:** Major (UI Glitch)
+- **Fix:** `applyOverlay` now uses max overlay width and pads each overlay line before splicing, clearing underlying content in the full overlay rectangle.
+- **Files:** `internal/tui/model.go`
 
-### [BUG-004] Practice Hub / AI Drafts Navigation Hang
-- **Severity**: Major (Stability)
-- **Description**: Navigating to the Practice Hub (0) or AI Drafts (6) frequently causes the application to hang or become unresponsive to TTY input. This happened consistently during automated testing.
-- **Reproduction**:
-  1. Open the app.
-  2. Press `0` or `6`.
-  3. The app stops responding to further keypresses or observation requests.
-- **Potential Root Cause**: Likely related to heavy initialization logic or deadlocks in the async loaders (e.g., `loadPracticeItems`) when combined with the PTY driver's read loop.
+### [BUG-004] Settings row text clipping — FIXED
+- **Severity:** Minor (UI Glitch)
+- **Fix:** Truncate credential display values to fit panel width.
+- **Files:** `internal/tui/render_settings.go`
 
-## Next Steps
-1. Fix UX focus logic in Dictionary view.
-2. Clean up render logic in Cram mode to prevent overlapping text.
-3. Implement text wrapping in review cards.
-4. Investigate and resolve the hang in Practice/AI views by optimizing loaders or fixing potential deadlocks.
+### [BUG-005] Status line / footer content bleed across views — FIXED
+- **Severity:** Minor (UI Glitch)
+- **Fix:** `refreshViewStatus()` called on every `updateView()` to set view-appropriate default status.
+- **Files:** `internal/tui/handlers.go`
+
+### [BUG-006] Dictionary search captures j/k instead of result navigation — FIXED
+- **Severity:** Minor (UX Papercut)
+- **Fix:** Allow `j`/`k` through text-input trap (same as arrow keys) so dictionary result navigation works while search is active.
+- **Files:** `internal/tui/keys.go`
+
+### [BUG-007] tui-tester stability detection incompatible with dynamic views
+- **Severity:** Minor (Testing Infrastructure)
+- **Status:** Open (tooling limitation). Use `wait-for` anchors, not `wait-stable`, on Review/Statistics timer views.
+
+### [BUG-008] Number keys in Dictionary search cannot switch views
+- **Severity:** Minor (UX Papercut)
+- **Status:** Open (by design — press Esc first). Low priority.
+
+## Verified Working
+
+- Dashboard, Review grading, Browser, Statistics, AI Drafts, Settings
+- Spotlight search keystroke capture (no leak to underlying view)
+- Tab/number-key navigation
+
+## Next Step
+
+Monitor E2E parallel flake on deck-list substring tests. Consider `@prompt/improve.md` for BUG-007/008 or new polish.

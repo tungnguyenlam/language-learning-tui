@@ -1,10 +1,28 @@
 # Active Backlog
 
-Last updated: 2026-06-12
+Last updated: 2026-06-14
 
 ## Current Milestone
 
 Polish and Reliability - IN PROGRESS.
+
+## Completed Work (2026-06-14 TTY Fix Session)
+
+- [x] **BUG-001 Practice Hub borders/ghost text:** Two-line truncated buttons, `S/` icon, practice sub-view `fillViewportContent`.
+- [x] **BUG-002 Practice view-transition ghost text:** Pad short trainer content to panel interior height.
+- [x] **BUG-003 Spotlight overlay bleed:** `applyOverlay` pads to max overlay width before splice.
+- [x] **BUG-004 Settings credential clipping:** Truncate long credential rows to panel width.
+- [x] **BUG-005 Status line bleed:** `refreshViewStatus()` on `updateView()`.
+- [x] **BUG-006 Dictionary j/k navigation:** Allow vim keys through text-input trap.
+
+## Exact Next Action
+
+Monitor parallel E2E flake on deck-list tests. Optional: dictionary Esc-to-blur for view number keys (BUG-008).
+
+## Top Issues (from TTY Testing 2026-06-14)
+
+1. **MINOR - BUG-007:** tui-tester stability detection incompatible with dynamic/timer views.
+2. **MINOR - BUG-008:** Number keys in Dictionary search cannot switch views without Esc.
 
 ## Completed Work
 
@@ -92,28 +110,14 @@ Polish and Reliability - IN PROGRESS.
 - [x] **AI Suggestion Duplicate Fix:** Removed duplicate `{"grammar breakdown", "explain German grammar"}` entry from the AI suggestions slice in `internal/tui/render_ai.go`, replacing the second occurrence with a new `{"A2 doctor & health", "medical German"}` suggestion to expand the suggestion list.
 - [x] **A2 Work & Office Deck:** Added a new practical A2 deck with 200+ cards covering workplace vocabulary, office communication, business terminology, HR concepts, and professional interactions. Includes both a Go deck (`a2_work_office.go`) and an embedded TSV deck (`a2-work-office.tsv`) with full registry coverage. Added E2E test `test_a2_work_office_deck.py` to verify deck loading and search functionality.
 
-## Exact Next Action
-
-Run `@prompt/improve.md` to fix bugs discovered in TTY exploratory testing (see `prompt/tty_test_results.md`).
-
-## Top Issues (from TTY Testing 2026-06-12)
-
-1. **CRITICAL - BUG-001:** Dictionary Spotlight overlay keystroke capture broken — typed characters leak to underlying view instead of Spotlight search bar.
-2. **MAJOR - BUG-002:** ANSI escape sequences leak into visible UI (status line, Dashboard, Statistics).
-3. **MINOR - BUG-003:** Help overlay text wrapping artifacts (Cram/Practice word breaks).
-4. **MINOR - BUG-004:** Dashboard Daily Digest text clipping.
-5. **MINOR - BUG-005:** Browser status line content bleed from help overlay.
-6. **MINOR - BUG-006:** `/` key context-dependent behavior inconsistency.
-7. **MINOR - BUG-007:** tui-tester stability detection incompatible with timer views.
-
 ## Top Issues / Priorities
 
 None.
 
 ## Last Verified
 
-- `PATH="/opt/homebrew/bin:$PATH" go test ./internal/...` passed on 2026-06-11.
-- `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` passed on 2026-06-11: Go unit tests, smoke tests, binary builds, and 350+ E2E tests all passed (including conjunction trainer expansion, practice hints, practice navigation, review undo aliases, spotlight narrow scrollbar, explanation toggles, input query clipping, and review header click hitboxes).
+- `PATH="/opt/homebrew/bin:$PATH" go test ./internal/...` passed on 2026-06-14.
+- `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` Go tests + smoke + 348/351 E2E passed on 2026-06-14 (3 parallel flake failures on deck-list substring waits).
 
 ## Blockers
 

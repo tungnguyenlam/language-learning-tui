@@ -112,7 +112,7 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if m.textInputActive() {
 		m.logger.Debug("Text input active, trapping key: %s", key)
 		// Only allow certain keys to escape trapping
-		if key != "tab" && key != "shift+tab" && key != "left" && key != "right" && key != "up" && key != "down" {
+		if key != "tab" && key != "shift+tab" && key != "left" && key != "right" && key != "up" && key != "down" && key != "j" && key != "k" {
 			// If it's a view-specific key for the active editing view, handle it
 			if cmd, handled := m.updateActiveViewKey(msg); handled {
 				m.logger.Debug("Key %s handled by active view despite text input", key)

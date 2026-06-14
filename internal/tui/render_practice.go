@@ -13,23 +13,23 @@ func (m *Model) renderPractice(layout viewportLayout) string {
 	case PracticeSubViewHub:
 		return m.renderPracticeHub(layout)
 	case PracticeSubViewGender:
-		return m.renderGenderTrainer(layout)
+		return fillViewportContent(m.renderGenderTrainer(layout), layout)
 	case PracticeSubViewConjugation:
-		return m.renderConjugation(layout)
+		return fillViewportContent(m.renderConjugation(layout), layout)
 	case PracticeSubViewCase:
-		return m.renderCaseTrainer(layout)
+		return fillViewportContent(m.renderCaseTrainer(layout), layout)
 	case PracticeSubViewAdjective:
-		return m.renderAdjectiveTrainer(layout)
+		return fillViewportContent(m.renderAdjectiveTrainer(layout), layout)
 	case PracticeSubViewPreposition:
-		return m.renderPrepositionTrainer(layout)
+		return fillViewportContent(m.renderPrepositionTrainer(layout), layout)
 	case PracticeSubViewPlural:
-		return m.renderPluralTrainer(layout)
+		return fillViewportContent(m.renderPluralTrainer(layout), layout)
 	case PracticeSubViewSeparable:
-		return m.renderSeparableTrainer(layout)
+		return fillViewportContent(m.renderSeparableTrainer(layout), layout)
 	case PracticeSubViewNumbers:
-		return m.renderNumberTrainer(layout)
+		return fillViewportContent(m.renderNumberTrainer(layout), layout)
 	case PracticeSubViewConjunctions:
-		return m.renderConjunctionTrainer(layout)
+		return fillViewportContent(m.renderConjunctionTrainer(layout), layout)
 	}
 	return "Unknown Practice View"
 }
@@ -54,14 +54,14 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 		{"practice-adjective", "4", "Adjective Ending Trainer", "Practice weak/strong/mixed endings", PracticeSubViewAdjective, colorYellow, "🎨"},
 		{"practice-preposition", "5", "Preposition Trainer", "Practice two-way prepositions & cases", PracticeSubViewPreposition, colorPurple, "📍"},
 		{"practice-plural", "6", "Plural Trainer", "Practice German noun plural forms", PracticeSubViewPlural, colorSecondary, "👥"},
-		{"practice-separable", "7", "Separable Verb Trainer", "Practice verb prefixes and word order", PracticeSubViewSeparable, colorOrange, "✂️"},
+		{"practice-separable", "7", "Separable Verb Trainer", "Practice verb prefixes and word order", PracticeSubViewSeparable, colorOrange, "S/"},
 		{"practice-numbers", "8", "Numbers & Time", "Practice German numbers and time", PracticeSubViewNumbers, colorCyan, "🔢"},
 		{"practice-conjunctions", "9", "Conjunctions & Word Order", "Practice conjunctions & sentence structure", PracticeSubViewConjunctions, colorGreen, "🔗"},
 	}
 
-	spacing := 3
-	if layout.Height >= 36 {
-		spacing = 4
+	spacing := 4
+	if layout.Height >= 40 {
+		spacing = 5
 	}
 
 	getItemCount := func(sub PracticeSubView) int {
@@ -148,18 +148,21 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 		}
 
 		scoreStr := getScoreStr(mode.sub)
-		scoreRendered := ""
-		if scoreStr != "" {
-			scoreRendered = lipgloss.NewStyle().Foreground(lipgloss.Color("42")).Render(scoreStr)
-		}
 
-		keyHint := lipgloss.NewStyle().Bold(true).Foreground(mode.color).Render("[" + mode.key + "]")
-		iconStr := mode.icon + " "
-		content := fmt.Sprintf("%s%s %s%s %s%s\n%s", prefix, keyHint, iconStr, lipgloss.NewStyle().Foreground(mode.color).Bold(true).Render(mode.label), countStr, scoreRendered, mutedStyle.Render(mode.desc))
-		if spacing == 3 {
-			content = fmt.Sprintf("%s%s %s%s %s%s%s - %s", prefix, keyHint, iconStr, lipgloss.NewStyle().Foreground(mode.color).Bold(true).Render(mode.label), countStr, scoreRendered, "", mutedStyle.Render(mode.desc))
-			btnStyle = btnStyle.Padding(0, 1)
+		titlePlain := truncateLine(
+			fmt.Sprintf("%s[%s] %s %s%s", prefix, mode.key, mode.icon, mode.label, countStr),
+			btnWidth-4,
+		)
+		titleStyle := lipgloss.NewStyle().Bold(true).Foreground(mode.color)
+		if i == m.practiceHubCursor {
+			titleStyle = lipgloss.NewStyle().Bold(true).Foreground(colorPink)
 		}
+		descText := mode.desc
+		if scoreStr != "" {
+			descText = strings.TrimSpace(scoreStr) + " — " + mode.desc
+		}
+		descRendered := mutedStyle.Render(truncateLine(descText, btnWidth-4))
+		content := titleStyle.Render(titlePlain) + "\n" + descRendered
 
 		btn := btnStyle.Render(content)
 		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, btn) + "\n")
@@ -170,7 +173,7 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 			X:      layout.X + (layout.Width-btnWidth)/2,
 			Y:      layout.Y + 3 + (i * spacing),
 			Width:  btnWidth,
-			Height: spacing - 1,
+			Height: spacing,
 		})
 	}
 

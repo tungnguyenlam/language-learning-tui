@@ -167,7 +167,7 @@ func (m *Model) renderSettings(x, y int) string {
 				itemStyle = itemStyle.Bold(true).Foreground(lipgloss.Color("212"))
 			}
 		}
-		displayValue := row.value
+		displayValue := truncateLine(row.value, maxInt(20, layout.Width-lipgloss.Width(prefix+row.label)-4))
 		if m.editingSecretKey != "" && row.idx == m.settingsCursor {
 			raw := m.getCredValue(m.editingSecretProvider, m.editingSecretKey)
 			if m.editingSecretKey == "api_key" {

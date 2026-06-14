@@ -1590,13 +1590,22 @@ func (m *Model) renderStatus(x, y int) string {
 
 func (m *Model) applyOverlay(base, overlay string) string {
 	baseLines := strings.Split(base, "\n")
-	overlayLines := strings.Split(overlay, "\n")
+	overlayLines := strings.Split(strings.TrimSuffix(overlay, "\n"), "\n")
+	if len(overlayLines) == 0 {
+		return base
+	}
 
 	startY := (len(baseLines) - len(overlayLines)) / 2
 	if startY < 0 {
 		startY = 0
 	}
-	overlayWidth := lipgloss.Width(overlayLines[0])
+
+	overlayWidth := 0
+	for _, line := range overlayLines {
+		if w := lipgloss.Width(line); w > overlayWidth {
+			overlayWidth = w
+		}
+	}
 	startX := (m.width - overlayWidth) / 2
 	if startX < 0 {
 		startX = 0
@@ -1606,9 +1615,8 @@ func (m *Model) applyOverlay(base, overlay string) string {
 		if startY+i >= len(baseLines) {
 			break
 		}
-		baseLine := baseLines[startY+i]
-		lineLen := lipgloss.Width(line)
-		baseLines[startY+i] = spliceVisual(baseLine, startX, lineLen, line)
+		padded := padLine(line, overlayWidth)
+		baseLines[startY+i] = spliceVisual(baseLines[startY+i], startX, overlayWidth, padded)
 	}
 
 	return strings.Join(baseLines, "\n")
