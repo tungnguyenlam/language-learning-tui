@@ -107,3 +107,12 @@ tui-tester stop
 - **Card Loading Limits:** For large seeded collections (Standard Content), keep the default `DueCards` load cap comfortably above current seeded size (currently 20,000). Lower caps can cause some decks to appear empty in the Review view if their card IDs sort after the limit.
 - **E2E Test Selectors:** Prefer unique tags or specific substrings for E2E `wait_for_text` to avoid collisions between similar decks (e.g., "B1 Environment" vs "C1 Environment").
 - **Dictionary is a Spotlight Overlay:** Dictionary is NOT in the tab/arrow/WASD navigation cycle. It is a Spotlight-like overlay triggered by `=` from any view. The legacy full `ViewDictionary` tab still exists for `/` (Dashboard) and `d` (Review) shortcuts. E2E tests must not assume Dictionary in the tab cycle.
+
+## Shortcuts Reference
+
+- **Global Navigation:** `1-9` for primary views, `0` for Practice Hub. `Tab`/`Arrows` to cycle.
+- **Selection:** `m` for multi-select in Decks and Browser. `x` also works in Decks.
+- **Dictionary:** `=` for Spotlight (anywhere), `/` for full tab (Dashboard).
+- **Review:** `1-4` for grading, `Space`/`Enter` to reveal. `d` for Dictionary lookup.
+- **Practice:** `1-9` to select trainer within the Practice Hub.
+

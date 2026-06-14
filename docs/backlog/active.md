@@ -14,15 +14,18 @@ Polish and Reliability - IN PROGRESS.
 - [x] **BUG-004 Settings credential clipping:** Truncate long credential rows to panel width.
 - [x] **BUG-005 Status line bleed:** `refreshViewStatus()` on `updateView()`.
 - [x] **BUG-006 Dictionary j/k navigation:** Allow vim keys through text-input trap.
+- [x] **BUG-009 Practice Hub navigation [NEW]:** Added '0' to global navigation, fixed Cram mode blocking number keys.
+- [x] **BUG-010 Selection key consistency [NEW]:** Standardized 'm' for multi-select in Decks and Browser; fixed help documentation.
 
 ## Exact Next Action
 
-Monitor parallel E2E flake on deck-list tests. Optional: dictionary Esc-to-blur for view number keys (BUG-008).
+Monitor parallel E2E flake on deck-list tests.
 
 ## Top Issues (from TTY Testing 2026-06-14)
 
 1. **MINOR - BUG-007:** tui-tester stability detection incompatible with dynamic/timer views.
 2. **MINOR - BUG-008:** Number keys in Dictionary search cannot switch views without Esc.
+3. **MINOR - BUG-011 [NEW]:** macOS PTY exhaustion during parallel E2E tests (run with -n 4).
 
 ## Completed Work
 
