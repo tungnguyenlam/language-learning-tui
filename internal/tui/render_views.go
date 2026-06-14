@@ -19,7 +19,7 @@ func (m *Model) renderHelp(layout viewportLayout) string {
 
 	// Simplified: just render it as before, but maybe we can make some headers clickable to switch views
 	global := sectionStyle.Render("Global:") + "\n" +
-		"  1-9      Switch to view\n" +
+		"  1-9, 0   Switch to view\n" +
 		"  Tab/arr  Cycle views\n" +
 		"  w/s      Prev/next view\n" +
 		"  ?        Toggle help\n" +
@@ -31,8 +31,7 @@ func (m *Model) renderHelp(layout viewportLayout) string {
 		"  L        Edit deck limits\n" +
 		"  +/-      Adjust limits\n" +
 		"  !/@/#    Recent decks\n" +
-		"  Enter    Select deck\n" +
-		"  0        Practice"
+		"  Enter    Select deck"
 
 	review := sectionStyle.Render("Review:") + "\n" +
 		"  Spc/Ent  Reveal answer\n" +
@@ -403,7 +402,7 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 
 	footer := ""
 	if m.searchingDecks {
-		footer = "Press Enter or Esc to finish searching."
+		footer = "Press enter or Esc to finish searching."
 	} else {
 		selectedCount := 0
 		for _, s := range m.deckSelected {
@@ -415,8 +414,8 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 			footer = fmt.Sprintf("%d decks selected. Press %s to delete, %s to merge into current.", selectedCount,
 				keyStyle.Render("Backspace"), keyStyle.Render("M"))
 		} else {
-			footer = fmt.Sprintf("%s select | %s search | %s stats | %s multi-select | %s clear\nPress enter to select deck.",
-				keyStyle.Render("enter"), keyStyle.Render("/"), keyStyle.Render("v"), keyStyle.Render("x"), keyStyle.Render("Esc"))
+			footer = fmt.Sprintf("%s select | %s search | %s stats | %s/%s multi-select | %s clear\nPress enter to select deck.",
+				keyStyle.Render("enter"), keyStyle.Render("/"), keyStyle.Render("v"), keyStyle.Render("m"), keyStyle.Render("x"), keyStyle.Render("Esc"))
 		}
 	}
 

@@ -261,7 +261,7 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 	} else {
 		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 		ctx.WriteLine(fmt.Sprintf("\nUse %s/%s to navigate, %s to select, %s to select all, %s to play audio, %s to toggle kind, %s for tags, %s to cleanup tags, %s to search, %s for history, %s to delete.",
-			keyStyle.Render("j"), keyStyle.Render("k"), keyStyle.Render("m"), keyStyle.Render("a"), keyStyle.Render("p"), keyStyle.Render("t"), keyStyle.Render("T"), keyStyle.Render("C"), keyStyle.Render("/"), keyStyle.Render("Enter"), keyStyle.Render("Backspace")))
+			keyStyle.Render("j"), keyStyle.Render("k"), keyStyle.Render("m"), keyStyle.Render("a"), keyStyle.Render("p"), keyStyle.Render("t"), keyStyle.Render("T"), keyStyle.Render("C"), keyStyle.Render("/"), keyStyle.Render("enter"), keyStyle.Render("Backspace")))
 	}
 	return ctx.String()
 }

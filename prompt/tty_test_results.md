@@ -1,57 +1,33 @@
-# TTY Exploratory Test Results - 2026-06-14
+# TTY Exploratory Testing Results - 2026-06-14
 
 ## Summary
+Exploratory testing of `deutsch-tui` revealed a generally stable core UI with some significant performance/reliability issues in the `tui-tester` integration or the app's responsiveness to rapid input.
 
-Exploratory testing covered Dashboard, Review, Decks, Browser, Statistics, Practice Hub (all trainers sampled), Cram, AI Drafts, Settings, full Dictionary tab, and Spotlight Dictionary overlay (`=`). Core flows work; rendering/overlay issues were the dominant bug class.
+## Findings
 
-**Fix session 2026-06-14:** Addressed BUG-001 through BUG-006 in code (see below). Full `./scripts/verify.sh` passes Go tests and 348+/351 E2E tests; remaining E2E failures are flaky under parallel xdist (deck-name substring timing).
+### BUG-001: Tester/App Hangs During Rapid Navigation or Search [High]
+- **Description:** The `tui-tester` daemon or the `deutsch-tui` process frequently hangs (timeouts) when performing searches or switching views quickly. This was observed during Browser search and Dictionary lookup.
+- **Severity:** High (Impacts automated testing and potentially user experience if the app blocks on UI thread).
+- **Reproduction:**
+    1. Start app.
+    2. Go to Browser (shortcut '8').
+    3. Press '/' to search.
+    4. Type 'rot' and press Enter.
+    5. Occasionally hangs here.
 
-## Identified Issues
+### BUG-002: Practice Mode Shortcut Confusion [Minor]
+- **Description:** Shortcut '0' is listed for "Practice" in some views, but it navigates to "Cram Mode" in some contexts or shows "PRACTICE HUB" in others. The sidebar says "Practice [0]" but the navigation behavior was slightly inconsistent during testing.
+- **Severity:** Minor.
+- **Evidence:** Captured screen showing "DEUTSCH-TUI │ CRAM" when '0' was pressed.
 
-### [BUG-001] Practice Hub border corruption and ghost text in sub-views — FIXED
-- **Severity:** Major (UI Glitch)
-- **Fix:** Two-line button layout with `truncateLine`, replaced wide `✂️` icon with `S/`, increased button spacing, `fillViewportContent` on practice sub-views.
-- **Files:** `internal/tui/render_practice.go`, `internal/tui/utils.go`
+### BUG-003: UI Rendering Artifacts [Minor]
+- **Description:** Some screen captures showed overlapping text or partial renders (e.g., `deutsch-tui DASHBOARD │ wide──────────────────────────────────────────────────────────────────────────────╮` appearing inside the Practice Hub).
+- **Severity:** Minor (Visual).
+- **Evidence:** Multiple `tui-tester observe` outputs showed shifted borders and mixed view content.
 
-### [BUG-002] View-transition ghost text (incomplete screen clear) — FIXED (practice views)
-- **Severity:** Major (UI Glitch)
-- **Fix:** `fillViewportContent` pads short practice trainer output to full panel interior dimensions.
-- **Files:** `internal/tui/render_practice.go`, `internal/tui/utils.go`
+### BUG-004: Browser Multi-Select Instruction Error [Trivial]
+- **Description:** The footer says "Enter select" but 'm' is used for selection in the list. Enter actually reveals history or edits.
+- **Severity:** Trivial.
 
-### [BUG-003] Spotlight Dictionary overlay border / content bleed — FIXED
-- **Severity:** Major (UI Glitch)
-- **Fix:** `applyOverlay` now uses max overlay width and pads each overlay line before splicing, clearing underlying content in the full overlay rectangle.
-- **Files:** `internal/tui/model.go`
-
-### [BUG-004] Settings row text clipping — FIXED
-- **Severity:** Minor (UI Glitch)
-- **Fix:** Truncate credential display values to fit panel width.
-- **Files:** `internal/tui/render_settings.go`
-
-### [BUG-005] Status line / footer content bleed across views — FIXED
-- **Severity:** Minor (UI Glitch)
-- **Fix:** `refreshViewStatus()` called on every `updateView()` to set view-appropriate default status.
-- **Files:** `internal/tui/handlers.go`
-
-### [BUG-006] Dictionary search captures j/k instead of result navigation — FIXED
-- **Severity:** Minor (UX Papercut)
-- **Fix:** Allow `j`/`k` through text-input trap (same as arrow keys) so dictionary result navigation works while search is active.
-- **Files:** `internal/tui/keys.go`
-
-### [BUG-007] tui-tester stability detection incompatible with dynamic views
-- **Severity:** Minor (Testing Infrastructure)
-- **Status:** Open (tooling limitation). Use `wait-for` anchors, not `wait-stable`, on Review/Statistics timer views.
-
-### [BUG-008] Number keys in Dictionary search cannot switch views
-- **Severity:** Minor (UX Papercut)
-- **Status:** Open (by design — press Esc first). Low priority.
-
-## Verified Working
-
-- Dashboard, Review grading, Browser, Statistics, AI Drafts, Settings
-- Spotlight search keystroke capture (no leak to underlying view)
-- Tab/number-key navigation
-
-## Next Step
-
-Monitor E2E parallel flake on deck-list substring tests. Consider `@prompt/improve.md` for BUG-007/008 or new polish.
+## Conclusion
+The core learning and review loop works well. The app handles initial data import gracefully. The primary focus for "improve.md" should be stabilizing the UI responsiveness and fixing the inconsistent shortcuts.

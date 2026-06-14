@@ -1252,9 +1252,9 @@ func (m *Model) View() tea.View {
 		}
 	case ViewDecks:
 		if m.searchingDecks {
-			helpHint = "| Searching... | Stop: Esc/Enter"
+			helpHint = "| Searching... | Stop: Esc/enter"
 		} else {
-			helpHint = "| Search: / | Select: x | Study: Enter"
+			helpHint = "| Select: enter | Multi-select: m | Search: /"
 		}
 	case ViewStatistics:
 		helpHint = "| Scroll: j/k | Export: x"
@@ -1263,14 +1263,14 @@ func (m *Model) View() tea.View {
 			if m.cramRevealed {
 				helpHint = "| Grade: a/h/g/e | Quit: q"
 			} else {
-				helpHint = "| Reveal: Space/Enter"
+				helpHint = "| Reveal: Space/enter"
 			}
 		} else {
-			helpHint = "| Filter: 1-5 | Start: Enter"
+			helpHint = "| Filter: 1-5 | Start: enter"
 		}
 	case ViewPractice:
 		if m.practiceSubView == PracticeSubViewHub {
-			helpHint = "| Nav: j/k | Select: Enter | Trainer: 1-9 | Reset: r | Esc: back"
+			helpHint = "| Nav: j/k | Select: enter | Trainer: 1-9 | Reset: r | Esc: back"
 		} else {
 			switch m.practiceSubView {
 			case PracticeSubViewGender:
@@ -1289,16 +1289,16 @@ func (m *Model) View() tea.View {
 		}
 	case ViewBrowser:
 		if m.searchingBrowser {
-			helpHint = "| Searching... | Stop: Esc/Enter"
+			helpHint = "| Searching... | Stop: Esc/enter"
 		} else {
-			helpHint = "| Search: / | Bookmark: b | Suspend: x"
+			helpHint = "| Nav: j/k | Select: m | History: enter | Search: /"
 		}
 	case ViewSettings:
-		helpHint = "| Nav: j/k | Edit: Enter"
+		helpHint = "| Nav: j/k | Edit: enter"
 	case ViewImport:
-		helpHint = "| Import: Enter | Export: x"
+		helpHint = "| Import: enter | Export: x"
 	case ViewAI:
-		helpHint = "| Generate: Enter | Approve: a"
+		helpHint = "| Generate: enter | Approve: a"
 	}
 
 	statusText := singleLine(m.status)
@@ -1314,7 +1314,7 @@ func (m *Model) View() tea.View {
 	keyInfoStyle := lipgloss.NewStyle().Foreground(colorPink).Bold(true)
 	footerParts := []string{
 		keyInfoStyle.Render("tab/arrows") + " views",
-		keyInfoStyle.Render("1-9") + " views",
+		keyInfoStyle.Render("0-9") + " views",
 		keyInfoStyle.Render("?") + " help",
 		keyInfoStyle.Render("q") + " quit",
 	}
@@ -1353,7 +1353,7 @@ func (m *Model) View() tea.View {
 		statusLine := fmt.Sprintf("status: %s", statusText)
 		footer := strings.Join([]string{
 			keyInfoStyle.Render("tab/arrows") + " views",
-			keyInfoStyle.Render("1-9") + " views",
+			keyInfoStyle.Render("0-9") + " views",
 			keyInfoStyle.Render("?") + " help",
 			keyInfoStyle.Render("q") + " quit",
 		}, " │ ")

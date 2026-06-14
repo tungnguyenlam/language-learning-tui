@@ -248,9 +248,6 @@ func (m *Model) textInputActive() bool {
 
 func (m *Model) updateNumberKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	key := msg.String()
-	if m.activeView == ViewCram {
-		return nil, false
-	}
 	if m.textInputActive() {
 		return nil, false
 	}
@@ -679,7 +676,7 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.deckSelected[id] = !m.deckSelected[id]
 		}
 		return nil, true
-	case "x":
+	case "x", "m":
 		if len(filtered) > 0 {
 			id := filtered[m.deckCursor].ID
 			m.deckSelected[id] = !m.deckSelected[id]

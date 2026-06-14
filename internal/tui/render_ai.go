@@ -61,7 +61,7 @@ func (m *Model) renderAI(x, y int) string {
 	}
 	ctx.WriteLine(searchStyle.Render(fmt.Sprintf("%s: %s", searchLabel, displayText)))
 	ctx.WriteLine(fmt.Sprintf("\nPress %s to edit topic | %s generate | %s approve | %s discard | %s clear",
-		keyStyle.Render("/"), keyStyle.Render("Enter"), keyStyle.Render("a"), keyStyle.Render("d"), keyStyle.Render("esc")))
+		keyStyle.Render("/"), keyStyle.Render("enter"), keyStyle.Render("a"), keyStyle.Render("d"), keyStyle.Render("esc")))
 	if m.aiProvider == nil {
 		ctx.WriteLine(warnStyle.Render("AI provider is disabled. Enable Offline, Template, OpenAI, or Anthropic in Settings to generate drafts."))
 	}
