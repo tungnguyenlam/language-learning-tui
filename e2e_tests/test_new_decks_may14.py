@@ -9,7 +9,7 @@ from tui_tester.agent import TUIAgent
 
 def start_agent(tmpdir):
     app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
-    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir}', columns=110, lines=44)
+    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir} -test-mode', columns=110, lines=44)
     agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()
     return agent

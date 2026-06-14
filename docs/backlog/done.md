@@ -1,5 +1,29 @@
 # Done Backlog
 
+## 2026-06-14 (Dictionary Nav, E2E Stability & macOS PTY fix)
+
+### Bug Fixes
+- **Dictionary Navigation (BUG-008):** Number keys are no longer trapped by the Dictionary search input when it is empty, allowing for quick global navigation from both the full tab and the Spotlight overlay.
+- **macOS PTY Exhaustion (BUG-011):** Limited parallel E2E tests to 4 processes on macOS in `verify.sh` to prevent "out of pty devices" errors.
+- **ANSI-Aware Dictionary Highlights (BUG-001):** Fixed `padString` to use visual width tracking, preventing UI corruption when highlights occur near the end of a line.
+- **Plural Trainer Logic (BUG-002):** Fixed meaning extraction to correctly identify the non-German side for reversed cards.
+- **Dashboard Color Consistency (BUG-003):** Refactored `progressBar` to use theme-consistent style variables instead of hardcoded strings.
+
+### UI & UX Improvements
+- **E2E Test Mode:** Introduced a `-test-mode` flag and `testMode` model state that freezes dynamic elements like the review timer and card transition spinners. This ensures stable screen state for `tui-tester` matching.
+- **TUI Stability (BUG-007):** Resolved `tui-tester` instability by providing a consistent UI state in test mode.
+- **Overlay Auto-Close:** Dictionary overlay now automatically closes when switching views via global navigation.
+
+### Reliability & Testing
+- **E2E Test Suite Update:** Updated all 350+ E2E tests to automatically use the `-test-mode` flag.
+- **New Unit Tests:** Added `internal/tui/dictionary_nav_test.go` and `TestTestModeFreezesTimer` to verify navigation and stability features.
+
+### Verification
+- `go test ./...` passed.
+- `go run ./cmd/deutsch-tui -smoke` passed.
+- All 14 tests in `test_tui.py` passed with `-test-mode`.
+- `verify.sh` (unit + smoke + limited-parallel E2E) verified as much as local PTY limits allowed.
+
 ## 2026-06-11 (Practice Hub Visuals, Dashboard Session Stats, Reveal Speed)
 
 ### UI & UX Improvements

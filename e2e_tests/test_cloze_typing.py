@@ -13,7 +13,7 @@ def start_agent(tmpdir, columns=100, lines=30):
     # If we're running from tui_tester subdir, adjust path
     if not os.path.exists(app_cmd) and os.path.exists('../deutsch-tui-bin'):
         app_cmd = '../deutsch-tui-bin'
-    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir}', columns=columns, lines=lines)
+    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir} -test-mode', columns=columns, lines=lines)
     agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()
     return agent

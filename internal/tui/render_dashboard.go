@@ -60,26 +60,26 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 	dueMixBox := dashMixStyle.
 		Width(boxWidth).
 		Render(lipgloss.NewStyle().Foreground(colorSecondary).Bold(true).Render("Card Mix") + "\n" +
-			fmt.Sprintf("  New    %3d %s\n", m.stats.NewCards, progressBar(mixWidth, newPct, "81", "238")) +
-			fmt.Sprintf("  Young  %3d %s\n", m.stats.YoungCards, progressBar(mixWidth, youngPct, "220", "238")) +
-			fmt.Sprintf("  Mature %3d %s", m.stats.MatureCards, progressBar(mixWidth, maturePct, "46", "238")))
+			fmt.Sprintf("  New    %3d %s\n", m.stats.NewCards, progressBar(mixWidth, newPct, colorBlue, colorProgress)) +
+			fmt.Sprintf("  Young  %3d %s\n", m.stats.YoungCards, progressBar(mixWidth, youngPct, colorGold, colorProgress)) +
+			fmt.Sprintf("  Mature %3d %s", m.stats.MatureCards, progressBar(mixWidth, maturePct, colorGreen, colorProgress)))
 
 	percentage := 0.0
-	barColor := "46" // Green by default
+	var barColor color.Color = colorGreen
 	if m.stats.DailyGoal > 0 {
 		percentage = float64(m.stats.ReviewsToday) / float64(m.stats.DailyGoal)
 		if percentage >= 1.0 {
-			barColor = "220" // Gold when goal is met
+			barColor = colorGold
 		}
 	}
-	goalStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(barColor)).Bold(true)
-	bar := progressBar(maxInt(10, layout.Width/2-10), percentage, barColor, "238")
+	goalStyle := lipgloss.NewStyle().Foreground(barColor).Bold(true)
+	bar := progressBar(maxInt(10, layout.Width/2-10), percentage, barColor, colorProgress)
 	if isNarrow {
-		bar = progressBar(maxInt(10, layout.Width-14), percentage, barColor, "238")
+		bar = progressBar(maxInt(10, layout.Width-14), percentage, barColor, colorProgress)
 	}
 
 	progressBox := dashProgressStyle.
-		BorderForeground(lipgloss.Color(barColor)).
+		BorderForeground(barColor).
 		Width(boxWidth).
 		Render(goalStyle.Render("Today's Progress") + "\n" +
 			fmt.Sprintf("  Reviews:     %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal) +

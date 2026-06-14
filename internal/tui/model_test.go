@@ -2850,3 +2850,26 @@ func TestFillViewportContent(t *testing.T) {
 		t.Fatalf("expected tall content to pass through unchanged, got %q", filled)
 	}
 }
+
+func TestTestModeFreezesTimer(t *testing.T) {
+	repo := &mockRepo{}
+	model := NewModelWithOptions(repo, &mockScheduler{}, ModelOptions{
+		TestMode: true,
+	})
+	model.activeView = ViewReview
+	model.dueCards = []core.Card{{ID: "c1", Prompt: "P", Answer: "A"}}
+	model.sessionStartTime = time.Now().Add(-10 * time.Minute)
+
+	view := model.renderReview(0, 0)
+	if !strings.Contains(view, "00:00") {
+		t.Errorf("expected timer to be frozen at 00:00 in test mode, got:\n%s", view)
+	}
+
+	// Double check without test mode
+	model.testMode = false
+	view = model.renderReview(0, 0)
+	// Since it's 10 minutes ago, it should be 10:00 or similar
+	if strings.Contains(view, " 00:00") {
+		t.Errorf("expected timer NOT to be 00:00 without test mode, got:\n%s", view)
+	}
+}

@@ -11,7 +11,7 @@ from tui_tester.agent import TUIAgent
 
 def start_agent(tmpdir, columns=120, lines=60):
     app_cmd = os.getenv('DEUTSCH_TUI_BIN', './deutsch-tui-bin')
-    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir}', columns=columns, lines=lines)
+    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir} -test-mode', columns=columns, lines=lines)
     agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()
     return agent

@@ -4,7 +4,7 @@ import traceback
 from tui_tester.agent import TUIAgent
 
 def main():
-    agent = TUIAgent(command="go run ../cmd/deutsch-tui")
+    agent = TUIAgent(command="go run ../cmd/deutsch-tui -test-mode")
     print("Started TUI")
     
     keys = ["<Tab>", "<Enter>", "1", "2", "3", "4", "j", "k", "h", "l", "[", "]", "e", "C"]

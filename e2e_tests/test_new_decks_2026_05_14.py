@@ -9,7 +9,7 @@ from tui_tester.agent import TUIAgent
 
 def start_agent(tmpdir):
     app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
-    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir}', columns=110, lines=44)
+    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir} -test-mode', columns=110, lines=44)
     agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()
     return agent
@@ -75,7 +75,7 @@ def test_dashboard_verb_box_shows_english_meaning():
     # Use a taller terminal so the bottom Verb/Tip section is not clipped
     with tempfile.TemporaryDirectory() as tmpdir:
         app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
-        agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir}', columns=140, lines=60)
+        agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir} -test-mode', columns=140, lines=60)
         agent.wait_for_text("DASHBOARD", timeout=15.0)
         agent.wait_until_stable()
         try:

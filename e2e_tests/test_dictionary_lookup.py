@@ -13,7 +13,7 @@ def start_agent(tmpdir):
     subprocess.run(["go", "run", app_path, "-data-dir", tmpdir, "-smoke"], check=True)
     
     app_cmd = os.getenv('DEUTSCH_TUI_BIN', f'go run {app_path}')
-    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir}')
+    agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir} -test-mode')
     agent.wait_for_text("DASHBOARD", timeout=15.0)
     agent.wait_until_stable()
     return agent
@@ -57,7 +57,7 @@ def test_dictionary_single_column_details():
         
         # Start agent with narrow terminal columns=70 to force single-column layout
         app_cmd = os.getenv('DEUTSCH_TUI_BIN', f'go run {app_path}')
-        agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir}', columns=70, lines=30)
+        agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir} -test-mode', columns=70, lines=30)
         try:
             agent.wait_for_text("DASHBOARD", timeout=15.0)
             agent.wait_until_stable()

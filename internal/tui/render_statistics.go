@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"image/color"
 	"strings"
 	"time"
 
@@ -42,13 +43,13 @@ func (m *Model) renderStatistics(layout viewportLayout) string {
 	if m.stats.DailyGoal > 0 {
 		percentage = float64(m.stats.ReviewsToday) / float64(m.stats.DailyGoal)
 	}
-	barColor := "196"
+	var barColor color.Color = lipgloss.Color("196")
 	if percentage >= 1.0 {
-		barColor = "46"
+		barColor = lipgloss.Color("46")
 	} else if percentage >= 0.5 {
-		barColor = "226"
+		barColor = lipgloss.Color("226")
 	}
-	bar := progressBar(25, percentage, barColor, "238")
+	bar := progressBar(25, percentage, barColor, lipgloss.Color("238"))
 	col2.WriteString(fmt.Sprintf("  %s %s\n", bar, valueStyle.Render(fmt.Sprintf("%.0f%%", percentage*100))))
 
 	streakIndicator := ""
@@ -138,9 +139,9 @@ func (m *Model) renderStatistics(layout viewportLayout) string {
 		youngPct := float64(m.stats.YoungCards) / float64(totalKnown)
 		maturePct := float64(m.stats.MatureCards) / float64(totalKnown)
 
-		content.WriteString(fmt.Sprintf("  %-8s %s %d (%.1f%%)\n", labelStyle.Render("New:"), progressBar(20, newPct, "212", "238"), m.stats.NewCards, newPct*100))
-		content.WriteString(fmt.Sprintf("  %-8s %s %d (%.1f%%)\n", labelStyle.Render("Young:"), progressBar(20, youngPct, "220", "238"), m.stats.YoungCards, youngPct*100))
-		content.WriteString(fmt.Sprintf("  %-8s %s %d (%.1f%%)\n", labelStyle.Render("Mature:"), progressBar(20, maturePct, "46", "238"), m.stats.MatureCards, maturePct*100))
+		content.WriteString(fmt.Sprintf("  %-8s %s %d (%.1f%%)\n", labelStyle.Render("New:"), progressBar(20, newPct, lipgloss.Color("212"), lipgloss.Color("238")), m.stats.NewCards, newPct*100))
+		content.WriteString(fmt.Sprintf("  %-8s %s %d (%.1f%%)\n", labelStyle.Render("Young:"), progressBar(20, youngPct, lipgloss.Color("220"), lipgloss.Color("238")), m.stats.YoungCards, youngPct*100))
+		content.WriteString(fmt.Sprintf("  %-8s %s %d (%.1f%%)\n", labelStyle.Render("Mature:"), progressBar(20, maturePct, lipgloss.Color("46"), lipgloss.Color("238")), m.stats.MatureCards, maturePct*100))
 	} else {
 		content.WriteString("  (no cards in collection)\n")
 	}
@@ -162,7 +163,7 @@ func (m *Model) renderStatistics(layout viewportLayout) string {
 				successColor = "226"
 			}
 			successStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(successColor)).Bold(true)
-			bar := progressBar(20, d.SuccessRate, successColor, "238")
+			bar := progressBar(20, d.SuccessRate, lipgloss.Color(successColor), lipgloss.Color("238"))
 			deckSuccess.WriteString(fmt.Sprintf("  %-20s %s %s\n", truncateLine(d.Name, 20), bar, successStyle.Render(fmt.Sprintf("%.1f%%", d.SuccessRate*100))))
 		}
 		if hasData {
@@ -231,7 +232,7 @@ func (m *Model) renderStatistics(layout viewportLayout) string {
 		if maxGradeCount > 0 {
 			gPercentage = float64(count) / float64(maxGradeCount)
 		}
-		gBar := progressBar(20, gPercentage, gradeColors[g], "238")
+		gBar := progressBar(20, gPercentage, lipgloss.Color(gradeColors[g]), lipgloss.Color("238"))
 		content.WriteString(fmt.Sprintf("  %s %s %d  %s\n", labelStyle.Render(gradeLabel), gBar, count, lipgloss.NewStyle().Foreground(lipgloss.Color(gradeColors[g])).Render(gradeIcons[g])))
 	}
 
@@ -276,7 +277,7 @@ func (m *Model) renderStatistics(layout viewportLayout) string {
 			}
 		}
 
-		bar := progressBar(20, percentage, barColor, "238")
+		bar := progressBar(20, percentage, lipgloss.Color(barColor), lipgloss.Color("238"))
 
 		dayStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("248")).Bold(true)
 		var countStyle lipgloss.Style
@@ -333,7 +334,7 @@ func (m *Model) renderStatistics(layout viewportLayout) string {
 			barColor = "81" // blueish for added cards
 		}
 
-		bar := progressBar(20, percentage, barColor, "238")
+		bar := progressBar(20, percentage, lipgloss.Color(barColor), lipgloss.Color("238"))
 
 		dayStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("248")).Bold(true)
 		var countStyle lipgloss.Style
@@ -431,7 +432,7 @@ func (m *Model) renderStatistics(layout viewportLayout) string {
 				continue
 			}
 			percentage := float64(count) / float64(m.stats.TotalCards)
-			bar := progressBar(20, percentage, "81", "238")
+			bar := progressBar(20, percentage, lipgloss.Color("81"), lipgloss.Color("238"))
 			content.WriteString(fmt.Sprintf("  %-11s %s %d (%.1f%%)\n", labelStyle.Render(typeLabels[t]), bar, count, percentage*100))
 		}
 	}

@@ -112,7 +112,10 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	if m.textInputActive() {
 		m.logger.Debug("Text input active, trapping key: %s", key)
 		// Only allow certain keys to escape trapping
-		if key != "tab" && key != "shift+tab" && key != "left" && key != "right" && key != "up" && key != "down" && key != "j" && key != "k" {
+		allowNumbers := (m.activeView == ViewDictionary || m.dictionaryOverlayActive) && m.dictionarySearch == ""
+		isNumber := len(key) == 1 && unicode.IsDigit([]rune(key)[0])
+
+		if key != "tab" && key != "shift+tab" && key != "left" && key != "right" && key != "up" && key != "down" && key != "j" && key != "k" && !(allowNumbers && isNumber) {
 			// If it's a view-specific key for the active editing view, handle it
 			if cmd, handled := m.updateActiveViewKey(msg); handled {
 				m.logger.Debug("Key %s handled by active view despite text input", key)
@@ -249,7 +252,12 @@ func (m *Model) textInputActive() bool {
 func (m *Model) updateNumberKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	key := msg.String()
 	if m.textInputActive() {
-		return nil, false
+		// Exception: allow view switching from Dictionary if search is empty
+		if (m.activeView == ViewDictionary || m.dictionaryOverlayActive) && m.dictionarySearch == "" {
+			// fall through
+		} else {
+			return nil, false
+		}
 	}
 	switch key {
 	case "0":
@@ -2160,6 +2168,12 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	}
 
 	if ch, ok := singlePrintableInput(key); ok {
+		// If search is empty and it's a number key, don't handle it here to allow global navigation.
+		// Standard German/English searches rarely start with a single digit, and nav parity is more important.
+		if m.dictionarySearch == "" && unicode.IsDigit([]rune(ch)[0]) {
+			return nil, false
+		}
+
 		m.dictionarySearch += ch
 		m.dictionarySearchTimerID++
 		id := m.dictionarySearchTimerID

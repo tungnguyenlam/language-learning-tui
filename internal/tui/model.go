@@ -396,6 +396,8 @@ type Model struct {
 	fixOldNote  *core.Note    // original note (snapshot before AI)
 	fixProposal *ai.FixedNote // AI's proposed correction (nil until ready)
 	fixError    string        // last fix error, if any
+
+	testMode bool
 }
 
 // buildProvider returns the ai.Provider for the named choice. Unknown
@@ -449,6 +451,7 @@ type ModelOptions struct {
 	AutoPlayAudio       bool
 	RevealSpeed         int
 	StrictNormalization bool
+	TestMode            bool
 	ImportPath          string
 	ExportPath          string
 	OnConfigChange      func(string, string, string, map[string]map[string]string, bool, bool, int)
@@ -561,6 +564,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		browserSelected:     make(map[string]bool),
 		deckSelected:        make(map[string]bool),
 		logger:              logger, // Set the logger
+		testMode:            opts.TestMode,
 	}
 }
 

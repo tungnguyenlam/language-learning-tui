@@ -21,6 +21,7 @@ import (
 func main() {
 	dataDir := flag.String("data-dir", "", "directory for local deutsch-tui data")
 	smoke := flag.Bool("smoke", false, "initialize app data and exit")
+	testMode := flag.Bool("test-mode", false, "disable dynamic UI elements for testing")
 	flag.Parse()
 
 	dir, err := app.ResolveDataDir(*dataDir)
@@ -110,9 +111,11 @@ func main() {
 		AutoPlayAudio:       cfg.AutoPlayAudio,
 		RevealSpeed:         cfg.RevealSpeed,
 		StrictNormalization: cfg.StrictNormalization,
+		TestMode:            *testMode,
 		ImportPath:          filepath.Join(dir, "import.tsv"),
-		ExportPath:          filepath.Join(dir, "export.tsv"),
-		Logger:              leveledLogger, // Pass the logger
+
+		ExportPath: filepath.Join(dir, "export.tsv"),
+		Logger:     leveledLogger, // Pass the logger
 		OnConfigChange: func(theme string, aiProvider string, dictProvider string, tmpls map[string]map[string]string, autoPlayAudio bool, strictNormalization bool, revealSpeed int) {
 			pCfg.Theme = theme
 			pCfg.AIProvider = aiProvider

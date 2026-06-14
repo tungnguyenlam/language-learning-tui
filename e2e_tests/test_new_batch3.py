@@ -11,7 +11,7 @@ import tempfile
 def agent():
     app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
     with tempfile.TemporaryDirectory() as tmpdir:
-        app = TUIAgent(f'{app_cmd} -data-dir {tmpdir}', columns=100, lines=50)
+        app = TUIAgent(f'{app_cmd} -data-dir {tmpdir} -test-mode', columns=100, lines=50)
         yield app
         app.close()
 

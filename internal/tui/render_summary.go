@@ -105,7 +105,7 @@ func (m *Model) renderSessionSummary(layout viewportLayout) string {
 			if maxCount > 0 {
 				pct = float64(count) / float64(maxCount)
 			}
-			bar := progressBar(15, pct, gradeColors[g], "238")
+			bar := progressBar(15, pct, lipgloss.Color(gradeColors[g]), lipgloss.Color("238"))
 			distContent += fmt.Sprintf("  %s %s %-5s %d\n",
 				lipgloss.NewStyle().Foreground(lipgloss.Color(gradeColors[g])).Render(gradeIcons[g]),
 				bar,

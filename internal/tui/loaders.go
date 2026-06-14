@@ -282,14 +282,19 @@ func (m *Model) loadPluralItems() tea.Cmd {
 			pluralVal := extractPlural(card.Extra)
 			if pluralVal != "" {
 				singular := card.Prompt
+				meaning := card.Answer
 				info := content.AnalyzeCard(card.Prompt, card.Answer)
 				if info.Kind == content.KindNoun {
 					singular = info.Display
+					// If the answer side was chosen as the German side, the prompt must be the meaning
+					if strings.Contains(card.Answer, info.Base) {
+						meaning = card.Prompt
+					}
 				}
 				items = append(items, pluralItem{
 					Singular: singular,
 					Plural:   pluralVal,
-					Meaning:  card.Answer,
+					Meaning:  meaning,
 				})
 			}
 		}

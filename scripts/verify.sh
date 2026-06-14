@@ -20,13 +20,20 @@ go build -o deutsch-tui-test ./cmd/deutsch-tui
 export DEUTSCH_TUI_BIN="$(pwd)/deutsch-tui-test"
 
 if [ -d "tui_tester/venv" ]; then
-	printf 'Running E2E tests in parallel...\n'
+	printf 'Running E2E tests...\n'
+	# Detect macOS and limit parallelism to avoid PTY exhaustion (BUG-011)
+	num_procs="auto"
+	if [ "$(uname)" = "Darwin" ]; then
+		num_procs=4
+		printf 'Limiting parallelism to 4 on macOS to prevent PTY exhaustion.\n'
+	fi
+
 	# Use a subshell to avoid affecting the current shell's environment
 	(
 		. tui_tester/venv/bin/activate
 		# Install pytest-xdist if missing (for robustness in different environments)
 		python3 -m pip install pytest-xdist --quiet
-		python3 -m pytest e2e_tests/ -n auto -q
+		python3 -m pytest e2e_tests/ -n "$num_procs" -q
 	)
 	# Cleanup test binary
 	rm -f ./deutsch-tui-test

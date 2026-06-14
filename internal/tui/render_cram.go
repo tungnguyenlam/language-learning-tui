@@ -31,7 +31,7 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		if len(m.cramCards) > 0 {
 			cramPercentage = float64(m.cramCursor) / float64(len(m.cramCards))
 		}
-		cramBar := progressBar(15, cramPercentage, "81", "238")
+		cramBar := progressBar(15, cramPercentage, lipgloss.Color("81"), lipgloss.Color("238"))
 
 		titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159"))
 		header := fmt.Sprintf("%s | %s %d/%d", titleStyle.Render("Cram Review"), cramBar, m.cramCursor+1, len(m.cramCards))

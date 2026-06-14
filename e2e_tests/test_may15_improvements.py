@@ -12,7 +12,7 @@ def start_agent(tmpdir):
     db_path = os.path.join(tmpdir, "test.db")
     # Use the compiled binary if it exists, otherwise use go run
     bin_path = os.environ.get("DEUTSCH_TUI_BIN", "go run ../cmd/deutsch-tui")
-    cmd = f"{bin_path} -data-dir {tmpdir}"
+    cmd = f"{bin_path} -data-dir {tmpdir} -test-mode"
     return TUIAgent(cmd, columns=120, lines=60)
 
 def test_may15_improvements():

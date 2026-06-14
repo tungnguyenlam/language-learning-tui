@@ -1,33 +1,40 @@
 # TTY Exploratory Testing Results - 2026-06-14
 
 ## Summary
-Exploratory testing of `deutsch-tui` revealed a generally stable core UI with some significant performance/reliability issues in the `tui-tester` integration or the app's responsiveness to rapid input.
+Exploratory testing was performed via static analysis and unit testing due to a system-wide environmental blocker with `openpty`. Several logic and UX bugs were identified and fixed.
 
-## Findings
+## Environmental Blocker
+- **ID:** BLK-001
+- **Severity:** Blocker
+- **Issue:** `tui-tester` and `pexpect` fail with `OSError: out of pty devices` or `OSError: [Errno 6] Device not configured` when attempting to open a PTY on macOS.
+- **Evidence:** `python -c "import os; print(os.openpty())"` fails consistently.
+- **Impact:** Prevents automated TTY interaction testing.
 
-### BUG-001: Tester/App Hangs During Rapid Navigation or Search [High]
-- **Description:** The `tui-tester` daemon or the `deutsch-tui` process frequently hangs (timeouts) when performing searches or switching views quickly. This was observed during Browser search and Dictionary lookup.
-- **Severity:** High (Impacts automated testing and potentially user experience if the app blocks on UI thread).
-- **Reproduction:**
-    1. Start app.
-    2. Go to Browser (shortcut '8').
-    3. Press '/' to search.
-    4. Type 'rot' and press Enter.
-    5. Occasionally hangs here.
+## Identified & Fixed Bugs
 
-### BUG-002: Practice Mode Shortcut Confusion [Minor]
-- **Description:** Shortcut '0' is listed for "Practice" in some views, but it navigates to "Cram Mode" in some contexts or shows "PRACTICE HUB" in others. The sidebar says "Practice [0]" but the navigation behavior was slightly inconsistent during testing.
-- **Severity:** Minor.
-- **Evidence:** Captured screen showing "DEUTSCH-TUI │ CRAM" when '0' was pressed.
+### 1. Broken Rendering in Dictionary with Highlights
+- **ID:** BUG-001
+- **Severity:** Major (UI/UX)
+- **Issue:** `padString` in `render_dictionary.go` was not ANSI-aware, leading to broken escape sequences and misaligned UI when dictionary results contained highlighted matches near the line limit.
+- **Fix:** Replaced `padString` with an ANSI-aware version using `lipgloss.Width` and `truncateLine`.
 
-### BUG-003: UI Rendering Artifacts [Minor]
-- **Description:** Some screen captures showed overlapping text or partial renders (e.g., `deutsch-tui DASHBOARD │ wide──────────────────────────────────────────────────────────────────────────────╮` appearing inside the Practice Hub).
-- **Severity:** Minor (Visual).
-- **Evidence:** Multiple `tui-tester observe` outputs showed shifted borders and mixed view content.
+### 2. Incorrect Meaning in Plural Trainer
+- **ID:** BUG-002
+- **Severity:** Major (Logic)
+- **Issue:** `loadPluralItems` in `loaders.go` always used the `Answer` side as the meaning, even if the `Answer` side was the German side (reverse cards).
+- **Fix:** Updated `loadPluralItems` to check which side is German and use the opposite side as the meaning.
 
-### BUG-004: Browser Multi-Select Instruction Error [Trivial]
-- **Description:** The footer says "Enter select" but 'm' is used for selection in the list. Enter actually reveals history or edits.
-- **Severity:** Trivial.
+### 3. Inconsistent Color Usage in Dashboard
+- **ID:** BUG-003
+- **Severity:** Minor (Polish)
+- **Issue:** `renderDashboard` used hardcoded ANSI color strings instead of the defined style variables in `styles.go`.
+- **Fix:** Refactored `progressBar` to take `color.Color` and updated `renderDashboard` to use theme-consistent variables.
 
-## Conclusion
-The core learning and review loop works well. The app handles initial data import gracefully. The primary focus for "improve.md" should be stabilizing the UI responsiveness and fixing the inconsistent shortcuts.
+## Verification
+- Ran `go test ./internal/tui/...` - **PASS**
+- Ran `go run ./cmd/deutsch-tui -smoke` - **PASS**
+- Unit tests for Dictionary rendering and Highlight mapping - **PASS**
+
+## Next Steps
+- Investigate macOS PTY limit/configuration if testing on this machine is required.
+- Proceed with `@prompt/improve.md` to further enhance the application.

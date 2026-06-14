@@ -3,6 +3,7 @@ package tui
 import (
 	"errors"
 	"fmt"
+	"image/color"
 	"os"
 	"path/filepath"
 	"strings"
@@ -192,7 +193,7 @@ func truncateLine(s string, maxWidth int) string {
 	return b.String()
 }
 
-func progressBar(width int, percentage float64, filledColor, emptyColor string) string {
+func progressBar(width int, percentage float64, filledColor, emptyColor color.Color) string {
 	if width <= 0 {
 		return ""
 	}
@@ -205,8 +206,8 @@ func progressBar(width int, percentage float64, filledColor, emptyColor string) 
 	}
 	emptyWidth := width - filledWidth
 
-	filled := lipgloss.NewStyle().Foreground(lipgloss.Color(filledColor)).Render(strings.Repeat("█", filledWidth))
-	empty := lipgloss.NewStyle().Foreground(lipgloss.Color(emptyColor)).Render(strings.Repeat("░", emptyWidth))
+	filled := lipgloss.NewStyle().Foreground(filledColor).Render(strings.Repeat("█", filledWidth))
+	empty := lipgloss.NewStyle().Foreground(emptyColor).Render(strings.Repeat("░", emptyWidth))
 
 	return filled + empty
 }

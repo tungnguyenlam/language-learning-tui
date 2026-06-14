@@ -296,7 +296,7 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 
 		miniBar := ""
 		if miniBarWidth > 0 {
-			miniBar = progressBar(5, deckPercentage, "46", "238") + " "
+			miniBar = progressBar(5, deckPercentage, lipgloss.Color("46"), lipgloss.Color("238")) + " "
 		}
 
 		studyBtn := ""

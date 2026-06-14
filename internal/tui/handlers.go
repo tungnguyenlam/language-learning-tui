@@ -51,6 +51,7 @@ func (m *Model) updateView(view View) tea.Cmd {
 		m.viewTransitionFrame = 0
 	}
 	m.activeView = view
+	m.dictionaryOverlayActive = false // Close overlay on any view switch
 	m.isDragging = false
 	m.confirmingDelete = false
 	m.clearReviewHistory()

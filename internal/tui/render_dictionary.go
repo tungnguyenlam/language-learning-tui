@@ -36,11 +36,11 @@ func renderGender(gender string) string {
 }
 
 func padString(s string, width int) string {
-	runes := []rune(s)
-	if len(runes) >= width {
-		return string(runes[:width])
+	w := lipgloss.Width(s)
+	if w >= width {
+		return truncateLine(s, width)
 	}
-	return s + strings.Repeat(" ", width-len(runes))
+	return s + strings.Repeat(" ", width-w)
 }
 
 func dictionaryVisibleRows(layout viewportLayout) int {

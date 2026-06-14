@@ -182,9 +182,12 @@ func (m *Model) renderReview(x, y int) string {
 	if sessionTotal > 0 {
 		sessionPercentage = float64(m.sessionReviewed) / float64(sessionTotal)
 	}
-	sessionBar := progressBar(15, sessionPercentage, "46", "238")
+	sessionBar := progressBar(15, sessionPercentage, lipgloss.Color("46"), lipgloss.Color("238"))
 
 	duration := time.Since(m.sessionStartTime)
+	if m.testMode {
+		duration = 0 // Freeze timer in test mode
+	}
 	timerStr := fmt.Sprintf("%02d:%02d", int(duration.Minutes()), int(duration.Seconds())%60)
 
 	cardsPerMin := 0.0
