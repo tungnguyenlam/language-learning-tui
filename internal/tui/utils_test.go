@@ -1,8 +1,11 @@
 package tui
 
 import (
+	"strings"
 	"testing"
 	"time"
+
+	"charm.land/lipgloss/v2"
 )
 
 func TestStripANSI(t *testing.T) {
@@ -64,6 +67,62 @@ func TestSinglePrintableInput(t *testing.T) {
 		if result != test.expected || ok != test.ok {
 			t.Errorf("singlePrintableInput(%q) = (%q, %t), expected (%q, %t)", test.input, result, ok, test.expected, test.ok)
 		}
+	}
+}
+
+func TestTruncateLine(t *testing.T) {
+	style := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("226"))
+
+	tests := []struct {
+		name     string
+		input    string
+		maxWidth int
+		wantVis  int
+	}{
+		{"ascii exact boundary", "abcdef", 6, 6},
+		{"ascii old-overflow case", "12345x", 5, 5},
+		{"german umlauts", "Größe und mehr", 10, 10},
+		{"wide cjk chars", "中文中文中文", 6, 5},
+		{"ansi styled near boundary", style.Render("abc") + "def", 5, 5},
+		{"ansi styled old-overflow case", style.Render("abcde") + "f", 5, 5},
+		{"small width uses dots", "abcdef", 3, 3},
+		{"fits without truncation", "abc", 5, 3},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got := truncateLine(tc.input, tc.maxWidth)
+			gotVis := lipgloss.Width(got)
+			if gotVis != tc.wantVis {
+				t.Errorf("truncateLine(%q, %d) visual width = %d, want %d; got %q",
+					tc.input, tc.maxWidth, gotVis, tc.wantVis, got)
+			}
+			if tc.maxWidth > 3 && lipgloss.Width(got) > tc.maxWidth {
+				t.Errorf("truncateLine(%q, %d) exceeded maxWidth: got visual width %d",
+					tc.input, tc.maxWidth, lipgloss.Width(got))
+			}
+		})
+	}
+}
+
+func TestDictionaryHighlightAfterTruncation(t *testing.T) {
+	style := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("226"))
+
+	// Simulate a dictionary list item that contains multi-byte German characters
+	// and is truncated before highlighting is applied.
+	wordText := "Größenordnung und mehr"
+	padded := padString(wordText, 12)
+	highlighted := highlightQuery(padded, "ße", style)
+
+	// The highlight should be applied to the visible portion of the text.
+	if !strings.Contains(highlighted, style.Render("ße")) {
+		t.Errorf("expected highlight to contain styled 'ße'; got %q", highlighted)
+	}
+
+	// The rendered width must not exceed the requested panel width.
+	if lipgloss.Width(highlighted) > 12 {
+		t.Errorf("highlighted result width %d exceeds panel width 12: %q",
+			lipgloss.Width(highlighted), highlighted)
 	}
 }
 

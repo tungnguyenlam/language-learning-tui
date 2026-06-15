@@ -52,7 +52,10 @@ def test_new_a1_decks_loaded(agent: TUIAgent):
     agent.act("/")
     agent.act("Travel")
     agent.act("<Enter>")
-    agent.wait_for_text("A1 Travel & Transport")
+    # Use a substring of the deck name and its unique description because the
+    # full name may be truncated or wrapped depending on terminal width.
+    agent.wait_for_text("Travel & Transport")
+    agent.wait_for_text("Essential A1 vocabulary for traveling")
 def test_ai_draft_empty_state(agent: TUIAgent):
     agent.wait_for_text("DASHBOARD")
     

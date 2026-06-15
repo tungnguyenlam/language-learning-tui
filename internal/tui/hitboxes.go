@@ -142,6 +142,8 @@ func (m *Model) activateHitboxByID(id string) tea.Cmd {
 			return m.updateView(ViewBrowser)
 		case "dash-progress":
 			return m.updateView(ViewStatistics)
+		case "dash-activity":
+			return m.updateView(ViewStatistics)
 		case "dash-digest":
 			return m.updateView(ViewDecks)
 		}

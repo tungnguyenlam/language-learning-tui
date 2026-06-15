@@ -158,38 +158,45 @@ func truncateLine(s string, maxWidth int) string {
 	var b strings.Builder
 	currW := 0
 	inEsc := false
+	var escBuf []rune
 	runes := []rune(s)
+	ellipsisWidth := 3
+	limit := maxWidth - ellipsisWidth
 
 	for i := 0; i < len(runes); i++ {
 		r := runes[i]
 
 		if r == '\x1b' {
 			inEsc = true
-			b.WriteRune(r)
+			escBuf = append(escBuf, r)
 			continue
 		}
 
 		if inEsc {
-			b.WriteRune(r)
-			// ANSI sequences end with a letter (for CSI sequences like colors)
-			// or other characters for other sequences. This is a common heuristic.
-			if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') {
+			escBuf = append(escBuf, r)
+			if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || r == '@' {
 				inEsc = false
 			}
 			continue
 		}
 
 		rw := lipgloss.Width(string(r))
-		if currW+rw+3 > maxWidth {
+		if currW+rw > limit {
+			// No room for this rune; truncate here. Discard any pending ANSI
+			// sequences that have no visible character after them.
 			b.WriteString("...")
-			// Make sure we close any open ANSI sequences if possible?
-			// For simplicity, just append a reset sequence if we were highlighting.
 			b.WriteString("\x1b[0m")
 			break
+		}
+
+		if len(escBuf) > 0 {
+			b.WriteString(string(escBuf))
+			escBuf = nil
 		}
 		b.WriteRune(r)
 		currW += rw
 	}
+
 	return b.String()
 }
 

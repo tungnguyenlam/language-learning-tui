@@ -1,5 +1,21 @@
 # Done Backlog
 
+## 2026-06-15 (Polish & Reliability: Dashboard, Dictionary Truncation, E2E Flake)
+
+### Bug Fixes
+- **BUG-013 Dashboard Sparkline Click:** Mouse clicks on the Dashboard "Recent Activity" sparkline box now navigate to Statistics via the `dash-activity` hitbox in `internal/tui/hitboxes.go`.
+- **BUG-012 Dictionary Highlight Truncation:** Fixed `truncateLine` in `internal/tui/utils.go` so that lines containing multi-byte characters or ANSI escape sequences no longer overflow their requested visual width at the truncation boundary. ANSI sequences that have no following visible character are now discarded instead of being emitted before the ellipsis.
+
+### E2E Stability
+- **Deck-list search flake:** Hardened `e2e_tests/test_new_batch3.py::test_new_a1_decks_loaded` against parallel PTY truncation/wrapping by asserting on the visible deck-name substring and the deck's unique description rather than the full name.
+
+### Tests
+- Added `TestTruncateLine` covering ASCII, German umlauts, wide CJK characters, ANSI styling, and small-width edge cases.
+- Added `TestDictionaryHighlightAfterTruncation` verifying that `padString` + `highlightQuery` correctly styles German multi-byte text without exceeding the panel width.
+
+### Verification
+- `./scripts/verify.sh` passed: all Go unit tests, smoke test, binary build, and 351 E2E tests.
+
 ## 2026-06-14 (Dictionary Nav, E2E Stability & macOS PTY fix)
 
 ### Bug Fixes

@@ -2,6 +2,8 @@
 /bin/
 /dist/
 /deutsch-tui
+/deutsch-tui-test
+/deutsch-tui-qa
 *.test
 *.out
 coverage.txt
