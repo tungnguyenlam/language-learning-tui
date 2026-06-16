@@ -182,6 +182,7 @@ type Model struct {
 	aiProvider                 ai.Provider
 	aiProviderName             string
 	dictionaryProvider         string
+	dictCount                  int
 	aiTemplates                map[string]map[string]string
 	aiTemplateSets             []string
 	aiTemplateIndex            int
@@ -571,7 +572,6 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 type dueCardsMsg []core.Card
 type bookmarkedDueCardsMsg []core.Card
 type decksMsg []core.Deck
-type statsMsg core.Statistics
 type draftsMsg []ai.Draft
 type draftApprovedMsg struct {
 	noteID string
@@ -787,7 +787,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.logger.Debug("Received %d bookmarked due cards", len(msg))
 
 	case statsMsg:
-		m.stats = core.Statistics(msg)
+		m.stats = msg.stats
+		m.dictCount = msg.dictCount
 		m.logger.Debug("Received statistics update")
 	case reviewsPerDayMsg:
 		m.reviewsPerDay = map[string]int(msg)

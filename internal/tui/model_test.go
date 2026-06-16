@@ -1082,7 +1082,7 @@ func TestSettingsDailyGoalAdjustsAndRenders(t *testing.T) {
 	model := NewModel(repo, &mockScheduler{})
 	model.width = 100
 	model.height = 50
-	model.Update(statsMsg(core.Statistics{DailyGoal: 10, Grades: map[core.ReviewGrade]int{}}))
+	model.Update(statsMsg{stats: core.Statistics{DailyGoal: 10, Grades: map[core.ReviewGrade]int{}}})
 	model.activeView = ViewSettings
 	model.settingsCursor = 5
 

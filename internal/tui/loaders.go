@@ -67,6 +67,11 @@ func (m *Model) loadDecks() tea.Msg {
 	return decksMsg(allDecks)
 }
 
+type statsMsg struct {
+	stats     core.Statistics
+	dictCount int
+}
+
 func (m *Model) loadStatistics() tea.Cmd {
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -80,11 +85,16 @@ func (m *Model) loadStatistics() tea.Cmd {
 		} else {
 			stats, err = m.repo.Statistics(ctx)
 		}
-
 		if err != nil {
 			return err
 		}
-		return statsMsg(stats)
+
+		var count int
+		if dictRepo, ok := m.repo.(core.DictionaryRepository); ok {
+			count, _ = dictRepo.DictionaryCount(ctx)
+		}
+
+		return statsMsg{stats: stats, dictCount: count}
 	}
 }
 

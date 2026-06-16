@@ -186,6 +186,7 @@ type DictionaryRepository interface {
 	Search(ctx context.Context, query string, limit int) ([]DictionaryEntry, error)
 	GetEntry(ctx context.Context, id string) (DictionaryEntry, error)
 	ImportEntries(ctx context.Context, entries []DictionaryEntry) error
+	DictionaryCount(ctx context.Context) (int, error)
 }
 
 func ValidateCard(card Card) error {

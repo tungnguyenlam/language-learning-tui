@@ -1266,3 +1266,10 @@ Added three 40-note embedded TSV decks for everyday learner scenarios: A2 Bankin
 ### Verification
 - `PATH="/opt/homebrew/bin:$PATH" go test ./internal/content` passed.
 - `PATH="/opt/homebrew/bin:$PATH" ./scripts/verify.sh` passed with 349 E2E tests.
+
+## 2026-06-16 (Dictionary Onboarding UI)
+
+Added a "DICTIONARY DATA" section to the Settings View to help users onboard with the `dict.cc` dataset. It displays the number of currently loaded entries or provides clear instructions on downloading the zip file and placing it in `local_dict_files/` to enable offline dictionary search. Also added `DictionaryCount` to the `DictionaryRepository` interface and model loaders to surface this count in the UI.
+
+### Verification
+- `./scripts/verify.sh` passed with 351 E2E tests.

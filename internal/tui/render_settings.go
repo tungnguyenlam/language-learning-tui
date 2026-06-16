@@ -140,6 +140,17 @@ func (m *Model) renderSettings(x, y int) string {
 	addContent(itemStyle.Render(fmt.Sprintf("%sStrict Normalization (ss vs ß): %s", prefix, strictStatus)), &lineInfo{itemIdx: strictIdx, kind: "item"})
 
 	addContent("", nil)
+	addContent(sectionStyle.Render("DICTIONARY DATA"), nil)
+	if m.dictCount > 0 {
+		addContent(fmt.Sprintf("  Loaded Entries: %s", lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Render(fmt.Sprintf("%d", m.dictCount))), nil)
+	} else {
+		addContent(lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Render("  No dictionary data loaded."), nil)
+		addContent(mutedStyle.Render("  To enable offline local dictionary search, download the German-English dataset"), nil)
+		addContent(mutedStyle.Render("  from dict.cc, zip it, and place it in the 'local_dict_files/' folder."), nil)
+		addContent(mutedStyle.Render("  The app will automatically import it on the next startup."), nil)
+	}
+
+	addContent("", nil)
 	addContent(sectionStyle.Render("API CREDENTIALS"), nil)
 	addContent(mutedStyle.Render("  Press Enter on a row to edit credentials."), nil)
 
