@@ -506,6 +506,11 @@ func (m *Model) startDrafting() tea.Cmd {
 		}
 	}
 
+	sourceText := cleanTopic
+	if m.draftSource != "" {
+		sourceText = fmt.Sprintf("Topic/User Input: %s\n\nDictionary Context:\n%s", cleanTopic, m.draftSource)
+	}
+
 	m.drafting = true
 	m.status = "AI is drafting flashcards..."
 	return tea.Batch(
@@ -520,7 +525,7 @@ func (m *Model) startDrafting() tea.Cmd {
 			}
 
 			drafts, err := m.aiProvider.GenerateDrafts(ctx, ai.DraftRequest{
-				SourceText: cleanTopic,
+				SourceText: sourceText,
 				DeckID:     deckID,
 				Tags:       tags,
 			})

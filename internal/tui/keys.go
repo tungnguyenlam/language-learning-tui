@@ -1253,10 +1253,14 @@ func (m *Model) updateAIKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		case "esc", "escape":
 			m.searchingAI = false
 			m.aiInput = ""
+			m.draftSource = ""
 			return nil, true
 		case "backspace":
 			if len(m.aiInput) > 0 {
 				m.aiInput = trimLastRune(m.aiInput)
+				if len(m.aiInput) == 0 {
+					m.draftSource = ""
+				}
 			}
 			return nil, true
 		}
@@ -1273,6 +1277,7 @@ func (m *Model) updateAIKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, true
 	case "esc", "escape":
 		m.aiInput = ""
+		m.draftSource = ""
 		return nil, true
 	case "[":
 		m.previousAITemplate()
@@ -2127,7 +2132,29 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 			m.recordDictionarySearch(m.dictionarySearch)
 			entry := m.dictionaryResults[m.dictionaryCursor]
+
 			m.aiInput = entry.Word + " - " + entry.Translation
+
+			var source strings.Builder
+			source.WriteString(fmt.Sprintf("Word: %s\nTranslation: %s\n", entry.Word, entry.Translation))
+			if entry.WordClass != "" {
+				source.WriteString(fmt.Sprintf("Class: %s\n", entry.WordClass))
+			}
+			if entry.Gender != "" {
+				source.WriteString(fmt.Sprintf("Gender: %s\n", entry.Gender))
+			}
+			if entry.Forms != "" {
+				source.WriteString(fmt.Sprintf("Forms: %s\n", entry.Forms))
+			}
+			if len(entry.Examples) > 0 {
+				source.WriteString("Examples:\n")
+				for _, ex := range entry.Examples {
+					source.WriteString(fmt.Sprintf("- %s\n", ex))
+				}
+			}
+
+			m.draftSource = source.String()
+
 			m.updateView(ViewAI)
 			m.status = "Drafting flashcard from dictionary entry"
 			return m.startDrafting(), true

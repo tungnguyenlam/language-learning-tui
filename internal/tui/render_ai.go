@@ -68,6 +68,10 @@ func (m *Model) renderAI(x, y int) string {
 
 	ctx.WriteLine(mutedStyle.Render("Tip: include level and use case, e.g. B1 workplace small talk with 2 examples."))
 
+	if m.draftSource != "" {
+		ctx.WriteLine(lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true).Render("★ Dictionary Context Active"))
+	}
+
 	// Suggested Topics Section
 	if (m.aiInput == "" || m.aiInput == "der Kaffee") && len(m.drafts) == 0 {
 		ctx.WriteLine("\n" + infoStyle.Bold(true).Render("Click a topic or type your own, then press Enter:"))

@@ -1273,3 +1273,10 @@ Added a "DICTIONARY DATA" section to the Settings View to help users onboard wit
 
 ### Verification
 - `./scripts/verify.sh` passed with 351 E2E tests.
+
+## 2026-06-16 (Dictionary Flashcard Draft Loop)
+
+Enhanced the AI Drafting flow to seamlessly integrate dictionary search results. When a user presses `Enter` on a dictionary result to draft a flashcard, the rich context of the entry (word class, gender, forms, and example sentences) is now automatically embedded into the AI draft request as `Dictionary Context`. Added a "★ Dictionary Context Active" visual badge to the AI View to confirm when this context is included, and updated key handlers to properly clear the context if the user manually overrides or escapes the draft query.
+
+### Verification
+- `./scripts/verify.sh` passed with 351 E2E tests.
