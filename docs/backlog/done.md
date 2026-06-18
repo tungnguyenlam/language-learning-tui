@@ -1,5 +1,18 @@
 # Done Backlog
 
+## 2026-06-18 (Content Expansion & E2E Stability)
+
+### Content Expansion
+- **A1 Clothing Deck:** Added a foundational A1 vocabulary deck covering 25 clothing, accessories, and shopping-related words to the comprehensive `german_expanded.go` content.
+- **A1 Time & Weather Deck:** Added an essential A1 vocabulary deck containing 30 notes for days of the week, time expressions, and basic weather conditions.
+
+### E2E Stability & Reliability
+- **TUI Tester Layout Assertions:** Fixed flaky tests in `test_may15_improvements.py`, `test_new_batch3.py`, and `test_new_decks_2026_05_14.py` that failed due to PTY visual truncation string overlays when terminal highlights are active. Adjusted the assertion targets to avoid corrupted text areas, restoring suite stability.
+- **Pytest Execution Path Fixes:** Patched all `e2e_tests/*.py` scripts that mistakenly referenced `go run ../cmd/deutsch-tui` instead of `./cmd/deutsch-tui`. This enables engineers to easily run single e2e test files from the project root without `directory not found` crashes.
+
+### Verification
+- `./scripts/verify.sh` passed successfully (all unit, smoke, and E2E tests).
+
 ## 2026-06-15 (Polish & Reliability: Dashboard, Dictionary Truncation, E2E Flake)
 
 ### Bug Fixes

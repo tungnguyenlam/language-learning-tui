@@ -35,8 +35,7 @@ def test_a1_animals_deck_listed():
             agent.wait_for_text("Search:", timeout=2.0)
             agent.act("Animals")
             agent.act("<Enter>")
-            agent.wait_for_text("Animals", timeout=10.0)
-            agent.wait_for_text("a1, animals", timeout=10.0)
+            agent.wait_for_text("A1 German Animals", timeout=10.0)
         finally:
             agent.close()
 

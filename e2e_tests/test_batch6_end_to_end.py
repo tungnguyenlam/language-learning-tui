@@ -108,6 +108,7 @@ def test_ai_empty_topic_guard_is_visible():
         try:
             agent.act("6")
             agent.wait_for_text("Click a topic or type your own")
+            agent.wait_for_text("der Kaffee")
             agent.act("<Esc>")
             agent.act("<Enter>")
             agent.wait_for_text("Enter a topic before generating AI drafts")

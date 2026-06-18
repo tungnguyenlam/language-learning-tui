@@ -9,7 +9,7 @@ from tui_tester.agent import TUIAgent
 
 
 def start_agent(tmpdir):
-    bin_path = os.environ.get("DEUTSCH_TUI_BIN", "go run ../cmd/deutsch-tui")
+    bin_path = os.environ.get("DEUTSCH_TUI_BIN", "go run ./cmd/deutsch-tui")
     cmd = f"{bin_path} -data-dir {tmpdir} -test-mode"
     return TUIAgent(cmd, columns=120, lines=45)
 

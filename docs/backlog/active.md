@@ -1,14 +1,14 @@
 # Active Backlog
 
-Last updated: 2026-06-16
+Last updated: 2026-06-18
 
 ## Current Milestone
 
-Hybrid Dictionary - COMPLETED.
+Content Expansion & Refinement.
 
 ## Exact Next Action
 
-Select next milestone from `docs/backlog/roadmap.md` (e.g., `.apkg` import/export or Backup workflow) after committing the current fixes.
+Select next milestone from `docs/backlog/roadmap.md` (e.g., Backup workflow or more visual refinements) or continue adding content.
 
 ## Top Issues
 
@@ -16,10 +16,10 @@ None active.
 
 ## Completed Work
 
-- [x] **Flashcard Loop Enhancement [FIXED]:** Enhanced the AI Drafting flow to capture rich context (word class, gender, forms, examples) from dictionary search results.
-- [x] **UI Badge:** Added a visual "★ Dictionary Context Active" badge to the AI View to inform the user when dictionary context is included in the draft request.
-- [x] **State Management:** Added `m.draftSource` to the TUI model, correctly clearing it when the user overrides or escapes the drafted query.
+- [x] **A1 Content Expansion:** Added A1 Clothing Deck and A1 Time & Weather Deck to `german_expanded.go` covering essential topics.
+- [x] **E2E Stability:** Fixed PTY truncation/rendering glitch in `test_may15_improvements.py` caused by string manipulation affecting UI layout tests.
+- [x] **E2E Path Robustness:** Fixed the `app_cmd` binary paths in all E2E pytest files, removing `../cmd/` from `go run ../cmd/deutsch-tui` to prevent `directory not found` exceptions when running individual test files from the project root.
 
 ## Verification
 
-- `./scripts/verify.sh` passed: all Go unit tests, smoke test, binary build, and 351 E2E tests.
+- `./scripts/verify.sh` passed: all Go unit tests, smoke test, binary build, and E2E tests.

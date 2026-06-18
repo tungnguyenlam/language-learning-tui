@@ -10,7 +10,7 @@ def test_settings_panic():
     with tempfile.TemporaryDirectory() as tmpdir:
         # Create empty config to force empty template sets?
         # Actually just start agent
-        app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ../cmd/deutsch-tui')
+        app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
         agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir} -test-mode')
         agent.wait_for_text("DASHBOARD", timeout=15.0)
         agent.wait_until_stable()

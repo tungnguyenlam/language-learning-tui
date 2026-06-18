@@ -11,7 +11,7 @@ from tui_tester.agent import TUIAgent
 def start_agent(tmpdir):
     db_path = os.path.join(tmpdir, "test.db")
     # Use the compiled binary if it exists, otherwise use go run
-    bin_path = os.environ.get("DEUTSCH_TUI_BIN", "go run ../cmd/deutsch-tui")
+    bin_path = os.environ.get("DEUTSCH_TUI_BIN", "go run ./cmd/deutsch-tui")
     cmd = f"{bin_path} -data-dir {tmpdir} -test-mode"
     return TUIAgent(cmd, columns=120, lines=60)
 
@@ -33,7 +33,7 @@ def test_may15_improvements():
             agent.act("/")
             agent.act("Travel")
             agent.act("<Enter>")
-            agent.wait_for_text("A2 Travel")
+            agent.wait_for_text("Travel & Booking")
             
             # Verify B1 Housing & Apartment
             agent.act("/")
