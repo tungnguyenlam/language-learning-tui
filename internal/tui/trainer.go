@@ -33,12 +33,12 @@ type trainerItem struct {
 // trainerConfig describes a single text-input trainer. Entries live in
 // trainerConfigs, keyed by PracticeSubView.
 type trainerConfig struct {
-	Title      string                   // header, e.g. "CASE ENDING TRAINER"
-	ItemNoun   string                   // used in status line, e.g. "case exercises"
-	NextLabel  string                   // trailing word in "Press any key for <NextLabel>"
-	EmptyMsg   string                   // shown when there are no items
-	InputWidth int  // input/answer box width (defaults to 30)
-	HintKey    bool // whether 'h' toggles the hint line
+	Title      string // header, e.g. "CASE ENDING TRAINER"
+	ItemNoun   string // used in status line, e.g. "case exercises"
+	NextLabel  string // trailing word in "Press any key for <NextLabel>"
+	EmptyMsg   string // shown when there are no items
+	InputWidth int    // input/answer box width (defaults to 30)
+	HintKey    bool   // whether 'h' toggles the hint line
 
 	// match overrides the default case-insensitive equality check (used by the
 	// plural trainer for umlaut/article-flexible matching).
