@@ -1635,7 +1635,7 @@ func TestSessionSummaryShowsGradeDistribution(t *testing.T) {
 		core.GradeEasy:  1,
 	}
 
-	view := model.renderSessionSummary(viewportLayout{Width: 80, Height: 30})
+	view := summaryScreen{}.Render(model, viewportLayout{Width: 80, Height: 30})
 	if !strings.Contains(view, "Grade Distribution") {
 		t.Fatalf("session summary should show Grade Distribution: %s", view)
 	}

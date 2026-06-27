@@ -100,6 +100,9 @@ type practiceItem struct {
 type Model struct {
 	repo                       core.Repository
 	scheduler                  core.Scheduler
+	// screens holds views migrated to the screen interface, keyed by View.
+	// Dispatch consults this before the legacy per-view method switches.
+	screens                    map[View]screen
 	width                      int
 	height                     int
 	activeView                 View
@@ -424,6 +427,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 	return &Model{
 		repo:                repo,
 		scheduler:           scheduler,
+		screens:             registerScreens(),
 		theme:               opts.Theme,
 		aiProvider:          provider,
 		aiProviderName:      providerName,
@@ -1329,6 +1333,10 @@ func (m *Model) renderActiveView(x, y int) string {
 }
 
 func (m *Model) renderActiveViewPlainAt(layout viewportLayout) string {
+	if s, ok := m.screens[m.activeView]; ok {
+		return s.Render(m, layout)
+	}
+
 	var content string
 	switch m.activeView {
 	case ViewDashboard:
@@ -1355,8 +1363,6 @@ func (m *Model) renderActiveViewPlainAt(layout viewportLayout) string {
 		content = m.renderPractice(layout)
 	case ViewDebug:
 		content = m.renderDebug(layout.X, layout.Y)
-	case ViewSessionSummary:
-		content = m.renderSessionSummary(layout)
 	default:
 		content = "Unknown View"
 	}

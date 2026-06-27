@@ -296,6 +296,10 @@ func (m *Model) updateNumberKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 }
 
 func (m *Model) updateActiveViewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
+	if s, ok := m.screens[m.activeView]; ok {
+		return s.HandleKey(m, msg)
+	}
+
 	switch m.activeView {
 	case ViewDashboard:
 		return m.updateDashboardKey(msg)
@@ -315,8 +319,6 @@ func (m *Model) updateActiveViewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return m.updateCramKey(msg)
 	case ViewPractice:
 		return m.updatePracticeKey(msg)
-	case ViewSessionSummary:
-		return m.updateSessionSummaryKey(msg)
 	case ViewDecks:
 		return m.updateDecksKey(msg)
 	case ViewStatistics:
@@ -1325,16 +1327,6 @@ func (m *Model) updateAIKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 	}
 	return nil, false
-}
-
-func (m *Model) updateSessionSummaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
-	// Any key returns to dashboard and resets session stats
-	m.lastSessionReviewed = m.sessionReviewed
-	m.lastSessionCorrect = m.sessionCorrect
-	m.lastSessionDuration = time.Since(m.sessionStartTime)
-	m.sessionReviewed = 0
-	m.sessionCorrect = 0
-	return m.updateView(ViewDashboard), true
 }
 
 func (m *Model) handlePaste(text string) tea.Cmd {

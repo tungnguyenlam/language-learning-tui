@@ -7,10 +7,28 @@ import (
 
 	"deutsch-tui/internal/core"
 
+	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
 
-func (m *Model) renderSessionSummary(layout viewportLayout) string {
+// summaryScreen is the post-session statistics screen shown after a review
+// session ends. It carries no view-local state: the session counters it reads
+// (sessionReviewed/sessionCorrect/sessionStartTime/sessionGrades) are updated
+// during review, so they remain shared state on Model.
+type summaryScreen struct{}
+
+// HandleKey returns to the dashboard on any key, snapshotting the session
+// totals into the "last session" fields and resetting the live counters.
+func (summaryScreen) HandleKey(m *Model, _ tea.KeyPressMsg) (tea.Cmd, bool) {
+	m.lastSessionReviewed = m.sessionReviewed
+	m.lastSessionCorrect = m.sessionCorrect
+	m.lastSessionDuration = time.Since(m.sessionStartTime)
+	m.sessionReviewed = 0
+	m.sessionCorrect = 0
+	return m.updateView(ViewDashboard), true
+}
+
+func (summaryScreen) Render(m *Model, layout viewportLayout) string {
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).MarginBottom(1)
 
 	duration := time.Since(m.sessionStartTime)
