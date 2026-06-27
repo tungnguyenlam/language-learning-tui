@@ -97,51 +97,6 @@ type practiceItem struct {
 	Meaning string
 }
 
-type caseItem struct {
-	Sentence string // "Ich gehe mit {{...}} Hund."
-	Answer   string // "dem"
-	Context  string // "m, Dative"
-}
-
-type adjectiveItem struct {
-	Sentence string // "Ich sehe einen {{...}} (alt) Mann."
-	Answer   string // "alten"
-	Context  string // "m, Accusative, mixed declension"
-}
-
-type prepositionItem struct {
-	Sentence string
-	Answer   string
-	Context  string
-}
-
-type pluralItem struct {
-	Singular string
-	Plural   string
-	Meaning  string
-}
-
-type separableItem struct {
-	Sentence string // "Ich stehe um 7 Uhr {{...}}."
-	Verb     string // "aufstehen"
-	Answer   string // "auf"
-	Meaning  string // "to get up"
-}
-
-type numberItem struct {
-	Question string
-	Answer   string
-	Help     string
-}
-
-type conjunctionItem struct {
-	Sentence    string
-	Answer      string
-	Meaning     string
-	Hint        string
-	Explanation string
-}
-
 type Model struct {
 	repo                       core.Repository
 	scheduler                  core.Scheduler
@@ -303,80 +258,10 @@ type Model struct {
 	practiceRevealed   bool
 	practiceLastResult bool
 
-	// Verb Conjugation Trainer state
-	conjugationItems      []content.DailyVerb
-	conjugationIndex      int
-	conjugationCorrect    int
-	conjugationTotal      int
-	conjugationRevealed   bool
-	conjugationLastResult bool
-	conjugationPerson     int // 0-5
-	conjugationAnswer     string
-	conjugationInput      string
-
-	// Case Ending Trainer state
-	caseItems      []caseItem
-	caseIndex      int
-	caseCorrect    int
-	caseTotal      int
-	caseRevealed   bool
-	caseLastResult bool
-	caseInput      string
-
-	// Adjective Ending Trainer state
-	adjItems      []adjectiveItem
-	adjIndex      int
-	adjCorrect    int
-	adjTotal      int
-	adjRevealed   bool
-	adjLastResult bool
-	adjInput      string
-
-	// Preposition Trainer state
-	prepItems      []prepositionItem
-	prepIndex      int
-	prepCorrect    int
-	prepTotal      int
-	prepRevealed   bool
-	prepLastResult bool
-	prepInput      string
-
-	// Noun Plural Trainer state
-	pluralItems      []pluralItem
-	pluralIndex      int
-	pluralCorrect    int
-	pluralTotal      int
-	pluralRevealed   bool
-	pluralLastResult bool
-	pluralInput      string
-
-	// Separable Verb Trainer state
-	separableItems      []separableItem
-	separableIndex      int
-	separableCorrect    int
-	separableTotal      int
-	separableRevealed   bool
-	separableLastResult bool
-	separableInput      string
-
-	// Number Trainer state
-	numberItems      []numberItem
-	numberIndex      int
-	numberCorrect    int
-	numberTotal      int
-	numberRevealed   bool
-	numberLastResult bool
-	numberInput      string
-
-	// Conjunction Trainer state
-	conjItems        []conjunctionItem
-	conjIndex        int
-	conjCorrect      int
-	conjTotal        int
-	conjRevealed     bool
-	practiceShowHint bool
-	conjLastResult   bool
-	conjInput        string
+	// trainers holds the live state for every text-input trainer
+	// (conjugation, case, adjective, preposition, plural, separable, numbers,
+	// conjunctions), keyed by sub-view. See trainer.go / trainer_content.go.
+	trainers map[PracticeSubView]*trainerState
 
 	practiceSubView   PracticeSubView
 	practiceHubCursor int
@@ -643,10 +528,6 @@ type debounceSearchMsg struct {
 
 type deckDeletedMsg struct{}
 
-type caseItemsMsg []caseItem
-type adjItemsMsg []adjectiveItem
-type prepItemsMsg []prepositionItem
-type numberItemsMsg []numberItem
 type dictHistoryLoadedMsg []string
 type deckHistoryLoadedMsg []string
 
@@ -899,69 +780,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.status = fmt.Sprintf("Loaded %d nouns for practice", len(m.practiceItems))
 		}
 		return m, nil
-	case conjugationItemsMsg:
-		m.conjugationItems = []content.DailyVerb(msg)
-		if len(m.conjugationItems) == 0 {
-			m.status = "No verbs found for practice"
+	case trainerItemsMsg:
+		st := m.trainerStateFor(msg.kind)
+		st.items = msg.items
+		if len(msg.items) == 0 {
+			m.status = "No " + st.config.ItemNoun + " found"
 		} else {
-			m.status = fmt.Sprintf("Loaded %d verbs for conjugation practice", len(m.conjugationItems))
-		}
-		return m, nil
-	case caseItemsMsg:
-		m.caseItems = []caseItem(msg)
-		if len(m.caseItems) == 0 {
-			m.status = "No case exercises found"
-		} else {
-			m.status = fmt.Sprintf("Loaded %d case exercises", len(m.caseItems))
-		}
-		return m, nil
-	case adjItemsMsg:
-		m.adjItems = []adjectiveItem(msg)
-		if len(m.adjItems) == 0 {
-			m.status = "No adjective exercises found"
-		} else {
-			m.status = fmt.Sprintf("Loaded %d adjective exercises", len(m.adjItems))
-		}
-		return m, nil
-	case prepItemsMsg:
-		m.prepItems = []prepositionItem(msg)
-		if len(m.prepItems) == 0 {
-			m.status = "No preposition exercises found"
-		} else {
-			m.status = fmt.Sprintf("Loaded %d preposition exercises", len(m.prepItems))
-		}
-		return m, nil
-	case pluralItemsMsg:
-		m.pluralItems = []pluralItem(msg)
-		if len(m.pluralItems) == 0 {
-			m.status = "No plural exercises found"
-		} else {
-			m.status = fmt.Sprintf("Loaded %d plural exercises", len(m.pluralItems))
-		}
-		return m, nil
-
-	case separableItemsMsg:
-		m.separableItems = []separableItem(msg)
-		if len(m.separableItems) == 0 {
-			m.status = "No separable verb exercises found"
-		} else {
-			m.status = fmt.Sprintf("Loaded %d separable verb exercises", len(m.separableItems))
-		}
-		return m, nil
-	case numberItemsMsg:
-		m.numberItems = []numberItem(msg)
-		if len(m.numberItems) == 0 {
-			m.status = "No number exercises found"
-		} else {
-			m.status = fmt.Sprintf("Loaded %d number exercises", len(m.numberItems))
-		}
-		return m, nil
-	case conjItemsMsg:
-		m.conjItems = []conjunctionItem(msg)
-		if len(m.conjItems) == 0 {
-			m.status = "No conjunction exercises found"
-		} else {
-			m.status = fmt.Sprintf("Loaded %d conjunction exercises", len(m.conjItems))
+			m.status = fmt.Sprintf("Loaded %d %s", len(msg.items), st.config.ItemNoun)
 		}
 		return m, nil
 	case timedClearStatusMsg:

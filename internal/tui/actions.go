@@ -1190,18 +1190,19 @@ func (m *Model) practiceVerbOfTheDay() tea.Cmd {
 	return tea.Sequence(
 		m.updateView(ViewPractice),
 		func() tea.Msg {
-			// Find the verb in conjugation items and set the index
-			for i, item := range m.conjugationItems {
-				if item.German == verb.German {
+			// Find the verb in the loaded conjugation items and jump to it.
+			st := m.trainerStateFor(PracticeSubViewConjugation)
+			for i, item := range st.items {
+				if item.Title == verb.German {
 					m.practiceSubView = PracticeSubViewConjugation
-					m.conjugationIndex = i
-					m.conjugationRevealed = false
-					m.conjugationInput = ""
+					st.index = i
+					st.revealed = false
+					st.input = ""
 					m.status = fmt.Sprintf("Conjugate: %s", verb.German)
 					return nil
 				}
 			}
-			// Fallback: load it into conjugation items if not found
+			// Fallback: load conjugation items if not present yet.
 			return m.enterPracticeMode(PracticeSubViewConjugation)()
 		},
 	)

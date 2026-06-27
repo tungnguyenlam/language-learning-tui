@@ -34,3 +34,4 @@ __pycache__/
 # Local dictionary files (containing dict.cc licensed data, do not push)
 /local_dict_files/
 
+language-learning-tui

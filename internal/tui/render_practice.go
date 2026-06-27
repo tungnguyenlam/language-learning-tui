@@ -14,22 +14,9 @@ func (m *Model) renderPractice(layout viewportLayout) string {
 		return m.renderPracticeHub(layout)
 	case PracticeSubViewGender:
 		return fillViewportContent(m.renderGenderTrainer(layout), layout)
-	case PracticeSubViewConjugation:
-		return fillViewportContent(m.renderConjugation(layout), layout)
-	case PracticeSubViewCase:
-		return fillViewportContent(m.renderCaseTrainer(layout), layout)
-	case PracticeSubViewAdjective:
-		return fillViewportContent(m.renderAdjectiveTrainer(layout), layout)
-	case PracticeSubViewPreposition:
-		return fillViewportContent(m.renderPrepositionTrainer(layout), layout)
-	case PracticeSubViewPlural:
-		return fillViewportContent(m.renderPluralTrainer(layout), layout)
-	case PracticeSubViewSeparable:
-		return fillViewportContent(m.renderSeparableTrainer(layout), layout)
-	case PracticeSubViewNumbers:
-		return fillViewportContent(m.renderNumberTrainer(layout), layout)
-	case PracticeSubViewConjunctions:
-		return fillViewportContent(m.renderConjunctionTrainer(layout), layout)
+	}
+	if isGenericTrainer(m.practiceSubView) {
+		return fillViewportContent(m.renderTrainer(m.practiceSubView, layout), layout)
 	}
 	return "Unknown Practice View"
 }
@@ -65,50 +52,21 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 	}
 
 	getItemCount := func(sub PracticeSubView) int {
-		switch sub {
-		case PracticeSubViewGender:
+		if sub == PracticeSubViewGender {
 			return len(m.practiceItems)
-		case PracticeSubViewConjugation:
-			return len(m.conjugationItems)
-		case PracticeSubViewCase:
-			return len(m.caseItems)
-		case PracticeSubViewAdjective:
-			return len(m.adjItems)
-		case PracticeSubViewPreposition:
-			return len(m.prepItems)
-		case PracticeSubViewPlural:
-			return len(m.pluralItems)
-		case PracticeSubViewSeparable:
-			return len(m.separableItems)
-		case PracticeSubViewNumbers:
-			return len(m.numberItems)
-		case PracticeSubViewConjunctions:
-			return len(m.conjItems)
+		}
+		if st, ok := m.trainers[sub]; ok {
+			return len(st.items)
 		}
 		return 0
 	}
 
 	getScoreStr := func(sub PracticeSubView) string {
 		var correct, total int
-		switch sub {
-		case PracticeSubViewGender:
+		if sub == PracticeSubViewGender {
 			correct, total = m.practiceCorrect, m.practiceTotal
-		case PracticeSubViewConjugation:
-			correct, total = m.conjugationCorrect, m.conjugationTotal
-		case PracticeSubViewCase:
-			correct, total = m.caseCorrect, m.caseTotal
-		case PracticeSubViewAdjective:
-			correct, total = m.adjCorrect, m.adjTotal
-		case PracticeSubViewPreposition:
-			correct, total = m.prepCorrect, m.prepTotal
-		case PracticeSubViewPlural:
-			correct, total = m.pluralCorrect, m.pluralTotal
-		case PracticeSubViewSeparable:
-			correct, total = m.separableCorrect, m.separableTotal
-		case PracticeSubViewNumbers:
-			correct, total = m.numberCorrect, m.numberTotal
-		case PracticeSubViewConjunctions:
-			correct, total = m.conjCorrect, m.conjTotal
+		} else if st, ok := m.trainers[sub]; ok {
+			correct, total = st.correct, st.total
 		}
 		if total > 0 {
 			pct := float64(correct) / float64(total) * 100

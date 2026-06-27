@@ -167,78 +167,24 @@ func (m *Model) refreshViewStatus() {
 
 func (m *Model) enterPracticeMode(mode PracticeSubView) tea.Cmd {
 	m.practiceSubView = mode
-	switch mode {
-	case PracticeSubViewGender:
+	if mode == PracticeSubViewGender {
 		m.practiceIndex = 0
 		m.practiceCorrect = 0
 		m.practiceTotal = 0
 		m.practiceRevealed = false
 		m.status = "Loading nouns for practice..."
 		return m.loadPracticeItems()
-	case PracticeSubViewConjugation:
-		m.conjugationIndex = 0
-		m.conjugationCorrect = 0
-		m.conjugationTotal = 0
-		m.conjugationRevealed = false
-		m.conjugationInput = ""
-		m.status = "Loading verbs for conjugation practice..."
-		return m.loadConjugationItems()
-	case PracticeSubViewCase:
-		m.caseIndex = 0
-		m.caseCorrect = 0
-		m.caseTotal = 0
-		m.caseRevealed = false
-		m.caseInput = ""
-		m.status = "Loading case exercises..."
-		return m.loadCaseItems()
-	case PracticeSubViewAdjective:
-		m.adjIndex = 0
-		m.adjCorrect = 0
-		m.adjTotal = 0
-		m.adjRevealed = false
-		m.adjInput = ""
-		m.status = "Loading adjective exercises..."
-		return m.loadAdjectiveItems()
-	case PracticeSubViewPreposition:
-		m.prepIndex = 0
-		m.prepCorrect = 0
-		m.prepTotal = 0
-		m.prepRevealed = false
-		m.prepInput = ""
-		m.status = "Loading preposition exercises..."
-		return m.loadPrepositionItems()
-	case PracticeSubViewPlural:
-		m.pluralIndex = 0
-		m.pluralCorrect = 0
-		m.pluralTotal = 0
-		m.pluralRevealed = false
-		m.pluralInput = ""
-		m.status = "Loading plural exercises..."
-		return m.loadPluralItems()
-	case PracticeSubViewSeparable:
-		m.separableIndex = 0
-		m.separableCorrect = 0
-		m.separableTotal = 0
-		m.separableRevealed = false
-		m.separableInput = ""
-		m.status = "Loading separable verb exercises..."
-		return m.loadSeparableItems()
-	case PracticeSubViewNumbers:
-		m.numberIndex = 0
-		m.numberCorrect = 0
-		m.numberTotal = 0
-		m.numberRevealed = false
-		m.numberInput = ""
-		m.status = "Loading number & time exercises..."
-		return m.loadNumberItems()
-	case PracticeSubViewConjunctions:
-		m.conjIndex = 0
-		m.conjCorrect = 0
-		m.conjTotal = 0
-		m.conjRevealed = false
-		m.conjInput = ""
-		m.status = "Loading conjunction & word order exercises..."
-		return m.loadConjItems()
+	}
+	if isGenericTrainer(mode) {
+		st := m.trainerStateFor(mode)
+		st.index = 0
+		st.correct = 0
+		st.total = 0
+		st.revealed = false
+		st.input = ""
+		st.showHint = false
+		m.status = "Loading " + st.config.ItemNoun + "..."
+		return st.config.Load(m)
 	}
 	return nil
 }

@@ -2391,27 +2391,28 @@ func TestAdjectiveEndingTrainer(t *testing.T) {
 	updated, _ = model.Update(msgs[0])
 	model = updated.(*Model)
 
-	if len(model.adjItems) == 0 {
+	st := model.trainerStateFor(PracticeSubViewAdjective)
+	if len(st.items) == 0 {
 		t.Fatal("expected loaded adjective items to be non-empty")
 	}
 
 	// Test inputs
 	// Type correct/incorrect ending
-	model.adjInput = "kaltes"
+	st.input = "kaltes"
 	updated, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	model = updated.(*Model)
-	if !model.adjRevealed {
+	if !st.revealed {
 		t.Fatal("expected exercise to be revealed after Enter")
 	}
 
 	// Press key to move to next item
 	updated, _ = model.Update(tea.KeyPressMsg{Code: ' '})
 	model = updated.(*Model)
-	if model.adjRevealed {
+	if st.revealed {
 		t.Fatal("expected exercise to reset revealed state on next action")
 	}
-	if model.adjIndex != 1 {
-		t.Fatalf("expected adjIndex to advance to 1, got %d", model.adjIndex)
+	if st.index != 1 {
+		t.Fatalf("expected adjective index to advance to 1, got %d", st.index)
 	}
 }
 
@@ -2438,37 +2439,39 @@ func TestPluralTrainer(t *testing.T) {
 	updated, _ = model.Update(msgs[0])
 	model = updated.(*Model)
 
-	if len(model.pluralItems) == 0 {
+	st := model.trainerStateFor(PracticeSubViewPlural)
+	if len(st.items) == 0 {
 		t.Fatal("expected loaded plural items to be non-empty")
 	}
 
 	// Set singular and plural for testing
-	model.pluralItems[0] = pluralItem{
-		Singular: "das Buch",
-		Plural:   "die Bücher",
-		Meaning:  "book",
+	st.items[0] = trainerItem{
+		Title:       "das Buch",
+		Subtitle:    "(book)",
+		Answer:      "die Bücher",
+		Instruction: "Enter the plural form (with or without article):",
 	}
 
 	// Test inputs
 	// Type correct plural form
-	model.pluralInput = "die Bücher"
+	st.input = "die Bücher"
 	updated, _ = model.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	model = updated.(*Model)
-	if !model.pluralRevealed {
+	if !st.revealed {
 		t.Fatal("expected exercise to be revealed after Enter")
 	}
-	if !model.pluralLastResult {
+	if !st.lastOK {
 		t.Fatal("expected correct answer to be recorded")
 	}
 
 	// Press key to move to next item
 	updated, _ = model.Update(tea.KeyPressMsg{Code: ' '})
 	model = updated.(*Model)
-	if model.pluralRevealed {
+	if st.revealed {
 		t.Fatal("expected exercise to reset revealed state on next action")
 	}
-	if model.pluralIndex != 1 {
-		t.Fatalf("expected pluralIndex to advance to 1, got %d", model.pluralIndex)
+	if st.index != 1 {
+		t.Fatalf("expected plural index to advance to 1, got %d", st.index)
 	}
 }
 
@@ -2564,24 +2567,27 @@ func TestConjunctionsTrainer(t *testing.T) {
 	m.activeView = ViewPractice
 	m.practiceSubView = PracticeSubViewConjunctions
 
-	m.conjItems = []conjunctionItem{
+	st := m.trainerStateFor(PracticeSubViewConjunctions)
+	st.items = []trainerItem{
 		{
-			Sentence:    "Ich bleibe heute zu Hause, {{...}} es regnet.",
+			Title:       "Ich bleibe heute zu Hause, {{...}} es regnet.",
+			Subtitle:    "Meaning: because",
 			Answer:      "weil",
-			Meaning:     "because",
+			Instruction: "Enter the missing word:",
 			Explanation: "weil is a subordinating conjunction",
 		},
 		{
-			Sentence:    "Es regnet, {{...}} ich gehe trotzdem spazieren.",
+			Title:       "Es regnet, {{...}} ich gehe trotzdem spazieren.",
+			Subtitle:    "Meaning: but",
 			Answer:      "aber",
-			Meaning:     "but",
+			Instruction: "Enter the missing word:",
 			Explanation: "aber is coordinating",
 		},
 	}
-	m.conjIndex = 0
+	st.index = 0
 
 	layout := viewportLayout{Width: 80, Height: 30}
-	view := m.renderConjunctionTrainer(layout)
+	view := m.renderTrainer(PracticeSubViewConjunctions, layout)
 	if !strings.Contains(view, "Ich bleibe heute zu Hause") {
 		t.Fatalf("expected view to contain sentence: %s", view)
 	}
@@ -2589,35 +2595,35 @@ func TestConjunctionsTrainer(t *testing.T) {
 	for _, char := range "weil" {
 		m.updatePracticeKey(tea.KeyPressMsg{Code: char})
 	}
-	if m.conjInput != "weil" {
-		t.Fatalf("expected conjInput to be 'weil', got '%s'", m.conjInput)
+	if st.input != "weil" {
+		t.Fatalf("expected input to be 'weil', got '%s'", st.input)
 	}
 
 	m.updatePracticeKey(tea.KeyPressMsg{Code: '\r'})
-	if !m.conjRevealed {
+	if !st.revealed {
 		t.Fatal("expected trainer to be in revealed state")
 	}
-	if !m.conjLastResult {
+	if !st.lastOK {
 		t.Fatal("expected answer to be correct")
 	}
-	if m.conjCorrect != 1 || m.conjTotal != 1 {
-		t.Fatalf("expected score to be 1/1, got %d/%d", m.conjCorrect, m.conjTotal)
+	if st.correct != 1 || st.total != 1 {
+		t.Fatalf("expected score to be 1/1, got %d/%d", st.correct, st.total)
 	}
 
-	view = m.renderConjunctionTrainer(layout)
+	view = m.renderTrainer(PracticeSubViewConjunctions, layout)
 	if !strings.Contains(view, "weil is a subordinating conjunction") {
 		t.Fatalf("expected explanation to be rendered, got: %s", view)
 	}
 
 	m.updatePracticeKey(tea.KeyPressMsg{Code: ' '})
-	if m.conjRevealed {
+	if st.revealed {
 		t.Fatal("expected trainer to reset revealed state on advance")
 	}
-	if m.conjIndex != 1 {
-		t.Fatalf("expected trainer to advance to next item, index=%d", m.conjIndex)
+	if st.index != 1 {
+		t.Fatalf("expected trainer to advance to next item, index=%d", st.index)
 	}
-	if m.conjInput != "" {
-		t.Fatalf("expected conjInput to reset, got '%s'", m.conjInput)
+	if st.input != "" {
+		t.Fatalf("expected input to reset, got '%s'", st.input)
 	}
 }
 
@@ -2626,35 +2632,37 @@ func TestConjunctionsHint(t *testing.T) {
 	m.activeView = ViewPractice
 	m.practiceSubView = PracticeSubViewConjunctions
 
-	m.conjItems = []conjunctionItem{
+	st := m.trainerStateFor(PracticeSubViewConjunctions)
+	st.items = []trainerItem{
 		{
-			Sentence:    "Sentence",
+			Title:       "Sentence",
+			Subtitle:    "Meaning: meaning",
 			Answer:      "weil",
-			Meaning:     "meaning",
-			Hint:        "THIS IS A HINT",
+			Instruction: "Enter the missing word:",
+			HintText:    "THIS IS A HINT",
 			Explanation: "explanation",
 		},
 	}
-	m.conjIndex = 0
+	st.index = 0
 
 	layout := viewportLayout{Width: 80, Height: 30}
-	view := m.renderConjunctionTrainer(layout)
+	view := m.renderTrainer(PracticeSubViewConjunctions, layout)
 	if strings.Contains(view, "THIS IS A HINT") {
 		t.Fatal("hint should not be visible initially")
 	}
 
 	m.updatePracticeKey(tea.KeyPressMsg{Code: 'h'})
-	if !m.practiceShowHint {
-		t.Fatal("expected practiceShowHint to be true")
+	if !st.showHint {
+		t.Fatal("expected showHint to be true")
 	}
-	view = m.renderConjunctionTrainer(layout)
+	view = m.renderTrainer(PracticeSubViewConjunctions, layout)
 	if !strings.Contains(view, "THIS IS A HINT") {
 		t.Fatal("hint should be visible after pressing 'h'")
 	}
 
 	m.updatePracticeKey(tea.KeyPressMsg{Code: 'h'})
-	if m.practiceShowHint {
-		t.Fatal("expected practiceShowHint to be false after toggle")
+	if st.showHint {
+		t.Fatal("expected showHint to be false after toggle")
 	}
 
 	// Reveal answer should hide hint input prompt but hint itself?
@@ -2664,13 +2672,13 @@ func TestConjunctionsHint(t *testing.T) {
 		m.updatePracticeKey(tea.KeyPressMsg{Code: char})
 	}
 	m.updatePracticeKey(tea.KeyPressMsg{Code: '\r'})
-	if !m.conjRevealed {
+	if !st.revealed {
 		t.Fatal("expected trainer to be revealed")
 	}
 
 	// Advance should reset hint
 	m.updatePracticeKey(tea.KeyPressMsg{Code: ' '})
-	if m.practiceShowHint {
+	if st.showHint {
 		t.Fatal("expected hint to reset on advance")
 	}
 }
@@ -2684,7 +2692,8 @@ func TestPracticeHubScoresAndReset(t *testing.T) {
 
 	// Mock some practice scores
 	m.practiceCorrect, m.practiceTotal = 4, 5
-	m.conjugationCorrect, m.conjugationTotal = 3, 3
+	conj := m.trainerStateFor(PracticeSubViewConjugation)
+	conj.correct, conj.total = 3, 3
 
 	layout := m.activeViewContentLayout()
 	view := m.renderPracticeHub(layout)
@@ -2705,9 +2714,9 @@ func TestPracticeHubScoresAndReset(t *testing.T) {
 	}
 
 	// Verify scores are reset to 0
-	if m.practiceCorrect != 0 || m.practiceTotal != 0 || m.conjugationCorrect != 0 || m.conjugationTotal != 0 {
+	if m.practiceCorrect != 0 || m.practiceTotal != 0 || conj.correct != 0 || conj.total != 0 {
 		t.Errorf("expected practice scores to be reset, got: gender=%d/%d, conj=%d/%d",
-			m.practiceCorrect, m.practiceTotal, m.conjugationCorrect, m.conjugationTotal)
+			m.practiceCorrect, m.practiceTotal, conj.correct, conj.total)
 	}
 
 	// Re-render and check that score info is gone
