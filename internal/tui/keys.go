@@ -235,10 +235,10 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 }
 
 func (m *Model) textInputActive() bool {
-	return (m.activeView == ViewImport && m.editingImportPath) ||
+	return (m.activeView == ViewImport && m.importScreen.editingImportPath) ||
 		(m.activeView == ViewSettings && m.editingTemplate) ||
 		(m.activeView == ViewSettings && m.editingSecretKey != "") ||
-		(m.activeView == ViewImport && m.editingExportTag) ||
+		(m.activeView == ViewImport && m.importScreen.editingExportTag) ||
 		m.taggingCards ||
 		m.searchingBrowser ||
 		m.searchingTags ||
@@ -309,8 +309,6 @@ func (m *Model) updateActiveViewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return m.updateReviewKey(msg)
 	case ViewAI:
 		return m.updateAIKey(msg)
-	case ViewImport:
-		return m.updateImportKey(msg)
 	case ViewBrowser:
 		return m.updateBrowserKey(msg)
 	case ViewSettings:
@@ -735,117 +733,6 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, true
 	}
 
-	return nil, false
-}
-
-func (m *Model) updateImportKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
-	if m.editingImportPath {
-		switch msg.String() {
-		case "enter", "\r", "\n", "esc":
-			m.editingImportPath = false
-			return nil, true
-		case "backspace":
-			if m.importCursor == 0 {
-				if len(m.importPath) > 0 {
-					m.importPath = trimLastRune(m.importPath)
-				}
-			} else {
-				if len(m.exportPath) > 0 {
-					m.exportPath = trimLastRune(m.exportPath)
-				}
-			}
-			return nil, true
-		case "ctrl+u":
-			if m.importCursor == 0 {
-				m.importPath = ""
-			} else {
-				m.exportPath = ""
-			}
-			return nil, true
-		}
-		if ch, ok := singlePrintableInput(msg.String()); ok {
-			if m.importCursor == 0 {
-				m.importPath += ch
-			} else {
-				m.exportPath += ch
-			}
-			return nil, true
-		}
-		return nil, true
-	}
-
-	if m.editingExportTag {
-		switch msg.String() {
-		case "enter", "\r", "\n", "esc":
-			m.editingExportTag = false
-			return nil, true
-		case "backspace":
-			if len(m.exportTag) > 0 {
-				m.exportTag = trimLastRune(m.exportTag)
-			}
-			return nil, true
-		case "ctrl+u":
-			m.exportTag = ""
-			return nil, true
-		}
-		if ch, ok := singlePrintableInput(msg.String()); ok {
-			m.exportTag += ch
-			return nil, true
-		}
-		return nil, true
-	}
-
-	switch msg.String() {
-	case "up", "k":
-		if m.importCursor > 0 {
-			m.importCursor--
-		}
-		return nil, true
-	case "down", "j":
-		if m.importCursor < 4 {
-			m.importCursor++
-		}
-		return nil, true
-	case "[":
-		if m.importCursor == 2 {
-			m.previousExportDeck()
-			return nil, true
-		} else if m.importCursor == 4 {
-			m.cycleExportFilter(false)
-			return nil, true
-		}
-	case "]":
-		if m.importCursor == 2 {
-			m.nextExportDeck()
-			return nil, true
-		} else if m.importCursor == 4 {
-			m.cycleExportFilter(true)
-			return nil, true
-		}
-	case "enter", "\r", "\n":
-		if m.importCursor < 2 {
-			m.editingImportPath = true
-		} else if m.importCursor == 3 {
-			m.editingExportTag = true
-		}
-		return nil, true
-	case "t":
-		m.importCursor = 3
-		m.editingExportTag = true
-		return nil, true
-	case "i":
-		return m.importTSV(), true
-	case "I":
-		return m.importAPKG(), true
-	case "S", "s":
-		return m.seedStandardContent(), true
-	case "R":
-		return m.handleResetDatabase(), true
-	case "x":
-		return m.exportTSV(), true
-	case "X":
-		return m.exportAPKG(), true
-	}
 	return nil, false
 }
 
@@ -1373,15 +1260,15 @@ func (m *Model) handlePaste(text string) tea.Cmd {
 	}
 
 	if m.activeView == ViewImport {
-		if m.editingImportPath {
-			if m.importCursor == 0 {
+		if m.importScreen.editingImportPath {
+			if m.importScreen.importCursor == 0 {
 				m.importPath += text
 			} else {
 				m.exportPath += text
 			}
 			return nil
 		}
-		if m.editingExportTag {
+		if m.importScreen.editingExportTag {
 			m.exportTag += text
 			return nil
 		}

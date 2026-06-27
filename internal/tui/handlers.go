@@ -56,11 +56,9 @@ func (m *Model) updateView(view View) tea.Cmd {
 	m.confirmingDelete = false
 	m.clearReviewHistory()
 	m.hitboxes = nil // Clear hitboxes for new view
-	m.importCursor = 0
+	m.importScreen.resetCursor()
 	m.settingsCursor = 0
 	m.settingsScroll = 0
-	m.editingImportPath = false
-	m.editingExportTag = false
 	m.editingTemplate = false
 	m.typingMode = false
 	m.typedAnswer = ""

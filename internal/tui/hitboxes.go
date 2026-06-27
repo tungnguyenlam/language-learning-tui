@@ -199,13 +199,13 @@ func (m *Model) activateHitboxByID(id string) tea.Cmd {
 	case strings.HasPrefix(id, "import-path-"):
 		idx, err := strconv.Atoi(strings.TrimPrefix(id, "import-path-"))
 		if err == nil && (idx >= 0 && idx <= 4) {
-			m.importCursor = idx
+			m.importScreen.importCursor = idx
 			if idx < 2 {
-				m.editingImportPath = true
+				m.importScreen.editingImportPath = true
 			} else if idx == 2 {
 				m.nextExportDeck()
 			} else if idx == 3 {
-				m.editingExportTag = true
+				m.importScreen.editingExportTag = true
 			} else if idx == 4 {
 				m.cycleExportFilter(true)
 			}

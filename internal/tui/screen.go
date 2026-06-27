@@ -19,10 +19,14 @@ type screen interface {
 	HandleKey(m *Model, msg tea.KeyPressMsg) (tea.Cmd, bool)
 }
 
-// registerScreens returns the set of views that have been migrated to the
-// screen interface. Add an entry here as each view is migrated.
-func registerScreens() map[View]screen {
-	return map[View]screen{
+// registerScreens populates m.screens with the views migrated to the screen
+// interface. Stateful screens are stored both in the map and via a typed handle
+// on Model so shared code can reach their view-local state. Add migrated views
+// here.
+func (m *Model) registerScreens() {
+	m.importScreen = &importScreen{}
+	m.screens = map[View]screen{
 		ViewSessionSummary: summaryScreen{},
+		ViewImport:         m.importScreen,
 	}
 }

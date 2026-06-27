@@ -98,11 +98,15 @@ type practiceItem struct {
 }
 
 type Model struct {
-	repo                       core.Repository
-	scheduler                  core.Scheduler
+	repo      core.Repository
+	scheduler core.Scheduler
 	// screens holds views migrated to the screen interface, keyed by View.
 	// Dispatch consults this before the legacy per-view method switches.
-	screens                    map[View]screen
+	screens map[View]screen
+	// importScreen is a typed handle to the registered Import/Export screen, so
+	// shared code (the updateView reset, import hitbox actions) can reach its
+	// view-local state without a type assertion.
+	importScreen               *importScreen
 	width                      int
 	height                     int
 	activeView                 View
@@ -165,9 +169,6 @@ type Model struct {
 	exportDeckID               string
 	exportTag                  string
 	exportFilter               string // e.g. "All", "Mature", "Learning"
-	importCursor               int    // 0: import path, 1: export path, 2: export deck, 3: export tag, 4: export filter
-	editingImportPath          bool
-	editingExportTag           bool
 	theme                      string
 	onConfigChange             func(string, string, string, map[string]map[string]string, bool, bool, int)
 	bookmarkFilter             bool
@@ -424,10 +425,9 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		logger = app.NewLeveledLogger(nullLogger, app.LogLevelInfo)
 	}
 
-	return &Model{
+	m := &Model{
 		repo:                repo,
 		scheduler:           scheduler,
-		screens:             registerScreens(),
 		theme:               opts.Theme,
 		aiProvider:          provider,
 		aiProviderName:      providerName,
@@ -456,6 +456,8 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		logger:              logger, // Set the logger
 		testMode:            opts.TestMode,
 	}
+	m.registerScreens()
+	return m
 }
 
 type dueCardsMsg []core.Card
@@ -1349,8 +1351,6 @@ func (m *Model) renderActiveViewPlainAt(layout viewportLayout) string {
 		content = m.renderReview(layout.X, layout.Y)
 	case ViewStatistics:
 		content = m.renderStatisticsAt(layout)
-	case ViewImport:
-		content = m.renderImport(layout.X, layout.Y)
 	case ViewAI:
 		content = m.renderAI(layout.X, layout.Y)
 	case ViewSettings:

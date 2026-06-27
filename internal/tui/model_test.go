@@ -458,7 +458,7 @@ func TestImportTSVUpsertsDeckAndRefreshesDueCards(t *testing.T) {
 	model.Update(decksMsg([]core.Deck{{ID: "a1-survival", Name: "German A1 Survival"}}))
 	model.activeView = ViewImport
 
-	cmd, handled := model.updateImportKey(tea.KeyPressMsg{Code: 'i'})
+	cmd, handled := model.importScreen.HandleKey(model, tea.KeyPressMsg{Code: 'i'})
 	if !handled || cmd == nil {
 		t.Fatal("import key should return command")
 	}
@@ -509,7 +509,7 @@ func TestExportTSVWritesSelectedDeck(t *testing.T) {
 	model.Update(decksMsg(repo.decks))
 	model.activeView = ViewImport
 
-	cmd, handled := model.updateImportKey(tea.KeyPressMsg{Code: 'x'})
+	cmd, handled := model.importScreen.HandleKey(model, tea.KeyPressMsg{Code: 'x'})
 	if !handled || cmd == nil {
 		t.Fatal("export key should return command")
 	}
@@ -1124,7 +1124,7 @@ func TestImportViewShowsResetAndStatusFilterGuidance(t *testing.T) {
 	model := NewModel(&mockRepo{}, &mockScheduler{})
 	model.activeView = ViewImport
 
-	view := ansi.Strip(model.renderImport(0, 0))
+	view := ansi.Strip(model.importScreen.Render(model, viewportLayout{}))
 	for _, want := range []string{"[R] Reset DB", "Status filters apply to TSV and APKG exports"} {
 		if !strings.Contains(view, want) {
 			t.Fatalf("import view missing %q:\n%s", want, view)
