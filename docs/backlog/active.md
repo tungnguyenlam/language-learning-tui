@@ -4,11 +4,11 @@ Last updated: 2026-07-27
 
 ## Current Milestone
 
-Screen-Interface Migration & TUI Polish.
+Grammar Trainer Content Expansion & Konjunktiv II Trainer.
 
 ## Exact Next Action
 
-Explore further SRS review enhancements and offline content extensions.
+Run E2E suite after `verify.sh` confirms green; then consider adding more Konjunktiv II edge cases (modal + Infinitiv Perfekt) or a new "Passive Voice" trainer.
 
 ## Top Issues
 

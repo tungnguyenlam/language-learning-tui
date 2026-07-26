@@ -32,5 +32,22 @@ func GetPrepositionExercises() []PrepositionExercise {
 		{"Die Kinder laufen vor {{...}} Haus.", "das", "vor", "Motion (Accusative)"},
 		{"Der Stift liegt zwischen {{...}} Büchern.", "den", "zwischen", "Location (Dative)"},
 		{"Ich lege den Stift zwischen {{...}} Bücher.", "die", "zwischen", "Motion (Accusative)"},
+		// Genitive prepositions
+		{Sentence: "Wegen {{...}} Erkältung kann er nicht kommen.", Answer: "seiner", Preposition: "wegen", Context: "Genitive (masculine possessive)"},
+		{Sentence: "Trotz {{...}} Regens gehen sie spazieren.", Answer: "des", Preposition: "trotz", Context: "Genitive (masculine/neuter)"},
+		{Sentence: "Während {{...}} Mittagspause lese ich.", Answer: "der", Preposition: "während", Context: "Genitive (feminine)"},
+		{Sentence: "Statt {{...}} Busses nehme ich die U-Bahn.", Answer: "des", Preposition: "statt", Context: "Genitive (masculine/neuter)"},
+		{Sentence: "Innerhalb {{...}} Woche muss das erledigt sein.", Answer: "einer", Preposition: "innerhalb", Context: "Genitive (feminine)"},
+		{Sentence: "Außerhalb {{...}} Stadt gibt es viel Natur.", Answer: "der", Preposition: "außerhalb", Context: "Genitive (feminine)"},
+		// Temporal prepositions (Dative)
+		{Sentence: "Ich lerne Deutsch seit {{...}} Jahr.", Answer: "einem", Preposition: "seit", Context: "Dative (neuter, ein-word)"},
+		{Sentence: "Nach {{...}} Arbeit gehe ich ins Fitnessstudio.", Answer: "der", Preposition: "nach", Context: "Dative (feminine)"},
+		{Sentence: "Vor {{...}} Essen sollst du Hände waschen.", Answer: "dem", Preposition: "vor", Context: "Dative (neuter, temporal)"},
+		{Sentence: "Bis {{...}} nächsten Montag muss der Bericht fertig sein.", Answer: "zum", Preposition: "bis + zu", Context: "Dative (bis zum = bis zu dem)"},
+		// Accusative-only prepositions
+		{Sentence: "Das Geschenk ist {{...}} seine Mutter.", Answer: "für", Preposition: "für", Context: "Accusative (für + accusative)"},
+		{Sentence: "Wir laufen um {{...}} Park.", Answer: "den", Preposition: "um", Context: "Accusative (um + accusative)"},
+		{Sentence: "Er kämpft {{...}} die Wahrheit.", Answer: "für", Preposition: "für", Context: "Accusative (für + accusative)"},
+		{Sentence: "Ohne {{...}} Schlüssel kann sie nicht rein.", Answer: "den", Preposition: "ohne", Context: "Accusative (ohne + accusative)"},
 	}
 }

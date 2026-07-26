@@ -76,6 +76,14 @@ var trainerConfigs = map[PracticeSubView]trainerConfig{
 		HintKey:   true,
 		Load:      (*Model).loadConjItems,
 	},
+	PracticeSubViewKonjunktiv: {
+		Title:     "KONJUNKTIV II TRAINER",
+		ItemNoun:  "Konjunktiv II exercises",
+		NextLabel: "next exercise",
+		EmptyMsg:  "No Konjunktiv II exercises found.",
+		HintKey:   true,
+		Load:      (*Model).loadKonjunktivItems,
+	},
 }
 
 // blanked renders a fill-in-the-blank sentence, replacing the {{...}} marker.
@@ -323,6 +331,22 @@ func (m *Model) loadSeparableItems() tea.Cmd {
 			{"Wir laden euch zur Party {{...}}.", "einladen", "ein", "to invite"},
 			{"Er gibt das Geld {{...}}.", "ausgeben", "aus", "to spend"},
 			{"Ich schlage ein Treffen {{...}}.", "vorschlagen", "vor", "to suggest"},
+			// 15 additional exercises
+			{"Wann fährst du {{...}}?", "abfahren", "ab", "to depart"},
+			{"Ich schreibe den Text {{...}}.", "abschreiben", "ab", "to copy/write off"},
+			{"Er denkt oft an seine Kindheit {{...}}.", "zurückdenken", "zurück", "to think back"},
+			{"Sie probiert das neue Kleid {{...}}.", "anprobieren", "an", "to try on"},
+			{"Ich nehme an dem Kurs {{...}}.", "teilnehmen", "teil", "to participate"},
+			{"Kannst du bitte {{...}} rufen?", "zurückrufen", "zurück", "to call back"},
+			{"Der Chef stellt den neuen Mitarbeiter {{...}}.", "vorstellen", "vor", "to introduce"},
+			{"Wann fängt die Schule {{...}}?", "aufhören", "auf", "to stop/end"},
+			{"Er macht die Tür {{...}}.", "aufmachen", "auf", "to open"},
+			{"Ich gebe auf dieser Party {{...}}.", "aufgeben", "auf", "to give up"},
+			{"Sie zieht das Hemd {{...}}.", "anziehen", "an", "to put on (clothes)"},
+			{"Wir räumen das Zimmer {{...}}.", "aufräumen", "auf", "to tidy up"},
+			{"Er bringt das Paket {{...}}.", "mitbringen", "mit", "to bring along"},
+			{"Sie füllt das Formular {{...}}.", "ausfüllen", "aus", "to fill out"},
+			{"Wir kommen morgen {{...}}.", "vorbeikommen", "vorbei", "to come by/visit"},
 		}
 		items := make([]trainerItem, len(raw))
 		for i, r := range raw {
@@ -368,5 +392,25 @@ func (m *Model) loadConjItems() tea.Cmd {
 			}
 		}
 		return trainerItemsMsg{kind: PracticeSubViewConjunctions, items: items}
+	}
+}
+
+func (m *Model) loadKonjunktivItems() tea.Cmd {
+	return func() tea.Msg {
+		exercises := content.GetKonjunktivExercises()
+		items := make([]trainerItem, len(exercises))
+		for i, ex := range exercises {
+			items[i] = trainerItem{
+				Title:       blanked(ex.Sentence, "_____"),
+				Subtitle:    "Meaning: " + ex.Meaning,
+				Answer:      ex.Answer,
+				RevealTitle: blanked(ex.Sentence, ex.Answer),
+				Instruction: "Enter the Konjunktiv II form:",
+				HintText:    ex.Hint,
+				Context:     ex.Hint,
+				Explanation: ex.Explanation,
+			}
+		}
+		return trainerItemsMsg{kind: PracticeSubViewKonjunktiv, items: items}
 	}
 }

@@ -44,6 +44,7 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 		{"practice-separable", "7", "Separable Verb Trainer", "Practice verb prefixes and word order", PracticeSubViewSeparable, colorOrange, "S/"},
 		{"practice-numbers", "8", "Numbers & Time", "Practice German numbers and time", PracticeSubViewNumbers, colorCyan, "🔢"},
 		{"practice-conjunctions", "9", "Conjunctions & Word Order", "Practice conjunctions & sentence structure", PracticeSubViewConjunctions, colorGreen, "🔗"},
+		{"practice-konjunktiv", "0", "Konjunktiv II Trainer", "Practice subjunctive II (würde, wäre, hätte)", PracticeSubViewKonjunktiv, colorAITitle, "Kj"},
 	}
 
 	spacing := 5

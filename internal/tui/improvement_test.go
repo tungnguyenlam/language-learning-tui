@@ -46,13 +46,13 @@ func TestPracticeHubKeyboardNavigation(t *testing.T) {
 		t.Fatalf("Expected cursor to be 0, got %d", model.practiceHubCursor)
 	}
 
-	// Wrap around moving up from 0
+	// Wrap around moving up from 0 — now 10 trainers (indices 0-9)
 	model.updatePracticeKey(tea.KeyPressMsg{Code: tea.KeyUp})
-	if model.practiceHubCursor != 8 {
-		t.Fatalf("Expected cursor to be 8 after wrap-around, got %d", model.practiceHubCursor)
+	if model.practiceHubCursor != 9 {
+		t.Fatalf("Expected cursor to be 9 after wrap-around, got %d", model.practiceHubCursor)
 	}
 
-	// Wrap around moving down from 8
+	// Wrap around moving down from 9
 	model.updatePracticeKey(tea.KeyPressMsg{Code: tea.KeyDown})
 	if model.practiceHubCursor != 0 {
 		t.Fatalf("Expected cursor to be 0 after wrap-around, got %d", model.practiceHubCursor)
@@ -228,8 +228,8 @@ func TestPracticeHubVisuals(t *testing.T) {
 
 	view := model.renderPracticeHub(viewportLayout{Width: 80, Height: 24})
 
-	// Check for some icons and colors in the view (using substrings)
-	icons := []string{"🚻", "🔄", "📐", "🎨", "📍", "👥", "S/", "🔢", "🔗"}
+	// Check for icons/labels from all 10 trainers
+	icons := []string{"🚻", "🔄", "📐", "🎨", "📍", "👥", "S/", "🔢", "🔗", "Kj"}
 	for _, icon := range icons {
 		if !strings.Contains(view, icon) {
 			t.Errorf("Expected icon %s in Practice Hub view", icon)
@@ -320,13 +320,66 @@ func TestPracticeHubHitboxSpacing(t *testing.T) {
 	layout := viewportLayout{X: 0, Y: 0, Width: 80, Height: 24}
 	model.renderPracticeHub(layout)
 
-	if len(model.hitboxes) != 9 {
-		t.Fatalf("Expected 9 hitboxes in Practice Hub, got %d", len(model.hitboxes))
+	if len(model.hitboxes) != 10 {
+		t.Fatalf("Expected 10 hitboxes in Practice Hub, got %d", len(model.hitboxes))
 	}
 	for i, hb := range model.hitboxes {
 		expectedY := layout.Y + 3 + (i * 5)
 		if hb.Y != expectedY {
 			t.Errorf("Hitbox %d Y coordinate mismatch: expected %d, got %d", i, expectedY, hb.Y)
 		}
+	}
+}
+
+func TestKonjunktivTrainerIsRegistered(t *testing.T) {
+	repo := &mockRepo{}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewPractice
+	model.practiceSubView = PracticeSubViewHub
+
+	// '0' key should enter Konjunktiv II trainer
+	cmd, handled := model.updatePracticeKey(tea.KeyPressMsg{Code: '0'})
+	if !handled {
+		t.Fatal("Expected '0' key to be handled in Practice Hub")
+	}
+	if cmd == nil {
+		t.Fatal("Expected non-nil command for '0' key (Konjunktiv II trainer)")
+	}
+	if model.practiceSubView != PracticeSubViewKonjunktiv {
+		t.Fatalf("Expected PracticeSubViewKonjunktiv, got %d", model.practiceSubView)
+	}
+	if model.practiceHubCursor != 9 {
+		t.Fatalf("Expected hub cursor to be 9, got %d", model.practiceHubCursor)
+	}
+}
+
+func TestKonjunktivTrainerRenders(t *testing.T) {
+	repo := &mockRepo{}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewPractice
+	model.practiceSubView = PracticeSubViewKonjunktiv
+
+	// Simulate trainer items being loaded
+	st := model.trainerStateFor(PracticeSubViewKonjunktiv)
+	st.items = []trainerItem{
+		{
+			Title:       "Wenn ich mehr Zeit _____, würde ich mehr lesen.",
+			Subtitle:    "Meaning: If I had more time, I would read more.",
+			Answer:      "hätte",
+			RevealTitle: "Wenn ich mehr Zeit hätte, würde ich mehr lesen.",
+			Instruction: "Enter the Konjunktiv II form:",
+			HintText:    "Strong Konjunktiv II of haben",
+			Explanation: "'haben' → Konjunktiv II: 'hätte'.",
+		},
+	}
+
+	layout := viewportLayout{Width: 80, Height: 30}
+	view := stripANSI(model.renderTrainer(PracticeSubViewKonjunktiv, layout))
+
+	if !strings.Contains(view, "KONJUNKTIV II TRAINER") {
+		t.Error("Expected 'KONJUNKTIV II TRAINER' in trainer header")
+	}
+	if !strings.Contains(view, "Wenn ich mehr Zeit") {
+		t.Error("Expected trainer item content in rendered view")
 	}
 }
