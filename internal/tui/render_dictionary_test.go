@@ -1031,3 +1031,83 @@ func TestDictionaryTargetDeckCyclingAndBatchAdd(t *testing.T) {
 		t.Fatal("expected statusMsg from batch add command")
 	}
 }
+
+func TestDictionaryClozeCardGeneration(t *testing.T) {
+	repo := &captureRepo{}
+	m := NewModel(repo, &mockScheduler{})
+
+	entry := core.DictionaryEntry{
+		ID:          "cloze-1",
+		Word:        "Hund",
+		Translation: "dog",
+		Gender:      "m",
+		Examples:    []string{"Mein Hund ist braun."},
+	}
+
+	cmd := m.addDictionaryClozeEntryCmd(entry)
+	if cmd == nil {
+		t.Fatal("expected command from addDictionaryClozeEntryCmd")
+	}
+
+	msgs := executeCmd(cmd)
+	foundStatus := false
+	for _, msg := range msgs {
+		if s, ok := msg.(statusMsg); ok {
+			foundStatus = true
+			if !strings.Contains(s.text, "Created Cloze card for 'Hund'") {
+				t.Errorf("unexpected status message: %q", s.text)
+			}
+		}
+	}
+	if !foundStatus {
+		t.Fatal("expected statusMsg in executed msgs")
+	}
+
+	if repo.upsertedNote == nil {
+		t.Fatal("expected note to be upserted")
+	}
+	note := repo.upsertedNote
+	if !strings.Contains(note.Front, "{{c1::Hund}}") {
+		t.Errorf("expected Cloze prompt to contain {{c1::Hund}}, got %q", note.Front)
+	}
+	if note.Type != "cloze" {
+		t.Errorf("expected note type 'cloze', got %q", note.Type)
+	}
+	if len(note.Cards) == 0 || note.Cards[0].Kind != core.CardKindCloze {
+		t.Fatalf("expected Cloze card in note.Cards, got %v", note.Cards)
+	}
+}
+
+func TestDictionaryRecentlyViewedAndDomainTags(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.width = 100
+	m.height = 40
+
+	entry1 := core.DictionaryEntry{ID: "10", Word: "Käfer", Translation: "beetle", Tags: []string{"[zool.]"}}
+	entry2 := core.DictionaryEntry{ID: "20", Word: "Anapher", Translation: "anaphora", Tags: []string{"[lit.]"}}
+
+	m.recordDictionaryView(entry1)
+	m.recordDictionaryView(entry2)
+
+	if len(m.dictionaryRecentlyViewed) != 2 || m.dictionaryRecentlyViewed[0].Word != "Anapher" {
+		t.Fatalf("unexpected recently viewed stack: %v", m.dictionaryRecentlyViewed)
+	}
+
+	// 1. Verify Recently Inspected Words section rendered on empty search
+	m.dictionarySearch = ""
+	m.dictionaryResults = nil
+	viewEmpty := stripANSI(m.renderDictionary(m.activeViewContentLayout()))
+	if !strings.Contains(viewEmpty, "Recently Inspected Words:") || !strings.Contains(viewEmpty, "Anapher") {
+		t.Fatalf("expected view to contain Recently Inspected Words, got:\n%s", viewEmpty)
+	}
+
+	// 2. Verify domain tag badges in detail view
+	m.dictionaryResults = []core.DictionaryEntry{entry1}
+	m.dictionaryCursor = 0
+	m.dictionaryDetailView = true
+	viewDetail := stripANSI(m.renderDictionary(m.activeViewContentLayout()))
+	if !strings.Contains(viewDetail, "[ZOOL.]") {
+		t.Fatalf("expected detail view to contain domain tag badge [ZOOL.], got:\n%s", viewDetail)
+	}
+}

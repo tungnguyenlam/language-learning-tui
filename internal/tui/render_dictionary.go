@@ -230,6 +230,34 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 					})
 				}
 			}
+
+			if len(m.dictionaryRecentlyViewed) > 0 {
+				b.WriteString("\n" + boldStyle.Render("Recently Inspected Words:") + "\n")
+				for i, e := range m.dictionaryRecentlyViewed {
+					lineY := strings.Count(b.String(), "\n")
+					wordStr := e.Word
+					if e.Gender != "" {
+						wordStr += " {" + e.Gender + "}"
+					}
+					if e.Translation != "" {
+						wordStr += " - " + e.Translation
+					}
+					b.WriteString(fmt.Sprintf("  • %s\n", wordStr))
+					entry := e
+					m.hitboxes = append(m.hitboxes, Hitbox{
+						ID:     fmt.Sprintf("dict-recent-view-%d", i),
+						View:   ViewDictionary,
+						X:      layout.X + 4,
+						Y:      layout.Y + lineY,
+						Width:  len([]rune(wordStr)),
+						Height: 1,
+						Action: func() tea.Cmd {
+							m.dictionarySearch = entry.Word
+							return m.searchDictionary()
+						},
+					})
+				}
+			}
 		}
 		return b.String()
 	}
@@ -262,6 +290,15 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		}
 		if res.Gender != "" {
 			meta += renderGender(res.Gender) + " "
+		}
+		if len(res.Tags) > 0 {
+			tagStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("86")).Background(lipgloss.Color("236")).Padding(0, 1)
+			for _, tg := range res.Tags {
+				cleanTag := strings.Trim(tg, "[] ")
+				if cleanTag != "" {
+					meta += tagStyle.Render("["+strings.ToUpper(cleanTag)+"]") + " "
+				}
+			}
 		}
 		if meta != "" {
 			detailBuilder.WriteString(meta + "\n")
@@ -998,6 +1035,7 @@ func (m *Model) renderSpotlightDictionary() string {
 				keyHint("esc", "back"),
 				keyHint("Enter", "draft"),
 				keyHint("ctrl+a", "add"),
+				keyHint("c", "cloze"),
 				keyHint("b", "star"),
 				keyHint("ctrl+e", "explain"),
 				keyHint("ctrl+p", "play"),
@@ -1007,6 +1045,7 @@ func (m *Model) renderSpotlightDictionary() string {
 			keys = []string{
 				keyHint("Enter", "draft"),
 				keyHint("ctrl+a", "add"),
+				keyHint("c", "cloze"),
 				keyHint("b", "star"),
 				keyHint("ctrl+e", "explain"),
 				keyHint("ctrl+p", "play"),

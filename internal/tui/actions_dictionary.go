@@ -570,3 +570,117 @@ func (m *Model) addDictionaryEntriesBatchCmd(entries []core.DictionaryEntry) tea
 		m.loadDueCards,
 	)
 }
+
+func (m *Model) recordDictionaryView(entry core.DictionaryEntry) {
+	if entry.ID == "" && entry.Word == "" {
+		return
+	}
+	var clean []core.DictionaryEntry
+	for _, e := range m.dictionaryRecentlyViewed {
+		if e.ID != entry.ID && e.Word != entry.Word {
+			clean = append(clean, e)
+		}
+	}
+	m.dictionaryRecentlyViewed = append([]core.DictionaryEntry{entry}, clean...)
+	if len(m.dictionaryRecentlyViewed) > 10 {
+		m.dictionaryRecentlyViewed = m.dictionaryRecentlyViewed[:10]
+	}
+}
+
+func stripWordArticle(word string) string {
+	w := strings.TrimSpace(strings.ToLower(word))
+	for _, art := range []string{"der ", "die ", "das ", "den ", "dem ", "des ", "the ", "a ", "an "} {
+		if strings.HasPrefix(w, art) {
+			return strings.TrimSpace(w[len(art):])
+		}
+	}
+	return w
+}
+
+func (m *Model) addDictionaryClozeEntryCmd(entry core.DictionaryEntry) tea.Cmd {
+	return tea.Batch(
+		func() tea.Msg {
+			ctx := context.Background()
+
+			deckID := "dictionary"
+			deckName := "Dictionary"
+			if m.dictionaryTargetDeckID != "" {
+				deckID = m.dictionaryTargetDeckID
+				for _, d := range m.decks {
+					if d.ID == deckID {
+						deckName = d.Name
+						break
+					}
+				}
+			} else if m.deck.ID != "" && m.deck.ID != "all" {
+				deckID = m.deck.ID
+				deckName = m.deck.Name
+			}
+			deck, err := m.repo.GetDeck(ctx, deckID)
+			if err != nil {
+				deck = core.Deck{
+					ID:   deckID,
+					Name: deckName,
+				}
+				if err := m.repo.UpsertDeck(ctx, deck); err != nil {
+					return err
+				}
+			}
+
+			noteID := "dict-cloze-" + entry.ID
+			if entry.ID == "" {
+				noteID = fmt.Sprintf("dict-cloze-%d", time.Now().UnixNano())
+			}
+
+			wordClean := entry.Word
+			bareWord := stripWordArticle(wordClean)
+			frontText := ""
+
+			for _, ex := range entry.Examples {
+				idx := strings.Index(strings.ToLower(ex), strings.ToLower(bareWord))
+				if idx != -1 {
+					matchStr := ex[idx : idx+len(bareWord)]
+					frontText = ex[:idx] + "{{c1::" + matchStr + "}}" + ex[idx+len(bareWord):]
+					break
+				}
+			}
+
+			if frontText == "" {
+				frontText = fmt.Sprintf("Das deutsche Wort für '%s' ist {{c1::%s}}.", entry.Translation, formatDictionaryCardFront(entry.Word, entry.Gender))
+			}
+
+			extraParts := []string{}
+			if entry.Forms != "" {
+				extraParts = append(extraParts, "Forms: "+entry.Forms)
+			}
+			if entry.WordClass != "" {
+				extraParts = append(extraParts, "Class: ["+strings.ToUpper(entry.WordClass)+"]")
+			}
+			if entry.Gender != "" {
+				extraParts = append(extraParts, "Gender: {"+entry.Gender+"}")
+			}
+			if len(entry.Examples) > 0 {
+				extraParts = append(extraParts, "Examples:\n• "+strings.Join(entry.Examples, "\n• "))
+			}
+
+			note := core.Note{
+				ID:     noteID,
+				DeckID: deckID,
+				Type:   "cloze",
+				Front:  frontText,
+				Back:   entry.Translation,
+				Extra:  strings.Join(extraParts, "\n"),
+				Tags:   append(entry.Tags, "dictionary", "cloze"),
+			}
+			note.Cards = content.CardsForNote(note)
+
+			if err := m.repo.UpsertNote(ctx, note); err != nil {
+				return err
+			}
+
+			return statusMsg{text: fmt.Sprintf("Created Cloze card for '%s' in %s deck", wordClean, deck.Name)}
+		},
+		m.loadDecks,
+		m.loadDueCards,
+	)
+}

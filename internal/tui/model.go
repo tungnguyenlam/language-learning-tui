@@ -209,6 +209,7 @@ type Model struct {
 	dictionaryOverlayActive    bool
 	dictionaryStarred          map[string]bool
 	dictionaryTargetDeckID     string
+	dictionaryRecentlyViewed   []core.DictionaryEntry
 	isErrorStatus              bool
 	searchingTags              bool
 	sessionReviewed            int
