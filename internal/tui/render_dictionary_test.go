@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 
@@ -203,6 +204,11 @@ func (r *captureRepo) UpsertDeck(ctx context.Context, deck core.Deck) error {
 }
 
 func (r *captureRepo) GetDeck(ctx context.Context, id string) (core.Deck, error) {
+	for _, d := range r.decks {
+		if d.ID == id {
+			return d, nil
+		}
+	}
 	return core.Deck{ID: id, Name: "Dictionary"}, nil
 }
 
@@ -852,5 +858,176 @@ func TestDictionaryKAndJKeyHandling(t *testing.T) {
 	}
 	if m.dictionaryCursor != 0 {
 		t.Fatalf("expected cursor to be 0 after 'k', got %d", m.dictionaryCursor)
+	}
+}
+
+type mockDictRepo struct {
+	mockRepo
+	entries map[string]core.DictionaryEntry
+}
+
+func (r *mockDictRepo) GetEntry(ctx context.Context, id string) (core.DictionaryEntry, error) {
+	if entry, ok := r.entries[id]; ok {
+		return entry, nil
+	}
+	return core.DictionaryEntry{}, errors.New("entry not found")
+}
+
+func (r *mockDictRepo) Search(ctx context.Context, query string, limit int) ([]core.DictionaryEntry, error) {
+	var res []core.DictionaryEntry
+	for _, e := range r.entries {
+		res = append(res, e)
+	}
+	return res, nil
+}
+
+func (r *mockDictRepo) ImportEntries(ctx context.Context, entries []core.DictionaryEntry) error {
+	return nil
+}
+
+func (r *mockDictRepo) DictionaryCount(ctx context.Context) (int, error) {
+	return len(r.entries), nil
+}
+
+func TestDictionaryStarringAndFiltering(t *testing.T) {
+	repo := &mockDictRepo{
+		entries: map[string]core.DictionaryEntry{
+			"1": {ID: "1", Word: "Hund", Translation: "dog", Gender: "m"},
+			"2": {ID: "2", Word: "Katze", Translation: "cat", Gender: "f"},
+		},
+	}
+	m := NewModel(repo, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.width = 100
+	m.height = 40
+	m.dictionaryResults = []core.DictionaryEntry{
+		repo.entries["1"],
+		repo.entries["2"],
+	}
+	m.dictionaryCursor = 0
+	m.dictionaryFocusResults = true
+
+	// Toggle star on "Hund" using 'b' key
+	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'b'})
+	if !handled {
+		t.Fatal("expected 'b' to be handled when results focused")
+	}
+	_ = cmd
+	if !m.dictionaryStarred["1"] {
+		t.Fatalf("expected entry '1' (Hund) to be starred")
+	}
+	if !strings.Contains(m.status, "Starred") || !strings.Contains(m.status, "Hund") {
+		t.Fatalf("unexpected status after starring: %q", m.status)
+	}
+
+	// Verify rendered 2-column view contains star symbol ★ for Hund
+	view := stripANSI(m.renderDictionary(m.activeViewContentLayout()))
+	if !strings.Contains(view, "★ Hund") {
+		t.Fatalf("expected rendered view to show ★ Hund, got:\n%s", view)
+	}
+
+	// Test :starred filter
+	m.dictionarySearch = ":starred"
+	cmdSearch := m.searchDictionary()
+	if cmdSearch == nil {
+		t.Fatal("expected searchDictionary command for :starred filter")
+	}
+	msg := cmdSearch()
+	resMsg, ok := msg.(dictionarySearchResultsMsg)
+	if !ok {
+		t.Fatalf("expected dictionarySearchResultsMsg, got %T", msg)
+	}
+	if len(resMsg.results) != 1 || resMsg.results[0].Word != "Hund" {
+		t.Fatalf("expected :starred filter to return only Hund, got %v", resMsg.results)
+	}
+
+	// Unstar "Hund" using ctrl+b
+	cmd, handled = m.updateDictionaryKey(tea.KeyPressMsg{Code: 'b', Mod: tea.ModCtrl})
+	if !handled {
+		t.Fatal("expected ctrl+b to be handled")
+	}
+	_ = cmd
+	if m.dictionaryStarred["1"] {
+		t.Fatalf("expected entry '1' (Hund) to be unstarred")
+	}
+}
+
+func TestDictionaryTwoColumnTranslationDisplay(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.width = 110
+	m.height = 40
+	m.dictionaryResults = []core.DictionaryEntry{
+		{ID: "1", Word: "Haus", Translation: "house", Gender: "n"},
+		{ID: "2", Word: "Baum", Translation: "tree", Gender: "m"},
+	}
+
+	view := stripANSI(m.renderDictionary(m.activeViewContentLayout()))
+	if !strings.Contains(view, "Haus {n} - house") {
+		t.Fatalf("expected 2-column list item to show 'Haus {n} - house', got:\n%s", view)
+	}
+	if !strings.Contains(view, "Baum {m} - tree") {
+		t.Fatalf("expected 2-column list item to show 'Baum {m} - tree', got:\n%s", view)
+	}
+}
+
+func TestDictionaryTargetDeckCyclingAndBatchAdd(t *testing.T) {
+	repo := &captureRepo{}
+	repo.decks = []core.Deck{
+		{ID: "deck-1", Name: "German A1"},
+		{ID: "deck-2", Name: "German B1"},
+	}
+	m := NewModel(repo, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.decks = repo.decks
+
+	// Cycle deck with ctrl+g
+	_, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'g', Mod: tea.ModCtrl})
+	if !handled {
+		t.Fatal("expected ctrl+g to be handled")
+	}
+	if m.dictionaryTargetDeckID != "deck-1" {
+		t.Fatalf("expected target deck ID 'deck-1', got %q", m.dictionaryTargetDeckID)
+	}
+
+	// Add single entry with ctrl+a
+	entry := core.DictionaryEntry{ID: "101", Word: "Buch", Translation: "book", Gender: "n"}
+	m.dictionaryResults = []core.DictionaryEntry{entry}
+	m.dictionaryCursor = 0
+	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'a', Mod: tea.ModCtrl})
+	if !handled || cmd == nil {
+		t.Fatal("expected ctrl+a to return batch command")
+	}
+	msgs := executeCmd(cmd)
+	foundStatus := false
+	for _, msg := range msgs {
+		if s, ok := msg.(statusMsg); ok {
+			foundStatus = true
+			if !strings.Contains(s.text, "German A1") {
+				t.Fatalf("expected status to mention target deck 'German A1', got %q", s.text)
+			}
+		}
+	}
+	if !foundStatus {
+		t.Fatal("expected statusMsg from add command")
+	}
+
+	// Batch add results with ctrl+s
+	cmdBatch, handledBatch := m.updateDictionaryKey(tea.KeyPressMsg{Code: 's', Mod: tea.ModCtrl})
+	if !handledBatch || cmdBatch == nil {
+		t.Fatal("expected ctrl+s to return batch command")
+	}
+	batchMsgs := executeCmd(cmdBatch)
+	foundBatchStatus := false
+	for _, msg := range batchMsgs {
+		if s, ok := msg.(statusMsg); ok {
+			foundBatchStatus = true
+			if !strings.Contains(s.text, "Added 1 entries to German A1 deck") {
+				t.Fatalf("unexpected batch status: %q", s.text)
+			}
+		}
+	}
+	if !foundBatchStatus {
+		t.Fatal("expected statusMsg from batch add command")
 	}
 }

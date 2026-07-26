@@ -57,6 +57,7 @@ func renderFilterPillsRow(m *Model, startX, startY int, targetView View) string 
 		Tag  string
 	}{
 		{"All", ""},
+		{"★ Starred", ":starred"},
 		{"Verb", ":verb"},
 		{"Noun", ":noun"},
 		{"Adj", ":adj"},
@@ -249,7 +250,11 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		detailWidth := layout.Width
 
 		var detailBuilder strings.Builder
-		detailBuilder.WriteString(titleStyle.Render(res.Word) + "\n")
+		titleText := res.Word
+		if m.dictionaryStarred != nil && m.dictionaryStarred[res.ID] {
+			titleText = lipgloss.NewStyle().Foreground(colorYellow).Render("★ ") + titleText
+		}
+		detailBuilder.WriteString(titleStyle.Render(titleText) + "\n")
 
 		meta := ""
 		if res.WordClass != "" {
@@ -337,17 +342,25 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 				prefix = "> "
 			}
 
-			// Format the word text for list item (e.g. "Word {m}" or "Word [verb]")
+			starStr := ""
+			if m.dictionaryStarred != nil && m.dictionaryStarred[res.ID] {
+				starStr = lipgloss.NewStyle().Foreground(colorYellow).Render("★ ")
+			}
+
+			// Format the word text for list item (e.g. "Word {m} - house")
 			wordText := res.Word
 			if res.Gender != "" {
 				wordText += " {" + res.Gender + "}"
 			} else if res.WordClass != "" {
 				wordText += " [" + res.WordClass + "]"
 			}
+			if res.Translation != "" {
+				wordText = fmt.Sprintf("%s - %s", wordText, res.Translation)
+			}
 
-			padded := padString(wordText, contentWidth)
+			padded := padString(wordText, maxInt(5, contentWidth-lipgloss.Width(starStr)))
 			highlighted := highlightQuery(padded, m.dictionarySearch, dictHighlightStyle)
-			line := prefix + highlighted
+			line := prefix + starStr + highlighted
 
 			if i == m.dictionaryCursor {
 				listBuilder.WriteString(editStyle.Render(line) + "\n")
@@ -387,7 +400,11 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			res := m.dictionaryResults[m.dictionaryCursor]
 
 			// Modern styled header for detail view
-			detailBuilder.WriteString(titleStyle.Render(res.Word) + "\n")
+			titleText := res.Word
+			if m.dictionaryStarred != nil && m.dictionaryStarred[res.ID] {
+				titleText = lipgloss.NewStyle().Foreground(colorYellow).Render("★ ") + titleText
+			}
+			detailBuilder.WriteString(titleStyle.Render(titleText) + "\n")
 
 			// Part of speech / Gender tags
 			meta := ""
@@ -490,7 +507,12 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 				prefix = "> "
 			}
 
-			plainLine := fmt.Sprintf("%s - %s", res.Word, res.Translation)
+			starStr := ""
+			if m.dictionaryStarred != nil && m.dictionaryStarred[res.ID] {
+				starStr = "★ "
+			}
+
+			plainLine := fmt.Sprintf("%s%s - %s", starStr, res.Word, res.Translation)
 			if res.WordClass != "" {
 				plainLine += " [" + res.WordClass + "]"
 			}
@@ -727,7 +749,11 @@ func (m *Model) renderSpotlightDictionary() string {
 			res := m.dictionaryResults[m.dictionaryCursor]
 
 			var detailBuilder strings.Builder
-			detailBuilder.WriteString(titleStyle.Render(res.Word) + "\n")
+			titleText := res.Word
+			if m.dictionaryStarred != nil && m.dictionaryStarred[res.ID] {
+				titleText = lipgloss.NewStyle().Foreground(colorYellow).Render("★ ") + titleText
+			}
+			detailBuilder.WriteString(titleStyle.Render(titleText) + "\n")
 			meta := ""
 			if res.WordClass != "" {
 				meta += mutedStyle.Render("["+strings.ToUpper(res.WordClass)+"]") + " "
@@ -792,15 +818,22 @@ func (m *Model) renderSpotlightDictionary() string {
 				if i == m.dictionaryCursor {
 					prefix = "> "
 				}
+				starStr := ""
+				if m.dictionaryStarred != nil && m.dictionaryStarred[res.ID] {
+					starStr = lipgloss.NewStyle().Foreground(colorYellow).Render("★ ")
+				}
 				wordText := res.Word
 				if res.Gender != "" {
 					wordText += " {" + res.Gender + "}"
 				} else if res.WordClass != "" {
 					wordText += " [" + res.WordClass + "]"
 				}
-				padded := padString(wordText, listWidth-2)
+				if res.Translation != "" {
+					wordText = fmt.Sprintf("%s - %s", wordText, res.Translation)
+				}
+				padded := padString(wordText, maxInt(5, listWidth-2-lipgloss.Width(starStr)))
 				highlighted := highlightQuery(padded, m.dictionarySearch, dictHighlightStyle)
-				line := prefix + highlighted
+				line := prefix + starStr + highlighted
 				if i == m.dictionaryCursor {
 					listBuilder.WriteString(editStyle.Render(line) + "\n")
 				} else {
@@ -833,7 +866,11 @@ func (m *Model) renderSpotlightDictionary() string {
 			var detailBuilder strings.Builder
 			if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 				res := m.dictionaryResults[m.dictionaryCursor]
-				detailBuilder.WriteString(titleStyle.Render(res.Word) + "\n")
+				titleText := res.Word
+				if m.dictionaryStarred != nil && m.dictionaryStarred[res.ID] {
+					titleText = lipgloss.NewStyle().Foreground(colorYellow).Render("★ ") + titleText
+				}
+				detailBuilder.WriteString(titleStyle.Render(titleText) + "\n")
 				meta := ""
 				if res.WordClass != "" {
 					meta += mutedStyle.Render("["+strings.ToUpper(res.WordClass)+"]") + " "
@@ -890,7 +927,11 @@ func (m *Model) renderSpotlightDictionary() string {
 				if i == m.dictionaryCursor {
 					prefix = "> "
 				}
-				plainLine := fmt.Sprintf("%s - %s", res.Word, res.Translation)
+				starStr := ""
+				if m.dictionaryStarred != nil && m.dictionaryStarred[res.ID] {
+					starStr = "★ "
+				}
+				plainLine := fmt.Sprintf("%s%s - %s", starStr, res.Word, res.Translation)
 				padded := padString(plainLine, maxInt(5, interiorWidth-3))
 				highlighted := highlightQuery(padded, m.dictionarySearch, dictHighlightStyle)
 				line := prefix + highlighted
@@ -942,7 +983,7 @@ func (m *Model) renderSpotlightDictionary() string {
 		statusText := m.status
 		var statusStyle lipgloss.Style
 		lowerStatus := strings.ToLower(statusText)
-		if strings.Contains(lowerStatus, "added") || strings.Contains(lowerStatus, "found") || strings.Contains(lowerStatus, "ready") {
+		if strings.Contains(lowerStatus, "added") || strings.Contains(lowerStatus, "found") || strings.Contains(lowerStatus, "ready") || strings.Contains(lowerStatus, "starred") {
 			statusStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("120")).Bold(true) // Success (green)
 		} else if strings.Contains(lowerStatus, "no") || strings.Contains(lowerStatus, "failed") || strings.Contains(lowerStatus, "error") {
 			statusStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Bold(true) // Error (red)
@@ -957,16 +998,20 @@ func (m *Model) renderSpotlightDictionary() string {
 				keyHint("esc", "back"),
 				keyHint("Enter", "draft"),
 				keyHint("ctrl+a", "add"),
+				keyHint("b", "star"),
 				keyHint("ctrl+e", "explain"),
 				keyHint("ctrl+p", "play"),
+				keyHint("ctrl+g", "deck"),
 			}
 		} else {
 			keys = []string{
 				keyHint("Enter", "draft"),
 				keyHint("ctrl+a", "add"),
+				keyHint("b", "star"),
 				keyHint("ctrl+e", "explain"),
 				keyHint("ctrl+p", "play"),
 				keyHint("ctrl+d", "details"),
+				keyHint("ctrl+g", "deck"),
 			}
 		}
 		footerStr = strings.Join(keys, " │ ")

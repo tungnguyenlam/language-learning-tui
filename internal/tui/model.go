@@ -207,6 +207,8 @@ type Model struct {
 	dictionaryDetailView       bool
 	dictionaryFocusResults     bool
 	dictionaryOverlayActive    bool
+	dictionaryStarred          map[string]bool
+	dictionaryTargetDeckID     string
 	isErrorStatus              bool
 	searchingTags              bool
 	sessionReviewed            int
@@ -463,6 +465,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		aiSecrets:           opts.AISecrets,
 		browserSelected:     make(map[string]bool),
 		deckSelected:        make(map[string]bool),
+		dictionaryStarred:   make(map[string]bool),
 		logger:              logger, // Set the logger
 		testMode:            opts.TestMode,
 	}
@@ -546,9 +549,10 @@ type deckDeletedMsg struct{}
 
 type dictHistoryLoadedMsg []string
 type deckHistoryLoadedMsg []string
+type dictStarredLoadedMsg map[string]bool
 
 func (m *Model) Init() tea.Cmd {
-	return tea.Sequence(m.loadDueCards, m.loadDecks, m.loadStatistics(), m.loadReviewsPerDay(), m.loadRecentDecks(), m.loadDictionaryHistory(), m.loadDeckHistory())
+	return tea.Sequence(m.loadDueCards, m.loadDecks, m.loadStatistics(), m.loadReviewsPerDay(), m.loadRecentDecks(), m.loadDictionaryHistory(), m.loadDeckHistory(), m.loadDictionaryStarred())
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -592,6 +596,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	case dictHistoryLoadedMsg:
 		m.dictionarySearchHistory = msg
+	case dictStarredLoadedMsg:
+		if msg != nil {
+			m.dictionaryStarred = msg
+		}
 	case deckHistoryLoadedMsg:
 		m.deckSearchHistory = msg
 	case spinnerTickMsg:

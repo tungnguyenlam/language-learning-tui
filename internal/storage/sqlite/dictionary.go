@@ -63,6 +63,8 @@ func parseSearchFilters(query string) (cleanQuery string, classFilter string, ge
 	for _, term := range terms {
 		lower := strings.ToLower(term)
 		switch {
+		case lower == ":starred" || lower == ":star" || lower == ":fav" || lower == ":favorite":
+			// Handled by TUI filter layer
 		case strings.HasPrefix(lower, "de:"):
 			langFilter = "de"
 			if len(term) > 3 {

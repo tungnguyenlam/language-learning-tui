@@ -35,10 +35,36 @@ func (m *Model) searchDictionary() tea.Cmd {
 
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
+
+		starredOnly := isFilterActive(query, ":starred") || isFilterActive(query, ":star") || isFilterActive(query, ":fav") || isFilterActive(query, ":favorite")
+
+		cleanText := clearFilterTags(query)
+		if starredOnly && cleanText == "" {
+			var results []core.DictionaryEntry
+			for entryID := range m.dictionaryStarred {
+				entry, err := dictRepo.GetEntry(ctx, entryID)
+				if err == nil {
+					results = append(results, entry)
+				}
+			}
+			return dictionarySearchResultsMsg{id: id, results: results}
+		}
+
 		results, err := dictRepo.Search(ctx, query, 50)
 		if err != nil {
 			return err
 		}
+
+		if starredOnly {
+			var filtered []core.DictionaryEntry
+			for _, e := range results {
+				if m.dictionaryStarred[e.ID] {
+					filtered = append(filtered, e)
+				}
+			}
+			results = filtered
+		}
+
 		return dictionarySearchResultsMsg{id: id, results: results}
 	}
 }
@@ -106,7 +132,15 @@ func (m *Model) addDictionaryEntryCmd(entry core.DictionaryEntry) tea.Cmd {
 			// 1. Ensure target deck exists
 			deckID := "dictionary"
 			deckName := "Dictionary"
-			if m.deck.ID != "" && m.deck.ID != "all" {
+			if m.dictionaryTargetDeckID != "" {
+				deckID = m.dictionaryTargetDeckID
+				for _, d := range m.decks {
+					if d.ID == deckID {
+						deckName = d.Name
+						break
+					}
+				}
+			} else if m.deck.ID != "" && m.deck.ID != "all" {
 				deckID = m.deck.ID
 				deckName = m.deck.Name
 			}
@@ -327,6 +361,7 @@ func isFilterActive(query, tag string) bool {
 		filterTags := map[string]bool{
 			":verb": true, ":v": true, ":noun": true, ":adj": true, ":adv": true,
 			":m": true, ":f": true, ":n": true, ":pl": true,
+			":starred": true, ":star": true, ":fav": true, ":favorite": true,
 		}
 		for _, t := range strings.Fields(query) {
 			if filterTags[strings.ToLower(t)] {
@@ -365,6 +400,7 @@ func clearFilterTags(query string) string {
 		":verb": true, ":v": true, ":noun": true, ":adj": true, ":adv": true,
 		":m": true, ":f": true, ":n": true, ":pl": true,
 		":de": true, ":en": true, "lang:de": true, "lang:en": true,
+		":starred": true, ":star": true, ":fav": true, ":favorite": true,
 	}
 	terms := strings.Fields(query)
 	var clean []string
@@ -374,4 +410,163 @@ func clearFilterTags(query string) string {
 		}
 	}
 	return strings.Join(clean, " ")
+}
+
+func (m *Model) toggleStarDictionaryEntry(entry core.DictionaryEntry) tea.Cmd {
+	if m.dictionaryStarred == nil {
+		m.dictionaryStarred = make(map[string]bool)
+	}
+	starred := !m.dictionaryStarred[entry.ID]
+	if starred {
+		m.dictionaryStarred[entry.ID] = true
+	} else {
+		delete(m.dictionaryStarred, entry.ID)
+	}
+
+	var ids []string
+	for id := range m.dictionaryStarred {
+		ids = append(ids, id)
+	}
+	data, err := json.Marshal(ids)
+	if err == nil {
+		ctx := context.Background()
+		_ = m.repo.SetSetting(ctx, "dict_starred_entries", string(data))
+	}
+
+	if starred {
+		m.status = fmt.Sprintf("★ Starred %q", entry.Word)
+	} else {
+		m.status = fmt.Sprintf("Unstarred %q", entry.Word)
+	}
+
+	if isFilterActive(m.dictionarySearch, ":starred") || isFilterActive(m.dictionarySearch, ":star") || isFilterActive(m.dictionarySearch, ":fav") {
+		return m.searchDictionary()
+	}
+	return nil
+}
+
+func (m *Model) loadDictionaryStarred() tea.Cmd {
+	return func() tea.Msg {
+		ctx := context.Background()
+		raw, err := m.repo.GetSetting(ctx, "dict_starred_entries")
+		if err != nil || raw == "" {
+			return dictStarredLoadedMsg{}
+		}
+		var ids []string
+		if err := json.Unmarshal([]byte(raw), &ids); err != nil {
+			return dictStarredLoadedMsg{}
+		}
+		starred := make(map[string]bool, len(ids))
+		for _, id := range ids {
+			starred[id] = true
+		}
+		return dictStarredLoadedMsg(starred)
+	}
+}
+
+func (m *Model) cycleDictionaryTargetDeck() tea.Cmd {
+	if len(m.decks) == 0 {
+		m.dictionaryTargetDeckID = "dictionary"
+		m.status = "Quick-add target deck: Dictionary"
+		return nil
+	}
+
+	currentIndex := -1
+	if m.dictionaryTargetDeckID == "dictionary" || m.dictionaryTargetDeckID == "" {
+		currentIndex = -1
+	} else {
+		for i, d := range m.decks {
+			if d.ID == m.dictionaryTargetDeckID {
+				currentIndex = i
+				break
+			}
+		}
+	}
+
+	nextIndex := currentIndex + 1
+	if nextIndex >= len(m.decks) {
+		m.dictionaryTargetDeckID = "dictionary"
+		m.status = "Quick-add target deck: Dictionary"
+	} else {
+		target := m.decks[nextIndex]
+		m.dictionaryTargetDeckID = target.ID
+		m.status = fmt.Sprintf("Quick-add target deck: %s", target.Name)
+	}
+	return nil
+}
+
+func (m *Model) addDictionaryEntriesBatchCmd(entries []core.DictionaryEntry) tea.Cmd {
+	if len(entries) == 0 {
+		m.status = "No dictionary entries to add"
+		return nil
+	}
+	return tea.Batch(
+		func() tea.Msg {
+			ctx := context.Background()
+			deckID := "dictionary"
+			deckName := "Dictionary"
+			if m.dictionaryTargetDeckID != "" {
+				deckID = m.dictionaryTargetDeckID
+				for _, d := range m.decks {
+					if d.ID == deckID {
+						deckName = d.Name
+						break
+					}
+				}
+			} else if m.deck.ID != "" && m.deck.ID != "all" {
+				deckID = m.deck.ID
+				deckName = m.deck.Name
+			}
+			deck, err := m.repo.GetDeck(ctx, deckID)
+			if err != nil {
+				deck = core.Deck{
+					ID:   deckID,
+					Name: deckName,
+				}
+				if err := m.repo.UpsertDeck(ctx, deck); err != nil {
+					return err
+				}
+			}
+
+			count := 0
+			for _, entry := range entries {
+				noteID := "dict-" + entry.ID
+				if entry.ID == "" {
+					noteID = fmt.Sprintf("dict-%d-%d", time.Now().UnixNano(), count)
+				}
+				frontText := formatDictionaryCardFront(entry.Word, entry.Gender)
+				extraParts := []string{}
+				if entry.Forms != "" {
+					extraParts = append(extraParts, "Forms: "+entry.Forms)
+				}
+				if entry.WordClass != "" {
+					extraParts = append(extraParts, "Class: ["+strings.ToUpper(entry.WordClass)+"]")
+				}
+				if entry.Gender != "" {
+					extraParts = append(extraParts, "Gender: {"+entry.Gender+"}")
+				}
+				if len(entry.Examples) > 0 {
+					extraParts = append(extraParts, "Examples:\n• "+strings.Join(entry.Examples, "\n• "))
+				}
+
+				note := core.Note{
+					ID:     noteID,
+					DeckID: deckID,
+					Type:   "flashcard",
+					Front:  frontText,
+					Back:   entry.Translation,
+					Extra:  strings.Join(extraParts, "\n"),
+					Tags:   append(entry.Tags, "dictionary"),
+				}
+				note.Cards = content.CardsForNote(note)
+				if err := m.repo.UpsertNote(ctx, note); err == nil {
+					count++
+				}
+			}
+
+			return statusMsg{text: fmt.Sprintf("Added %d entries to %s deck", count, deckName)}
+		},
+		m.loadDecks,
+		m.loadDueCards,
+	)
 }

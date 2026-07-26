@@ -1620,6 +1620,27 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return m.addDictionaryEntryCmd(entry), true
 		}
 		return nil, true
+	case "ctrl+s":
+		if len(m.dictionaryResults) > 0 {
+			m.recordDictionarySearch(m.dictionarySearch)
+			return m.addDictionaryEntriesBatchCmd(m.dictionaryResults), true
+		}
+		return nil, true
+	case "ctrl+b":
+		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			m.recordDictionarySearch(m.dictionarySearch)
+			entry := m.dictionaryResults[m.dictionaryCursor]
+			return m.toggleStarDictionaryEntry(entry), true
+		}
+		return nil, true
+	case "b":
+		if (m.dictionaryFocusResults || m.dictionaryDetailView) && m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			m.recordDictionarySearch(m.dictionarySearch)
+			entry := m.dictionaryResults[m.dictionaryCursor]
+			return m.toggleStarDictionaryEntry(entry), true
+		}
+	case "ctrl+g":
+		return m.cycleDictionaryTargetDeck(), true
 	case "ctrl+e":
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 			m.recordDictionarySearch(m.dictionarySearch)
