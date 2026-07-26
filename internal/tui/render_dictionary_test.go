@@ -738,3 +738,28 @@ func TestDictionaryPersistentSearchHistory(t *testing.T) {
 		t.Fatalf("expected cleared history to be empty, got %q", val)
 	}
 }
+
+func TestDictionaryHistoryKeyboardCycling(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.dictionarySearchHistory = []string{"Apfel", "Birne"}
+	m.dictionarySearch = ""
+
+	// Down arrow cycles to recent history
+	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: tea.KeyDown})
+	if !handled || cmd == nil {
+		t.Fatal("expected Down arrow to be handled with search command")
+	}
+	if m.dictionarySearch != "Birne" {
+		t.Fatalf("expected search query to be 'Birne', got %q", m.dictionarySearch)
+	}
+
+	// Up arrow cycles to previous history item
+	cmd, handled = m.updateDictionaryKey(tea.KeyPressMsg{Code: tea.KeyUp})
+	if !handled || cmd == nil {
+		t.Fatal("expected Up arrow to be handled with search command")
+	}
+	if m.dictionarySearch != "Apfel" {
+		t.Fatalf("expected search query to be 'Apfel', got %q", m.dictionarySearch)
+	}
+}

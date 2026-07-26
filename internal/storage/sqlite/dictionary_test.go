@@ -66,3 +66,36 @@ func TestDictionarySearchFallback(t *testing.T) {
 		t.Errorf("expected Fahrrad for translation fallback LIKE, got: %v", res)
 	}
 }
+
+func TestDictionarySearchExactMatchOrdering(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	entries := []core.DictionaryEntry{
+		{ID: "1", Word: "Krankenhaus", Translation: "hospital"},
+		{ID: "2", Word: "Haus", Translation: "house"},
+		{ID: "3", Word: "Haustür", Translation: "front door"},
+	}
+
+	if err := store.ImportEntries(ctx, entries); err != nil {
+		t.Fatalf("import entries: %v", err)
+	}
+
+	res, err := store.Search(ctx, "Haus", 10)
+	if err != nil {
+		t.Fatalf("Search failed: %v", err)
+	}
+	if len(res) != 2 {
+		t.Fatalf("expected 2 results, got %d", len(res))
+	}
+	if res[0].Word != "Haus" {
+		t.Errorf("expected exact match 'Haus' to be first, got '%s'", res[0].Word)
+	}
+	if res[1].Word != "Haustür" {
+		t.Errorf("expected prefix match 'Haustür' to be second, got '%s'", res[1].Word)
+	}
+}

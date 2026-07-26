@@ -1507,12 +1507,18 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			}
 			return nil, true
 		}
+		if len(m.dictionarySearchHistory) > 0 {
+			return m.cycleDictionaryHistory(-1), true
+		}
 		return nil, false
 	case "down", "j":
 		if !m.dictionaryFocusResults {
 			if len(m.dictionaryResults) > 0 {
 				m.dictionaryFocusResults = true
 				return nil, true
+			}
+			if len(m.dictionarySearchHistory) > 0 {
+				return m.cycleDictionaryHistory(1), true
 			}
 			return nil, false
 		}

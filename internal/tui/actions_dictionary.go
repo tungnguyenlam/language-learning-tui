@@ -47,13 +47,18 @@ func (m *Model) addDictionaryEntryCmd(entry core.DictionaryEntry) tea.Cmd {
 		func() tea.Msg {
 			ctx := context.Background()
 
-			// 1. Ensure "Dictionary" deck exists
+			// 1. Ensure target deck exists
 			deckID := "dictionary"
+			deckName := "Dictionary"
+			if m.deck.ID != "" && m.deck.ID != "all" {
+				deckID = m.deck.ID
+				deckName = m.deck.Name
+			}
 			deck, err := m.repo.GetDeck(ctx, deckID)
 			if err != nil {
 				deck = core.Deck{
 					ID:   deckID,
-					Name: "Dictionary",
+					Name: deckName,
 				}
 				if err := m.repo.UpsertDeck(ctx, deck); err != nil {
 					return err
@@ -87,7 +92,7 @@ func (m *Model) addDictionaryEntryCmd(entry core.DictionaryEntry) tea.Cmd {
 				return err
 			}
 
-			return statusMsg{text: fmt.Sprintf("Added '%s' to Dictionary deck", entry.Word)}
+			return statusMsg{text: fmt.Sprintf("Added '%s' to %s deck", entry.Word, deck.Name)}
 		},
 		m.loadDecks,
 		m.loadDueCards,
@@ -112,6 +117,41 @@ func (m *Model) recordDictionarySearch(query string) {
 		m.dictionarySearchHistory = m.dictionarySearchHistory[1:]
 	}
 	m.saveDictionaryHistory()
+}
+
+func (m *Model) cycleDictionaryHistory(direction int) tea.Cmd {
+	if len(m.dictionarySearchHistory) == 0 {
+		return nil
+	}
+	currentIndex := -1
+	for i, q := range m.dictionarySearchHistory {
+		if q == m.dictionarySearch {
+			currentIndex = i
+			break
+		}
+	}
+	var nextIndex int
+	if currentIndex == -1 {
+		if direction > 0 {
+			nextIndex = len(m.dictionarySearchHistory) - 1
+		} else {
+			nextIndex = 0
+		}
+	} else {
+		nextIndex = currentIndex + direction
+		if nextIndex < 0 {
+			nextIndex = 0
+		}
+		if nextIndex >= len(m.dictionarySearchHistory) {
+			nextIndex = len(m.dictionarySearchHistory) - 1
+		}
+	}
+	m.dictionarySearch = m.dictionarySearchHistory[nextIndex]
+	m.dictionaryCursor = 0
+	m.dictionaryScroll = 0
+	m.dictionaryDetailScroll = 0
+	m.dictionaryDetailView = false
+	return m.searchDictionary()
 }
 
 func (m *Model) saveDictionaryHistory() {

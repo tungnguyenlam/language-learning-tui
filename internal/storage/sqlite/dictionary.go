@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"sort"
 	"strings"
 
 	"deutsch-tui/internal/core"
@@ -84,6 +85,7 @@ func (s *Store) Search(ctx context.Context, query string, limit int) ([]core.Dic
 	}
 
 	if len(entries) > 0 {
+		sortDictionaryEntries(entries, query)
 		return entries, nil
 	}
 
@@ -100,7 +102,38 @@ func (s *Store) Search(ctx context.Context, query string, limit int) ([]core.Dic
 		return nil, fmt.Errorf("search dictionary fallback like: %w", err)
 	}
 
+	sortDictionaryEntries(entries, query)
 	return entries, nil
+}
+
+func sortDictionaryEntries(entries []core.DictionaryEntry, query string) {
+	q := strings.ToLower(strings.TrimSpace(query))
+	if q == "" {
+		return
+	}
+	sort.SliceStable(entries, func(i, j int) bool {
+		scoreI := entryMatchScore(entries[i], q)
+		scoreJ := entryMatchScore(entries[j], q)
+		return scoreI < scoreJ
+	})
+}
+
+func entryMatchScore(entry core.DictionaryEntry, q string) int {
+	w := strings.ToLower(entry.Word)
+	t := strings.ToLower(entry.Translation)
+	if w == q {
+		return 0
+	}
+	if t == q {
+		return 1
+	}
+	if strings.HasPrefix(w, q) {
+		return 2
+	}
+	if strings.HasPrefix(t, q) {
+		return 3
+	}
+	return 4
 }
 
 func (s *Store) GetEntry(ctx context.Context, id string) (core.DictionaryEntry, error) {
