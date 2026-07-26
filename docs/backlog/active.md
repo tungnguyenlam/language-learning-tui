@@ -1,33 +1,24 @@
 # Active Backlog
 
-Last updated: 2026-07-26
+Last updated: 2026-07-27
 
 ## Current Milestone
 
-Anki Ecosystem Compatibility (follows Practice Trainer Quality, both landed on
-`refactor/generic-trainer`).
+Screen-Interface Migration & TUI Polish.
 
 ## Exact Next Action
 
-Continue the screen-interface migration started on `refactor/generic-trainer` —
-`internal/tui/screen.go` documents the pattern and only ViewImport /
-ViewSessionSummary / ViewAnkiWeb are migrated so far. Alternatively pick the
-Backup workflow milestone from `docs/backlog/roadmap.md`.
-
-Possible follow-ups to the AnkiWeb browser, none blocking:
-
-- Media import: downloaded packages' audio blobs are currently dropped;
-  `[sound:...]` references are lifted into the note's audio field but the files
-  themselves are not stored.
-- An E2E scenario for ViewAnkiWeb. It must not touch the network, which means
-  the binary needs a way to inject a stub client — the Go tests in
-  `internal/tui/screen_ankiweb_test.go` cover the behaviour for now.
+Continue migrating remaining views (ViewDashboard, ViewDecks, ViewReview, ViewBrowser, ViewAI, ViewCram, ViewPractice, ViewDictionary) to the `screen` interface pattern in `internal/tui/screen.go`.
 
 ## Top Issues
 
 None active.
 
 ## Completed Work
+
+- [x] **Screen-interface migration for ViewSettings, ViewDebug, ViewStatistics:** Created `screen_settings.go`, `screen_debug.go`, `screen_statistics.go` implementing `screen` interface and registered them in `m.registerScreens()`.
+- [x] **Practice Hub click alignment fix:** Fixed button hitbox Y spacing in `renderPracticeHub` (`spacing := 5`) so mouse clicks align precisely with rendered button blocks across all terminal heights. Added `TestPracticeHubHitboxSpacing` unit test.
+- [x] **Decks view search reset:** Ensured `m.applyDeckFilter()` is called when clearing `m.deckFilter` with `<Esc>` key in Decks view so the deck list immediately refreshes to show all decks.
 
 - [x] **`.apkg` export Anki can actually open:** the old exporter wrote notes
   with `mid=0`, matching no note type in `col.models` — structurally invalid

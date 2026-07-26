@@ -30,5 +30,8 @@ func (m *Model) registerScreens() {
 		ViewSessionSummary: summaryScreen{},
 		ViewImport:         m.importScreen,
 		ViewAnkiWeb:        m.ankiWebScreen,
+		ViewSettings:       settingsScreen{},
+		ViewDebug:          debugScreen{},
+		ViewStatistics:     statisticsScreen{},
 	}
 }

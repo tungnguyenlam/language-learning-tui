@@ -1,5 +1,18 @@
 # Done Backlog
 
+## 2026-07-27 (Screen-Interface Migration & Practice Hub Hitbox Alignment)
+
+### Screen-Interface Migration
+- **Screen Migration for ViewSettings, ViewDebug, ViewStatistics:** Created `screen_settings.go`, `screen_debug.go`, and `screen_statistics.go` implementing the `screen` interface (`Render` and `HandleKey`). Registered them in `m.registerScreens()` to decouple view-specific rendering and input handling off `Model`.
+
+### UX & Hitbox Alignment
+- **Practice Hub Mouse Click Alignment:** Fixed button hitbox Y spacing in `renderPracticeHub` (`spacing := 5`) so mouse hitboxes line up precisely with 5-line rendered button blocks on all terminal sizes. Added `TestPracticeHubHitboxSpacing` unit test.
+- **Decks Search Reset Refresh:** Ensured `m.applyDeckFilter()` is called when clearing `m.deckFilter` with `<Esc>` in Decks view so the deck list immediately refreshes to show all available decks.
+
+### Verification
+- Added `TestMigratedScreensDispatch` and `TestPracticeHubHitboxSpacing` unit tests in `internal/tui/improvement_test.go`.
+- `./scripts/verify.sh` passed successfully (all unit tests, `go vet`, smoke test, binary build, and E2E suite).
+
 ## 2026-06-18 (Content Expansion & E2E Stability)
 
 ### Content Expansion

@@ -291,3 +291,42 @@ func TestRevealSpeedSetting(t *testing.T) {
 		t.Error("Expected 0% initial flip progress when speed is 5")
 	}
 }
+
+func TestMigratedScreensDispatch(t *testing.T) {
+	repo := &mockRepo{}
+	model := NewModel(repo, &mockScheduler{})
+
+	screensToTest := []View{ViewSettings, ViewDebug, ViewStatistics}
+	for _, view := range screensToTest {
+		if _, registered := model.screens[view]; !registered {
+			t.Fatalf("Expected %s screen to be registered in m.screens", view)
+		}
+		model.activeView = view
+		rendered := model.renderActiveViewPlainAt(viewportLayout{Width: 80, Height: 24})
+		if rendered == "" || strings.Contains(rendered, "Unknown View") {
+			t.Fatalf("Expected valid rendered output for view %s, got empty or unknown", view)
+		}
+	}
+}
+
+func TestPracticeHubHitboxSpacing(t *testing.T) {
+	repo := &mockRepo{}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewPractice
+	model.practiceSubView = PracticeSubViewHub
+
+	// Test on short height layout (<40)
+	model.hitboxes = nil
+	layout := viewportLayout{X: 0, Y: 0, Width: 80, Height: 24}
+	model.renderPracticeHub(layout)
+
+	if len(model.hitboxes) != 9 {
+		t.Fatalf("Expected 9 hitboxes in Practice Hub, got %d", len(model.hitboxes))
+	}
+	for i, hb := range model.hitboxes {
+		expectedY := layout.Y + 3 + (i * 5)
+		if hb.Y != expectedY {
+			t.Errorf("Hitbox %d Y coordinate mismatch: expected %d, got %d", i, expectedY, hb.Y)
+		}
+	}
+}

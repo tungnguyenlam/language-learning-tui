@@ -758,6 +758,7 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		m.deckFilter = ""
 		m.deckCursor = 0
+		m.applyDeckFilter()
 		return nil, true
 	}
 

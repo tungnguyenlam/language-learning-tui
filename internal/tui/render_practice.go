@@ -46,10 +46,7 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 		{"practice-conjunctions", "9", "Conjunctions & Word Order", "Practice conjunctions & sentence structure", PracticeSubViewConjunctions, colorGreen, "🔗"},
 	}
 
-	spacing := 4
-	if layout.Height >= 40 {
-		spacing = 5
-	}
+	spacing := 5
 
 	getItemCount := func(sub PracticeSubView) int {
 		if sub == PracticeSubViewGender {
