@@ -4,11 +4,11 @@ Last updated: 2026-07-27
 
 ## Current Milestone
 
-Grammar Trainer Content Expansion & Passive Voice Trainer.
+Dictionary Feature Enhancements & Lemmatization Search.
 
 ## Exact Next Action
 
-Explore further UI polish, vocabulary deck expansion, or AI tutor enhancements.
+Continue dictionary UX refinements, vocabulary deck expansion, or AI tutor enhancements.
 
 ## Top Issues
 
@@ -16,6 +16,10 @@ None active.
 
 ## Completed Work
 
+- [x] **Dictionary Inflected Form Matching & Lemmatization Ranking:** Updated `Search()` and `entryMatchScore()` in `internal/storage/sqlite/dictionary.go` to search `entry.Forms` via `LIKE` alongside FTS matches and score exact form matches at Tier 2. Searching inflected forms (e.g. "ging", "gegangen", "Häuser") now correctly returns and prioritizes their lemma entries ("gehen", "Haus") above prefix/substring matches. Added `TestDictionarySearchInflectedFormsAndFilters`.
+- [x] **Dictionary Tag & Part-of-Speech Filters:** Added query filter parsing (`parseSearchFilters`) to `Search()` in `internal/storage/sqlite/dictionary.go`, supporting `:verb` (`:v`), `:noun`, `:adj`, `:adv`, `:m`, `:f`, `:n`, `:pl` tag filters for targeted dictionary searches.
+- [x] **Smart Query Sanitization for Contextual Dictionary Lookups:** Added `cleanLookupQuery()` in `internal/tui/actions_dictionary.go` to strip HTML formatting, Cloze tags (`{{c1::...}}`), parenthetical hints `(...)`, bracket tags `[...]`, bullet prefixes, and trailing punctuation when looking up words from Review, Browser, Cram, or Daily Tips. Added `TestCleanLookupQueryAndCardFormat`.
+- [x] **Dictionary Quick-Add Flashcard Enrichment:** Updated `addDictionaryEntryCmd()` in `internal/tui/actions_dictionary.go` to automatically attach German gender articles (`der`, `die`, `das`) to noun fronts and format `Extra` card metadata with forms, word class, gender, and example sentences.
 - [x] **Dict.cc Data Pipeline & Parsing Enhancements:** Updated `ParseDictCCStream` in `internal/content/dictcc.go` with HTML entity unescaping (`html.UnescapeString`), regex-based gender extraction (`{m}`, `{f}`, `{n}`, `{pl}`, `{m/f}`), word form extraction (`<...>`), and bracketed tag extraction (`[...]`), producing clean headwords and structured forms/tags. Added `TestParseDictCCStream_Enhanced`.
 - [x] **Dictionary Search Multi-Tier Ranking & Article Stripping:** Updated `entryMatchScore` and `sortDictionaryEntries` in `internal/storage/sqlite/dictionary.go` with German/English article stripping (`der`, `die`, `das`, `the`, `a`, `an`), semicolon-separated translation matching, and 7-tier score prioritization so headword matches rank above example sentence substrings. Added `TestDictionarySearchArticleAndMultiTranslation`.
 - [x] **Cram View Dictionary Lookup & Spotlight Overlay Auto-Close:** Added `lookupCramCardInDictionary()` in `actions_dictionary.go` with `d` key shortcut in Cram mode (`updateCramKey`). Updated Spotlight Dictionary navigation (`ctrl+f` for Browser, `enter` for AI Draft) in `updateDictionaryKey` to automatically close `m.dictionaryOverlayActive` when switching views.

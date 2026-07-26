@@ -245,7 +245,7 @@ func TestDictionaryQuickAddCardsGenerated(t *testing.T) {
 	}
 
 	note := repo.upsertedNote
-	if note.Front != "Auto" || note.Back != "Car" {
+	if note.Front != "das Auto" || note.Back != "Car" {
 		t.Errorf("unexpected note content: front=%q, back=%q", note.Front, note.Back)
 	}
 
@@ -254,7 +254,7 @@ func TestDictionaryQuickAddCardsGenerated(t *testing.T) {
 	}
 
 	card := note.Cards[0]
-	if card.Prompt != "Auto" || card.Answer != "Car" {
+	if card.Prompt != "das Auto" || card.Answer != "Car" {
 		t.Errorf("unexpected card content: prompt=%q, answer=%q", card.Prompt, card.Answer)
 	}
 }

@@ -56,8 +56,79 @@ func (s *Store) queryDictionaryEntries(ctx context.Context, q string, args ...an
 	return entries, nil
 }
 
-func (s *Store) Search(ctx context.Context, query string, limit int) ([]core.DictionaryEntry, error) {
+func parseSearchFilters(query string) (cleanQuery string, classFilter string, genderFilter string) {
 	terms := strings.Fields(query)
+	var textTerms []string
+
+	for _, term := range terms {
+		lower := strings.ToLower(term)
+		switch {
+		case lower == ":verb" || lower == ":v" || lower == "class:verb":
+			classFilter = "verb"
+		case lower == ":noun" || lower == "class:noun":
+			classFilter = "noun"
+		case lower == ":adj" || lower == ":adjective" || lower == "class:adj":
+			classFilter = "adj"
+		case lower == ":adv" || lower == ":adverb" || lower == "class:adv":
+			classFilter = "adv"
+		case lower == ":m" || lower == ":masc" || lower == "gender:m":
+			genderFilter = "m"
+		case lower == ":f" || lower == ":fem" || lower == "gender:f":
+			genderFilter = "f"
+		case lower == ":n" || lower == ":neut" || lower == "gender:n":
+			genderFilter = "n"
+		case lower == ":pl" || lower == ":plural" || lower == "gender:pl":
+			genderFilter = "pl"
+		default:
+			textTerms = append(textTerms, term)
+		}
+	}
+	return strings.Join(textTerms, " "), classFilter, genderFilter
+}
+
+func filterEntries(entries []core.DictionaryEntry, classFilter, genderFilter string) []core.DictionaryEntry {
+	if classFilter == "" && genderFilter == "" {
+		return entries
+	}
+	filtered := make([]core.DictionaryEntry, 0, len(entries))
+	for _, entry := range entries {
+		if classFilter != "" {
+			wc := strings.ToLower(entry.WordClass)
+			if !strings.Contains(wc, classFilter) {
+				continue
+			}
+		}
+		if genderFilter != "" {
+			g := strings.ToLower(entry.Gender)
+			if !strings.HasPrefix(g, genderFilter) {
+				continue
+			}
+		}
+		filtered = append(filtered, entry)
+	}
+	return filtered
+}
+
+func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.DictionaryEntry, error) {
+	cleanQuery, classFilter, genderFilter := parseSearchFilters(rawQuery)
+	if cleanQuery == "" && (classFilter != "" || genderFilter != "") {
+		q := `
+			SELECT id, word, translation, word_class, gender, forms, examples, tags
+			FROM dictionary_fts
+			LIMIT 200
+		`
+		entries, err := s.queryDictionaryEntries(ctx, q)
+		if err != nil {
+			return nil, fmt.Errorf("search dictionary filter-only: %w", err)
+		}
+		filtered := filterEntries(entries, classFilter, genderFilter)
+		if len(filtered) > limit {
+			filtered = filtered[:limit]
+		}
+		return filtered, nil
+	}
+
+	terms := strings.Fields(cleanQuery)
 	if len(terms) == 0 {
 		return nil, nil
 	}
@@ -79,31 +150,62 @@ func (s *Store) Search(ctx context.Context, query string, limit int) ([]core.Dic
 		LIMIT ?
 	`
 
-	entries, err := s.queryDictionaryEntries(ctx, q, matchQuery.String(), limit)
+	entries, err := s.queryDictionaryEntries(ctx, q, matchQuery.String(), limit*2)
 	if err != nil {
 		return nil, fmt.Errorf("search dictionary fts: %w", err)
 	}
 
-	if len(entries) > 0 {
-		sortDictionaryEntries(entries, query)
-		return entries, nil
+	// Also check forms via LIKE to catch unindexed inflected form matches
+	likePattern := "%" + cleanQuery + "%"
+	qForms := `
+		SELECT id, word, translation, word_class, gender, forms, examples, tags
+		FROM dictionary_fts
+		WHERE forms LIKE ?
+		LIMIT ?
+	`
+	formEntries, _ := s.queryDictionaryEntries(ctx, qForms, likePattern, limit)
+	if len(formEntries) > 0 {
+		seen := make(map[string]bool, len(entries))
+		for _, e := range entries {
+			seen[e.ID] = true
+		}
+		for _, e := range formEntries {
+			if !seen[e.ID] {
+				entries = append(entries, e)
+				seen[e.ID] = true
+			}
+		}
 	}
 
-	// Fallback to LIKE-based substring match
-	likePattern := "%" + query + "%"
+	if len(entries) > 0 {
+		filtered := filterEntries(entries, classFilter, genderFilter)
+		if len(filtered) > 0 {
+			sortDictionaryEntries(filtered, cleanQuery)
+			if len(filtered) > limit {
+				filtered = filtered[:limit]
+			}
+			return filtered, nil
+		}
+	}
+
+	// Fallback to LIKE-based substring match (checking word, translation, and forms)
 	qLike := `
 		SELECT id, word, translation, word_class, gender, forms, examples, tags
 		FROM dictionary_fts
-		WHERE word LIKE ? OR translation LIKE ?
+		WHERE word LIKE ? OR translation LIKE ? OR forms LIKE ?
 		LIMIT ?
 	`
-	entries, err = s.queryDictionaryEntries(ctx, qLike, likePattern, likePattern, limit)
+	entries, err = s.queryDictionaryEntries(ctx, qLike, likePattern, likePattern, likePattern, limit*2)
 	if err != nil {
 		return nil, fmt.Errorf("search dictionary fallback like: %w", err)
 	}
 
-	sortDictionaryEntries(entries, query)
-	return entries, nil
+	filtered := filterEntries(entries, classFilter, genderFilter)
+	sortDictionaryEntries(filtered, cleanQuery)
+	if len(filtered) > limit {
+		filtered = filtered[:limit]
+	}
+	return filtered, nil
 }
 
 func sortDictionaryEntries(entries []core.DictionaryEntry, query string) {
@@ -126,6 +228,23 @@ func stripArticle(word string) string {
 		}
 	}
 	return w
+}
+
+func parseForms(formsStr string) []string {
+	if strings.TrimSpace(formsStr) == "" {
+		return nil
+	}
+	parts := strings.FieldsFunc(formsStr, func(r rune) bool {
+		return r == ';' || r == ','
+	})
+	var res []string
+	for _, p := range parts {
+		trimmed := stripArticle(strings.TrimSpace(p))
+		if trimmed != "" {
+			res = append(res, trimmed)
+		}
+	}
+	return res
 }
 
 func entryMatchScore(entry core.DictionaryEntry, q string) int {
@@ -151,27 +270,49 @@ func entryMatchScore(entry core.DictionaryEntry, q string) int {
 		}
 	}
 
-	// 2: Word prefix match
-	if strings.HasPrefix(wRaw, qClean) || strings.HasPrefix(wClean, qBare) {
-		return 2
+	// 2: Exact word form match (e.g. "ging" or "gegangen" matching entry "gehen")
+	forms := parseForms(entry.Forms)
+	for _, f := range forms {
+		if f == qClean || f == qBare {
+			return 2
+		}
 	}
 
-	// 3: Translation prefix match
-	if strings.HasPrefix(tRaw, qClean) || strings.HasPrefix(tRaw, qBare) {
+	// 3: Word prefix match
+	if strings.HasPrefix(wRaw, qClean) || strings.HasPrefix(wClean, qBare) {
 		return 3
 	}
 
-	// 4: Word contains query substring
-	if strings.Contains(wRaw, qClean) || strings.Contains(wClean, qBare) {
+	// 4: Translation prefix match
+	if strings.HasPrefix(tRaw, qClean) || strings.HasPrefix(tRaw, qBare) {
 		return 4
 	}
 
-	// 5: Translation contains query substring
-	if strings.Contains(tRaw, qClean) || strings.Contains(tRaw, qBare) {
-		return 5
+	// 5: Form prefix match
+	for _, f := range forms {
+		if strings.HasPrefix(f, qClean) || strings.HasPrefix(f, qBare) {
+			return 5
+		}
 	}
 
-	return 6
+	// 6: Word contains query substring
+	if strings.Contains(wRaw, qClean) || strings.Contains(wClean, qBare) {
+		return 6
+	}
+
+	// 7: Translation contains query substring
+	if strings.Contains(tRaw, qClean) || strings.Contains(tRaw, qBare) {
+		return 7
+	}
+
+	// 8: Form contains query substring
+	for _, f := range forms {
+		if strings.Contains(f, qClean) || strings.Contains(f, qBare) {
+			return 8
+		}
+	}
+
+	return 9
 }
 
 func (s *Store) GetEntry(ctx context.Context, id string) (core.DictionaryEntry, error) {

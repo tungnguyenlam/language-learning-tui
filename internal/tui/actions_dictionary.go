@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -42,6 +43,61 @@ func (m *Model) searchDictionary() tea.Cmd {
 	}
 }
 
+var (
+	htmlTagRegex  = regexp.MustCompile(`<[^>]+>`)
+	clozeTagRegex = regexp.MustCompile(`\{\{c\d+::([^:}]+)(?:::[^}]*)?\}\}`)
+	parenRegex    = regexp.MustCompile(`\([^)]*\)`)
+	bracketRegex  = regexp.MustCompile(`\[[^\]]*\]`)
+)
+
+func cleanLookupQuery(raw string) string {
+	s := raw
+	if matches := clozeTagRegex.FindStringSubmatch(s); len(matches) > 1 {
+		s = matches[1]
+	}
+
+	s = htmlTagRegex.ReplaceAllString(s, "")
+
+	if idx := strings.Index(s, "\n"); idx != -1 {
+		s = s[:idx]
+	}
+
+	if idx := strings.Index(s, "/"); idx != -1 {
+		s = s[:idx]
+	}
+
+	s = parenRegex.ReplaceAllString(s, "")
+	s = bracketRegex.ReplaceAllString(s, "")
+
+	s = strings.TrimLeft(s, "•-–—*# \t")
+	s = strings.TrimRight(s, " \t?!.,;:\"'’")
+
+	fields := strings.Fields(s)
+	if len(fields) == 0 {
+		return strings.TrimSpace(raw)
+	}
+	return strings.Join(fields, " ")
+}
+
+func formatDictionaryCardFront(word, gender string) string {
+	w := strings.TrimSpace(word)
+	lower := strings.ToLower(w)
+	if strings.HasPrefix(lower, "der ") || strings.HasPrefix(lower, "die ") || strings.HasPrefix(lower, "das ") {
+		return w
+	}
+	switch strings.ToLower(strings.TrimSpace(gender)) {
+	case "m", "masc", "der":
+		return "der " + w
+	case "f", "fem", "die":
+		return "die " + w
+	case "n", "neut", "das":
+		return "das " + w
+	case "pl", "plural":
+		return "die " + w + " (pl.)"
+	}
+	return w
+}
+
 func (m *Model) addDictionaryEntryCmd(entry core.DictionaryEntry) tea.Cmd {
 	return tea.Batch(
 		func() tea.Msg {
@@ -71,20 +127,30 @@ func (m *Model) addDictionaryEntryCmd(entry core.DictionaryEntry) tea.Cmd {
 				noteID = fmt.Sprintf("dict-%d", time.Now().UnixNano())
 			}
 
+			frontText := formatDictionaryCardFront(entry.Word, entry.Gender)
+
+			extraParts := []string{}
+			if entry.Forms != "" {
+				extraParts = append(extraParts, "Forms: "+entry.Forms)
+			}
+			if entry.WordClass != "" {
+				extraParts = append(extraParts, "Class: ["+strings.ToUpper(entry.WordClass)+"]")
+			}
+			if entry.Gender != "" {
+				extraParts = append(extraParts, "Gender: {"+entry.Gender+"}")
+			}
+			if len(entry.Examples) > 0 {
+				extraParts = append(extraParts, "Examples:\n• "+strings.Join(entry.Examples, "\n• "))
+			}
+
 			note := core.Note{
 				ID:     noteID,
 				DeckID: deckID,
 				Type:   "flashcard",
-				Front:  entry.Word,
+				Front:  frontText,
 				Back:   entry.Translation,
-				Extra:  entry.Forms,
+				Extra:  strings.Join(extraParts, "\n"),
 				Tags:   append(entry.Tags, "dictionary"),
-			}
-			if entry.WordClass != "" {
-				note.Extra += "\n[" + entry.WordClass + "]"
-			}
-			if entry.Gender != "" {
-				note.Extra += " {" + entry.Gender + "}"
 			}
 			note.Cards = content.CardsForNote(note)
 
@@ -92,7 +158,7 @@ func (m *Model) addDictionaryEntryCmd(entry core.DictionaryEntry) tea.Cmd {
 				return err
 			}
 
-			return statusMsg{text: fmt.Sprintf("Added '%s' to %s deck", entry.Word, deck.Name)}
+			return statusMsg{text: fmt.Sprintf("Added '%s' to %s deck", frontText, deck.Name)}
 		},
 		m.loadDecks,
 		m.loadDueCards,
@@ -201,9 +267,10 @@ func (m *Model) openDictionaryOverlay() tea.Cmd {
 func (m *Model) openDictionaryOverlayWithQuery(query string) tea.Cmd {
 	m.dictionaryOverlayActive = true
 	m.resetDictionarySearchState()
-	if query != "" {
-		m.dictionarySearch = query
-		m.status = fmt.Sprintf("Spotlight lookup: %s", query)
+	clean := cleanLookupQuery(query)
+	if clean != "" {
+		m.dictionarySearch = clean
+		m.status = fmt.Sprintf("Spotlight lookup: %s", clean)
 		return m.searchDictionary()
 	}
 	m.status = "Spotlight dictionary open"
@@ -236,8 +303,7 @@ func (m *Model) lookupReviewCardInDictionary() tea.Cmd {
 		return nil
 	}
 	card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
-	word := strings.Split(card.Prompt, "\n")[0]
-	return m.openDictionaryOverlayWithQuery(word)
+	return m.openDictionaryOverlayWithQuery(card.Prompt)
 }
 
 func (m *Model) lookupBrowserCardInDictionary() tea.Cmd {
@@ -245,8 +311,7 @@ func (m *Model) lookupBrowserCardInDictionary() tea.Cmd {
 		return nil
 	}
 	card := m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)]
-	word := strings.Split(card.Prompt, "\n")[0]
-	return m.openDictionaryOverlayWithQuery(word)
+	return m.openDictionaryOverlayWithQuery(card.Prompt)
 }
 
 func (m *Model) lookupCramCardInDictionary() tea.Cmd {
@@ -254,6 +319,5 @@ func (m *Model) lookupCramCardInDictionary() tea.Cmd {
 		return nil
 	}
 	card := m.cramCards[clampInt(m.cramCursor, 0, len(m.cramCards)-1)]
-	word := strings.Split(card.Prompt, "\n")[0]
-	return m.openDictionaryOverlayWithQuery(word)
+	return m.openDictionaryOverlayWithQuery(card.Prompt)
 }

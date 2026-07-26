@@ -62,3 +62,38 @@ func TestDictionaryNavigation(t *testing.T) {
 		t.Errorf("expected dictionarySearch to be A1, got %s", m.dictionarySearch)
 	}
 }
+
+func TestCleanLookupQueryAndCardFormat(t *testing.T) {
+	tests := []struct {
+		input    string
+		expected string
+	}{
+		{"<b>das Haus</b> (n.)", "das Haus"},
+		{"{{c1::trinken::verb}} nach Hause", "trinken"},
+		{"• sprechen (spricht, sprach, hat gesprochen)", "sprechen"},
+		{"gefallen [Dat.]", "gefallen"},
+		{"der Apfel / die Äpfel", "der Apfel"},
+		{"Was bedeutet Haus?", "Was bedeutet Haus"},
+	}
+
+	for _, tt := range tests {
+		got := cleanLookupQuery(tt.input)
+		if got != tt.expected {
+			t.Errorf("cleanLookupQuery(%q) = %q, expected %q", tt.input, got, tt.expected)
+		}
+	}
+
+	// Test formatDictionaryCardFront
+	if got := formatDictionaryCardFront("Haus", "n"); got != "das Haus" {
+		t.Errorf("expected 'das Haus', got %q", got)
+	}
+	if got := formatDictionaryCardFront("Apfel", "m"); got != "der Apfel" {
+		t.Errorf("expected 'der Apfel', got %q", got)
+	}
+	if got := formatDictionaryCardFront("Katze", "f"); got != "die Katze" {
+		t.Errorf("expected 'die Katze', got %q", got)
+	}
+	if got := formatDictionaryCardFront("der Tisch", "m"); got != "der Tisch" {
+		t.Errorf("expected 'der Tisch', got %q", got)
+	}
+}

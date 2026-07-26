@@ -142,3 +142,61 @@ func TestDictionarySearchArticleAndMultiTranslation(t *testing.T) {
 		t.Errorf("expected 'das Haus' to match 'home' at rank 0, got '%s'", res[0].Word)
 	}
 }
+
+func TestDictionarySearchInflectedFormsAndFilters(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	entries := []core.DictionaryEntry{
+		{ID: "1", Word: "gehen", Translation: "to go", WordClass: "verb", Forms: "ging; gegangen; geht"},
+		{ID: "2", Word: "Gingivitis", Translation: "gum infection", WordClass: "noun", Gender: "f"},
+		{ID: "3", Word: "Haus", Translation: "house", WordClass: "noun", Gender: "n", Forms: "Häuser; Häusern"},
+	}
+
+	if err := store.ImportEntries(ctx, entries); err != nil {
+		t.Fatalf("import entries: %v", err)
+	}
+
+	// 1. Inflected form exact match: searching "ging" should rank "gehen" first (exact form match) above "Gingivitis" (word prefix)
+	res, err := store.Search(ctx, "ging", 10)
+	if err != nil {
+		t.Fatalf("Search failed: %v", err)
+	}
+	if len(res) < 2 {
+		t.Fatalf("expected at least 2 results for 'ging', got %d", len(res))
+	}
+	if res[0].Word != "gehen" {
+		t.Errorf("expected 'gehen' to be ranked first for inflected form 'ging', got '%s'", res[0].Word)
+	}
+
+	// 2. Inflected form plural: searching "Häuser" should match "Haus"
+	res, err = store.Search(ctx, "Häuser", 10)
+	if err != nil {
+		t.Fatalf("Search failed: %v", err)
+	}
+	if len(res) < 1 || res[0].Word != "Haus" {
+		t.Errorf("expected 'Haus' for inflected form 'Häuser', got %v", res)
+	}
+
+	// 3. Filter query: searching "ging :verb" should filter out Gingivitis (noun)
+	res, err = store.Search(ctx, "ging :verb", 10)
+	if err != nil {
+		t.Fatalf("Search failed: %v", err)
+	}
+	if len(res) != 1 || res[0].Word != "gehen" {
+		t.Errorf("expected only 'gehen' for 'ging :verb', got %v", res)
+	}
+
+	// 4. Gender filter query: searching ":n" should return neuter nouns
+	res, err = store.Search(ctx, ":n", 10)
+	if err != nil {
+		t.Fatalf("Search failed: %v", err)
+	}
+	if len(res) != 1 || res[0].Word != "Haus" {
+		t.Errorf("expected 'Haus' for filter ':n', got %v", res)
+	}
+}
