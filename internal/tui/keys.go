@@ -1505,8 +1505,11 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	key := msg.String()
 	switch key {
 	case "up", "k":
-		if m.dictionaryFocusResults {
-			if m.dictionaryCursor == 0 {
+		if key == "k" && !m.dictionaryFocusResults && !m.dictionaryDetailView {
+			break
+		}
+		if m.dictionaryFocusResults || m.dictionaryDetailView {
+			if m.dictionaryCursor == 0 && !m.dictionaryDetailView {
 				m.dictionaryFocusResults = false
 				return nil, true
 			}
@@ -1522,18 +1525,23 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			}
 			return nil, true
 		}
-		if len(m.dictionarySearchHistory) > 0 {
+		if key == "up" && len(m.dictionarySearchHistory) > 0 {
 			return m.cycleDictionaryHistory(-1), true
 		}
 		return nil, false
 	case "down", "j":
-		if !m.dictionaryFocusResults {
-			if len(m.dictionaryResults) > 0 {
-				m.dictionaryFocusResults = true
-				return nil, true
-			}
-			if len(m.dictionarySearchHistory) > 0 {
-				return m.cycleDictionaryHistory(1), true
+		if key == "j" && !m.dictionaryFocusResults && !m.dictionaryDetailView {
+			break
+		}
+		if !m.dictionaryFocusResults && !m.dictionaryDetailView {
+			if key == "down" {
+				if len(m.dictionaryResults) > 0 {
+					m.dictionaryFocusResults = true
+					return nil, true
+				}
+				if len(m.dictionarySearchHistory) > 0 {
+					return m.cycleDictionaryHistory(1), true
+				}
 			}
 			return nil, false
 		}

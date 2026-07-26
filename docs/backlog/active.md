@@ -16,6 +16,8 @@ None active.
 
 ## Completed Work
 
+- [x] **Dictionary Input Fix for 'k' and 'j' Keys:** Updated `updateDictionaryKey()` in `internal/tui/keys.go` so that `'k'` and `'j'` are typed as input characters when the search bar is active (`!m.dictionaryFocusResults && !m.dictionaryDetailView`), preventing search history cycling or list navigation when typing words containing 'k' or 'j'. Added `TestDictionaryKAndJKeyHandling` in `render_dictionary_test.go`.
+
 - [x] **Dictionary Wildcard (* & ?) & Language Scope (de: & en:) Search:** Updated `parseSearchFilters`, `filterEntries`, and `Search` in `internal/storage/sqlite/dictionary.go` to convert wildcard queries into SQLite `LIKE` queries (`*` -> `%`, `?` -> `_`), enabling suffix searches like `*ung`, `*keit`, `*ieren` and language scope filters (`de:` for German headwords/forms, `en:` for English translations). Added `TestDictionarySearchWildcardAndLanguagePrefix`.
 - [x] **Interactive Dictionary Filter Pills:** Added `renderFilterPillsRow()` and filter tag helpers (`isFilterActive`, `toggleFilterTag`, `clearFilterTags`) in `internal/tui/render_dictionary.go` and `internal/tui/actions_dictionary.go`. Renders interactive clickable filter pills (`[All]`, `[:verb]`, `[:noun]`, `[:adj]`, `[:adv]`, `[:m]`, `[:f]`, `[:n]`, `[:pl]`) in both standard Dictionary view and Spotlight Dictionary overlay.
 - [x] **Dictionary Entry Contextual AI Explainer (`ctrl+e`):** Added `ctrl+e` shortcut in `updateDictionaryKey` (`internal/tui/keys.go`) to automatically pre-populate the AI Tutor (`ViewAI`) with a structured request explaining the selected German dictionary entry (grammar notes, gender usage, collocations, and example sentences). Added unit test `TestDictionaryCtrlEExplainAndFilterTagHelpers`.

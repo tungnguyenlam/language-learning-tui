@@ -803,3 +803,54 @@ func TestDictionaryCtrlEExplainAndFilterTagHelpers(t *testing.T) {
 		t.Fatalf("expected aiInput to contain explain prompt, got %q", m.aiInput)
 	}
 }
+
+func TestDictionaryKAndJKeyHandling(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.dictionarySearchHistory = []string{"Apfel", "Birne"}
+	m.dictionarySearch = ""
+	m.dictionaryFocusResults = false
+	m.dictionaryDetailView = false
+
+	// Typing 'k' while in search input must append 'k' to dictionarySearch, NOT cycle history or navigate
+	_, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'k'})
+	if !handled {
+		t.Fatal("expected 'k' to be handled as printable text input")
+	}
+	if m.dictionarySearch != "k" {
+		t.Fatalf("expected search input to be 'k', got %q", m.dictionarySearch)
+	}
+
+	// Typing 'j' while in search input must append 'j' to dictionarySearch
+	_, handled = m.updateDictionaryKey(tea.KeyPressMsg{Code: 'j'})
+	if !handled {
+		t.Fatal("expected 'j' to be handled as printable text input")
+	}
+	if m.dictionarySearch != "kj" {
+		t.Fatalf("expected search input to be 'kj', got %q", m.dictionarySearch)
+	}
+
+	// When results list is focused (dictionaryFocusResults = true), 'k' and 'j' navigate results list
+	m.dictionaryFocusResults = true
+	m.dictionaryResults = []core.DictionaryEntry{
+		{ID: "1", Word: "Käse"},
+		{ID: "2", Word: "Kuchen"},
+	}
+	m.dictionaryCursor = 0
+
+	_, handled = m.updateDictionaryKey(tea.KeyPressMsg{Code: 'j'})
+	if !handled {
+		t.Fatal("expected 'j' to navigate down when results are focused")
+	}
+	if m.dictionaryCursor != 1 {
+		t.Fatalf("expected cursor to be 1 after 'j', got %d", m.dictionaryCursor)
+	}
+
+	_, handled = m.updateDictionaryKey(tea.KeyPressMsg{Code: 'k'})
+	if !handled {
+		t.Fatal("expected 'k' to navigate up when results are focused")
+	}
+	if m.dictionaryCursor != 0 {
+		t.Fatalf("expected cursor to be 0 after 'k', got %d", m.dictionaryCursor)
+	}
+}
