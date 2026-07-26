@@ -1365,6 +1365,7 @@ func (m *Model) enterPracticeModeByIndex(idx int) tea.Cmd {
 		PracticeSubViewNumbers,
 		PracticeSubViewConjunctions,
 		PracticeSubViewKonjunktiv,
+		PracticeSubViewPassive,
 	}
 	if idx >= 0 && idx < len(modes) {
 		return m.enterPracticeMode(modes[idx])
@@ -1382,11 +1383,11 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			if m.practiceHubCursor > 0 {
 				m.practiceHubCursor--
 			} else {
-				m.practiceHubCursor = 9
+				m.practiceHubCursor = 10
 			}
 			return nil, true
 		case "down", "j":
-			if m.practiceHubCursor < 9 {
+			if m.practiceHubCursor < 10 {
 				m.practiceHubCursor++
 			} else {
 				m.practiceHubCursor = 0
@@ -1483,7 +1484,8 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 
 	case PracticeSubViewConjugation, PracticeSubViewCase, PracticeSubViewAdjective,
 		PracticeSubViewPreposition, PracticeSubViewPlural, PracticeSubViewSeparable,
-		PracticeSubViewNumbers, PracticeSubViewConjunctions, PracticeSubViewKonjunktiv:
+		PracticeSubViewNumbers, PracticeSubViewConjunctions, PracticeSubViewKonjunktiv,
+		PracticeSubViewPassive:
 		return m.updateTrainerKey(m.practiceSubView, msg)
 	}
 

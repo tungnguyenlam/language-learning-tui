@@ -455,7 +455,7 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 			// Three column row for wide terminals
 			thirdWidth := (layout.Width - 4) / 3
 			tipBox = dashTipStyle.Width(thirdWidth).Render(tipLabelStyle.Render("Grammar: [g/G] "+tip.Title) + "\n" + tip.Tip)
-			verbBox = dashVerbStyle.Width(thirdWidth).Render(verbHeader + "\n" + fmt.Sprintf("  ich %-8s wir %-8s\n  du  %-8s ihr %-8s", verb.Ich, verb.Wir, verb.Du, verb.Ihr))
+			verbBox = dashVerbStyle.Width(thirdWidth).Render(verbHeader + "\n" + fmt.Sprintf("  ich %-8s wir %-8s\n  du  %-8s ihr %-8s\n  er  %-8s sie %-8s", verb.Ich, verb.Wir, verb.Du, verb.Ihr, verb.ErSieEs, verb.SieSie))
 			wordBox = dashWordStyle.Width(thirdWidth).Render(wordHeader + "\n" + wordContent)
 
 			m.hitboxes = append(m.hitboxes, Hitbox{ID: "dash-tip", View: ViewDashboard, X: layout.X, Y: layout.Y + tipY, Width: thirdWidth, Height: lipgloss.Height(tipBox)})

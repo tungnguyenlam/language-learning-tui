@@ -4,11 +4,11 @@ Last updated: 2026-07-27
 
 ## Current Milestone
 
-Grammar Trainer Content Expansion & Konjunktiv II Trainer.
+Grammar Trainer Content Expansion & Passive Voice Trainer.
 
 ## Exact Next Action
 
-Run E2E suite after `verify.sh` confirms green; then consider adding more Konjunktiv II edge cases (modal + Infinitiv Perfekt) or a new "Passive Voice" trainer.
+Explore further UI polish or new grammar content expansion (e.g. Relativsätze / Relative Clauses trainer).
 
 ## Top Issues
 
@@ -16,6 +16,12 @@ None active.
 
 ## Completed Work
 
+- [x] **Passive Voice Trainer (trainer #11):** New `PracticeSubViewPassive` mode added to the Practice Hub (icon `Pv`). 25 fill-in-the-blank exercises in `internal/content/passive.go` covering Vorgangspassiv (Präsens, Präteritum, Perfekt), Zustandspassiv, modal passives, agent prepositions (von/durch), passive alternatives (sich lassen), and Futur I passive — each with meaning, hint, and detailed explanation. Added `TestGetPassiveExercises` and `TestPassiveTrainerIsRegistered`.
+- [x] **Dashboard Wide-Mode Verb Conjugation Fix:** Updated `render_dashboard.go` so the 3-column wide layout (>110 cols) renders all 6 German verb forms (`ich`, `du`, `er/sie/es`, `wir`, `ihr`, `sie/Sie`) matching the standard 2-column mode.
+- [x] **Dashboard Quick Actions Visual Consistency:** Removed opaque `Background("234")` from `dashActionsStyle` in `styles.go` so the Quick Actions block has a transparent background like all other dashboard boxes.
+- [x] **Konjunktiv II Trainer (trainer #10):** New `PracticeSubViewKonjunktiv` mode added to the Practice Hub (key `0`, icon `Kj`). 25 fill-in-the-blank exercises in `internal/content/konjunktiv.go` covering würde+Infinitiv, strong Konjunktiv II forms (wäre/hätte/bliebe), modal subjunctives (könnte/sollte/dürfte), and Perfekt conditionals — each with a meaning, grammar hint, and full explanation shown on reveal.
+- [x] **Preposition Trainer expanded (24→40 exercises):** Added 16 new exercises to `prepositions_practice.go` covering genitive prepositions (wegen, trotz, während, statt, innerhalb, außerhalb), temporal dative (seit, nach, vor, bis+zu), and accusative-only prepositions (für, um, ohne) to complement the existing two-way preposition pairs.
+- [x] **Separable Verb Trainer expanded (15→30 exercises):** Added 15 more exercises in `trainer_content.go` covering abfahren, zurückdenken, anprobieren, teilnehmen, zurückrufen, vorstellen, aufhören, aufmachen, aufgeben, anziehen, aufräumen, mitbringen, ausfüllen, and vorbeikommen.
 - [x] **Dictionary Search Exact Match Prioritization:** Updated `Search()` in `internal/storage/sqlite/dictionary.go` with stable tier sorting (`sortDictionaryEntries`), ensuring exact headwords, exact translations, and prefix matches take precedence over substring occurrences in example sentences. Added `TestDictionarySearchExactMatchOrdering`.
 - [x] **Dictionary Keyboard History Cycling:** Added `cycleDictionaryHistory()` in `internal/tui/actions_dictionary.go` and updated `updateDictionaryKey()` in `keys.go` so `Up`/`Down` arrow keys navigate recent search history when search input is active/cleared. Added `TestDictionaryHistoryKeyboardCycling`.
 - [x] **Active Deck Context for Dictionary Quick-Add:** Updated `addDictionaryEntryCmd()` in `actions_dictionary.go` to target `m.deck.ID` if a specific deck is selected, otherwise defaulting to the `"dictionary"` deck.

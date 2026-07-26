@@ -122,6 +122,9 @@ func (m *Model) activateHitboxByID(id string) tea.Cmd {
 		case "konjunktiv":
 			m.practiceHubCursor = 9
 			return m.enterPracticeMode(PracticeSubViewKonjunktiv)
+		case "passive":
+			m.practiceHubCursor = 10
+			return m.enterPracticeMode(PracticeSubViewPassive)
 		}
 		return nil
 	case strings.HasPrefix(id, "dash-"):

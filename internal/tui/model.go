@@ -57,6 +57,7 @@ const (
 	PracticeSubViewNumbers
 	PracticeSubViewConjunctions
 	PracticeSubViewKonjunktiv
+	PracticeSubViewPassive
 )
 
 type RevealState int
@@ -1131,7 +1132,7 @@ func (m *Model) View() tea.View {
 				helpHint = "| Type answer | h: hint | Enter check | Esc: back"
 			case PracticeSubViewSeparable, PracticeSubViewNumbers:
 				helpHint = "| Type answer | Enter check | Esc: back"
-			case PracticeSubViewConjunctions, PracticeSubViewKonjunktiv:
+			case PracticeSubViewConjunctions, PracticeSubViewKonjunktiv, PracticeSubViewPassive:
 				helpHint = "| Type answer | h: hint | Enter check | Esc: back"
 			case PracticeSubViewPlural:
 				helpHint = "| Type plural | Enter check | Esc: back"

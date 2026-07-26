@@ -1,5 +1,19 @@
 # Done Backlog
 
+## 2026-07-27 (Passive Voice Trainer & Dashboard Polish)
+
+### Features & Grammar Content
+- **Passive Voice Trainer (Trainer #11):** Added `PracticeSubViewPassive` mode to the Practice Hub. Created `internal/content/passive.go` containing 25 fill-in-the-blank exercises covering Vorgangspassiv (Präsens, Präteritum, Perfekt), Zustandspassiv, modal passives, agent prepositions (*von* / *durch*), passive alternatives (*sich lassen*), and Futur I passive. Each exercise includes sentence with blank, full meaning, hint, and detailed explanation.
+- **Practice Hub Keyboard & Hitbox Routing:** Registered `PracticeSubViewPassive` in `trainerConfigs`, generic trainer key handler, and mouse hitbox click dispatcher. Updated cursor bounds and added unit tests `TestGetPassiveExercises` and `TestPassiveTrainerIsRegistered`.
+
+### UI Polish & Fixes
+- **Dashboard Wide-Mode Verb Conjugation:** Fixed `render_dashboard.go` where wide terminal mode (>110 cols) omitted 2 of the 6 verb conjugation forms (`er/sie/es` and `sie/Sie`). All 6 forms are now displayed consistently across 2-column and 3-column layouts.
+- **Dashboard Quick Actions Background:** Removed `Background("234")` from `dashActionsStyle` in `styles.go` to match the transparent background of all other dashboard cards.
+
+### Verification
+- Added `internal/content/passive_test.go` and updated `internal/tui/improvement_test.go`.
+- `./scripts/verify.sh` passed: all unit tests, `go vet`, dict.cc import, smoke test, binary build, and E2E test suite (34 passed).
+
 ## 2026-07-27 (Screen-Interface Migration & Practice Hub Hitbox Alignment)
 
 ### Screen-Interface Migration

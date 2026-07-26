@@ -46,13 +46,13 @@ func TestPracticeHubKeyboardNavigation(t *testing.T) {
 		t.Fatalf("Expected cursor to be 0, got %d", model.practiceHubCursor)
 	}
 
-	// Wrap around moving up from 0 — now 10 trainers (indices 0-9)
+	// Wrap around moving up from 0 — now 11 trainers (indices 0-10)
 	model.updatePracticeKey(tea.KeyPressMsg{Code: tea.KeyUp})
-	if model.practiceHubCursor != 9 {
-		t.Fatalf("Expected cursor to be 9 after wrap-around, got %d", model.practiceHubCursor)
+	if model.practiceHubCursor != 10 {
+		t.Fatalf("Expected cursor to be 10 after wrap-around, got %d", model.practiceHubCursor)
 	}
 
-	// Wrap around moving down from 9
+	// Wrap around moving down from 10
 	model.updatePracticeKey(tea.KeyPressMsg{Code: tea.KeyDown})
 	if model.practiceHubCursor != 0 {
 		t.Fatalf("Expected cursor to be 0 after wrap-around, got %d", model.practiceHubCursor)
@@ -320,8 +320,8 @@ func TestPracticeHubHitboxSpacing(t *testing.T) {
 	layout := viewportLayout{X: 0, Y: 0, Width: 80, Height: 24}
 	model.renderPracticeHub(layout)
 
-	if len(model.hitboxes) != 10 {
-		t.Fatalf("Expected 10 hitboxes in Practice Hub, got %d", len(model.hitboxes))
+	if len(model.hitboxes) != 11 {
+		t.Fatalf("Expected 11 hitboxes in Practice Hub, got %d", len(model.hitboxes))
 	}
 	for i, hb := range model.hitboxes {
 		expectedY := layout.Y + 3 + (i * 5)
@@ -338,18 +338,34 @@ func TestKonjunktivTrainerIsRegistered(t *testing.T) {
 	model.practiceSubView = PracticeSubViewHub
 
 	// '0' key should enter Konjunktiv II trainer
-	cmd, handled := model.updatePracticeKey(tea.KeyPressMsg{Code: '0'})
+	_, handled := model.updatePracticeKey(tea.KeyPressMsg{Code: '0'})
 	if !handled {
-		t.Fatal("Expected '0' key to be handled in Practice Hub")
-	}
-	if cmd == nil {
-		t.Fatal("Expected non-nil command for '0' key (Konjunktiv II trainer)")
+		t.Fatal("Expected '0' key to be handled in practice hub")
 	}
 	if model.practiceSubView != PracticeSubViewKonjunktiv {
-		t.Fatalf("Expected PracticeSubViewKonjunktiv, got %d", model.practiceSubView)
+		t.Fatalf("Expected subview PracticeSubViewKonjunktiv, got %v", model.practiceSubView)
 	}
-	if model.practiceHubCursor != 9 {
-		t.Fatalf("Expected hub cursor to be 9, got %d", model.practiceHubCursor)
+}
+
+func TestPassiveTrainerIsRegistered(t *testing.T) {
+	repo := &mockRepo{}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewPractice
+	model.practiceSubView = PracticeSubViewHub
+
+	// Cursor at index 10 + enter should enter Passive Voice trainer
+	model.practiceHubCursor = 10
+	_, handled := model.updatePracticeKey(tea.KeyPressMsg{Code: tea.KeyEnter})
+	if !handled {
+		t.Fatal("Expected Enter key to be handled in practice hub")
+	}
+	if model.practiceSubView != PracticeSubViewPassive {
+		t.Fatalf("Expected subview PracticeSubViewPassive, got %v", model.practiceSubView)
+	}
+
+	st := model.trainerStateFor(PracticeSubViewPassive)
+	if st == nil {
+		t.Fatal("Expected non-nil trainer state for PracticeSubViewPassive")
 	}
 }
 

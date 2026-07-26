@@ -84,6 +84,14 @@ var trainerConfigs = map[PracticeSubView]trainerConfig{
 		HintKey:   true,
 		Load:      (*Model).loadKonjunktivItems,
 	},
+	PracticeSubViewPassive: {
+		Title:     "PASSIVE VOICE TRAINER",
+		ItemNoun:  "passive voice exercises",
+		NextLabel: "next exercise",
+		EmptyMsg:  "No passive voice exercises found.",
+		HintKey:   true,
+		Load:      (*Model).loadPassiveItems,
+	},
 }
 
 // blanked renders a fill-in-the-blank sentence, replacing the {{...}} marker.
@@ -412,5 +420,25 @@ func (m *Model) loadKonjunktivItems() tea.Cmd {
 			}
 		}
 		return trainerItemsMsg{kind: PracticeSubViewKonjunktiv, items: items}
+	}
+}
+
+func (m *Model) loadPassiveItems() tea.Cmd {
+	return func() tea.Msg {
+		exercises := content.GetPassiveExercises()
+		items := make([]trainerItem, len(exercises))
+		for i, ex := range exercises {
+			items[i] = trainerItem{
+				Title:       blanked(ex.Sentence, "_____"),
+				Subtitle:    "Meaning: " + ex.Meaning,
+				Answer:      ex.Answer,
+				RevealTitle: blanked(ex.Sentence, ex.Answer),
+				Instruction: "Enter the correct passive form:",
+				HintText:    ex.Hint,
+				Context:     ex.Hint,
+				Explanation: ex.Explanation,
+			}
+		}
+		return trainerItemsMsg{kind: PracticeSubViewPassive, items: items}
 	}
 }
