@@ -118,22 +118,60 @@ func sortDictionaryEntries(entries []core.DictionaryEntry, query string) {
 	})
 }
 
+func stripArticle(word string) string {
+	w := strings.TrimSpace(strings.ToLower(word))
+	for _, art := range []string{"der ", "die ", "das ", "den ", "dem ", "des ", "the ", "a ", "an "} {
+		if strings.HasPrefix(w, art) {
+			return strings.TrimSpace(w[len(art):])
+		}
+	}
+	return w
+}
+
 func entryMatchScore(entry core.DictionaryEntry, q string) int {
-	w := strings.ToLower(entry.Word)
-	t := strings.ToLower(entry.Translation)
-	if w == q {
+	wRaw := strings.ToLower(strings.TrimSpace(entry.Word))
+	tRaw := strings.ToLower(strings.TrimSpace(entry.Translation))
+	qClean := strings.ToLower(strings.TrimSpace(q))
+	wClean := stripArticle(wRaw)
+	qBare := stripArticle(qClean)
+
+	// 0: Exact word match (with or without German/English article)
+	if wRaw == qClean || wClean == qBare || wClean == qClean {
 		return 0
 	}
-	if t == q {
+
+	// 1: Exact translation match (or exact match on semicolon-separated translation)
+	if tRaw == qClean || tRaw == qBare {
 		return 1
 	}
-	if strings.HasPrefix(w, q) {
+	for _, part := range strings.Split(tRaw, ";") {
+		p := strings.TrimSpace(part)
+		if p == qClean || p == qBare {
+			return 1
+		}
+	}
+
+	// 2: Word prefix match
+	if strings.HasPrefix(wRaw, qClean) || strings.HasPrefix(wClean, qBare) {
 		return 2
 	}
-	if strings.HasPrefix(t, q) {
+
+	// 3: Translation prefix match
+	if strings.HasPrefix(tRaw, qClean) || strings.HasPrefix(tRaw, qBare) {
 		return 3
 	}
-	return 4
+
+	// 4: Word contains query substring
+	if strings.Contains(wRaw, qClean) || strings.Contains(wClean, qBare) {
+		return 4
+	}
+
+	// 5: Translation contains query substring
+	if strings.Contains(tRaw, qClean) || strings.Contains(tRaw, qBare) {
+		return 5
+	}
+
+	return 6
 }
 
 func (s *Store) GetEntry(ctx context.Context, id string) (core.DictionaryEntry, error) {

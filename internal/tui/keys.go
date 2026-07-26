@@ -1096,6 +1096,8 @@ func (m *Model) updateCramKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			if len(m.cramCards) > 0 {
 				return m.playCardAudio(m.cramCards[clampInt(m.cramCursor, 0, len(m.cramCards)-1)]), true
 			}
+		case "d":
+			return m.lookupCramCardInDictionary(), true
 		case "a":
 			return m.gradeCramCard(core.GradeAgain), true
 		case "h":
@@ -1615,6 +1617,9 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.recordDictionarySearch(m.dictionarySearch)
 			entry := m.dictionaryResults[m.dictionaryCursor]
 			m.browserSearch = entry.Word
+			if m.dictionaryOverlayActive {
+				m.closeDictionaryOverlay()
+			}
 			return tea.Batch(m.updateView(ViewBrowser), m.loadBrowserCards()), true
 		}
 		return nil, true
@@ -1652,6 +1657,9 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 
 			m.draftSource = source.String()
 
+			if m.dictionaryOverlayActive {
+				m.closeDictionaryOverlay()
+			}
 			m.updateView(ViewAI)
 			m.status = "Drafting flashcard from dictionary entry"
 			return m.startDrafting(), true

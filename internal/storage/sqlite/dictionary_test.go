@@ -99,3 +99,46 @@ func TestDictionarySearchExactMatchOrdering(t *testing.T) {
 		t.Errorf("expected prefix match 'Haustür' to be second, got '%s'", res[1].Word)
 	}
 }
+
+func TestDictionarySearchArticleAndMultiTranslation(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	entries := []core.DictionaryEntry{
+		{ID: "1", Word: "das Haus", Translation: "house; home; building"},
+		{ID: "2", Word: "die Katze", Translation: "cat"},
+		{ID: "3", Word: "Häuser", Translation: "houses"},
+	}
+
+	if err := store.ImportEntries(ctx, entries); err != nil {
+		t.Fatalf("import entries: %v", err)
+	}
+
+	// 1. Searching "Haus" (without article) should rank "das Haus" first (exact match ignoring article)
+	res, err := store.Search(ctx, "Haus", 10)
+	if err != nil {
+		t.Fatalf("Search failed: %v", err)
+	}
+	if len(res) < 1 {
+		t.Fatalf("expected results for 'Haus'")
+	}
+	if res[0].Word != "das Haus" {
+		t.Errorf("expected 'das Haus' to match 'Haus' at rank 0, got '%s'", res[0].Word)
+	}
+
+	// 2. Searching "home" should rank "das Haus" first because "home" is an exact match in the semicolon list
+	res, err = store.Search(ctx, "home", 10)
+	if err != nil {
+		t.Fatalf("Search failed: %v", err)
+	}
+	if len(res) < 1 {
+		t.Fatalf("expected results for 'home'")
+	}
+	if res[0].Word != "das Haus" {
+		t.Errorf("expected 'das Haus' to match 'home' at rank 0, got '%s'", res[0].Word)
+	}
+}

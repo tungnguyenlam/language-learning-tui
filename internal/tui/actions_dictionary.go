@@ -248,3 +248,12 @@ func (m *Model) lookupBrowserCardInDictionary() tea.Cmd {
 	word := strings.Split(card.Prompt, "\n")[0]
 	return m.openDictionaryOverlayWithQuery(word)
 }
+
+func (m *Model) lookupCramCardInDictionary() tea.Cmd {
+	if len(m.cramCards) == 0 {
+		return nil
+	}
+	card := m.cramCards[clampInt(m.cramCursor, 0, len(m.cramCards)-1)]
+	word := strings.Split(card.Prompt, "\n")[0]
+	return m.openDictionaryOverlayWithQuery(word)
+}
