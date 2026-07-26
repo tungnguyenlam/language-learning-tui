@@ -398,7 +398,17 @@ func (m *Model) exportAPKG() tea.Cmd {
 		if err != nil {
 			return fmt.Errorf("failed to load cards for export: %w", err)
 		}
-		seen := make(map[string]bool)
+
+		// Anki shows the deck name, so map our deck IDs onto their titles
+		// rather than exporting decks called "a1_food_drink".
+		deckNames := make(map[string]string)
+		if decks, err := m.repo.Decks(ctx); err == nil {
+			for _, d := range decks {
+				deckNames[d.ID] = d.Name
+			}
+		}
+
+		index := make(map[string]int)
 		notes := make([]core.Note, 0, len(cards))
 		for _, c := range cards {
 			if filter == "Mature" && !c.Mature {
@@ -407,15 +417,22 @@ func (m *Model) exportAPKG() tea.Cmd {
 			if filter == "Learning" && c.Mature {
 				continue
 			}
-			if seen[c.NoteID] {
+			if at, ok := index[c.NoteID]; ok {
+				// A second card whose sides are swapped is the reverse
+				// direction of the same note; Anki models that as a note type,
+				// not as an extra note.
+				if notes[at].Front == c.Answer && notes[at].Back == c.Prompt {
+					notes[at].Type = "Reverse"
+				}
 				continue
 			}
-			seen[c.NoteID] = true
+			index[c.NoteID] = len(notes)
 			notes = append(notes, core.Note{
 				ID:     c.NoteID,
 				DeckID: c.DeckID,
 				Front:  c.Prompt,
 				Back:   c.Answer,
+				Extra:  c.Extra,
 				Tags:   c.Tags,
 				Audio:  c.Audio,
 			})
@@ -427,7 +444,7 @@ func (m *Model) exportAPKG() tea.Cmd {
 		}
 		defer file.Close()
 
-		if err := content.ExportAnkiAPKG(file, notes); err != nil {
+		if err := content.ExportAnkiAPKGWithDeckNames(file, notes, deckNames); err != nil {
 			return fmt.Errorf("failed to write APKG data to '%s': %w", filepath.Base(path), err)
 		}
 		return statusMsg{text: fmt.Sprintf("Exported %d notes to %s", len(notes), path)}
