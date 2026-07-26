@@ -200,3 +200,41 @@ func TestDictionarySearchInflectedFormsAndFilters(t *testing.T) {
 		t.Errorf("expected 'Haus' for filter ':n', got %v", res)
 	}
 }
+
+func TestDictionarySearchWildcardAndLanguagePrefix(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	entries := []core.DictionaryEntry{
+		{ID: "1", Word: "Hoffnung", Translation: "hope", WordClass: "noun", Gender: "f"},
+		{ID: "2", Word: "Zeitung", Translation: "newspaper", WordClass: "noun", Gender: "f"},
+		{ID: "3", Word: "Spaziergang", Translation: "walk; stroll", WordClass: "noun", Gender: "m"},
+		{ID: "4", Word: "gehen", Translation: "to walk; to go", WordClass: "verb"},
+	}
+
+	if err := store.ImportEntries(ctx, entries); err != nil {
+		t.Fatalf("import entries: %v", err)
+	}
+
+	// 1. Wildcard Suffix search: searching "*ung" should match Hoffnung and Zeitung
+	res, err := store.Search(ctx, "*ung", 10)
+	if err != nil {
+		t.Fatalf("Wildcard search failed: %v", err)
+	}
+	if len(res) != 2 {
+		t.Fatalf("expected 2 results for '*ung', got %d", len(res))
+	}
+
+	// 2. Language scope search de: searching "de:walk" should not match German headword walk, but searching "en:walk" should match translation "walk"
+	resEn, err := store.Search(ctx, "en:walk", 10)
+	if err != nil {
+		t.Fatalf("Language scope search failed: %v", err)
+	}
+	if len(resEn) != 2 {
+		t.Errorf("expected 2 results for 'en:walk', got %d", len(resEn))
+	}
+}

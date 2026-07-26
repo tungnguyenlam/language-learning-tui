@@ -1612,6 +1612,19 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return m.addDictionaryEntryCmd(entry), true
 		}
 		return nil, true
+	case "ctrl+e":
+		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			m.recordDictionarySearch(m.dictionarySearch)
+			entry := m.dictionaryResults[m.dictionaryCursor]
+			m.aiInput = fmt.Sprintf("Explain the German word '%s' (%s - %s). Provide grammar notes, gender usage, collocations, and example sentences.", entry.Word, entry.WordClass, entry.Translation)
+			if m.dictionaryOverlayActive {
+				m.closeDictionaryOverlay()
+			}
+			m.updateView(ViewAI)
+			m.status = fmt.Sprintf("Asking AI tutor about '%s'...", entry.Word)
+			return m.startDrafting(), true
+		}
+		return nil, true
 	case "ctrl+f":
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 			m.recordDictionarySearch(m.dictionarySearch)

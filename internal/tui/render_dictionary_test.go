@@ -763,3 +763,43 @@ func TestDictionaryHistoryKeyboardCycling(t *testing.T) {
 		t.Fatalf("expected search query to be 'Apfel', got %q", m.dictionarySearch)
 	}
 }
+
+func TestDictionaryCtrlEExplainAndFilterTagHelpers(t *testing.T) {
+	// 1. Test filter tag helpers
+	q := "Haus :noun"
+	if !isFilterActive(q, ":noun") {
+		t.Errorf("expected :noun to be active in %q", q)
+	}
+	if isFilterActive(q, ":verb") {
+		t.Errorf("expected :verb to not be active in %q", q)
+	}
+
+	toggled := toggleFilterTag(q, ":noun")
+	if strings.Contains(toggled, ":noun") {
+		t.Errorf("expected toggleFilterTag to remove :noun, got %q", toggled)
+	}
+
+	cleared := clearFilterTags("gehen :verb :de")
+	if cleared != "gehen" {
+		t.Errorf("expected clearFilterTags to return 'gehen', got %q", cleared)
+	}
+
+	// 2. Test ctrl+e shortcut switching to ViewAI with explain prompt
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.dictionaryResults = []core.DictionaryEntry{
+		{ID: "1", Word: "geheim", Translation: "secret", WordClass: "adj"},
+	}
+	m.dictionaryCursor = 0
+
+	_, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'e', Mod: tea.ModCtrl})
+	if !handled {
+		t.Fatal("expected ctrl+e to be handled")
+	}
+	if m.activeView != ViewAI {
+		t.Fatalf("expected activeView to switch to ViewAI, got %s", m.activeView)
+	}
+	if !strings.Contains(m.aiInput, "Explain the German word 'geheim'") {
+		t.Fatalf("expected aiInput to contain explain prompt, got %q", m.aiInput)
+	}
+}

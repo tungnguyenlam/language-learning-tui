@@ -56,13 +56,27 @@ func (s *Store) queryDictionaryEntries(ctx context.Context, q string, args ...an
 	return entries, nil
 }
 
-func parseSearchFilters(query string) (cleanQuery string, classFilter string, genderFilter string) {
+func parseSearchFilters(query string) (cleanQuery string, classFilter string, genderFilter string, langFilter string) {
 	terms := strings.Fields(query)
 	var textTerms []string
 
 	for _, term := range terms {
 		lower := strings.ToLower(term)
 		switch {
+		case strings.HasPrefix(lower, "de:"):
+			langFilter = "de"
+			if len(term) > 3 {
+				textTerms = append(textTerms, term[3:])
+			}
+		case strings.HasPrefix(lower, "en:"):
+			langFilter = "en"
+			if len(term) > 3 {
+				textTerms = append(textTerms, term[3:])
+			}
+		case lower == "lang:de" || lower == ":de":
+			langFilter = "de"
+		case lower == "lang:en" || lower == ":en":
+			langFilter = "en"
 		case lower == ":verb" || lower == ":v" || lower == "class:verb":
 			classFilter = "verb"
 		case lower == ":noun" || lower == "class:noun":
@@ -83,11 +97,11 @@ func parseSearchFilters(query string) (cleanQuery string, classFilter string, ge
 			textTerms = append(textTerms, term)
 		}
 	}
-	return strings.Join(textTerms, " "), classFilter, genderFilter
+	return strings.Join(textTerms, " "), classFilter, genderFilter, langFilter
 }
 
-func filterEntries(entries []core.DictionaryEntry, classFilter, genderFilter string) []core.DictionaryEntry {
-	if classFilter == "" && genderFilter == "" {
+func filterEntries(entries []core.DictionaryEntry, classFilter, genderFilter, langFilter string) []core.DictionaryEntry {
+	if classFilter == "" && genderFilter == "" && langFilter == "" {
 		return entries
 	}
 	filtered := make([]core.DictionaryEntry, 0, len(entries))
@@ -110,8 +124,8 @@ func filterEntries(entries []core.DictionaryEntry, classFilter, genderFilter str
 }
 
 func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.DictionaryEntry, error) {
-	cleanQuery, classFilter, genderFilter := parseSearchFilters(rawQuery)
-	if cleanQuery == "" && (classFilter != "" || genderFilter != "") {
+	cleanQuery, classFilter, genderFilter, langFilter := parseSearchFilters(rawQuery)
+	if cleanQuery == "" && (classFilter != "" || genderFilter != "" || langFilter != "") {
 		q := `
 			SELECT id, word, translation, word_class, gender, forms, examples, tags
 			FROM dictionary_fts
@@ -121,7 +135,7 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 		if err != nil {
 			return nil, fmt.Errorf("search dictionary filter-only: %w", err)
 		}
-		filtered := filterEntries(entries, classFilter, genderFilter)
+		filtered := filterEntries(entries, classFilter, genderFilter, langFilter)
 		if len(filtered) > limit {
 			filtered = filtered[:limit]
 		}
@@ -131,6 +145,34 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 	terms := strings.Fields(cleanQuery)
 	if len(terms) == 0 {
 		return nil, nil
+	}
+
+	// Direct LIKE search for wildcard queries (* or ?)
+	if strings.ContainsAny(cleanQuery, "*?") {
+		likePattern := strings.ReplaceAll(cleanQuery, "*", "%")
+		likePattern = strings.ReplaceAll(likePattern, "?", "_")
+		var qWild string
+		var args []any
+		if langFilter == "de" {
+			qWild = `SELECT id, word, translation, word_class, gender, forms, examples, tags FROM dictionary_fts WHERE word LIKE ? OR forms LIKE ? LIMIT ?`
+			args = []any{likePattern, likePattern, limit * 2}
+		} else if langFilter == "en" {
+			qWild = `SELECT id, word, translation, word_class, gender, forms, examples, tags FROM dictionary_fts WHERE translation LIKE ? LIMIT ?`
+			args = []any{likePattern, limit * 2}
+		} else {
+			qWild = `SELECT id, word, translation, word_class, gender, forms, examples, tags FROM dictionary_fts WHERE word LIKE ? OR translation LIKE ? OR forms LIKE ? LIMIT ?`
+			args = []any{likePattern, likePattern, likePattern, limit * 2}
+		}
+		entries, err := s.queryDictionaryEntries(ctx, qWild, args...)
+		if err != nil {
+			return nil, fmt.Errorf("search dictionary wildcard: %w", err)
+		}
+		filtered := filterEntries(entries, classFilter, genderFilter, langFilter)
+		sortDictionaryEntries(filtered, cleanQuery)
+		if len(filtered) > limit {
+			filtered = filtered[:limit]
+		}
+		return filtered, nil
 	}
 
 	var matchQuery strings.Builder
@@ -178,7 +220,7 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 	}
 
 	if len(entries) > 0 {
-		filtered := filterEntries(entries, classFilter, genderFilter)
+		filtered := filterEntries(entries, classFilter, genderFilter, langFilter)
 		if len(filtered) > 0 {
 			sortDictionaryEntries(filtered, cleanQuery)
 			if len(filtered) > limit {
@@ -188,19 +230,25 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 		}
 	}
 
-	// Fallback to LIKE-based substring match (checking word, translation, and forms)
-	qLike := `
-		SELECT id, word, translation, word_class, gender, forms, examples, tags
-		FROM dictionary_fts
-		WHERE word LIKE ? OR translation LIKE ? OR forms LIKE ?
-		LIMIT ?
-	`
-	entries, err = s.queryDictionaryEntries(ctx, qLike, likePattern, likePattern, likePattern, limit*2)
+	// Fallback to LIKE-based substring match
+	var qLike string
+	var args []any
+	if langFilter == "de" {
+		qLike = `SELECT id, word, translation, word_class, gender, forms, examples, tags FROM dictionary_fts WHERE word LIKE ? OR forms LIKE ? LIMIT ?`
+		args = []any{likePattern, likePattern, limit * 2}
+	} else if langFilter == "en" {
+		qLike = `SELECT id, word, translation, word_class, gender, forms, examples, tags FROM dictionary_fts WHERE translation LIKE ? LIMIT ?`
+		args = []any{likePattern, limit * 2}
+	} else {
+		qLike = `SELECT id, word, translation, word_class, gender, forms, examples, tags FROM dictionary_fts WHERE word LIKE ? OR translation LIKE ? OR forms LIKE ? LIMIT ?`
+		args = []any{likePattern, likePattern, likePattern, limit * 2}
+	}
+	entries, err = s.queryDictionaryEntries(ctx, qLike, args...)
 	if err != nil {
 		return nil, fmt.Errorf("search dictionary fallback like: %w", err)
 	}
 
-	filtered := filterEntries(entries, classFilter, genderFilter)
+	filtered := filterEntries(entries, classFilter, genderFilter, langFilter)
 	sortDictionaryEntries(filtered, cleanQuery)
 	if len(filtered) > limit {
 		filtered = filtered[:limit]

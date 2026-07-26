@@ -321,3 +321,57 @@ func (m *Model) lookupCramCardInDictionary() tea.Cmd {
 	card := m.cramCards[clampInt(m.cramCursor, 0, len(m.cramCards)-1)]
 	return m.openDictionaryOverlayWithQuery(card.Prompt)
 }
+
+func isFilterActive(query, tag string) bool {
+	if tag == "" {
+		filterTags := map[string]bool{
+			":verb": true, ":v": true, ":noun": true, ":adj": true, ":adv": true,
+			":m": true, ":f": true, ":n": true, ":pl": true,
+		}
+		for _, t := range strings.Fields(query) {
+			if filterTags[strings.ToLower(t)] {
+				return false
+			}
+		}
+		return true
+	}
+	for _, t := range strings.Fields(query) {
+		if strings.EqualFold(t, tag) {
+			return true
+		}
+	}
+	return false
+}
+
+func toggleFilterTag(query, tag string) string {
+	terms := strings.Fields(query)
+	found := false
+	var newTerms []string
+	for _, t := range terms {
+		if strings.EqualFold(t, tag) {
+			found = true
+		} else {
+			newTerms = append(newTerms, t)
+		}
+	}
+	if !found && tag != "" {
+		newTerms = append(newTerms, tag)
+	}
+	return strings.Join(newTerms, " ")
+}
+
+func clearFilterTags(query string) string {
+	filterTags := map[string]bool{
+		":verb": true, ":v": true, ":noun": true, ":adj": true, ":adv": true,
+		":m": true, ":f": true, ":n": true, ":pl": true,
+		":de": true, ":en": true, "lang:de": true, "lang:en": true,
+	}
+	terms := strings.Fields(query)
+	var clean []string
+	for _, t := range terms {
+		if !filterTags[strings.ToLower(t)] && !strings.HasPrefix(strings.ToLower(t), "de:") && !strings.HasPrefix(strings.ToLower(t), "en:") {
+			clean = append(clean, t)
+		}
+	}
+	return strings.Join(clean, " ")
+}

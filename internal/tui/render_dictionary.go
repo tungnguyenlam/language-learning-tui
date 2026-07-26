@@ -44,11 +44,72 @@ func padString(s string, width int) string {
 }
 
 func dictionaryVisibleRows(layout viewportLayout) int {
-	rows := layout.Height - 10
+	rows := layout.Height - 12
 	if rows < 1 {
 		return 1
 	}
 	return rows
+}
+
+func renderFilterPillsRow(m *Model, startX, startY int, targetView View) string {
+	pills := []struct {
+		Name string
+		Tag  string
+	}{
+		{"All", ""},
+		{"Verb", ":verb"},
+		{"Noun", ":noun"},
+		{"Adj", ":adj"},
+		{"Adv", ":adv"},
+		{"Der", ":m"},
+		{"Die", ":f"},
+		{"Das", ":n"},
+		{"Pl", ":pl"},
+	}
+
+	activeStyle := lipgloss.NewStyle().Bold(true).Foreground(colorYellow).Background(lipgloss.Color("236")).Padding(0, 1)
+	inactiveStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Padding(0, 1)
+
+	var parts []string
+	currentX := startX + 9
+	for i, p := range pills {
+		active := isFilterActive(m.dictionarySearch, p.Tag)
+		label := p.Name
+		if p.Tag != "" {
+			label = p.Tag
+		}
+		var rendered string
+		if active {
+			rendered = activeStyle.Render(label)
+		} else {
+			rendered = inactiveStyle.Render(label)
+		}
+		pillWidth := lipgloss.Width(rendered)
+
+		tag := p.Tag
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     fmt.Sprintf("dict-filter-pill-%d", i),
+			View:   targetView,
+			X:      currentX,
+			Y:      startY,
+			Width:  pillWidth,
+			Height: 1,
+			Action: func() tea.Cmd {
+				if tag == "" {
+					m.dictionarySearch = clearFilterTags(m.dictionarySearch)
+				} else {
+					m.dictionarySearch = toggleFilterTag(m.dictionarySearch, tag)
+				}
+				m.dictionaryCursor = 0
+				m.dictionaryScroll = 0
+				return m.searchDictionary()
+			},
+		})
+		currentX += pillWidth + 1
+		parts = append(parts, rendered)
+	}
+
+	return mutedStyle.Render("Filters: ") + strings.Join(parts, " ")
 }
 
 func (m *Model) renderDictionary(layout viewportLayout) string {
@@ -116,6 +177,11 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			},
 		})
 	}
+	b.WriteString("\n\n")
+
+	// Render interactive filter pills row
+	filterLineY := strings.Count(b.String(), "\n")
+	b.WriteString(renderFilterPillsRow(m, layout.X, layout.Y+filterLineY, ViewDictionary))
 	b.WriteString("\n\n")
 
 	// Results
@@ -252,7 +318,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		detailPanelContent := strings.Join(detailLinesWithScroll, "\n") + "\n"
 
 		b.WriteString(detailPanelContent)
-		b.WriteString("\n" + mutedStyle.Render("Press esc/ctrl+d to return to list | Enter to draft | ctrl+a to add | ctrl+p to play"))
+		b.WriteString("\n" + mutedStyle.Render("Press esc/ctrl+d to return to list | Enter to draft | ctrl+a to add | ctrl+e to explain | ctrl+p to play"))
 		return b.String()
 	}
 
@@ -475,7 +541,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		listWithScroll := strings.Join(listLinesWithScroll, "\n") + "\n"
 		b.WriteString(listWithScroll)
 
-		b.WriteString("\n" + mutedStyle.Render("Press ctrl+d/click selected to view details | Enter to draft | ctrl+a to add | ctrl+p to play"))
+		b.WriteString("\n" + mutedStyle.Render("Press ctrl+d/click selected to view details | Enter to draft | ctrl+a to add | ctrl+e to explain | ctrl+p to play"))
 	}
 
 	return b.String()
@@ -581,8 +647,10 @@ func (m *Model) renderSpotlightDictionary() string {
 			},
 		})
 	}
+	overlayFilterLineY := strings.Count(b.String(), "\n")
+	b.WriteString(renderFilterPillsRow(m, startX+2, startY+overlayFilterLineY+1, m.activeView) + "\n\n")
 
-	usedLines := 7
+	usedLines := 9
 	interiorHeight := boxHeight - usedLines - 2
 	if interiorHeight < 1 {
 		interiorHeight = 1
@@ -889,12 +957,14 @@ func (m *Model) renderSpotlightDictionary() string {
 				keyHint("esc", "back"),
 				keyHint("Enter", "draft"),
 				keyHint("ctrl+a", "add"),
+				keyHint("ctrl+e", "explain"),
 				keyHint("ctrl+p", "play"),
 			}
 		} else {
 			keys = []string{
 				keyHint("Enter", "draft"),
 				keyHint("ctrl+a", "add"),
+				keyHint("ctrl+e", "explain"),
 				keyHint("ctrl+p", "play"),
 				keyHint("ctrl+d", "details"),
 			}
