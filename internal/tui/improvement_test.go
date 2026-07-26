@@ -46,13 +46,13 @@ func TestPracticeHubKeyboardNavigation(t *testing.T) {
 		t.Fatalf("Expected cursor to be 0, got %d", model.practiceHubCursor)
 	}
 
-	// Wrap around moving up from 0 — now 11 trainers (indices 0-10)
+	// Wrap around moving up from 0 — now 12 trainers (indices 0-11)
 	model.updatePracticeKey(tea.KeyPressMsg{Code: tea.KeyUp})
-	if model.practiceHubCursor != 10 {
-		t.Fatalf("Expected cursor to be 10 after wrap-around, got %d", model.practiceHubCursor)
+	if model.practiceHubCursor != 11 {
+		t.Fatalf("Expected cursor to be 11 after wrap-around, got %d", model.practiceHubCursor)
 	}
 
-	// Wrap around moving down from 10
+	// Wrap around moving down from 11
 	model.updatePracticeKey(tea.KeyPressMsg{Code: tea.KeyDown})
 	if model.practiceHubCursor != 0 {
 		t.Fatalf("Expected cursor to be 0 after wrap-around, got %d", model.practiceHubCursor)
@@ -320,8 +320,8 @@ func TestPracticeHubHitboxSpacing(t *testing.T) {
 	layout := viewportLayout{X: 0, Y: 0, Width: 80, Height: 24}
 	model.renderPracticeHub(layout)
 
-	if len(model.hitboxes) != 11 {
-		t.Fatalf("Expected 11 hitboxes in Practice Hub, got %d", len(model.hitboxes))
+	if len(model.hitboxes) != 12 {
+		t.Fatalf("Expected 12 hitboxes in Practice Hub, got %d", len(model.hitboxes))
 	}
 	for i, hb := range model.hitboxes {
 		expectedY := layout.Y + 3 + (i * 5)
@@ -396,6 +396,57 @@ func TestKonjunktivTrainerRenders(t *testing.T) {
 		t.Error("Expected 'KONJUNKTIV II TRAINER' in trainer header")
 	}
 	if !strings.Contains(view, "Wenn ich mehr Zeit") {
+		t.Error("Expected trainer item content in rendered view")
+	}
+}
+
+func TestRelativeTrainerIsRegistered(t *testing.T) {
+	repo := &mockRepo{}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewPractice
+	model.practiceSubView = PracticeSubViewHub
+
+	// Test '=' shortcut for Relative Clauses trainer
+	_, handled := model.updatePracticeKey(tea.KeyPressMsg{Text: "="})
+	if !handled {
+		t.Fatal("Expected '=' key to be handled in practice hub")
+	}
+	if model.practiceSubView != PracticeSubViewRelative {
+		t.Fatalf("Expected subview PracticeSubViewRelative, got %v", model.practiceSubView)
+	}
+
+	st := model.trainerStateFor(PracticeSubViewRelative)
+	if st == nil {
+		t.Fatal("Expected non-nil trainer state for PracticeSubViewRelative")
+	}
+}
+
+func TestRelativeTrainerRenders(t *testing.T) {
+	repo := &mockRepo{}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewPractice
+	model.practiceSubView = PracticeSubViewRelative
+
+	st := model.trainerStateFor(PracticeSubViewRelative)
+	st.items = []trainerItem{
+		{
+			Title:       "Der Mann, _____ dort drüben steht, ist mein Lehrer.",
+			Subtitle:    "Meaning: The man who is standing over there is my teacher.",
+			Answer:      "der",
+			RevealTitle: "Der Mann, der dort drüben steht, ist mein Lehrer.",
+			Instruction: "Enter the relative pronoun:",
+			HintText:    "Nominative Masculine: der",
+			Explanation: "'Der Mann' is masculine singular subject → 'der'.",
+		},
+	}
+
+	layout := viewportLayout{Width: 80, Height: 30}
+	view := stripANSI(model.renderTrainer(PracticeSubViewRelative, layout))
+
+	if !strings.Contains(view, "RELATIVE CLAUSES TRAINER") {
+		t.Error("Expected 'RELATIVE CLAUSES TRAINER' in trainer header")
+	}
+	if !strings.Contains(view, "Der Mann") {
 		t.Error("Expected trainer item content in rendered view")
 	}
 }

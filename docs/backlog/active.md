@@ -8,7 +8,7 @@ Grammar Trainer Content Expansion & Passive Voice Trainer.
 
 ## Exact Next Action
 
-Explore further UI polish or new grammar content expansion (e.g. Relativsätze / Relative Clauses trainer).
+Explore further UI polish, vocabulary deck expansion, or AI tutor enhancements.
 
 ## Top Issues
 
@@ -16,6 +16,7 @@ None active.
 
 ## Completed Work
 
+- [x] **Relative Clauses Trainer (trainer #12):** New `PracticeSubViewRelative` mode added to the Practice Hub (icon `Rl`, key `=`). 25 fill-in-the-blank exercises in `internal/content/relative.go` covering Nominative (*der, die, das, die*), Accusative (*den, die, das, die*), Dative (*dem, der, dem, denen*), Genitive (*dessen, deren*), and Prepositional relative clauses (*mit dem, in der, an denen, worüber, für die, was* after indefinites). Added `TestGetRelativeExercises`, `TestRelativeTrainerIsRegistered`, `TestRelativeTrainerRenders`, and updated keybindings, hitboxes, footer, and help overlays.
 - [x] **Passive Voice Trainer (trainer #11):** New `PracticeSubViewPassive` mode added to the Practice Hub (icon `Pv`). 25 fill-in-the-blank exercises in `internal/content/passive.go` covering Vorgangspassiv (Präsens, Präteritum, Perfekt), Zustandspassiv, modal passives, agent prepositions (von/durch), passive alternatives (sich lassen), and Futur I passive — each with meaning, hint, and detailed explanation. Added `TestGetPassiveExercises` and `TestPassiveTrainerIsRegistered`.
 - [x] **Dashboard Wide-Mode Verb Conjugation Fix:** Updated `render_dashboard.go` so the 3-column wide layout (>110 cols) renders all 6 German verb forms (`ich`, `du`, `er/sie/es`, `wir`, `ihr`, `sie/Sie`) matching the standard 2-column mode.
 - [x] **Dashboard Quick Actions Visual Consistency:** Removed opaque `Background("234")` from `dashActionsStyle` in `styles.go` so the Quick Actions block has a transparent background like all other dashboard boxes.

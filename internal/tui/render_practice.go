@@ -46,6 +46,7 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 		{"practice-conjunctions", "9", "Conjunctions & Word Order", "Practice conjunctions & sentence structure", PracticeSubViewConjunctions, colorGreen, "🔗"},
 		{"practice-konjunktiv", "0", "Konjunktiv II Trainer", "Practice subjunctive II (würde, wäre, hätte)", PracticeSubViewKonjunktiv, colorAITitle, "Kj"},
 		{"practice-passive", "-", "Passive Voice Trainer", "Practice Vorgangspassiv & Zustandspassiv", PracticeSubViewPassive, colorPurple, "Pv"},
+		{"practice-relative", "=", "Relative Clauses Trainer", "Practice Relativpronomen & Relativsätze", PracticeSubViewRelative, colorGreen, "Rl"},
 	}
 
 	spacing := 5
@@ -135,7 +136,7 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 	}
 
 	b.WriteString("\n" + lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, "Press a key to select a trainer") + "\n")
-	b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, mutedStyle.Render("Press Esc to return to Dashboard")))
+	b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, mutedStyle.Render("r Reset scores  •  Esc Dashboard")))
 
 	return b.String()
 }

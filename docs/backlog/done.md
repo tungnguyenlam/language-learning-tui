@@ -1,5 +1,16 @@
 # Done Backlog
 
+## 2026-07-27 (Relative Clauses Trainer & Practice Hub Shortcuts Polish)
+
+### Features & Grammar Content
+- **Relative Clauses Trainer (Trainer #12):** Added `PracticeSubViewRelative` mode to the Practice Hub (icon `Rl`, key `=`). Created `internal/content/relative.go` with 25 pedagogical fill-in-the-blank exercises covering Nominative (*der, die, das, die*), Accusative (*den, die, das, die*), Dative (*dem, der, dem, denen*), Genitive (*dessen, deren*), and Prepositional relative clauses (*mit dem, in der, an denen, worüber, für die, was* after indefinites). Each exercise includes sentence with blank, full meaning, hint, and detailed explanation.
+- **Practice Hub Keybinding & Shortcut Parity:** Added `-` shortcut for Passive Voice Trainer and `=` shortcut for Relative Clauses Trainer to `updatePracticeKey` in `keys.go`. Registered `PracticeSubViewRelative` in `trainerConfigs`, generic trainer key handler, and mouse hitbox click dispatcher (`practice-relative`).
+- **Help Overlay & Footer Polish:** Updated Practice Hub footer in `render_practice.go` to explicitly document `r Reset scores • Esc Dashboard`. Updated global keyboard shortcuts help overlay in `render_views.go` to show `Practice 1-9/0/-/= pick, r reset`.
+
+### Verification
+- Added `internal/content/relative_test.go` and unit tests `TestRelativeTrainerIsRegistered` and `TestRelativeTrainerRenders` in `internal/tui/improvement_test.go`. Updated keyboard navigation and hitbox spacing unit tests for 12 trainers.
+- `./scripts/verify.sh` passed: all unit tests, `go vet`, dict.cc import, smoke test, binary build, and E2E test suite (34 passed).
+
 ## 2026-07-27 (Passive Voice Trainer & Dashboard Polish)
 
 ### Features & Grammar Content

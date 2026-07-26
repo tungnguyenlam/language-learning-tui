@@ -92,6 +92,14 @@ var trainerConfigs = map[PracticeSubView]trainerConfig{
 		HintKey:   true,
 		Load:      (*Model).loadPassiveItems,
 	},
+	PracticeSubViewRelative: {
+		Title:     "RELATIVE CLAUSES TRAINER",
+		ItemNoun:  "relative clause exercises",
+		NextLabel: "next exercise",
+		EmptyMsg:  "No relative clause exercises found.",
+		HintKey:   true,
+		Load:      (*Model).loadRelativeItems,
+	},
 }
 
 // blanked renders a fill-in-the-blank sentence, replacing the {{...}} marker.
@@ -440,5 +448,25 @@ func (m *Model) loadPassiveItems() tea.Cmd {
 			}
 		}
 		return trainerItemsMsg{kind: PracticeSubViewPassive, items: items}
+	}
+}
+
+func (m *Model) loadRelativeItems() tea.Cmd {
+	return func() tea.Msg {
+		exercises := content.GetRelativeExercises()
+		items := make([]trainerItem, len(exercises))
+		for i, ex := range exercises {
+			items[i] = trainerItem{
+				Title:       blanked(ex.Sentence, "_____"),
+				Subtitle:    "Meaning: " + ex.Meaning,
+				Answer:      ex.Answer,
+				RevealTitle: blanked(ex.Sentence, ex.Answer),
+				Instruction: "Enter the relative pronoun:",
+				HintText:    ex.Hint,
+				Context:     ex.Hint,
+				Explanation: ex.Explanation,
+			}
+		}
+		return trainerItemsMsg{kind: PracticeSubViewRelative, items: items}
 	}
 }

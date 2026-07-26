@@ -58,6 +58,7 @@ const (
 	PracticeSubViewConjunctions
 	PracticeSubViewKonjunktiv
 	PracticeSubViewPassive
+	PracticeSubViewRelative
 )
 
 type RevealState int

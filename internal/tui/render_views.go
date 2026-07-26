@@ -70,7 +70,7 @@ func (m *Model) renderHelp(layout viewportLayout) string {
 		"  Stats    j/k scroll, x exp\n" +
 		"  AI       / topic, a/d draft\n" +
 		"  Cram     Ent start, 1-5 filter\n" +
-		"  Practice 1-9 pick, r reset\n" +
+		"  Practice 1-9/0/-/= pick, r reset\n" +
 		"  Import   i/I import, x/X exp\n" +
 		"  AnkiWeb  A browse shared\n" +
 		"  Settings j/k nav, +/- goal"
