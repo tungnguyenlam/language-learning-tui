@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"fmt"
+	"math/rand/v2"
 	"strings"
 	"time"
 	"unicode"
@@ -176,6 +177,7 @@ func (m *Model) enterPracticeMode(mode PracticeSubView) tea.Cmd {
 	if isGenericTrainer(mode) {
 		st := m.trainerStateFor(mode)
 		st.index = 0
+		st.round = 0
 		st.correct = 0
 		st.total = 0
 		st.revealed = false
@@ -185,6 +187,23 @@ func (m *Model) enterPracticeMode(mode PracticeSubView) tea.Cmd {
 		return st.config.Load(m)
 	}
 	return nil
+}
+
+// advanceGenderItem moves the MCQ gender trainer to the next noun, reshuffling
+// after a full pass so a second lap is not the same sequence again.
+func (m *Model) advanceGenderItem() {
+	m.practiceRevealed = false
+	if len(m.practiceItems) == 0 {
+		m.practiceIndex = 0
+		return
+	}
+	m.practiceIndex++
+	if m.practiceIndex >= len(m.practiceItems) {
+		m.practiceIndex = 0
+		rand.Shuffle(len(m.practiceItems), func(i, j int) {
+			m.practiceItems[i], m.practiceItems[j] = m.practiceItems[j], m.practiceItems[i]
+		})
+	}
 }
 
 func (m *Model) toggleBrowserBookmark() tea.Cmd {

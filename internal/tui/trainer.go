@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"math/rand/v2"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -52,6 +53,7 @@ type trainerState struct {
 	config   trainerConfig
 	items    []trainerItem
 	index    int
+	round    int // completed passes over items; drives the reshuffle
 	correct  int
 	total    int
 	revealed bool
@@ -65,6 +67,31 @@ func (st *trainerState) matches(answer string) bool {
 		return st.config.match(st.input, answer)
 	}
 	return strings.TrimSpace(strings.ToLower(st.input)) == strings.TrimSpace(strings.ToLower(answer))
+}
+
+// advance clears the answer state and moves to the next item.
+//
+// Exercise sets are small (15 items for several trainers) and used to cycle in
+// a fixed order forever, so a returning learner recalled the position rather
+// than the grammar. Each completed pass is therefore reshuffled. The first pass
+// keeps its authored order, which is pedagogically sequenced and which the E2E
+// trainer tests rely on.
+func (st *trainerState) advance() {
+	st.revealed = false
+	st.showHint = false
+	st.input = ""
+	if len(st.items) == 0 {
+		st.index = 0
+		return
+	}
+	st.index++
+	if st.index >= len(st.items) {
+		st.index = 0
+		st.round++
+		rand.Shuffle(len(st.items), func(i, j int) {
+			st.items[i], st.items[j] = st.items[j], st.items[i]
+		})
+	}
 }
 
 // trainerItemsMsg delivers freshly loaded items to the named trainer.
@@ -116,10 +143,7 @@ func (m *Model) updateTrainerKey(kind PracticeSubView, msg tea.KeyPressMsg) (tea
 	}
 
 	if st.revealed {
-		st.revealed = false
-		st.showHint = false
-		st.input = ""
-		st.index = (st.index + 1) % len(st.items)
+		st.advance()
 		return nil, true
 	}
 
@@ -192,7 +216,13 @@ func (m *Model) renderTrainer(kind PracticeSubView, layout viewportLayout) strin
 	if st.total > 0 {
 		accuracy = float64(st.correct) / float64(st.total) * 100
 	}
-	b.WriteString(center(mutedStyle.Render(fmt.Sprintf("Score: %d/%d (%.0f%%)", st.correct, st.total, accuracy))) + "\n\n")
+	// "Score: x/y" stays contiguous — E2E trainer tests match on that substring.
+	progress := fmt.Sprintf("Item %d/%d  •  Score: %d/%d (%.0f%%)",
+		st.index+1, len(st.items), st.correct, st.total, accuracy)
+	if st.round > 0 {
+		progress += fmt.Sprintf("  •  Round %d", st.round+1)
+	}
+	b.WriteString(center(mutedStyle.Render(progress)) + "\n\n")
 
 	accentStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("81"))
 	b.WriteString(center(accentStyle.Render(item.Title)) + "\n")
@@ -276,10 +306,7 @@ func (m *Model) renderTrainer(kind PracticeSubView, layout viewportLayout) strin
 		Width:  layout.Width,
 		Height: layout.Height,
 		Action: func() tea.Cmd {
-			st.revealed = false
-			st.showHint = false
-			st.input = ""
-			st.index = (st.index + 1) % len(st.items)
+			st.advance()
 			return nil
 		},
 	})

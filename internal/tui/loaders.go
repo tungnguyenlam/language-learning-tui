@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"fmt"
+	"math/rand/v2"
 	"strings"
 	"time"
 
@@ -190,6 +191,10 @@ func (m *Model) loadPracticeItems() tea.Cmd {
 				})
 			}
 		}
+
+		// Cards arrive in repository order, which would otherwise present the
+		// same nouns in the same sequence every session.
+		rand.Shuffle(len(items), func(i, j int) { items[i], items[j] = items[j], items[i] })
 
 		return practiceItemsMsg(items)
 	}

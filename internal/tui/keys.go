@@ -89,6 +89,13 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 	case "q":
+		// "q" is a legitimate character in German answers (Qualität, Quelle),
+		// so let an actively-typing trainer consume it before quitting.
+		if m.trainerInputActive() {
+			if cmd, handled := m.updateActiveViewKey(msg); handled {
+				return m, cmd
+			}
+		}
 		if !m.textInputActive() {
 			if m.activeView == ViewCram && m.cramActive {
 				m.cramActive = false
@@ -97,6 +104,11 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	case "?":
+		if m.trainerInputActive() {
+			if cmd, handled := m.updateActiveViewKey(msg); handled {
+				return m, cmd
+			}
+		}
 		if !m.textInputActive() {
 			m.showHelp = !m.showHelp
 			msg := "Help overlay closed."
@@ -247,6 +259,21 @@ func (m *Model) textInputActive() bool {
 		(m.activeView == ViewDictionary && !m.dictionaryFocusResults) ||
 		m.dictionaryOverlayActive ||
 		m.drafting // AI drafting also uses input
+}
+
+// trainerInputActive reports whether a generic text-input trainer is waiting
+// for the learner to type an answer.
+//
+// Trainers deliberately stay out of textInputActive(): that predicate also
+// disables Tab/arrow view switching, which trainers must keep. This narrower
+// check exists so single-letter global shortcuts ("q", "?") are typed into the
+// answer instead of quitting the app or opening the help overlay mid-word.
+func (m *Model) trainerInputActive() bool {
+	if m.activeView != ViewPractice || !isGenericTrainer(m.practiceSubView) {
+		return false
+	}
+	st, ok := m.trainers[m.practiceSubView]
+	return ok && len(st.items) > 0 && !st.revealed
 }
 
 func (m *Model) updateNumberKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
@@ -1436,8 +1463,7 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return nil, true
 		}
 		if m.practiceRevealed {
-			m.practiceRevealed = false
-			m.practiceIndex = (m.practiceIndex + 1) % len(m.practiceItems)
+			m.advanceGenderItem()
 			return nil, true
 		}
 		switch key {

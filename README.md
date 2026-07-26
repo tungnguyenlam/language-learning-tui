@@ -44,6 +44,8 @@ $ deutsch-tui --features
   AI drafting        offline/template providers, prompt sets
   Statistics         streaks, timing, CSV export
   Review modes       MCQ, cloze, typing, focus, audio, dict
+  Grammar trainers   gender, cases, adjectives, plurals, verbs
+  Dictionary         offline dict.cc spotlight, card drafting
 
 Press [?] for full keybindings in the app.
 ```
@@ -189,7 +191,7 @@ go run ./cmd/deutsch-tui -smoke
 
 ## 🎮 Usage
 
-Switch views with **Tab** / **Shift+Tab**, **←**/**→** (or **w**/**s**), or **1**–**9** (Dashboard through Cram). Press **?** for the in-app overlay.
+Switch views with **Tab** / **Shift+Tab**, **←**/**→** (or **w**/**s**), or **1**–**9** (Dashboard through Cram). **0** opens the Practice Hub and **=** the dictionary spotlight from anywhere. Press **?** for the in-app overlay.
 
 <details>
 <summary>📋 Show all keybindings</summary>
@@ -199,8 +201,10 @@ Switch views with **Tab** / **Shift+Tab**, **←**/**→** (or **w**/**s**), or 
 | Key | Action |
 |-----|--------|
 | `1` … `9` | Jump to Dashboard, Decks, Review, Statistics, Import, AI, Settings, Browser, Cram |
+| `0` | Practice Hub |
 | `Tab` / `Shift+Tab`, `→` / `←`, `s` / `w` | Cycle views when not editing text |
 | `[` / `]` | Previous / next deck (also reloads Browser when active) |
+| `=` | Dictionary spotlight overlay (from any view) |
 | `?` | Toggle help overlay |
 | `q` | Quit (or exit cram session when active) |
 | `ctrl+c` | Quit |
@@ -247,6 +251,21 @@ Switch views with **Tab** / **Shift+Tab**, **←**/**→** (or **w**/**s**), or 
 | `b` / `B`, `x` / `X`, `t` / `T` | Bookmark, suspend, kind/tags (single or bulk) |
 | `Enter` | Toggle review history for card |
 | `Backspace` | Delete |
+
+### Practice (`0`)
+
+| Key | Action |
+|-----|--------|
+| `1` … `9` | Pick a trainer: gender, conjugation, case endings, adjective endings, prepositions, plurals, separable verbs, numbers & time, conjunctions |
+| `j` / `k`, `Enter` | Move the hub cursor / open the selected trainer |
+| `r` | Reset all practice session scores |
+| `1` / `d` / `m`, `2` / `i` / `f`, `3` / `a` / `n` | Answer der / die / das in the Gender Trainer |
+| `Enter` | Submit a typed answer; any key then moves to the next exercise |
+| `h` | Toggle the hint (case, adjective, preposition, conjunction trainers) |
+| `Esc` | Clear the typed answer, then leave the trainer |
+
+Exercise sets reshuffle after each completed pass, and the header tracks your
+position (`Item n/N`) and round alongside the running score.
 
 ### Other views
 

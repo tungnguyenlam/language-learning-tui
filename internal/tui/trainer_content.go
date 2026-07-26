@@ -140,7 +140,7 @@ func (m *Model) loadCaseItems() tea.Cmd {
 			{"Ich sehe {{...}} Mann.", "den", "m, Accusative (direct object)"},
 			{"Das ist das Buch {{...}} Frau.", "der", "f, Genitive (possession)"},
 			{"Wir wohnen in {{...}} Stadt.", "der", "f, Dative (location)"},
-			{"Er wartet auf {{...}} Bus.", "den", "m, Accusative (movement/direction)"},
+			{"Er wartet auf {{...}} Bus.", "den", "m, Accusative (fixed case with warten auf)"},
 			{"Sie gibt {{...}} Kind einen Apfel.", "dem", "n, Dative (indirect object)"},
 			{"Ohne {{...}} Hilfe schaffe ich es nicht.", "deine", "f, Accusative (after ohne)"},
 			{"Das ist das Haus {{...}} Mannes.", "des", "m, Genitive (possession)"},
@@ -148,9 +148,19 @@ func (m *Model) loadCaseItems() tea.Cmd {
 			{"Für {{...}} Mutter kaufe ich Blumen.", "meine", "f, Accusative (after für)"},
 			{"Neben {{...}} Tisch steht ein Stuhl.", "dem", "m, Dative (location)"},
 			{"Stell die Lampe auf {{...}} Tisch.", "den", "m, Accusative (movement)"},
-			{"Wegen {{...}} Wetters bleiben wir zu Hause.", "des", "m, Genitive (after wegen)"},
+			{"Wegen {{...}} Wetters bleiben wir zu Hause.", "des", "n, Genitive (after wegen)"},
 			{"Ich danke {{...}} Lehrer.", "dem", "m, Dative (verb danken)"},
 			{"Hilfst du {{...}} Bruder?", "deinem", "m, Dative (verb helfen)"},
+			{"Der Film gefällt {{...}} Kindern.", "den", "plural, Dative (verb gefallen)"},
+			{"Ich fahre mit {{...}} Fahrrad zur Arbeit.", "dem", "n, Dative (after mit)"},
+			{"Sie legt das Buch auf {{...}} Regal.", "das", "n, Accusative (movement onto)"},
+			{"Das Buch liegt auf {{...}} Regal.", "dem", "n, Dative (static location)"},
+			{"Trotz {{...}} Regens gehen wir spazieren.", "des", "m, Genitive (after trotz)"},
+			{"Gegen {{...}} Wind zu laufen ist anstrengend.", "den", "m, Accusative (after gegen)"},
+			{"Er folgt {{...}} Frau durch die Stadt.", "der", "f, Dative (verb folgen)"},
+			{"Seit {{...}} Woche lerne ich Deutsch.", "einer", "f, Dative (after seit)"},
+			{"Ich habe {{...}} Schwester angerufen.", "meine", "f, Accusative (direct object)"},
+			{"Wir helfen {{...}} Nachbarn.", "unseren", "plural, Dative (verb helfen)"},
 		}
 		return trainerItemsMsg{kind: PracticeSubViewCase, items: blankItems(raw)}
 	}
@@ -161,7 +171,7 @@ func (m *Model) loadAdjectiveItems() tea.Cmd {
 		raw := []struct{ sentence, answer, context string }{
 			{"Ich trinke ein {{...}} (kalt) Bier.", "kaltes", "n, Accusative, mixed declension (ein-word)"},
 			{"Der {{...}} (groß) Hund bellt.", "große", "m, Nominative, weak declension (der-word)"},
-			{"Ich wohne in einem {{...}} (alt) Haus.", "alten", "n, Dative, weak declension"},
+			{"Ich wohne in einem {{...}} (alt) Haus.", "alten", "n, Dative, mixed declension (ein-word)"},
 			{"Das ist eine {{...}} (schön) Blume.", "schöne", "f, Nominative, mixed declension"},
 			{"Wir mögen {{...}} (deutsch) Wein.", "deutschen", "m, Accusative, strong declension (no article)"},
 			{"Mit {{...}} (freundlich) Grüßen", "freundlichen", "plural, Dative, strong declension"},
@@ -174,6 +184,16 @@ func (m *Model) loadAdjectiveItems() tea.Cmd {
 			{"Wir gehen durch den {{...}} (dunkel) Wald.", "dunklen", "m, Accusative, weak declension"},
 			{"Er arbeitet mit {{...}} (neu) Kollegen.", "neuen", "plural, Dative, strong declension"},
 			{"Das ist ein {{...}} (schwierig) Rätsel.", "schwieriges", "n, Nominative, mixed declension"},
+			{"Ich suche einen {{...}} (billig) Flug.", "billigen", "m, Accusative, mixed declension"},
+			{"Die {{...}} (klein) Kinder spielen draußen.", "kleinen", "plural, Nominative, weak declension"},
+			{"Er hat {{...}} (kalt) Milch getrunken.", "kalte", "f, Accusative, strong declension"},
+			{"Nach einem {{...}} (lang) Tag schlafe ich gut.", "langen", "m, Dative, mixed declension"},
+			{"Das ist die Idee meiner {{...}} (best) Freundin.", "besten", "f, Genitive, mixed declension"},
+			{"Wir haben {{...}} (frisch) Brot gekauft.", "frisches", "n, Accusative, strong declension"},
+			{"Der Preis des {{...}} (neu) Autos ist hoch.", "neuen", "n, Genitive, weak declension"},
+			{"Sie hilft den {{...}} (alt) Leuten.", "alten", "plural, Dative, weak declension"},
+			{"Ein {{...}} (interessant) Buch liegt auf dem Tisch.", "interessantes", "n, Nominative, mixed declension"},
+			{"Sie spricht mit {{...}} (leise) Stimme.", "leiser", "f, Dative, strong declension"},
 		}
 		items := blankItems(raw)
 		for i := range items {

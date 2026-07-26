@@ -25,12 +25,14 @@ func (m *Model) renderGenderTrainer(layout viewportLayout) string {
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212")).Underline(true)
 	b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, titleStyle.Render(" GENDER TRAINER ")) + "\n\n")
 
-	// Score
+	// Position + score. This must stay a single line: the der/die/das option
+	// hitboxes below are anchored to a fixed row offset.
 	accuracy := 0.0
 	if m.practiceTotal > 0 {
 		accuracy = float64(m.practiceCorrect) / float64(m.practiceTotal) * 100
 	}
-	scoreStr := fmt.Sprintf("Score: %d/%d (%.0f%%)", m.practiceCorrect, m.practiceTotal, accuracy)
+	scoreStr := fmt.Sprintf("Noun %d/%d  •  Score: %d/%d (%.0f%%)",
+		m.practiceIndex+1, len(m.practiceItems), m.practiceCorrect, m.practiceTotal, accuracy)
 	b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, mutedStyle.Render(scoreStr)) + "\n\n")
 
 	// Word
@@ -136,8 +138,7 @@ func (m *Model) renderGenderTrainer(layout viewportLayout) string {
 			Width:  layout.Width,
 			Height: layout.Height,
 			Action: func() tea.Cmd {
-				m.practiceRevealed = false
-				m.practiceIndex = (m.practiceIndex + 1) % len(m.practiceItems)
+				m.advanceGenderItem()
 				return nil
 			},
 		})

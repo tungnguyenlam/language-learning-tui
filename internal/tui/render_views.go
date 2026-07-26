@@ -22,6 +22,7 @@ func (m *Model) renderHelp(layout viewportLayout) string {
 		"  1-9, 0   Switch to view\n" +
 		"  Tab/arr  Cycle views\n" +
 		"  w/s      Prev/next view\n" +
+		"  =        Dictionary lookup\n" +
 		"  ?        Toggle help\n" +
 		"  q/Ctrl+c Quit"
 
@@ -69,7 +70,7 @@ func (m *Model) renderHelp(layout viewportLayout) string {
 		"  Stats    j/k scroll, x exp\n" +
 		"  AI       / topic, a/d draft\n" +
 		"  Cram     Ent start, 1-5 filter\n" +
-		"  Practice 1-3/d-a/m-n select\n" +
+		"  Practice 1-9 pick, r reset\n" +
 		"  Import   i/I import, x/X exp\n" +
 		"  Settings j/k nav, +/- goal"
 

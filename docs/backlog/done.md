@@ -1293,3 +1293,24 @@ Enhanced the AI Drafting flow to seamlessly integrate dictionary search results.
 
 ### Verification
 - `./scripts/verify.sh` passed with 351 E2E tests.
+
+## 2026-07-26 (Practice Trainer Quality)
+
+Fixed a key-handling bug where typing `q` (or `?`) into a practice trainer hit
+the global quit / help shortcuts instead of the answer box, quitting the app
+mid-exercise on legitimate German answers such as *Qualität* and *Quelle*. Added
+`Model.trainerInputActive()` — a narrower predicate than `textInputActive()`,
+which trainers must stay out of so Tab/arrow view switching keeps working.
+
+Made the trainers reshuffle after each completed pass (`trainerState.advance()`,
+`Model.advanceGenderItem()`) and shuffled the Gender Trainer's noun list at load,
+so small exercise sets are no longer memorized by position. The first pass keeps
+its authored order. Trainer headers now show `Item n/N` and a `Round n` counter.
+
+Corrected three wrong grammar labels in the Case and Adjective trainers and grew
+both sets from 15 to 25 exercises, with a `TestBlankTrainerContentIsWellFormed`
+shape guard. Fixed the help overlay: the `=` Dictionary spotlight was undocumented
+and the Practice line still advertised the pre-Practice-Hub `1-3/d-a/m-n` keys.
+
+### Verification
+- `./scripts/verify.sh` passed with 353 E2E tests.
