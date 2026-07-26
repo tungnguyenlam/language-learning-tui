@@ -43,46 +43,55 @@ func (m *Model) searchDictionary() tea.Cmd {
 }
 
 func (m *Model) addDictionaryEntryCmd(entry core.DictionaryEntry) tea.Cmd {
-	return func() tea.Msg {
-		ctx := context.Background()
+	return tea.Batch(
+		func() tea.Msg {
+			ctx := context.Background()
 
-		// 1. Ensure "Dictionary" deck exists
-		deckID := "dictionary"
-		deck, err := m.repo.GetDeck(ctx, deckID)
-		if err != nil {
-			deck = core.Deck{
-				ID:   deckID,
-				Name: "Dictionary",
+			// 1. Ensure "Dictionary" deck exists
+			deckID := "dictionary"
+			deck, err := m.repo.GetDeck(ctx, deckID)
+			if err != nil {
+				deck = core.Deck{
+					ID:   deckID,
+					Name: "Dictionary",
+				}
+				if err := m.repo.UpsertDeck(ctx, deck); err != nil {
+					return err
+				}
 			}
-			if err := m.repo.UpsertDeck(ctx, deck); err != nil {
+
+			// 2. Create note
+			noteID := "dict-" + entry.ID
+			if entry.ID == "" {
+				noteID = fmt.Sprintf("dict-%d", time.Now().UnixNano())
+			}
+
+			note := core.Note{
+				ID:     noteID,
+				DeckID: deckID,
+				Type:   "flashcard",
+				Front:  entry.Word,
+				Back:   entry.Translation,
+				Extra:  entry.Forms,
+				Tags:   append(entry.Tags, "dictionary"),
+			}
+			if entry.WordClass != "" {
+				note.Extra += "\n[" + entry.WordClass + "]"
+			}
+			if entry.Gender != "" {
+				note.Extra += " {" + entry.Gender + "}"
+			}
+			note.Cards = content.CardsForNote(note)
+
+			if err := m.repo.UpsertNote(ctx, note); err != nil {
 				return err
 			}
-		}
 
-		// 2. Create note
-		note := core.Note{
-			ID:     "dict-" + entry.ID,
-			DeckID: deckID,
-			Type:   "flashcard",
-			Front:  entry.Word,
-			Back:   entry.Translation,
-			Extra:  entry.Forms,
-			Tags:   append(entry.Tags, "dictionary"),
-		}
-		if entry.WordClass != "" {
-			note.Extra += "\n[" + entry.WordClass + "]"
-		}
-		if entry.Gender != "" {
-			note.Extra += " {" + entry.Gender + "}"
-		}
-		note.Cards = content.CardsForNote(note)
-
-		if err := m.repo.UpsertNote(ctx, note); err != nil {
-			return err
-		}
-
-		return statusMsg{text: fmt.Sprintf("Added '%s' to Dictionary deck", entry.Word)}
-	}
+			return statusMsg{text: fmt.Sprintf("Added '%s' to Dictionary deck", entry.Word)}
+		},
+		m.loadDecks,
+		m.loadDueCards,
+	)
 }
 
 func (m *Model) recordDictionarySearch(query string) {

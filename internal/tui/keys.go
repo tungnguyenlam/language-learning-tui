@@ -327,31 +327,7 @@ func (m *Model) updateActiveViewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	if s, ok := m.screens[m.activeView]; ok {
 		return s.HandleKey(m, msg)
 	}
-
-	switch m.activeView {
-	case ViewDashboard:
-		return m.updateDashboardKey(msg)
-	case ViewDictionary:
-		return m.updateDictionaryKey(msg)
-	case ViewReview:
-		return m.updateReviewKey(msg)
-	case ViewAI:
-		return m.updateAIKey(msg)
-	case ViewBrowser:
-		return m.updateBrowserKey(msg)
-	case ViewSettings:
-		return m.updateSettingsKey(msg)
-	case ViewCram:
-		return m.updateCramKey(msg)
-	case ViewPractice:
-		return m.updatePracticeKey(msg)
-	case ViewDecks:
-		return m.updateDecksKey(msg)
-	case ViewStatistics:
-		return m.updateStatisticsKey(msg)
-	default:
-		return nil, false
-	}
+	return nil, false
 }
 
 func (m *Model) updateDashboardKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {

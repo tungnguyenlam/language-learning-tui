@@ -27,11 +27,19 @@ func (m *Model) registerScreens() {
 	m.importScreen = &importScreen{}
 	m.ankiWebScreen = &ankiWebScreen{}
 	m.screens = map[View]screen{
+		ViewDashboard:      dashboardScreen{},
+		ViewDecks:          decksScreen{},
+		ViewReview:         reviewScreen{},
+		ViewBrowser:        browserScreen{},
+		ViewAI:             aiScreen{},
+		ViewSettings:       settingsScreen{},
+		ViewCram:           cramScreen{},
+		ViewPractice:       practiceScreen{},
+		ViewDebug:          debugScreen{},
+		ViewStatistics:     statisticsScreen{},
+		ViewDictionary:     dictionaryScreen{},
 		ViewSessionSummary: summaryScreen{},
 		ViewImport:         m.importScreen,
 		ViewAnkiWeb:        m.ankiWebScreen,
-		ViewSettings:       settingsScreen{},
-		ViewDebug:          debugScreen{},
-		ViewStatistics:     statisticsScreen{},
 	}
 }

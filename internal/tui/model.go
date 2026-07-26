@@ -1351,36 +1351,7 @@ func (m *Model) renderActiveViewPlainAt(layout viewportLayout) string {
 	if s, ok := m.screens[m.activeView]; ok {
 		return s.Render(m, layout)
 	}
-
-	var content string
-	switch m.activeView {
-	case ViewDashboard:
-		content = m.renderDashboard(layout)
-	case ViewDictionary:
-		content = m.renderDictionary(layout)
-	case ViewDecks:
-		content = m.renderDecks(layout)
-	case ViewReview:
-		content = m.renderReview(layout.X, layout.Y)
-	case ViewStatistics:
-		content = m.renderStatisticsAt(layout)
-	case ViewAI:
-		content = m.renderAI(layout.X, layout.Y)
-	case ViewSettings:
-		content = m.renderSettings(layout.X, layout.Y)
-	case ViewBrowser:
-		content = m.renderBrowserAt(layout)
-	case ViewCram:
-		content = m.renderCramAt(layout)
-	case ViewPractice:
-		content = m.renderPractice(layout)
-	case ViewDebug:
-		content = m.renderDebug(layout.X, layout.Y)
-	default:
-		content = "Unknown View"
-	}
-
-	return content
+	return "Unknown View"
 }
 
 func (m *Model) activeViewContentLayout() viewportLayout {

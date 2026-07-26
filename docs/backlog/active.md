@@ -8,7 +8,7 @@ Screen-Interface Migration & TUI Polish.
 
 ## Exact Next Action
 
-Continue migrating remaining views (ViewDashboard, ViewDecks, ViewReview, ViewBrowser, ViewAI, ViewCram, ViewPractice, ViewDictionary) to the `screen` interface pattern in `internal/tui/screen.go`.
+Explore further dictionary UX enhancements and SRS learning options.
 
 ## Top Issues
 
@@ -16,6 +16,8 @@ None active.
 
 ## Completed Work
 
+- [x] **Full Screen-Interface Migration:** Completed migration of all remaining views (`ViewDashboard`, `ViewDecks`, `ViewReview`, `ViewBrowser`, `ViewAI`, `ViewCram`, `ViewPractice`, `ViewDictionary`) to concrete `screen` types in dedicated files (`screen_dashboard.go`, `screen_decks.go`, `screen_review.go`, `screen_browser.go`, `screen_ai.go`, `screen_cram.go`, `screen_practice.go`, `screen_dictionary.go`). Simplified `renderActiveViewPlainAt` and `updateActiveViewKey` to delegate directly through the `m.screens` map.
+- [x] **Dictionary Deck Sync on Card Add:** Updated `addDictionaryEntryCmd` in `actions_dictionary.go` to return a `tea.Batch` including `m.loadDecks` and `m.loadDueCards` so adding cards from the dictionary immediately updates deck state and review queues.
 - [x] **Scrollbar variation, smoothness, and UI unification:** Unified scrollbar rendering across all views (`RenderList`, `render_dictionary.go`, `screen_ankiweb.go`) using `renderScrollbarColumn` with consistent track (`│`) and thumb (`█`) characters and Lip Gloss styling. Fixed thumb offset rounding (`+ maxScroll/2`) and track click mapping (`+ (visibleLines-1)/2`) in `utils.go` to eliminate jerky thumb position jumps. Added unit tests in `render_test.go`.
 - [x] **Screen-interface migration for ViewSettings, ViewDebug, ViewStatistics:** Created `screen_settings.go`, `screen_debug.go`, `screen_statistics.go` implementing `screen` interface and registered them in `m.registerScreens()`.
 - [x] **Practice Hub click alignment fix:** Fixed button hitbox Y spacing in `renderPracticeHub` (`spacing := 5`) so mouse clicks align precisely with rendered button blocks across all terminal heights. Added `TestPracticeHubHitboxSpacing` unit test.

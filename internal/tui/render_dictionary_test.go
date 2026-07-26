@@ -222,10 +222,18 @@ func TestDictionaryQuickAddCardsGenerated(t *testing.T) {
 		t.Fatal("expected command from addDictionaryEntryCmd")
 	}
 
-	msg := cmd()
-	status, ok := msg.(statusMsg)
-	if !ok {
-		t.Fatalf("expected statusMsg, got %T: %v", msg, msg)
+	msgs := executeCmd(cmd)
+	var status statusMsg
+	var foundStatus bool
+	for _, msg := range msgs {
+		if s, ok := msg.(statusMsg); ok {
+			status = s
+			foundStatus = true
+			break
+		}
+	}
+	if !foundStatus {
+		t.Fatalf("expected statusMsg in executed msgs, got %v", msgs)
 	}
 
 	if !strings.Contains(status.text, "Added") {
