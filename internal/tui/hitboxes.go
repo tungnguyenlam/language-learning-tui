@@ -216,6 +216,8 @@ func (m *Model) activateHitboxByID(id string) tea.Cmd {
 		return m.importTSV()
 	case id == "import-apkg":
 		return m.importAPKG()
+	case id == "browse-ankiweb":
+		return m.updateView(ViewAnkiWeb)
 	case id == "seed-std":
 		return m.seedStandardContent()
 	case id == "export-tsv":

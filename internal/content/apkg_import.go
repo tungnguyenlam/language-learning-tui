@@ -132,9 +132,20 @@ func readAnkiCollection(dbPath string) ([]core.Note, error) {
 			return nil, fmt.Errorf("scanning note: %w", err)
 		}
 
-		fields := strings.Split(flds, "\x1f")
-		front, audio := stripHTMLFieldWithMedia(fields[0])
-		if strings.TrimSpace(front) == "" {
+		raw := strings.Split(flds, "\x1f")
+		texts := make([]string, len(raw))
+		audio := ""
+		for i, f := range raw {
+			text, a := stripHTMLFieldWithMedia(f)
+			texts[i] = text
+			if audio == "" {
+				audio = a
+			}
+		}
+
+		nt := noteTypes[mid]
+		frontOrd, backOrd, extraOrds := assignFieldRoles(texts, nt)
+		if frontOrd < 0 {
 			// Anki collections routinely carry empty scratch notes; one of them
 			// must not abort an otherwise good import.
 			continue
@@ -143,36 +154,26 @@ func readAnkiCollection(dbPath string) ([]core.Note, error) {
 		note := core.Note{
 			ID:     noteIdentity(guid, id),
 			DeckID: deckNames[noteDecks[id]],
-			Front:  front,
+			Front:  texts[frontOrd],
 			Audio:  audio,
 			Tags:   strings.Fields(strings.ReplaceAll(tags, "\x1f", " ")),
 		}
-		if len(fields) > 1 {
-			back, backAudio := stripHTMLFieldWithMedia(fields[1])
-			note.Back = back
-			if note.Audio == "" {
-				note.Audio = backAudio
-			}
+		if backOrd >= 0 {
+			note.Back = texts[backOrd]
 		}
-		// Anki note types vary wildly in field count; anything past Front/Back
-		// is preserved as the reveal-time extra rather than dropped.
-		if len(fields) > 2 {
-			var extras []string
-			for _, f := range fields[2:] {
-				if text, _ := stripHTMLFieldWithMedia(f); strings.TrimSpace(text) != "" {
-					extras = append(extras, text)
-				}
-			}
-			note.Extra = strings.Join(extras, "\n")
+		// Anki note types vary wildly in field count; whatever the templates
+		// do not use as a side is kept as the reveal-time extra.
+		var extras []string
+		for _, ord := range extraOrds {
+			extras = append(extras, texts[ord])
 		}
+		note.Extra = strings.Join(extras, "\n")
 
-		if nt, ok := noteTypes[mid]; ok {
-			if nt.cloze {
-				note.Front = fields[0] // keep {{c1::…}} markers for cloze parsing
-				note.Front, _ = stripHTMLKeepingCloze(note.Front)
-			} else if nt.reversed {
-				note.Type = "Reverse"
-			}
+		if nt.cloze {
+			// Keep the {{c1::…}} markers so the cloze parser can see them.
+			note.Front, _ = stripHTMLFieldWithMedia(raw[frontOrd])
+		} else if nt.reversed {
+			note.Type = "Reverse"
 		}
 
 		note.Cards = CardsForNote(note)
@@ -183,6 +184,52 @@ func readAnkiCollection(dbPath string) ([]core.Note, error) {
 	}
 
 	return notes, nil
+}
+
+// assignFieldRoles decides which of a note's fields become the prompt, the
+// answer, and the extra. It returns (-1, …) when the note has no usable text.
+//
+// The note type's templates win when they name fields that this note actually
+// filled in; otherwise the first two non-empty fields are used, which is what
+// makes decks with unconventional field layouts import as usable cards rather
+// than as prompts with a blank answer.
+func assignFieldRoles(texts []string, nt ankiNoteTypeInfo) (int, int, []int) {
+	filled := func(ord int) bool {
+		return ord >= 0 && ord < len(texts) && strings.TrimSpace(texts[ord]) != ""
+	}
+
+	front, back := -1, -1
+	if filled(nt.frontOrd) {
+		front = nt.frontOrd
+	}
+	if filled(nt.backOrd) && nt.backOrd != front {
+		back = nt.backOrd
+	}
+
+	for ord := range texts {
+		if front >= 0 && back >= 0 {
+			break
+		}
+		if !filled(ord) || ord == front || ord == back {
+			continue
+		}
+		if front < 0 {
+			front = ord
+		} else if back < 0 {
+			back = ord
+		}
+	}
+	if front < 0 {
+		return -1, -1, nil
+	}
+
+	var extras []int
+	for ord := range texts {
+		if ord != front && ord != back && filled(ord) {
+			extras = append(extras, ord)
+		}
+	}
+	return front, back, extras
 }
 
 // noteIdentity prefers Anki's stable guid so re-importing an updated package
@@ -197,6 +244,63 @@ func noteIdentity(guid string, id int64) string {
 type ankiNoteTypeInfo struct {
 	cloze    bool
 	reversed bool
+	// fields is the note type's field list, in note order. frontOrd/backOrd
+	// are the field ordinals the first card template puts on the question and
+	// answer side, or -1 when they could not be determined.
+	fields   []string
+	frontOrd int
+	backOrd  int
+}
+
+// fieldRefRe matches a template's field references, e.g. {{Front}},
+// {{cloze:Text}}, {{type:Back}}, {{#Extra}}.
+var fieldRefRe = regexp.MustCompile(`\{\{([^}]+)\}\}`)
+
+// templateFieldOrds resolves which fields a note type's first template shows on
+// the question and answer side.
+//
+// Anki note types are free-form: a deck may leave field 1 empty and put the
+// meaning in field 4. Assuming field 0/1 are the two sides produces cards with
+// a blank answer, so follow the template the way Anki does.
+func templateFieldOrds(fields []string, qfmt, afmt string) (int, int) {
+	ord := make(map[string]int, len(fields))
+	for i, name := range fields {
+		ord[strings.ToLower(name)] = i
+	}
+
+	refs := func(tmpl string) []int {
+		var out []int
+		for _, m := range fieldRefRe.FindAllStringSubmatch(tmpl, -1) {
+			name := strings.TrimSpace(m[1])
+			// Drop section markers and filters: {{#Tags}}, {{cloze:Text}}.
+			name = strings.TrimLeft(name, "#^/")
+			if i := strings.LastIndex(name, ":"); i >= 0 {
+				name = name[i+1:]
+			}
+			name = strings.TrimSpace(name)
+			if i, ok := ord[strings.ToLower(name)]; ok {
+				out = append(out, i)
+			}
+		}
+		return out
+	}
+
+	front, back := -1, -1
+	qOrds := refs(qfmt)
+	if len(qOrds) > 0 {
+		front = qOrds[0]
+	}
+	onQuestion := make(map[int]bool, len(qOrds))
+	for _, o := range qOrds {
+		onQuestion[o] = true
+	}
+	for _, o := range refs(afmt) {
+		if !onQuestion[o] {
+			back = o
+			break
+		}
+	}
+	return front, back
 }
 
 // readAnkiNoteTypes reads note types from either schema: the modern `notetypes`
@@ -230,7 +334,13 @@ func readAnkiNoteTypes(ctx context.Context, db *sql.DB) map[int64]ankiNoteTypeIn
 		Type      int    `json:"type"`
 		Templates []struct {
 			Name string `json:"name"`
+			QFmt string `json:"qfmt"`
+			AFmt string `json:"afmt"`
 		} `json:"tmpls"`
+		Fields []struct {
+			Name string `json:"name"`
+			Ord  int    `json:"ord"`
+		} `json:"flds"`
 	}
 	if err := json.Unmarshal([]byte(modelsJSON), &models); err != nil {
 		return types
@@ -247,6 +357,17 @@ func readAnkiNoteTypes(ctx context.Context, db *sql.DB) map[int64]ankiNoteTypeIn
 		if len(model.Templates) > 1 {
 			info.reversed = true
 		}
+
+		info.fields = make([]string, len(model.Fields))
+		for _, f := range model.Fields {
+			if f.Ord >= 0 && f.Ord < len(info.fields) {
+				info.fields[f.Ord] = f.Name
+			}
+		}
+		if len(model.Templates) > 0 {
+			info.frontOrd, info.backOrd = templateFieldOrds(
+				info.fields, model.Templates[0].QFmt, model.Templates[0].AFmt)
+		}
 		types[id] = info
 	}
 	return types
@@ -257,6 +378,8 @@ func noteTypeInfoFromName(name string) ankiNoteTypeInfo {
 	return ankiNoteTypeInfo{
 		cloze:    strings.Contains(lower, "cloze"),
 		reversed: strings.Contains(lower, "reversed") || strings.Contains(lower, "reverse"),
+		frontOrd: -1,
+		backOrd:  -1,
 	}
 }
 
@@ -350,6 +473,13 @@ var (
 func stripHTMLField(field string) string {
 	text, _ := stripHTMLFieldWithMedia(field)
 	return text
+}
+
+// PlainTextFromHTML renders HTML supplied by Anki or AnkiWeb as plain text
+// suitable for a terminal. Shared deck descriptions are HTML written by
+// strangers, so it strips markup rather than trying to render it.
+func PlainTextFromHTML(s string) string {
+	return stripHTMLField(s)
 }
 
 // stripHTMLFieldWithMedia converts an Anki field to plain text and returns the

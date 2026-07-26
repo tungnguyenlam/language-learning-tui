@@ -40,7 +40,7 @@ $ deutsch-tui --features
   Mouse + keyboard   tabs, buttons, scrollbars, WASD navigation
   Decks & cram       limits, filters, merge/cram, session stats
   Browser            search, tags, bulk actions, card preview
-  Anki I/O           import/export TSV and .apkg
+  Anki I/O           import/export TSV and .apkg, browse AnkiWeb
   AI drafting        offline/template providers, prompt sets
   Statistics         streaks, timing, CSV export
   Review modes       MCQ, cloze, typing, focus, audio, dict
@@ -64,6 +64,7 @@ Press [?] for full keybindings in the app.
 | **Data** | Local collection + sync ecosystems | Single local dir: SQLite + plain config |
 | **Scheduling** | SM-2 family / FSRS add-ons | Built-in **FSRS** mapping |
 | **Authoring** | Full editor, shared decks | Deck files + **AI drafting** workflow + TSV / `.apkg` |
+| **Shared decks** | Browse and download on ankiweb.net | Search and import AnkiWeb shared decks **in the TUI** |
 
 <p align="right"><a href="#top">↑ back to top</a></p>
 
@@ -267,9 +268,21 @@ Switch views with **Tab** / **Shift+Tab**, **←**/**→** (or **w**/**s**), or 
 Exercise sets reshuffle after each completed pass, and the header tracks your
 position (`Item n/N`) and round alongside the running score.
 
+### AnkiWeb shared decks
+
+From Import, press `A` to search AnkiWeb's public shared-deck library without
+leaving the terminal: `/` to type a query, `Enter` to search, `j`/`k` to move,
+`Enter` on a deck for its description and size, `d` to download and import it.
+
+This is the app's only network feature and it never runs on its own — nothing
+is uploaded, no account is involved, and every other view works offline. AnkiWeb
+publishes no API and rate-limits anonymous use, so if a search or download is
+refused the app says so and points at the manual route: download the `.apkg`
+from [ankiweb.net](https://ankiweb.net/shared/decks) and import it with `I`.
+
 ### Other views
 
-Statistics: `j`/`k` scroll, `x` export CSV. Import: `i`/`I` import TSV/APKG, `x`/`X` export, `R` reset DB (with confirmation flow). AI: `/` edit topic, `Enter` draft/approve, `[`/`]` templates, `a`/`A` / `d`/`D` approve or discard drafts. Cram: `1`–`5` filters, `Enter` start session, grades same as review when active.
+Statistics: `j`/`k` scroll, `x` export CSV. Import: `i`/`I` import TSV/APKG, `A` browse AnkiWeb shared decks, `x`/`X` export, `R` reset DB (with confirmation flow). AI: `/` edit topic, `Enter` draft/approve, `[`/`]` templates, `a`/`A` / `d`/`D` approve or discard drafts. Cram: `1`–`5` filters, `Enter` start session, grades same as review when active.
 
 </details>
 
@@ -303,6 +316,7 @@ See [docs/ops/config-and-logs.md](docs/ops/config-and-logs.md) for defaults and 
 ## 🗺️ Roadmap
 
 - [x] FSRS + SQLite + TSV/APKG interop and Bubble Tea shell
+- [x] Anki-valid `.apkg` export and AnkiWeb shared-deck browser
 - [x] AI drafting workflow with offline/template providers
 - [x] Browser, cram, statistics, focus mode, debug log
 - [ ] Audio pronunciation integration

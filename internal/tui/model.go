@@ -33,6 +33,7 @@ const (
 	ViewReview         View = "review"
 	ViewStatistics     View = "statistics"
 	ViewImport         View = "import"
+	ViewAnkiWeb        View = "ankiweb"
 	ViewAI             View = "ai"
 	ViewSettings       View = "settings"
 	ViewBrowser        View = "browser"
@@ -106,7 +107,13 @@ type Model struct {
 	// importScreen is a typed handle to the registered Import/Export screen, so
 	// shared code (the updateView reset, import hitbox actions) can reach its
 	// view-local state without a type assertion.
-	importScreen               *importScreen
+	importScreen *importScreen
+	// ankiWebScreen is a typed handle to the AnkiWeb shared-deck browser, so
+	// Update can route its async messages to the screen's own state.
+	ankiWebScreen *ankiWebScreen
+	// ankiWeb is the shared-deck client, created lazily on first use so the app
+	// never opens a network stack unless the browser is opened.
+	ankiWeb                    ankiWebSearcher
 	width                      int
 	height                     int
 	activeView                 View
@@ -543,6 +550,12 @@ func (m *Model) Init() tea.Cmd {
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	m.logger.Debug("Processing message: %T", msg)
+
+	// The AnkiWeb browser keeps its results on the screen rather than on Model,
+	// so its async replies are applied by the screen itself.
+	if handled, cmd := m.handleAnkiWebMsg(msg); handled {
+		return m, cmd
+	}
 
 	switch msg := msg.(type) {
 	case debounceSearchMsg:

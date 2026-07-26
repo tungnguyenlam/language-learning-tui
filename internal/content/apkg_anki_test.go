@@ -384,6 +384,70 @@ func TestImportRejectsNonPackage(t *testing.T) {
 	}
 }
 
+// Anki note types are free-form. A real AnkiWeb deck ("Deutsch: 4000 German
+// Words by Frequency") leaves field 1 empty and puts the meaning in a later
+// field, so assuming fields 0/1 are the two sides yields a blank answer.
+func TestFieldRolesFollowTemplates(t *testing.T) {
+	nt := ankiNoteTypeInfo{fields: []string{"Word", "Unused", "Meaning", "Example"}, frontOrd: -1, backOrd: -1}
+	nt.frontOrd, nt.backOrd = templateFieldOrds(nt.fields,
+		"{{Meaning}}", "{{FrontSide}}<hr id=answer>{{Word}}<br>{{Example}}")
+
+	if nt.frontOrd != 2 || nt.backOrd != 0 {
+		t.Fatalf("template mapping: want front=2 back=0, got front=%d back=%d", nt.frontOrd, nt.backOrd)
+	}
+
+	texts := []string{"ein", "", "1) a; 2) one", "Ein Mann."}
+	front, back, extras := assignFieldRoles(texts, nt)
+	if texts[front] != "1) a; 2) one" {
+		t.Errorf("front: got %q", texts[front])
+	}
+	if back < 0 || texts[back] != "ein" {
+		t.Errorf("back: got %d", back)
+	}
+	if len(extras) != 1 || texts[extras[0]] != "Ein Mann." {
+		t.Errorf("extras: got %v", extras)
+	}
+}
+
+func TestFieldRolesFallBackToNonEmptyFields(t *testing.T) {
+	// No usable template information: skip empty fields rather than emitting a
+	// card whose answer is blank.
+	unknown := ankiNoteTypeInfo{frontOrd: -1, backOrd: -1}
+
+	front, back, extras := assignFieldRoles([]string{"", "das Brot", "", "bread", "Beispiel"}, unknown)
+	if front != 1 || back != 3 {
+		t.Fatalf("want front=1 back=3, got front=%d back=%d", front, back)
+	}
+	if len(extras) != 1 || extras[0] != 4 {
+		t.Errorf("want extras=[4], got %v", extras)
+	}
+
+	// A note with nothing in it is skipped, not turned into a blank card.
+	if front, _, _ := assignFieldRoles([]string{"", "  ", ""}, unknown); front != -1 {
+		t.Errorf("expected an empty note to be skipped, got front=%d", front)
+	}
+
+	// A single-field note is still usable as a one-sided card.
+	if front, back, _ := assignFieldRoles([]string{"nur vorne"}, unknown); front != 0 || back != -1 {
+		t.Errorf("want front=0 back=-1, got front=%d back=%d", front, back)
+	}
+}
+
+func TestTemplateFieldOrdsIgnoresFiltersAndSpecials(t *testing.T) {
+	fields := []string{"Text", "Extra"}
+	front, back := templateFieldOrds(fields, "{{cloze:Text}}", "{{cloze:Text}}<br>{{Extra}}")
+	if front != 0 || back != 1 {
+		t.Errorf("cloze template: want front=0 back=1, got %d/%d", front, back)
+	}
+
+	// {{FrontSide}} and {{#Tags}} are not fields and must not be picked up.
+	front, back = templateFieldOrds([]string{"Front", "Back"},
+		"{{#Front}}{{type:Front}}{{/Front}}", "{{FrontSide}}{{Back}}")
+	if front != 0 || back != 1 {
+		t.Errorf("filtered template: want front=0 back=1, got %d/%d", front, back)
+	}
+}
+
 func TestClozeOrdinals(t *testing.T) {
 	for _, tc := range []struct {
 		text string

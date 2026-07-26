@@ -25,8 +25,10 @@ type screen interface {
 // here.
 func (m *Model) registerScreens() {
 	m.importScreen = &importScreen{}
+	m.ankiWebScreen = &ankiWebScreen{}
 	m.screens = map[View]screen{
 		ViewSessionSummary: summaryScreen{},
 		ViewImport:         m.importScreen,
+		ViewAnkiWeb:        m.ankiWebScreen,
 	}
 }

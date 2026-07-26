@@ -251,6 +251,7 @@ func (m *Model) textInputActive() bool {
 		(m.activeView == ViewSettings && m.editingTemplate) ||
 		(m.activeView == ViewSettings && m.editingSecretKey != "") ||
 		(m.activeView == ViewImport && m.importScreen.editingExportTag) ||
+		(m.activeView == ViewAnkiWeb && m.ankiWebScreen.editingQuery) ||
 		m.taggingCards ||
 		m.searchingBrowser ||
 		m.searchingTags ||

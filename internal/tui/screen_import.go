@@ -125,6 +125,8 @@ func (s *importScreen) HandleKey(m *Model, msg tea.KeyPressMsg) (tea.Cmd, bool) 
 		return m.importTSV(), true
 	case "I":
 		return m.importAPKG(), true
+	case "A":
+		return m.updateView(ViewAnkiWeb), true
 	case "S", "s":
 		return m.seedStandardContent(), true
 	case "R":
@@ -287,26 +289,40 @@ func (s *importScreen) Render(m *Model, layout viewportLayout) string {
 	}{
 		{"import-tsv", "Import TSV", "i"},
 		{"import-apkg", "Import APKG", "I"},
+		{"browse-ankiweb", "Browse AnkiWeb", "A"},
 		{"seed-std", "Seed Standard", "S"},
 		{"export-tsv", "Export TSV", "x"},
 		{"export-apkg", "Export APKG", "X"},
 		{"reset-db", "Reset DB", "R"},
 	}
 
+	// Wrap on whole buttons. Letting the panel hard-wrap the row instead splits
+	// a label across lines, which both reads badly and leaves the button's
+	// hitbox pointing at the wrong cells.
 	rowY = layout.Y + strings.Count(b.String(), "\n")
 	currentX := layout.X
-	for _, a := range actions {
+	for i, a := range actions {
 		item := fmt.Sprintf("[%s] %s", a.key, a.label)
+		width := lipgloss.Width(item) + 2
+		// btnStyle carries a right margin, so the gap between buttons is
+		// already there; only the row break has to be written. The +1 keeps
+		// that trailing margin inside the panel too — otherwise it alone wraps
+		// and leaves a stray blank row.
+		if i > 0 && currentX+width+1 > layout.X+layout.Width {
+			b.WriteString("\n")
+			rowY++
+			currentX = layout.X
+		}
 		b.WriteString(btnStyle.Render(item))
 		m.hitboxes = append(m.hitboxes, Hitbox{
 			ID:     a.id,
 			View:   ViewImport,
 			X:      currentX,
 			Y:      rowY,
-			Width:  lipgloss.Width(item) + 2,
+			Width:  width,
 			Height: 1,
 		})
-		currentX += lipgloss.Width(item) + 3
+		currentX += width + 1
 	}
 
 	if s.editingImportPath || s.editingExportTag {

@@ -27,6 +27,7 @@ Last updated: 2026-06-11
 - `docs/agent/notices/2026-05-16-edge-tts-provider.md`: Edge TTS is an optional unofficial online CLI provider and must fail gracefully.
 - `docs/agent/notices/2026-06-11-spotlight-dictionary-overlay.md`: Dictionary is a Spotlight-like overlay (`=` key), not a tab. Removed from nav cycle.
 - `docs/agent/notices/2026-07-26-trainer-input-vs-global-shortcuts.md`: new single-letter global shortcuts must be guarded with `trainerInputActive()` or they are unreachable as typed characters in the practice trainers.
+- `docs/agent/notices/2026-07-26-ankiweb-undocumented-endpoints.md`: AnkiWeb's shared-deck protobuf endpoints have no published schema; decode defensively, refresh download tokens, and keep the browser out of the tab cycle.
 
 ## Verification Status
 
@@ -51,6 +52,7 @@ Last updated: 2026-06-11
 - `internal/tui/README.md`: Responsive Bubble Tea shell, View/Model architecture, and mouse routing.
 - `internal/storage/README.md`: SQLite migrations, repository pattern, and persistence rules.
 - `internal/content/README.md`: TSV format, Anki interop, and embedded starter decks.
+- `internal/ankiweb/README.md`: read-only client for AnkiWeb's public shared-deck library (the app's only network surface).
 - `internal/ai/README.md`: AI provider adapters, drafting workflow, and validation.
 - `internal/srs/README.md`: FSRS scheduling implementation and core mapping.
 - `internal/app/README.md`: Config defaults, logging, and data directory setup.
