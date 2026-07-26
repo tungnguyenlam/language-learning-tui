@@ -124,3 +124,54 @@ func TestRenderStatisticsScrollbarAlignment(t *testing.T) {
 		}
 	}
 }
+
+func TestScrollbarThumbSmoothnessAndRounding(t *testing.T) {
+	// Verify that scrollbarThumb distributes steps evenly without lagging at scroll boundary
+	totalLines := 50
+	visibleLines := 10
+	maxScroll := totalLines - visibleLines                    // 40
+	thumbHeight := (visibleLines * visibleLines) / totalLines // 2
+	maxThumbStart := visibleLines - thumbHeight               // 8
+
+	// At start
+	start, _ := scrollbarThumb(totalLines, visibleLines, 0)
+	if start != 0 {
+		t.Fatalf("expected thumb start 0 at offset 0, got %d", start)
+	}
+
+	// At end
+	startEnd, _ := scrollbarThumb(totalLines, visibleLines, maxScroll)
+	if startEnd != maxThumbStart {
+		t.Fatalf("expected thumb start %d at maxScroll, got %d", maxThumbStart, startEnd)
+	}
+
+	// Near end (one line before maxScroll), rounded thumb math should reach maxThumbStart smoothly
+	startNearEnd, _ := scrollbarThumb(totalLines, visibleLines, maxScroll-1)
+	if startNearEnd != maxThumbStart {
+		t.Fatalf("expected thumb start near end to reach %d smoothly, got %d", maxThumbStart, startNearEnd)
+	}
+}
+
+func TestRenderScrollbarColumnUnification(t *testing.T) {
+	lines := []string{"Line 1", "Line 2", "Line 3", "Line 4", "Line 5"}
+
+	// When totalLines <= visibleHeight, appends space
+	unscrolled := renderScrollbarColumn(lines, 10, 5, 0)
+	if len(unscrolled) != 5 || unscrolled[0] != "Line 1 " {
+		t.Fatalf("unexpected unscrolled result: %v", unscrolled)
+	}
+
+	// When totalLines > visibleHeight, appends track/thumb characters
+	scrolled := renderScrollbarColumn(lines, 5, 20, 0)
+	if len(scrolled) != 5 {
+		t.Fatalf("expected 5 scrolled lines, got %d", len(scrolled))
+	}
+	plain0 := stripANSI(scrolled[0])
+	if !strings.HasSuffix(plain0, "█") {
+		t.Fatalf("expected top line thumb █, got %q", plain0)
+	}
+	plainLast := stripANSI(scrolled[4])
+	if !strings.HasSuffix(plainLast, "│") {
+		t.Fatalf("expected bottom line track │, got %q", plainLast)
+	}
+}

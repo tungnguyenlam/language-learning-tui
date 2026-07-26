@@ -247,27 +247,9 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			visibleDetailBuilder.WriteString(strings.Repeat(" ", detailContentWidth) + "\n")
 		}
 
-		detailPanelContent := visibleDetailBuilder.String()
-		if m.dictionaryDetailTotalLines > maxResultsDetail {
-			var sb strings.Builder
-			thumbStart, thumbHeight := scrollbarThumb(m.dictionaryDetailTotalLines, maxResultsDetail, m.dictionaryDetailScroll)
-			lines := strings.Split(detailPanelContent, "\n")
-			for i := 0; i < maxResultsDetail && i < len(lines); i++ {
-				char := "│"
-				if i >= thumbStart && i < thumbStart+thumbHeight {
-					char = "┃"
-				}
-				sb.WriteString(lines[i] + lipgloss.NewStyle().Foreground(colorPanel).Render(char) + "\n")
-			}
-			detailPanelContent = sb.String()
-		} else {
-			var sb strings.Builder
-			lines := strings.Split(detailPanelContent, "\n")
-			for i := 0; i < maxResultsDetail && i < len(lines); i++ {
-				sb.WriteString(lines[i] + " \n")
-			}
-			detailPanelContent = sb.String()
-		}
+		renderedDetailLines := strings.Split(strings.TrimSuffix(visibleDetailBuilder.String(), "\n"), "\n")
+		detailLinesWithScroll := renderScrollbarColumn(renderedDetailLines, maxResultsDetail, m.dictionaryDetailTotalLines, m.dictionaryDetailScroll)
+		detailPanelContent := strings.Join(detailLinesWithScroll, "\n") + "\n"
 
 		b.WriteString(detailPanelContent)
 		b.WriteString("\n" + mutedStyle.Render("Press esc/ctrl+d to return to list | Enter to draft | ctrl+a to add | ctrl+p to play"))
@@ -330,28 +312,9 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		}
 
 		// List scrollbar
-		listWithScroll := listBuilder.String()
-		if len(m.dictionaryResults) > maxResults {
-			var sb strings.Builder
-			thumbStart, thumbHeight := scrollbarThumb(len(m.dictionaryResults), maxResults, m.dictionaryScroll)
-			lines := strings.Split(listBuilder.String(), "\n")
-			for i := 0; i < maxResults && i < len(lines); i++ {
-				char := "│"
-				if i >= thumbStart && i < thumbStart+thumbHeight {
-					char = "┃"
-				}
-				sb.WriteString(lines[i] + lipgloss.NewStyle().Foreground(colorPanel).Render(char) + "\n")
-			}
-			listWithScroll = sb.String()
-		} else {
-			// Append an empty vertical line for alignment when no scrollbar is shown
-			var sb strings.Builder
-			lines := strings.Split(listBuilder.String(), "\n")
-			for i := 0; i < maxResults && i < len(lines); i++ {
-				sb.WriteString(lines[i] + " \n")
-			}
-			listWithScroll = sb.String()
-		}
+		listLines := strings.Split(strings.TrimSuffix(listBuilder.String(), "\n"), "\n")
+		listLinesWithScroll := renderScrollbarColumn(listLines, maxResults, len(m.dictionaryResults), m.dictionaryScroll)
+		listWithScroll := strings.Join(listLinesWithScroll, "\n") + "\n"
 
 		var detailBuilder strings.Builder
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
@@ -431,28 +394,9 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			visibleDetailBuilder.WriteString(strings.Repeat(" ", detailContentWidth) + "\n")
 		}
 
-		detailPanelContent := visibleDetailBuilder.String()
-		if m.dictionaryDetailTotalLines > maxResults {
-			var sb strings.Builder
-			thumbStart, thumbHeight := scrollbarThumb(m.dictionaryDetailTotalLines, maxResults, m.dictionaryDetailScroll)
-			lines := strings.Split(detailPanelContent, "\n")
-			for i := 0; i < maxResults && i < len(lines); i++ {
-				char := "│"
-				if i >= thumbStart && i < thumbStart+thumbHeight {
-					char = "┃"
-				}
-				sb.WriteString(lines[i] + lipgloss.NewStyle().Foreground(colorPanel).Render(char) + "\n")
-			}
-			detailPanelContent = sb.String()
-		} else {
-			// Append an empty vertical line for alignment when no scrollbar is shown
-			var sb strings.Builder
-			lines := strings.Split(detailPanelContent, "\n")
-			for i := 0; i < maxResults && i < len(lines); i++ {
-				sb.WriteString(lines[i] + " \n")
-			}
-			detailPanelContent = sb.String()
-		}
+		renderedDetailLines := strings.Split(strings.TrimSuffix(visibleDetailBuilder.String(), "\n"), "\n")
+		detailLinesWithScroll := renderScrollbarColumn(renderedDetailLines, maxResults, m.dictionaryDetailTotalLines, m.dictionaryDetailScroll)
+		detailPanelContent := strings.Join(detailLinesWithScroll, "\n") + "\n"
 
 		detailPanel := lipgloss.NewStyle().
 			Border(lipgloss.NormalBorder(), false, false, false, true).
@@ -526,27 +470,9 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		}
 
 		// List scrollbar
-		listWithScroll := listBuilder.String()
-		if len(m.dictionaryResults) > maxResults {
-			var sb strings.Builder
-			thumbStart, thumbHeight := scrollbarThumb(len(m.dictionaryResults), maxResults, m.dictionaryScroll)
-			lines := strings.Split(listBuilder.String(), "\n")
-			for i := 0; i < maxResults && i < len(lines); i++ {
-				char := "│"
-				if i >= thumbStart && i < thumbStart+thumbHeight {
-					char = "┃"
-				}
-				sb.WriteString(lines[i] + lipgloss.NewStyle().Foreground(colorPanel).Render(char) + "\n")
-			}
-			listWithScroll = sb.String()
-		} else {
-			var sb strings.Builder
-			lines := strings.Split(listWithScroll, "\n")
-			for i := 0; i < maxResults && i < len(lines); i++ {
-				sb.WriteString(lines[i] + " \n")
-			}
-			listWithScroll = sb.String()
-		}
+		listLines := strings.Split(strings.TrimSuffix(listBuilder.String(), "\n"), "\n")
+		listLinesWithScroll := renderScrollbarColumn(listLines, maxResults, len(m.dictionaryResults), m.dictionaryScroll)
+		listWithScroll := strings.Join(listLinesWithScroll, "\n") + "\n"
 		b.WriteString(listWithScroll)
 
 		b.WriteString("\n" + mutedStyle.Render("Press ctrl+d/click selected to view details | Enter to draft | ctrl+a to add | ctrl+p to play"))
@@ -782,27 +708,9 @@ func (m *Model) renderSpotlightDictionary() string {
 				visibleDetailBuilder.WriteString(strings.Repeat(" ", detailContentWidth) + "\n")
 			}
 
-			detailPanelContent := visibleDetailBuilder.String()
-			if m.dictionaryDetailTotalLines > maxResults {
-				var sb strings.Builder
-				thumbStart, thumbHeight := scrollbarThumb(m.dictionaryDetailTotalLines, maxResults, m.dictionaryDetailScroll)
-				lines := strings.Split(detailPanelContent, "\n")
-				for i := 0; i < maxResults && i < len(lines); i++ {
-					char := "│"
-					if i >= thumbStart && i < thumbStart+thumbHeight {
-						char = "┃"
-					}
-					sb.WriteString(lines[i] + lipgloss.NewStyle().Foreground(colorPanel).Render(char) + "\n")
-				}
-				detailPanelContent = sb.String()
-			} else {
-				var sb strings.Builder
-				lines := strings.Split(detailPanelContent, "\n")
-				for i := 0; i < maxResults && i < len(lines); i++ {
-					sb.WriteString(lines[i] + " \n")
-				}
-				detailPanelContent = sb.String()
-			}
+			renderedDetailLines := strings.Split(strings.TrimSuffix(visibleDetailBuilder.String(), "\n"), "\n")
+			detailLinesWithScroll := renderScrollbarColumn(renderedDetailLines, maxResults, m.dictionaryDetailTotalLines, m.dictionaryDetailScroll)
+			detailPanelContent := strings.Join(detailLinesWithScroll, "\n") + "\n"
 
 			b.WriteString(detailPanelContent)
 		} else if interiorWidth > 70 {
@@ -850,27 +758,9 @@ func (m *Model) renderSpotlightDictionary() string {
 				listBuilder.WriteString(strings.Repeat(" ", listWidth) + "\n")
 			}
 
-			listWithScroll := listBuilder.String()
-			if len(m.dictionaryResults) > maxResults {
-				var sb strings.Builder
-				thumbStart, thumbHeight := scrollbarThumb(len(m.dictionaryResults), maxResults, m.dictionaryScroll)
-				lines := strings.Split(listBuilder.String(), "\n")
-				for i := 0; i < maxResults && i < len(lines); i++ {
-					char := "│"
-					if i >= thumbStart && i < thumbStart+thumbHeight {
-						char = "┃"
-					}
-					sb.WriteString(lines[i] + lipgloss.NewStyle().Foreground(colorPanel).Render(char) + "\n")
-				}
-				listWithScroll = sb.String()
-			} else {
-				var sb strings.Builder
-				lines := strings.Split(listBuilder.String(), "\n")
-				for i := 0; i < maxResults && i < len(lines); i++ {
-					sb.WriteString(lines[i] + " \n")
-				}
-				listWithScroll = sb.String()
-			}
+			listLines := strings.Split(strings.TrimSuffix(listBuilder.String(), "\n"), "\n")
+			listLinesWithScroll := renderScrollbarColumn(listLines, maxResults, len(m.dictionaryResults), m.dictionaryScroll)
+			listWithScroll := strings.Join(listLinesWithScroll, "\n") + "\n"
 
 			var detailBuilder strings.Builder
 			if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
@@ -910,27 +800,9 @@ func (m *Model) renderSpotlightDictionary() string {
 				visibleDetailBuilder.WriteString(strings.Repeat(" ", detailWidth-3) + "\n")
 			}
 
-			detailPanelContent := visibleDetailBuilder.String()
-			if m.dictionaryDetailTotalLines > maxResults {
-				var sb strings.Builder
-				thumbStart, thumbHeight := scrollbarThumb(m.dictionaryDetailTotalLines, maxResults, m.dictionaryDetailScroll)
-				lines := strings.Split(detailPanelContent, "\n")
-				for i := 0; i < maxResults && i < len(lines); i++ {
-					char := "│"
-					if i >= thumbStart && i < thumbStart+thumbHeight {
-						char = "┃"
-					}
-					sb.WriteString(lines[i] + lipgloss.NewStyle().Foreground(colorPanel).Render(char) + "\n")
-				}
-				detailPanelContent = sb.String()
-			} else {
-				var sb strings.Builder
-				lines := strings.Split(detailPanelContent, "\n")
-				for i := 0; i < maxResults && i < len(lines); i++ {
-					sb.WriteString(lines[i] + " \n")
-				}
-				detailPanelContent = sb.String()
-			}
+			renderedDetailLines := strings.Split(strings.TrimSuffix(visibleDetailBuilder.String(), "\n"), "\n")
+			detailLinesWithScroll := renderScrollbarColumn(renderedDetailLines, maxResults, m.dictionaryDetailTotalLines, m.dictionaryDetailScroll)
+			detailPanelContent := strings.Join(detailLinesWithScroll, "\n") + "\n"
 
 			detailPanel := lipgloss.NewStyle().
 				Border(lipgloss.NormalBorder(), false, false, false, true).
@@ -984,27 +856,9 @@ func (m *Model) renderSpotlightDictionary() string {
 				listBuilder.WriteString(strings.Repeat(" ", maxInt(5, interiorWidth-1)) + "\n")
 			}
 
-			listWithScroll := listBuilder.String()
-			if len(m.dictionaryResults) > maxResults {
-				var sb strings.Builder
-				thumbStart, thumbHeight := scrollbarThumb(len(m.dictionaryResults), maxResults, m.dictionaryScroll)
-				lines := strings.Split(listBuilder.String(), "\n")
-				for i := 0; i < maxResults && i < len(lines); i++ {
-					char := "│"
-					if i >= thumbStart && i < thumbStart+thumbHeight {
-						char = "┃"
-					}
-					sb.WriteString(lines[i] + lipgloss.NewStyle().Foreground(colorPanel).Render(char) + "\n")
-				}
-				listWithScroll = sb.String()
-			} else {
-				var sb strings.Builder
-				lines := strings.Split(listWithScroll, "\n")
-				for i := 0; i < maxResults && i < len(lines); i++ {
-					sb.WriteString(lines[i] + " \n")
-				}
-				listWithScroll = sb.String()
-			}
+			listLines := strings.Split(strings.TrimSuffix(listBuilder.String(), "\n"), "\n")
+			listLinesWithScroll := renderScrollbarColumn(listLines, maxResults, len(m.dictionaryResults), m.dictionaryScroll)
+			listWithScroll := strings.Join(listLinesWithScroll, "\n") + "\n"
 			b.WriteString(listWithScroll)
 		}
 	}

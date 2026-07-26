@@ -381,6 +381,7 @@ func (s *ankiWebScreen) Render(m *Model, layout viewportLayout) string {
 	}
 	nameWidth := maxInt(12, layout.Width-metaWidth-4)
 
+	var resultLines []string
 	for i := s.scroll; i < len(s.results) && i < s.scroll+rows; i++ {
 		deck := s.results[i]
 		marker := "  "
@@ -392,8 +393,12 @@ func (s *ankiWebScreen) Render(m *Model, layout viewportLayout) string {
 
 		name := truncateLine(deck.Title, nameWidth)
 		pad := strings.Repeat(" ", maxInt(0, nameWidth-lipgloss.Width(name)))
-		b.WriteString(marker + nameStyle.Render(name) + pad +
-			mutedStyle.Render(metaFor(deck)) + "\n")
+		resultLines = append(resultLines, marker+nameStyle.Render(name)+pad+mutedStyle.Render(metaFor(deck)))
+	}
+
+	resultLinesWithScroll := renderScrollbarColumn(resultLines, rows, len(s.results), s.scroll)
+	for _, l := range resultLinesWithScroll {
+		b.WriteString(l + "\n")
 	}
 
 	if len(s.results) > rows {

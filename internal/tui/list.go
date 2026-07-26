@@ -67,15 +67,17 @@ func (m *Model) RenderList(layout viewportLayout, content string, opts ListOptio
 			ctx.Write(" ")
 
 			scrollbarChar := "│"
+			style := lipgloss.NewStyle().Foreground(colorPanel)
 			if lineIdx < totalLines {
 				if i >= thumbStart && i < thumbStart+thumbHeight {
 					scrollbarChar = "█"
+					style = lipgloss.NewStyle().Foreground(colorAccent)
 				}
 			}
 
 			// Register scrollbar hitbox precisely where it is written
 			ctx.RegisterHitbox(fmt.Sprintf("%s-scroll-%d", opts.HitboxPrefix, i), 1, 1)
-			ctx.Write(scrollbarChar)
+			ctx.Write(style.Render(scrollbarChar))
 		} else {
 			displayLine := padLine(truncateLine(lineContent, padWidth), padWidth)
 			ctx.Write(displayLine)

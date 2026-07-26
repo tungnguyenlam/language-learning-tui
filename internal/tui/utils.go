@@ -288,7 +288,7 @@ func scrollbarThumb(totalLines, visibleLines, offset int) (int, int) {
 	thumbHeight = minInt(visibleLines, thumbHeight)
 	maxScroll := maxInt(1, totalLines-visibleLines)
 	maxThumbStart := maxInt(0, visibleLines-thumbHeight)
-	thumbStart := (clampInt(offset, 0, maxScroll) * maxThumbStart) / maxScroll
+	thumbStart := (clampInt(offset, 0, maxScroll)*maxThumbStart + maxScroll/2) / maxScroll
 	return thumbStart, thumbHeight
 }
 
@@ -297,7 +297,34 @@ func scrollOffsetForTrackRow(totalLines, visibleLines, row int) int {
 	if maxScroll == 0 || visibleLines <= 1 {
 		return 0
 	}
-	return clampInt((clampInt(row, 0, visibleLines-1)*maxScroll)/(visibleLines-1), 0, maxScroll)
+	return clampInt((clampInt(row, 0, visibleLines-1)*maxScroll+(visibleLines-1)/2)/(visibleLines-1), 0, maxScroll)
+}
+
+// renderScrollbarColumn appends a unified right-aligned scrollbar to visible content lines.
+func renderScrollbarColumn(lines []string, visibleHeight, totalLines, scroll int) []string {
+	if totalLines <= visibleHeight {
+		out := make([]string, len(lines))
+		for i, l := range lines {
+			out[i] = l + " "
+		}
+		return out
+	}
+
+	thumbStart, thumbHeight := scrollbarThumb(totalLines, visibleHeight, scroll)
+	trackStyle := lipgloss.NewStyle().Foreground(colorPanel)
+	thumbStyle := lipgloss.NewStyle().Foreground(colorAccent)
+
+	out := make([]string, len(lines))
+	for i := 0; i < visibleHeight && i < len(lines); i++ {
+		char := "│"
+		style := trackStyle
+		if i >= thumbStart && i < thumbStart+thumbHeight {
+			char = "█"
+			style = thumbStyle
+		}
+		out[i] = lines[i] + style.Render(char)
+	}
+	return out
 }
 
 func selectedIndexForTrackRow(totalItems, visibleLines, row int) int {
