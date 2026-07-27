@@ -1160,7 +1160,7 @@ func (m *Model) View() tea.View {
 		}
 	case ViewPractice:
 		if m.practiceSubView == PracticeSubViewHub {
-			helpHint = "| Nav: j/k | Select: enter | Trainer: 1-9,0 | Reset: r | Esc: back"
+			helpHint = "| Nav: j/k | Select: enter | Trainer: 1-9,0,-,= | Reset: r | Esc: back"
 		} else {
 			switch m.practiceSubView {
 			case PracticeSubViewGender:
@@ -1171,7 +1171,7 @@ func (m *Model) View() tea.View {
 				helpHint = "| Type answer | h: hint | Enter check | Esc: back"
 			case PracticeSubViewSeparable, PracticeSubViewNumbers:
 				helpHint = "| Type answer | Enter check | Esc: back"
-			case PracticeSubViewConjunctions, PracticeSubViewKonjunktiv, PracticeSubViewPassive:
+			case PracticeSubViewConjunctions, PracticeSubViewKonjunktiv, PracticeSubViewPassive, PracticeSubViewRelative:
 				helpHint = "| Type answer | h: hint | Enter check | Esc: back"
 			case PracticeSubViewPlural:
 				helpHint = "| Type plural | Enter check | Esc: back"

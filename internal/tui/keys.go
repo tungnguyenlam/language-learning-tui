@@ -28,9 +28,12 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	// Toggle dictionary overlay on '='
+	// Toggle dictionary overlay on '='.
+	// Practice Hub reserves '=' for the Relative Clauses trainer (#12).
 	if key == "=" && !m.textInputActive() {
-		return m, m.openDictionaryOverlay()
+		if !(m.activeView == ViewPractice && m.practiceSubView == PracticeSubViewHub) {
+			return m, m.openDictionaryOverlay()
+		}
 	}
 
 	// 0. High-priority learning mode trapping
@@ -1510,11 +1513,10 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 
 	cmd, handled := m.doUpdateDictionaryKey(msg)
 	if handled {
-		wide := m.width > 80
-		detailVisible := m.dictionaryDetailView || wide
-		if detailVisible && (m.dictionaryCursor != oldCursor || m.dictionaryDetailView != oldDetailView) {
+		if m.dictionaryDetailVisible() && (m.dictionaryCursor != oldCursor || m.dictionaryDetailView != oldDetailView) {
 			if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 				entry := m.dictionaryResults[m.dictionaryCursor]
+				m.recordDictionaryView(entry)
 				relatedCmd := m.findRelatedEntries(entry.Word)
 				if cmd == nil {
 					cmd = relatedCmd

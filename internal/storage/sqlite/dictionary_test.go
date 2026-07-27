@@ -283,3 +283,31 @@ func TestFindRelatedEntries(t *testing.T) {
 		}
 	}
 }
+
+func TestDictionarySearchLangFilterOnly(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	entries := []core.DictionaryEntry{
+		{ID: "1", Word: "Hund", Translation: "dog", WordClass: "noun", Gender: "m"},
+		{ID: "2", Word: "gehen", Translation: "to go", WordClass: "verb"},
+		{ID: "3", Word: "schnell", Translation: "fast", WordClass: "adj"},
+	}
+	if err := store.ImportEntries(ctx, entries); err != nil {
+		t.Fatalf("import entries: %v", err)
+	}
+
+	for _, query := range []string{"de:", "en:", ":de", ":en"} {
+		res, err := store.Search(ctx, query, 10)
+		if err != nil {
+			t.Fatalf("lang-only search %q failed: %v", query, err)
+		}
+		if len(res) == 0 {
+			t.Fatalf("expected browse results for lang-only query %q, got none", query)
+		}
+	}
+}

@@ -229,7 +229,7 @@ func TestPracticeHubVisuals(t *testing.T) {
 	view := model.renderPracticeHub(viewportLayout{Width: 80, Height: 80})
 
 	// Check for icons/labels from all trainers
-	icons := []string{"🚻", "🔄", "📐", "🎨", "📍", "👥", "S/", "🔢", "🔗", "Kj"}
+	icons := []string{"🚻", "🔄", "📐", "🎨", "📍", "👥", "S/", "🔢", "🔗", "Kj", "Pv", "Rl"}
 	for _, icon := range icons {
 		if !strings.Contains(view, icon) {
 			t.Errorf("Expected icon %s in Practice Hub view", icon)
@@ -454,5 +454,33 @@ func TestRelativeTrainerRenders(t *testing.T) {
 	}
 	if !strings.Contains(view, "Der Mann") {
 		t.Error("Expected trainer item content in rendered view")
+	}
+}
+
+func TestPracticeHubEqualsOpensRelativeNotDictionary(t *testing.T) {
+	repo := &mockRepo{}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewPractice
+	model.practiceSubView = PracticeSubViewHub
+	model.width = 100
+	model.height = 40
+
+	// '=' must reach the Practice Hub Relative trainer, not the global spotlight overlay.
+	updated, _ := model.Update(tea.KeyPressMsg{Text: "="})
+	m := updated.(*Model)
+	if m.dictionaryOverlayActive {
+		t.Fatal("expected '=' on Practice Hub not to open dictionary spotlight")
+	}
+	if m.practiceSubView != PracticeSubViewRelative {
+		t.Fatalf("expected PracticeSubViewRelative, got %v", m.practiceSubView)
+	}
+
+	// Outside the hub, '=' still opens the dictionary overlay.
+	m.practiceSubView = PracticeSubViewHub
+	m.activeView = ViewDashboard
+	updated, _ = m.Update(tea.KeyPressMsg{Text: "="})
+	m = updated.(*Model)
+	if !m.dictionaryOverlayActive {
+		t.Fatal("expected '=' on Dashboard to open dictionary spotlight")
 	}
 }

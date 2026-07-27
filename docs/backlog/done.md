@@ -1,5 +1,20 @@
 # Done Backlog
 
+## 2026-07-27 (Practice Hub Shortcut Fix & Dictionary Continuity)
+
+### Bug Fixes
+- **Practice Hub `=` Conflict:** Global Dictionary Spotlight no longer intercepts `=` on the Practice Hub, so Relative Clauses trainer (#12) opens as documented. Spotlight still opens from other views.
+- **DE/EN Filter Pills:** Bare `de:` / `en:` queries now browse a sample of entries instead of returning an empty result set.
+- **Recently Inspected Auto-Record:** Selecting/navigating dictionary entries with a visible detail pane records them; Spotlight empty state shows the same Recently Inspected Words section.
+
+### Polish
+- **Stable `:starred` Order:** Starred-only browse sorts alphabetically by headword.
+- **Practice Hub Footer/Help:** Status footer documents `1-9,0,-,=`; Relative trainer hint footer parity; hub visuals test covers `Pv`/`Rl`.
+
+### Verification
+- Added `TestPracticeHubEqualsOpensRelativeNotDictionary`, `TestDictionarySearchLangFilterOnly`, `TestDictionaryStarredBrowseStableOrder`; extended recently-viewed and hub visuals tests.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dictionary import, smoke test, binary build, and core E2E suite.
+
 ## 2026-07-27 (Dictionary Continuity & Safe Batch Add)
 
 ### Dictionary UX & Safety

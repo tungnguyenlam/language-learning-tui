@@ -8,13 +8,19 @@ Dictionary Feature Enhancements & Lemmatization Search.
 
 ## Exact Next Action
 
-Continue dictionary UX refinements, vocabulary deck expansion, or AI tutor enhancements.
+Continue dictionary UX refinements (compound decomposition validation), vocabulary deck expansion, or AI tutor enhancements.
 
 ## Top Issues
 
 None active.
 
 ## Completed Work
+
+- [x] **Practice Hub `=` vs Dictionary Spotlight Conflict:** Global `=` spotlight handler no longer steals the Practice Hub Relative Clauses trainer shortcut. Outside the hub, `=` still opens Spotlight. Added `TestPracticeHubEqualsOpensRelativeNotDictionary`.
+- [x] **Recently Inspected Words Auto-Record & Spotlight Parity:** Navigating/selecting dictionary entries with a visible detail pane now records them via `inspectDictionaryCursor()` / `updateDictionaryKey`; Spotlight empty state renders the same Recently Inspected section with clickable hitboxes.
+- [x] **DE/EN Filter-Only Browse:** `Search()` treats bare `de:` / `en:` (and `:de` / `:en`) like other filter pills and returns a browse sample instead of an empty result set. Added `TestDictionarySearchLangFilterOnly`.
+- [x] **Stable `:starred` Browse Order:** Starred-only dictionary browse sorts by headword (then ID) instead of map iteration order. Added `TestDictionaryStarredBrowseStableOrder`.
+- [x] **Practice Hub Footer/Help Coverage:** Hub status footer documents `1-9,0,-,=`; Relative trainer shares the fill-in hint footer; `TestPracticeHubVisuals` asserts `Pv` and `Rl` icons.
 
 - [x] **Dictionary Continuity & Safe Batch Add:** Persisted the "Recently Inspected Words" stack in local settings and restored it at startup; made the mouse `[Clear]` recent-search control persist its clearing action; changed `ctrl+s` dictionary batch-add to skip existing notes rather than rewriting them (with accurate added/skipped/failed feedback). Added regression coverage for persisted recent words, persistent mouse clearing, and duplicate-safe batch add.
 
@@ -116,6 +122,8 @@ None active.
   the real `1-9` trainer keys.
 
 ## Verification
+
+- `./scripts/verify.sh` passed on 2026-07-27: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed) after Practice Hub `=` fix, recently-inspected auto-record/spotlight parity, DE/EN filter-only browse, and starred browse ordering.
 
 - `./scripts/verify.sh` passed on 2026-07-27: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite.
 

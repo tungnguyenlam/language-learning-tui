@@ -175,9 +175,11 @@ func buildFTSMatchQuery(terms []string, langFilter string) string {
 
 func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.DictionaryEntry, error) {
 	cleanQuery, classFilter, genderFilter, langFilter := parseSearchFilters(rawQuery)
-	// Language scope alone has no browse semantics (every entry has DE+EN fields).
-	// Class/gender-only filters still support browsing a sample of matching entries.
-	if cleanQuery == "" && (classFilter != "" || genderFilter != "") {
+	// Filter-only browse: class/gender/lang pills with no typed text return a
+	// sample of matching entries so interactive filter pills are never empty.
+	// Language scope alone still returns a sample (every entry is bilingual);
+	// the scope matters once the learner types a term.
+	if cleanQuery == "" && (classFilter != "" || genderFilter != "" || langFilter != "") {
 		q := `
 			SELECT id, word, translation, word_class, gender, forms, examples, tags
 			FROM dictionary_fts

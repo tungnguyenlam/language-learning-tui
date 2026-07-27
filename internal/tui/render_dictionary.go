@@ -571,6 +571,10 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 				Action: func() tea.Cmd {
 					m.dictionaryCursor = idx
 					m.dictionaryDetailScroll = 0
+					m.inspectDictionaryCursor()
+					if m.dictionaryDetailVisible() && idx >= 0 && idx < len(m.dictionaryResults) {
+						return m.findRelatedEntries(m.dictionaryResults[idx].Word)
+					}
 					return nil
 				},
 			})
@@ -822,10 +826,14 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 					if m.dictionaryCursor == idx {
 						m.dictionaryDetailView = true
 						m.dictionaryDetailScroll = 0
-					} else {
-						m.dictionaryCursor = idx
-						m.dictionaryDetailScroll = 0
+						m.inspectDictionaryCursor()
+						if idx >= 0 && idx < len(m.dictionaryResults) {
+							return m.findRelatedEntries(m.dictionaryResults[idx].Word)
+						}
+						return nil
 					}
+					m.dictionaryCursor = idx
+					m.dictionaryDetailScroll = 0
 					return nil
 				},
 			})
@@ -1013,6 +1021,40 @@ func (m *Model) renderSpotlightDictionary() string {
 				}
 			}
 
+			if len(m.dictionaryRecentlyViewed) > 0 {
+				b.WriteString(boldStyle.Render("Recently Inspected Words:") + "\n")
+				for i, e := range m.dictionaryRecentlyViewed {
+					lineY := strings.Count(b.String(), "\n")
+					wordStr := e.Word
+					if e.Gender != "" {
+						wordStr += " {" + e.Gender + "}"
+					}
+					if e.Translation != "" {
+						wordStr += " - " + e.Translation
+					}
+					b.WriteString(fmt.Sprintf("  • %s\n", wordStr))
+					entry := e
+					m.hitboxes = append(m.hitboxes, Hitbox{
+						ID:     fmt.Sprintf("dict-overlay-recent-%d", i),
+						View:   m.activeView,
+						X:      startX + 4,
+						Y:      startY + lineY + 1,
+						Width:  len([]rune(wordStr)),
+						Height: 1,
+						Action: func() tea.Cmd {
+							m.dictionarySearch = entry.Word
+							m.dictionaryResults = nil
+							m.dictionaryCursor = 0
+							m.dictionaryScroll = 0
+							m.dictionaryDetailScroll = 0
+							m.dictionaryDetailTotalLines = 0
+							m.dictionaryDetailView = false
+							return m.searchDictionary()
+						},
+					})
+				}
+			}
+
 			if len(m.dictionaryDiscoverEntries) > 0 {
 				discoverIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Render("✦")
 				b.WriteString(discoverIcon + " " + boldStyle.Render("Discover:") + "\n")
@@ -1168,6 +1210,10 @@ func (m *Model) renderSpotlightDictionary() string {
 					Action: func() tea.Cmd {
 						m.dictionaryCursor = idx
 						m.dictionaryDetailScroll = 0
+						m.inspectDictionaryCursor()
+						if m.dictionaryDetailVisible() && idx >= 0 && idx < len(m.dictionaryResults) {
+							return m.findRelatedEntries(m.dictionaryResults[idx].Word)
+						}
 						return nil
 					},
 				})
@@ -1273,10 +1319,14 @@ func (m *Model) renderSpotlightDictionary() string {
 						if m.dictionaryCursor == idx {
 							m.dictionaryDetailView = true
 							m.dictionaryDetailScroll = 0
-						} else {
-							m.dictionaryCursor = idx
-							m.dictionaryDetailScroll = 0
+							m.inspectDictionaryCursor()
+							if idx >= 0 && idx < len(m.dictionaryResults) {
+								return m.findRelatedEntries(m.dictionaryResults[idx].Word)
+							}
+							return nil
 						}
+						m.dictionaryCursor = idx
+						m.dictionaryDetailScroll = 0
 						return nil
 					},
 				})

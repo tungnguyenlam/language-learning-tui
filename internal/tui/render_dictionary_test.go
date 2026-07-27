@@ -970,6 +970,34 @@ func TestDictionaryStarringAndFiltering(t *testing.T) {
 	}
 }
 
+func TestDictionaryStarredBrowseStableOrder(t *testing.T) {
+	repo := &mockDictRepo{
+		entries: map[string]core.DictionaryEntry{
+			"3": {ID: "3", Word: "Zebra", Translation: "zebra"},
+			"1": {ID: "1", Word: "Apfel", Translation: "apple"},
+			"2": {ID: "2", Word: "Baum", Translation: "tree"},
+		},
+	}
+	m := NewModel(repo, &mockScheduler{})
+	m.dictionaryStarred = map[string]bool{"3": true, "1": true, "2": true}
+	m.dictionarySearch = ":starred"
+
+	msg := m.searchDictionary()()
+	results, ok := msg.(dictionarySearchResultsMsg)
+	if !ok {
+		t.Fatalf("expected dictionarySearchResultsMsg, got %T", msg)
+	}
+	if len(results.results) != 3 {
+		t.Fatalf("expected 3 starred results, got %d", len(results.results))
+	}
+	want := []string{"Apfel", "Baum", "Zebra"}
+	for i, w := range want {
+		if results.results[i].Word != w {
+			t.Fatalf("starred browse order[%d]=%q, want %q (full=%v)", i, results.results[i].Word, w, results.results)
+		}
+	}
+}
+
 func TestDictionaryTwoColumnTranslationDisplay(t *testing.T) {
 	m := NewModel(&mockRepo{}, &mockScheduler{})
 	m.activeView = ViewDictionary
@@ -1127,6 +1155,29 @@ func TestDictionaryRecentlyViewedAndDomainTags(t *testing.T) {
 	viewEmpty := stripANSI(m.renderDictionary(m.activeViewContentLayout()))
 	if !strings.Contains(viewEmpty, "Recently Inspected Words:") || !strings.Contains(viewEmpty, "Anapher") {
 		t.Fatalf("expected view to contain Recently Inspected Words, got:\n%s", viewEmpty)
+	}
+
+	// Spotlight empty state must show the same continuity section.
+	spotlightEmpty := stripANSI(m.renderSpotlightDictionary())
+	if !strings.Contains(spotlightEmpty, "Recently Inspected Words:") || !strings.Contains(spotlightEmpty, "Anapher") {
+		t.Fatalf("expected spotlight to contain Recently Inspected Words, got:\n%s", spotlightEmpty)
+	}
+
+	// Navigating results in wide mode should auto-record inspections.
+	m.dictionaryResults = []core.DictionaryEntry{
+		{ID: "1", Word: "Hund", Translation: "dog", Gender: "m"},
+		{ID: "2", Word: "Katze", Translation: "cat", Gender: "f"},
+	}
+	m.dictionaryCursor = 0
+	m.dictionaryFocusResults = true
+	m.dictionaryDetailView = false
+	m.width = 120
+	_, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'j'})
+	if !handled {
+		t.Fatal("expected j navigation to be handled")
+	}
+	if len(m.dictionaryRecentlyViewed) == 0 || m.dictionaryRecentlyViewed[0].Word != "Katze" {
+		t.Fatalf("expected navigation to record Katze, got %v", m.dictionaryRecentlyViewed)
 	}
 
 	// 2. Verify domain tag badges in detail view

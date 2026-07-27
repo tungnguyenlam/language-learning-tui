@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"sort"
 	"strings"
 	"time"
 
@@ -57,6 +58,12 @@ func (m *Model) searchDictionary() tea.Cmd {
 					results = append(results, entry)
 				}
 			}
+			sort.Slice(results, func(i, j int) bool {
+				if results[i].Word == results[j].Word {
+					return results[i].ID < results[j].ID
+				}
+				return strings.ToLower(results[i].Word) < strings.ToLower(results[j].Word)
+			})
 			return dictionarySearchResultsMsg{id: id, results: results}
 		}
 
@@ -711,6 +718,33 @@ func (m *Model) addDictionaryEntriesBatchCmd(entries []core.DictionaryEntry) tea
 		m.loadDecks,
 		m.loadDueCards,
 	)
+}
+
+func (m *Model) dictionaryDetailVisible() bool {
+	if m.dictionaryDetailView {
+		return true
+	}
+	if m.dictionaryOverlayActive {
+		boxWidth := 86
+		if m.width < 92 {
+			boxWidth = m.width - 6
+		}
+		if boxWidth < 30 {
+			boxWidth = 30
+		}
+		return boxWidth-4 > 70
+	}
+	return m.width > 80
+}
+
+// inspectDictionaryCursor records the selected entry when its detail pane is visible.
+func (m *Model) inspectDictionaryCursor() {
+	if !m.dictionaryDetailVisible() {
+		return
+	}
+	if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+		m.recordDictionaryView(m.dictionaryResults[m.dictionaryCursor])
+	}
 }
 
 func (m *Model) recordDictionaryView(entry core.DictionaryEntry) {
