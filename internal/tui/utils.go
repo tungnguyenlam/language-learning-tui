@@ -302,10 +302,15 @@ func scrollOffsetForTrackRow(totalLines, visibleLines, row int) int {
 
 // renderScrollbarColumn appends a unified right-aligned scrollbar to visible content lines.
 func renderScrollbarColumn(lines []string, visibleHeight, totalLines, scroll int) []string {
+	if visibleHeight <= 0 || len(lines) == 0 {
+		return lines
+	}
+
+	outCount := minInt(visibleHeight, len(lines))
 	if totalLines <= visibleHeight {
-		out := make([]string, len(lines))
-		for i, l := range lines {
-			out[i] = l + " "
+		out := make([]string, outCount)
+		for i := 0; i < outCount; i++ {
+			out[i] = lines[i] + " "
 		}
 		return out
 	}
@@ -314,8 +319,8 @@ func renderScrollbarColumn(lines []string, visibleHeight, totalLines, scroll int
 	trackStyle := lipgloss.NewStyle().Foreground(colorPanel)
 	thumbStyle := lipgloss.NewStyle().Foreground(colorAccent)
 
-	out := make([]string, len(lines))
-	for i := 0; i < visibleHeight && i < len(lines); i++ {
+	out := make([]string, outCount)
+	for i := 0; i < outCount; i++ {
 		char := "│"
 		style := trackStyle
 		if i >= thumbStart && i < thumbStart+thumbHeight {
@@ -325,6 +330,64 @@ func renderScrollbarColumn(lines []string, visibleHeight, totalLines, scroll int
 		out[i] = lines[i] + style.Render(char)
 	}
 	return out
+}
+
+// AutoScrollViewport takes rendered view text content and automatically clips lines to fit layout.Height.
+// If total content lines exceed layout.Height, it automatically appends a unified scrollbar and registers hitboxes.
+func AutoScrollViewport(content string, layout viewportLayout, scrollOffset *int, hitboxPrefix string, view View, m *Model) string {
+	lines := strings.Split(strings.TrimSuffix(content, "\n"), "\n")
+	totalLines := len(lines)
+	maxVisible := layout.Height
+
+	if maxVisible <= 0 {
+		return content
+	}
+
+	var scroll int
+	if scrollOffset != nil {
+		scroll = *scrollOffset
+	}
+	scroll = clampInt(scroll, 0, maxInt(0, totalLines-maxVisible))
+	if scrollOffset != nil {
+		*scrollOffset = scroll
+	}
+
+	if totalLines <= maxVisible {
+		for len(lines) < maxVisible {
+			lines = append(lines, strings.Repeat(" ", layout.Width))
+		}
+		for i, l := range lines {
+			lines[i] = padLine(truncateLine(l, layout.Width), layout.Width)
+		}
+		return strings.Join(lines, "\n")
+	}
+
+	visibleLines := make([]string, maxVisible)
+	for i := 0; i < maxVisible; i++ {
+		lineIdx := i + scroll
+		if lineIdx < totalLines {
+			visibleLines[i] = padLine(truncateLine(lines[lineIdx], layout.Width-1), layout.Width-1)
+		} else {
+			visibleLines[i] = strings.Repeat(" ", layout.Width-1)
+		}
+	}
+
+	linesWithScroll := renderScrollbarColumn(visibleLines, maxVisible, totalLines, scroll)
+
+	if hitboxPrefix != "" && m != nil {
+		for i := 0; i < maxVisible; i++ {
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID:     fmt.Sprintf("%s-scroll-%d", hitboxPrefix, i),
+				View:   view,
+				X:      layout.X + layout.Width - 1,
+				Y:      layout.Y + i,
+				Width:  1,
+				Height: 1,
+			})
+		}
+	}
+
+	return strings.Join(linesWithScroll, "\n")
 }
 
 func selectedIndexForTrackRow(totalItems, visibleLines, row int) int {

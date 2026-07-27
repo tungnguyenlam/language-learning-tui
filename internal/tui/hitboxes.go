@@ -277,6 +277,28 @@ func (m *Model) activateHitboxByID(id string) tea.Cmd {
 			}
 		}
 		return nil
+	case strings.HasPrefix(id, "dict-scroll-"):
+		line, err := strconv.Atoi(strings.TrimPrefix(id, "dict-scroll-"))
+		if err == nil && len(m.dictionaryResults) > 0 {
+			visible := dictionaryVisibleRows(m.activeViewContentLayout())
+			m.dictionaryScroll = scrollOffsetForTrackRow(len(m.dictionaryResults), visible, line)
+		}
+		return nil
+	case strings.HasPrefix(id, "dict-detail-scroll-"):
+		line, err := strconv.Atoi(strings.TrimPrefix(id, "dict-detail-scroll-"))
+		if err == nil && m.dictionaryDetailTotalLines > 0 {
+			visible := dictionaryVisibleRows(m.activeViewContentLayout())
+			m.dictionaryDetailScroll = scrollOffsetForTrackRow(m.dictionaryDetailTotalLines, visible, line)
+		}
+		return nil
+	case strings.HasPrefix(id, "practice-scroll-"):
+		line, err := strconv.Atoi(strings.TrimPrefix(id, "practice-scroll-"))
+		if err == nil {
+			visible := m.activeViewContentLayout().Height
+			total := 2 + (12 * 5) + 3
+			m.practiceScroll = scrollOffsetForTrackRow(total, visible, line)
+		}
+		return nil
 	}
 	return nil
 }

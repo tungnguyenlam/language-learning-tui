@@ -22,9 +22,9 @@ func (m *Model) renderPractice(layout viewportLayout) string {
 }
 
 func (m *Model) renderPracticeHub(layout viewportLayout) string {
-	var b strings.Builder
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212")).Underline(true)
-	b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, titleStyle.Render(" PRACTICE HUB ")) + "\n\n")
+	header := lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, titleStyle.Render(" PRACTICE HUB ")) + "\n\n"
+	headerHeight := 2
 
 	modes := []struct {
 		id    string
@@ -50,6 +50,7 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 	}
 
 	spacing := 5
+	listHeight := maxInt(1, layout.Height-headerHeight)
 
 	getItemCount := func(sub PracticeSubView) int {
 		if sub == PracticeSubViewGender {
@@ -85,6 +86,11 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 		btnWidth = 20
 	}
 
+	itemStartLine := m.practiceHubCursor * spacing
+	totalContentLines := (len(modes) * spacing) + 3
+	m.practiceScroll = AutoScroll(itemStartLine, m.practiceScroll, listHeight, totalContentLines)
+
+	var b strings.Builder
 	for i, mode := range modes {
 		borderCol := lipgloss.Color("240") // Default border
 		prefix := "  "
@@ -125,18 +131,28 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 		btn := btnStyle.Render(content)
 		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, btn) + "\n")
 
-		m.hitboxes = append(m.hitboxes, Hitbox{
-			ID:     mode.id,
-			View:   ViewPractice,
-			X:      layout.X + (layout.Width-btnWidth)/2,
-			Y:      layout.Y + 3 + (i * spacing),
-			Width:  btnWidth,
-			Height: spacing,
-		})
+		btnY := headerHeight + (i * spacing) - m.practiceScroll
+		if btnY >= headerHeight && btnY < layout.Height {
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID:     mode.id,
+				View:   ViewPractice,
+				X:      layout.X + (layout.Width-btnWidth)/2,
+				Y:      layout.Y + btnY,
+				Width:  btnWidth,
+				Height: minInt(spacing, layout.Height-btnY),
+			})
+		}
 	}
 
 	b.WriteString("\n" + lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, "Press a key to select a trainer") + "\n")
 	b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, mutedStyle.Render("r Reset scores  •  Esc Dashboard")))
 
-	return b.String()
+	listLayout := viewportLayout{
+		X:      layout.X,
+		Y:      layout.Y + headerHeight,
+		Width:  layout.Width,
+		Height: listHeight,
+	}
+
+	return header + AutoScrollViewport(b.String(), listLayout, &m.practiceScroll, "practice", ViewPractice, m)
 }

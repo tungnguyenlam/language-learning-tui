@@ -242,6 +242,7 @@ type Model struct {
 	drafting                       bool
 	statsScroll                    int
 	settingsScroll                 int
+	practiceScroll                 int
 	statsTotalLines                int
 	settingsTotalLines             int
 	isDragging                     bool
@@ -1055,6 +1056,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					m.moveCramCursor(-1)
 				case ViewSettings:
 					m.settingsScroll = maxInt(0, m.settingsScroll-1)
+				case ViewPractice:
+					if m.practiceSubView == PracticeSubViewHub {
+						m.practiceScroll = maxInt(0, m.practiceScroll-1)
+					}
 				}
 			} else if mouse.Button == tea.MouseWheelDown {
 				switch m.activeView {
@@ -1070,6 +1075,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					maxScroll := maxInt(0, m.settingsTotalLines-1)
 					if m.settingsScroll < maxScroll {
 						m.settingsScroll++
+					}
+				case ViewPractice:
+					if m.practiceSubView == PracticeSubViewHub {
+						m.practiceScroll++
 					}
 				}
 			}
@@ -1200,14 +1209,18 @@ func (m *Model) View() tea.View {
 		footerParts = append(footerParts, fmt.Sprintf("mouse %d,%d", m.mouseX, m.mouseY))
 	}
 	if helpHint != "" {
-		footerParts = append(footerParts, lipgloss.NewStyle().Foreground(colorMuted).Render(strings.TrimPrefix(helpHint, "| ")))
+		for _, part := range strings.Split(helpHint, "|") {
+			p := strings.TrimSpace(part)
+			if p != "" {
+				footerParts = append(footerParts, lipgloss.NewStyle().Foreground(colorMuted).Render(p))
+			}
+		}
 	}
-	footer := strings.Join(footerParts, " │ ")
 
 	b.WriteString("\n")
 	b.WriteString(statusStyle.Render(truncateLine(statusLine, maxInt(20, m.width-2))))
 	b.WriteString("\n")
-	b.WriteString(statusStyle.Render(truncateLine(footer, maxInt(20, m.width-2))))
+	b.WriteString(formatWrappedFooter(footerParts, maxInt(20, m.width-2), statusStyle))
 
 	finalContent := b.String()
 	if m.showHelp {
@@ -1258,6 +1271,40 @@ func (m *Model) View() tea.View {
 	}
 }
 
+func formatWrappedFooter(parts []string, width int, style lipgloss.Style) string {
+	if len(parts) == 0 {
+		return ""
+	}
+	maxWidth := maxInt(20, width)
+	var lines []string
+	var currentParts []string
+	currentLen := 0
+
+	for _, part := range parts {
+		partLen := lipgloss.Width(part)
+		delimLen := 0
+		if len(currentParts) > 0 {
+			delimLen = 3 // " │ "
+		}
+
+		if len(currentParts) > 0 && currentLen+delimLen+partLen > maxWidth {
+			lines = append(lines, style.Render(strings.Join(currentParts, " │ ")))
+			currentParts = []string{part}
+			currentLen = partLen
+		} else {
+			if len(currentParts) > 0 {
+				currentLen += delimLen
+			}
+			currentParts = append(currentParts, part)
+			currentLen += partLen
+		}
+	}
+	if len(currentParts) > 0 {
+		lines = append(lines, style.Render(strings.Join(currentParts, " │ ")))
+	}
+	return strings.Join(lines, "\n")
+}
+
 func (m *Model) renderConfirmation() string {
 
 	style := lipgloss.NewStyle().
@@ -1304,6 +1351,7 @@ func (m *Model) renderWide() string {
 		return b.String()
 	}
 
+	_, height := m.activePanelSize()
 	nav := m.renderNav(0, 1)
 	content := m.renderActiveView(20, 1)
 
@@ -1319,7 +1367,7 @@ func (m *Model) renderWide() string {
 	sb.WriteString(fmt.Sprintf("Progress: %d/%d\n", m.stats.ReviewsToday, m.stats.DailyGoal))
 	sb.WriteString(fmt.Sprintf("Streak: %d days\n", m.stats.CurrentStreak))
 
-	detail := panelStyle.Width(24).Render(sb.String())
+	detail := panelStyle.Width(24).Height(height).Render(sb.String())
 
 	navLines := strings.Split(nav, "\n")
 	contentLines := strings.Split(content, "\n")
@@ -1399,10 +1447,17 @@ func contentLayoutForStyle(style lipgloss.Style, x, y int) viewportLayout {
 
 func (m *Model) activePanelSize() (int, int) {
 	if m.focusMode && m.activeView == ViewReview {
-		return m.width - 4, m.height - 8
+		if m.height > 30 {
+			return m.width - 4, maxInt(10, m.height-6)
+		}
+		return m.width - 4, maxInt(10, m.height-8)
 	}
 	width := maxInt(30, m.width-50)
-	height := maxInt(15, m.height-10)
+	height := maxInt(12, m.height-10)
+	if m.height > 30 {
+		height = maxInt(15, m.height-6)
+	}
+
 	if m.breakpoint == BreakpointWide {
 		if m.width < 120 {
 			width = maxInt(40, m.width-20)
@@ -1411,10 +1466,14 @@ func (m *Model) activePanelSize() (int, int) {
 		}
 	} else if m.breakpoint == BreakpointMedium {
 		width = maxInt(30, m.width-4)
-		height = maxInt(15, m.height-12)
+		if m.height <= 30 {
+			height = maxInt(10, m.height-12)
+		}
 	} else if m.breakpoint == BreakpointCompact {
 		width = maxInt(20, m.width-2)
-		height = maxInt(10, m.height-12)
+		if m.height <= 30 {
+			height = maxInt(10, m.height-12)
+		}
 	}
 	return width, height
 }

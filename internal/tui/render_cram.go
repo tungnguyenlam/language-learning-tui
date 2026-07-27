@@ -104,6 +104,37 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 			keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 			answer += fmt.Sprintf("\n\nGrade: %s Again | %s Hard | %s Good | %s Easy",
 				keyStyle.Render("a"), keyStyle.Render("h"), keyStyle.Render("g"), keyStyle.Render("e"))
+
+			cardX := layout.X + (layout.Width-cardWidth)/2 + 3
+			cardY := layout.Y + 5
+			gradeYOffset := cardY + strings.Count(fmt.Sprintf("%s\n\n%s%s\n\nGrade: ", promptDisplay, card.Answer, extraDisplay), "\n")
+
+			gaW := lipgloss.Width(keyStyle.Render("a") + " Again")
+			ghW := lipgloss.Width(keyStyle.Render("h") + " Hard")
+			ggW := lipgloss.Width(keyStyle.Render("g") + " Good")
+			geW := lipgloss.Width(keyStyle.Render("e") + " Easy")
+
+			labelAgain := fmt.Sprintf("Grade: %s ", keyStyle.Render("a"))
+			labelHard := fmt.Sprintf("Grade: %s Again | %s ", keyStyle.Render("a"), keyStyle.Render("h"))
+			labelGood := fmt.Sprintf("Grade: %s Again | %s Hard | %s ", keyStyle.Render("a"), keyStyle.Render("h"), keyStyle.Render("g"))
+			labelEasy := fmt.Sprintf("Grade: %s Again | %s Hard | %s Good | %s ", keyStyle.Render("a"), keyStyle.Render("h"), keyStyle.Render("g"), keyStyle.Render("e"))
+
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID: "cram-grade-again", View: ViewCram, X: cardX + lipgloss.Width(labelAgain), Y: gradeYOffset, Width: gaW, Height: 1,
+				Action: func() tea.Cmd { return m.gradeCramCard(core.GradeAgain) },
+			})
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID: "cram-grade-hard", View: ViewCram, X: cardX + lipgloss.Width(labelHard), Y: gradeYOffset, Width: ghW, Height: 1,
+				Action: func() tea.Cmd { return m.gradeCramCard(core.GradeHard) },
+			})
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID: "cram-grade-good", View: ViewCram, X: cardX + lipgloss.Width(labelGood), Y: gradeYOffset, Width: ggW, Height: 1,
+				Action: func() tea.Cmd { return m.gradeCramCard(core.GradeGood) },
+			})
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID: "cram-grade-easy", View: ViewCram, X: cardX + lipgloss.Width(labelEasy), Y: gradeYOffset, Width: geW, Height: 1,
+				Action: func() tea.Cmd { return m.gradeCramCard(core.GradeEasy) },
+			})
 		} else {
 			answer = "Press Space or Enter to reveal."
 		}

@@ -207,19 +207,20 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 		var args []any
 		if langFilter == "de" {
 			qWild = `SELECT id, word, translation, word_class, gender, forms, examples, tags FROM dictionary_fts WHERE word LIKE ? OR forms LIKE ? LIMIT ?`
-			args = []any{likePattern, likePattern, limit * 2}
+			args = []any{likePattern, likePattern, limit * 4}
 		} else if langFilter == "en" {
 			qWild = `SELECT id, word, translation, word_class, gender, forms, examples, tags FROM dictionary_fts WHERE translation LIKE ? LIMIT ?`
-			args = []any{likePattern, limit * 2}
+			args = []any{likePattern, limit * 4}
 		} else {
 			qWild = `SELECT id, word, translation, word_class, gender, forms, examples, tags FROM dictionary_fts WHERE word LIKE ? OR translation LIKE ? OR forms LIKE ? LIMIT ?`
-			args = []any{likePattern, likePattern, likePattern, limit * 2}
+			args = []any{likePattern, likePattern, likePattern, limit * 4}
 		}
 		entries, err := s.queryDictionaryEntries(ctx, qWild, args...)
 		if err != nil {
 			return nil, fmt.Errorf("search dictionary wildcard: %w", err)
 		}
 		filtered := filterEntries(entries, classFilter, genderFilter, langFilter, cleanQuery)
+		filtered = core.ConsolidateDictionaryEntries(filtered)
 		sortDictionaryEntries(filtered, cleanQuery)
 		if len(filtered) > limit {
 			filtered = filtered[:limit]
@@ -237,7 +238,7 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 		LIMIT ?
 	`
 
-	entries, err := s.queryDictionaryEntries(ctx, q, matchQuery, limit*2)
+	entries, err := s.queryDictionaryEntries(ctx, q, matchQuery, limit*4)
 	if err != nil {
 		return nil, fmt.Errorf("search dictionary fts: %w", err)
 	}
@@ -251,7 +252,7 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 			WHERE forms LIKE ?
 			LIMIT ?
 		`
-		formEntries, _ := s.queryDictionaryEntries(ctx, qForms, likePattern, limit)
+		formEntries, _ := s.queryDictionaryEntries(ctx, qForms, likePattern, limit*2)
 		if len(formEntries) > 0 {
 			seen := make(map[string]bool, len(entries))
 			for _, e := range entries {
@@ -269,6 +270,7 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 	if len(entries) > 0 {
 		filtered := filterEntries(entries, classFilter, genderFilter, langFilter, cleanQuery)
 		if len(filtered) > 0 {
+			filtered = core.ConsolidateDictionaryEntries(filtered)
 			sortDictionaryEntries(filtered, cleanQuery)
 			if len(filtered) > limit {
 				filtered = filtered[:limit]
@@ -282,13 +284,13 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 	var args []any
 	if langFilter == "de" {
 		qLike = `SELECT id, word, translation, word_class, gender, forms, examples, tags FROM dictionary_fts WHERE word LIKE ? OR forms LIKE ? LIMIT ?`
-		args = []any{likePattern, likePattern, limit * 2}
+		args = []any{likePattern, likePattern, limit * 4}
 	} else if langFilter == "en" {
 		qLike = `SELECT id, word, translation, word_class, gender, forms, examples, tags FROM dictionary_fts WHERE translation LIKE ? LIMIT ?`
-		args = []any{likePattern, limit * 2}
+		args = []any{likePattern, limit * 4}
 	} else {
 		qLike = `SELECT id, word, translation, word_class, gender, forms, examples, tags FROM dictionary_fts WHERE word LIKE ? OR translation LIKE ? OR forms LIKE ? LIMIT ?`
-		args = []any{likePattern, likePattern, likePattern, limit * 2}
+		args = []any{likePattern, likePattern, likePattern, limit * 4}
 	}
 	entries, err = s.queryDictionaryEntries(ctx, qLike, args...)
 	if err != nil {
@@ -296,6 +298,7 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 	}
 
 	filtered := filterEntries(entries, classFilter, genderFilter, langFilter, cleanQuery)
+	filtered = core.ConsolidateDictionaryEntries(filtered)
 	sortDictionaryEntries(filtered, cleanQuery)
 	if len(filtered) > limit {
 		filtered = filtered[:limit]
@@ -473,6 +476,7 @@ func (s *Store) FindRelatedEntries(ctx context.Context, word string, limit int) 
 }
 
 func (s *Store) ImportEntries(ctx context.Context, entries []core.DictionaryEntry) error {
+	entries = core.ConsolidateDictionaryEntries(entries)
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)

@@ -82,7 +82,16 @@ func (m *Model) renderHelp(layout viewportLayout) string {
 	col3 := colStyle.Render(browser + "\n\n" + dictionary)
 	col4 := colStyle.Render(other)
 
-	helpContent := lipgloss.JoinHorizontal(lipgloss.Top, col1, col2, col3, col4)
+	var helpContent string
+	if layout.Width >= 110 {
+		helpContent = lipgloss.JoinHorizontal(lipgloss.Top, col1, col2, col3, col4)
+	} else if layout.Width >= 60 {
+		topRow := lipgloss.JoinHorizontal(lipgloss.Top, col1, col2)
+		bottomRow := lipgloss.JoinHorizontal(lipgloss.Top, col3, col4)
+		helpContent = lipgloss.JoinVertical(lipgloss.Left, topRow, "\n", bottomRow)
+	} else {
+		helpContent = lipgloss.JoinVertical(lipgloss.Left, col1, "\n", col2, "\n", col3, "\n", col4)
+	}
 
 	return titleStyle.Render("Keyboard Shortcuts") + "\n\n" + helpContent
 }

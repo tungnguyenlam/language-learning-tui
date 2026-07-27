@@ -174,7 +174,7 @@ func ParseDictCCStream(r io.Reader) ([]core.DictionaryEntry, error) {
 		return nil, fmt.Errorf("read dict.cc file: %w", err)
 	}
 
-	return entries, nil
+	return core.ConsolidateDictionaryEntries(entries), nil
 }
 
 func cleanWhitespace(s string) string {

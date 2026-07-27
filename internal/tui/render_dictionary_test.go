@@ -1164,3 +1164,85 @@ func TestDictionaryExportTSVAndFilterPills(t *testing.T) {
 		t.Fatal("expected target deck pill hitbox to be registered")
 	}
 }
+
+func TestDictionaryScrollbarLineCountAndOverscroll(t *testing.T) {
+	m := NewModel(nil, nil)
+	m.width = 120
+	m.height = 30
+	m.activeView = ViewDictionary
+
+	// Populate results with 5 items
+	for i := 0; i < 5; i++ {
+		m.dictionaryResults = append(m.dictionaryResults, core.DictionaryEntry{
+			ID:          "entry-" + string(rune('a'+i)),
+			Word:        "word" + string(rune('a'+i)),
+			Translation: "trans" + string(rune('a'+i)),
+		})
+	}
+
+	// Set scroll to 10 (overscrolled beyond 5 results)
+	m.dictionaryScroll = 10
+	m.dictionaryDetailScroll = 10
+
+	view := m.renderDictionary(m.activeViewContentLayout())
+	lines := strings.Split(view, "\n")
+
+	// Ensure view height does not blow up due to negative fill loop indices
+	if len(lines) > 40 {
+		t.Fatalf("renderDictionary produced excessive lines (%d) under overscroll conditions", len(lines))
+	}
+}
+
+func TestFormatInflectionTable(t *testing.T) {
+	// Verb forms
+	vGot := stripANSI(formatInflectionTable("verb", "", "geht, ging, ist gegangen", "ging"))
+	if !strings.Contains(vGot, "Verb Forms:") || !strings.Contains(vGot, "Präsens (3sg): geht") || !strings.Contains(vGot, "Präteritum:    ging") {
+		t.Errorf("unexpected verb inflection table output: %s", vGot)
+	}
+
+	// Noun forms
+	nGot := stripANSI(formatInflectionTable("noun", "m", "des Mannes, die Männer", "Männer"))
+	if !strings.Contains(nGot, "Noun Forms:") || !strings.Contains(nGot, "Genitiv: des Mannes") || !strings.Contains(nGot, "Plural:  die Männer") {
+		t.Errorf("unexpected noun inflection table output: %s", nGot)
+	}
+
+	// Adjective forms
+	aGot := stripANSI(formatInflectionTable("adj", "", "größer, am größten", "größer"))
+	if !strings.Contains(aGot, "Adjective Comparison:") || !strings.Contains(aGot, "Komparativ: größer") || !strings.Contains(aGot, "Superlativ: am größten") {
+		t.Errorf("unexpected adj inflection table output: %s", aGot)
+	}
+}
+
+func TestDictionaryNumberKeyNavigation(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.dictionaryResults = []core.DictionaryEntry{
+		{
+			ID:          "1",
+			Word:        "Handschuh",
+			Translation: "Glove",
+		},
+	}
+	m.dictionaryCursor = 0
+	m.dictionaryFocusResults = true
+
+	// Pressing '1' should jump search to 1st compound part "Hand"
+	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Text: "1", Code: '1'})
+	if !handled || cmd == nil {
+		t.Fatalf("expected key '1' to be handled with search command")
+	}
+	if m.dictionarySearch != "Hand" {
+		t.Fatalf("expected search to be 'Hand', got %q", m.dictionarySearch)
+	}
+
+	// Pressing '2' on Handschuh should jump search to 2nd compound part "Schuh"
+	m.dictionarySearch = "Handschuh"
+	m.dictionaryFocusResults = true
+	cmd, handled = m.updateDictionaryKey(tea.KeyPressMsg{Text: "2", Code: '2'})
+	if !handled || cmd == nil {
+		t.Fatalf("expected key '2' to be handled with search command")
+	}
+	if m.dictionarySearch != "Schuh" {
+		t.Fatalf("expected search to be 'Schuh', got %q", m.dictionarySearch)
+	}
+}

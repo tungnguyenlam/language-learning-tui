@@ -55,7 +55,7 @@ func (m *Model) renderGenderTrainer(layout viewportLayout) string {
 			ID:     "gender-opt-der",
 			View:   ViewPractice,
 			X:      startX,
-			Y:      layout.Y + 11,
+			Y:      layout.Y + 8,
 			Width:  11,
 			Height: 1,
 			Action: func() tea.Cmd {
@@ -74,7 +74,7 @@ func (m *Model) renderGenderTrainer(layout viewportLayout) string {
 			ID:     "gender-opt-die",
 			View:   ViewPractice,
 			X:      startX + 14,
-			Y:      layout.Y + 11,
+			Y:      layout.Y + 8,
 			Width:  11,
 			Height: 1,
 			Action: func() tea.Cmd {
@@ -93,7 +93,7 @@ func (m *Model) renderGenderTrainer(layout viewportLayout) string {
 			ID:     "gender-opt-das",
 			View:   ViewPractice,
 			X:      startX + 28,
-			Y:      layout.Y + 11,
+			Y:      layout.Y + 8,
 			Width:  11,
 			Height: 1,
 			Action: func() tea.Cmd {

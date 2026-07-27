@@ -5,9 +5,9 @@ import tempfile
 import time
 
 # Add tui_tester to sys.path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../tui_tester')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from tui_tester import TUIAgent
+from tui_tester.agent import TUIAgent
 
 def start_agent(tmpdir, columns=110, lines=30):
     app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
@@ -36,8 +36,8 @@ def test_practice_hub_mouse_click():
             agent.click(55, 7)
             agent.wait_for_text("GENDER TRAINER", timeout=5.0)
             
-            # Click one of the gender options (e.g. "die" which is around X=65, Y=15)
-            agent.click(65, 15)
+            # Click one of the gender options (e.g. "die" which is around X=65, Y=12)
+            agent.click(65, 12)
             agent.wait_until_stable()
             
             # Should show revealed state

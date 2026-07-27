@@ -279,6 +279,9 @@ func (m *Model) trainerInputActive() bool {
 
 func (m *Model) updateNumberKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	key := msg.String()
+	if (m.activeView == ViewDictionary || m.dictionaryOverlayActive) && (m.dictionaryFocusResults || m.dictionaryDetailView) {
+		return nil, false
+	}
 	if m.textInputActive() {
 		// Exception: allow view switching from Dictionary if search is empty
 		if (m.activeView == ViewDictionary || m.dictionaryOverlayActive) && m.dictionarySearch == "" {
@@ -1677,6 +1680,32 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			entry := m.dictionaryResults[m.dictionaryCursor]
 			m.recordDictionaryView(entry)
 			return m.addDictionaryReverseEntryCmd(entry), true
+		}
+	case "1", "2", "3", "4", "5":
+		if (m.dictionaryFocusResults || m.dictionaryDetailView) && m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			entry := m.dictionaryResults[m.dictionaryCursor]
+			compoundParts := content.DecomposeCompound(entry.Word, nil)
+			targetWord := ""
+			idx := int(key[0] - '1')
+			if len(compoundParts) == 2 {
+				if idx == 0 {
+					targetWord = compoundParts[0].Word
+				} else if idx == 1 {
+					targetWord = compoundParts[1].Word
+				} else if relIdx := idx - 2; relIdx >= 0 && relIdx < len(m.dictionaryRelatedEntries) {
+					targetWord = m.dictionaryRelatedEntries[relIdx].Word
+				}
+			} else if idx < len(m.dictionaryRelatedEntries) {
+				targetWord = m.dictionaryRelatedEntries[idx].Word
+			}
+
+			if targetWord != "" {
+				m.recordDictionarySearch(m.dictionarySearch)
+				m.dictionarySearch = targetWord
+				m.dictionaryFocusResults = false
+				m.dictionaryDetailView = false
+				return m.searchDictionary(), true
+			}
 		}
 	case "ctrl+r":
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {

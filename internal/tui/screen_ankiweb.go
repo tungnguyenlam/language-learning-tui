@@ -396,6 +396,25 @@ func (s *ankiWebScreen) Render(m *Model, layout viewportLayout) string {
 		resultLines = append(resultLines, marker+nameStyle.Render(name)+pad+mutedStyle.Render(metaFor(deck)))
 	}
 
+	startY := layout.Y + strings.Count(b.String(), "\n")
+	for i := s.scroll; i < len(s.results) && i < s.scroll+rows; i++ {
+		idx := i
+		rowY := startY + (i - s.scroll)
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     fmt.Sprintf("ankiweb-result-%d", idx),
+			View:   ViewAnkiWeb,
+			X:      layout.X,
+			Y:      rowY,
+			Width:  layout.Width,
+			Height: 1,
+			Action: func() tea.Cmd {
+				s.cursor = idx
+				s.details = nil
+				return s.loadDetails(m)
+			},
+		})
+	}
+
 	resultLinesWithScroll := renderScrollbarColumn(resultLines, rows, len(s.results), s.scroll)
 	for _, l := range resultLinesWithScroll {
 		b.WriteString(l + "\n")

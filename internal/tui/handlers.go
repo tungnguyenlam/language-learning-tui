@@ -110,6 +110,7 @@ func (m *Model) updateView(view View) tea.Cmd {
 	if view == ViewPractice {
 		m.practiceSubView = PracticeSubViewHub
 		m.practiceHubCursor = 0
+		m.practiceScroll = 0
 		m.status = "Practice Hub: Choose a trainer"
 		return nil // Loaders are called when entering specific modes
 	}

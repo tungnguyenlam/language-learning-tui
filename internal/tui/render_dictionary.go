@@ -80,9 +80,6 @@ func renderFilterPillsRow(m *Model, startX, startY int, targetView View) string 
 	for i, p := range pills {
 		active := isFilterActive(m.dictionarySearch, p.Tag)
 		label := p.Name
-		if p.Tag != "" {
-			label = p.Tag
-		}
 		var rendered string
 		if active {
 			rendered = activeStyle.Render(label)
@@ -385,14 +382,47 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		}
 
 		if res.Forms != "" {
-			detailBuilder.WriteString(boldStyle.Render("Word Forms:") + "\n")
-			highlightedForms := highlightQuery(res.Forms, m.dictionarySearch, dictHighlightStyle)
-			detailBuilder.WriteString("  " + highlightedForms + "\n\n")
+			detailBuilder.WriteString(formatInflectionTable(res.WordClass, res.Gender, res.Forms, m.dictionarySearch))
 		}
 
 		if compoundParts := content.DecomposeCompound(res.Word, nil); len(compoundParts) == 2 {
+			lineY := strings.Count(detailBuilder.String(), "\n")
 			detailBuilder.WriteString(boldStyle.Render("Compound Breakdown:") + "\n")
-			detailBuilder.WriteString(fmt.Sprintf("  • %s + %s\n\n", compoundParts[0].Word, compoundParts[1].Word))
+			part1 := compoundParts[0].Word
+			part2 := compoundParts[1].Word
+			detailBuilder.WriteString(fmt.Sprintf("  • %s + %s\n\n", part1, part2))
+
+			maxRows := dictionaryVisibleRows(layout)
+			if lineY+1 >= m.dictionaryDetailScroll && lineY+1 < m.dictionaryDetailScroll+maxRows {
+				screenY := layout.Y + strings.Count(b.String(), "\n") + (lineY + 1 - m.dictionaryDetailScroll)
+				p1Word := part1
+				p2Word := part2
+				m.hitboxes = append(m.hitboxes, Hitbox{
+					ID:     "dict-compound-sc-0",
+					View:   ViewDictionary,
+					X:      layout.X + 4,
+					Y:      screenY,
+					Width:  lipgloss.Width(p1Word),
+					Height: 1,
+					Action: func() tea.Cmd {
+						m.dictionarySearch = p1Word
+						return m.searchDictionary()
+					},
+				})
+				p2X := layout.X + 4 + lipgloss.Width(p1Word) + 3
+				m.hitboxes = append(m.hitboxes, Hitbox{
+					ID:     "dict-compound-sc-1",
+					View:   ViewDictionary,
+					X:      p2X,
+					Y:      screenY,
+					Width:  lipgloss.Width(p2Word),
+					Height: 1,
+					Action: func() tea.Cmd {
+						m.dictionarySearch = p2Word
+						return m.searchDictionary()
+					},
+				})
+			}
 		}
 
 		if len(res.Examples) > 0 {
@@ -460,12 +490,26 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		for i := m.dictionaryDetailScroll; i < m.dictionaryDetailScroll+maxResultsDetail && i < len(detailLines); i++ {
 			visibleDetailBuilder.WriteString(padString(detailLines[i], detailContentWidth) + "\n")
 		}
-		for i := len(detailLines) - m.dictionaryDetailScroll; i < maxResultsDetail; i++ {
+		writtenDetailLines := maxInt(0, minInt(len(detailLines)-m.dictionaryDetailScroll, maxResultsDetail))
+		for i := writtenDetailLines; i < maxResultsDetail; i++ {
 			visibleDetailBuilder.WriteString(strings.Repeat(" ", detailContentWidth) + "\n")
 		}
 
 		renderedDetailLines := strings.Split(strings.TrimSuffix(visibleDetailBuilder.String(), "\n"), "\n")
 		detailLinesWithScroll := renderScrollbarColumn(renderedDetailLines, maxResultsDetail, m.dictionaryDetailTotalLines, m.dictionaryDetailScroll)
+		if m.dictionaryDetailTotalLines > maxResultsDetail {
+			detailStartLine := strings.Count(b.String(), "\n")
+			for i := 0; i < maxResultsDetail; i++ {
+				m.hitboxes = append(m.hitboxes, Hitbox{
+					ID:     fmt.Sprintf("dict-detail-scroll-%d", i),
+					View:   ViewDictionary,
+					X:      layout.X + layout.Width - 1,
+					Y:      layout.Y + detailStartLine + i,
+					Width:  1,
+					Height: 1,
+				})
+			}
+		}
 		detailPanelContent := strings.Join(detailLinesWithScroll, "\n") + "\n"
 
 		b.WriteString(detailPanelContent)
@@ -532,13 +576,26 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		}
 
 		// Fill remaining space in list
-		for i := len(m.dictionaryResults) - m.dictionaryScroll; i < maxResults; i++ {
+		writtenListLines := maxInt(0, minInt(len(m.dictionaryResults)-m.dictionaryScroll, maxResults))
+		for i := writtenListLines; i < maxResults; i++ {
 			listBuilder.WriteString(strings.Repeat(" ", listWidth) + "\n")
 		}
 
 		// List scrollbar
 		listLines := strings.Split(strings.TrimSuffix(listBuilder.String(), "\n"), "\n")
 		listLinesWithScroll := renderScrollbarColumn(listLines, maxResults, len(m.dictionaryResults), m.dictionaryScroll)
+		if len(m.dictionaryResults) > maxResults {
+			for i := 0; i < maxResults; i++ {
+				m.hitboxes = append(m.hitboxes, Hitbox{
+					ID:     fmt.Sprintf("dict-scroll-%d", i),
+					View:   ViewDictionary,
+					X:      layout.X + listWidth - 1,
+					Y:      layout.Y + listStartLine + i,
+					Width:  1,
+					Height: 1,
+				})
+			}
+		}
 		listWithScroll := strings.Join(listLinesWithScroll, "\n") + "\n"
 
 		var detailBuilder strings.Builder
@@ -580,14 +637,47 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 
 			// Word Forms
 			if res.Forms != "" {
-				detailBuilder.WriteString(boldStyle.Render("Word Forms:") + "\n")
-				highlightedForms := highlightQuery(res.Forms, m.dictionarySearch, dictHighlightStyle)
-				detailBuilder.WriteString("  " + highlightedForms + "\n\n")
+				detailBuilder.WriteString(formatInflectionTable(res.WordClass, res.Gender, res.Forms, m.dictionarySearch))
 			}
 
 			if compoundParts := content.DecomposeCompound(res.Word, nil); len(compoundParts) == 2 {
+				lineY := strings.Count(detailBuilder.String(), "\n")
 				detailBuilder.WriteString(boldStyle.Render("Compound Breakdown:") + "\n")
-				detailBuilder.WriteString(fmt.Sprintf("  • %s + %s\n\n", compoundParts[0].Word, compoundParts[1].Word))
+				part1 := compoundParts[0].Word
+				part2 := compoundParts[1].Word
+				detailBuilder.WriteString(fmt.Sprintf("  • %s + %s\n\n", part1, part2))
+
+				if lineY+1 >= m.dictionaryDetailScroll && lineY+1 < m.dictionaryDetailScroll+maxResults {
+					screenY := layout.Y + listStartLine + (lineY + 1 - m.dictionaryDetailScroll)
+					p1Word := part1
+					p2Word := part2
+					detailLeftX := layout.X + listWidth + 3
+					m.hitboxes = append(m.hitboxes, Hitbox{
+						ID:     "dict-compound-tc-0",
+						View:   ViewDictionary,
+						X:      detailLeftX + 4,
+						Y:      screenY,
+						Width:  lipgloss.Width(p1Word),
+						Height: 1,
+						Action: func() tea.Cmd {
+							m.dictionarySearch = p1Word
+							return m.searchDictionary()
+						},
+					})
+					p2X := detailLeftX + 4 + lipgloss.Width(p1Word) + 3
+					m.hitboxes = append(m.hitboxes, Hitbox{
+						ID:     "dict-compound-tc-1",
+						View:   ViewDictionary,
+						X:      p2X,
+						Y:      screenY,
+						Width:  lipgloss.Width(p2Word),
+						Height: 1,
+						Action: func() tea.Cmd {
+							m.dictionarySearch = p2Word
+							return m.searchDictionary()
+						},
+					})
+				}
 			}
 
 			// Examples
@@ -660,7 +750,8 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			visibleDetailBuilder.WriteString(padString(detailLines[i], detailContentWidth) + "\n")
 		}
 		// Fill remaining vertical space in detail panel to match list height
-		for i := len(detailLines) - m.dictionaryDetailScroll; i < maxResults; i++ {
+		writtenDetailLines := maxInt(0, minInt(len(detailLines)-m.dictionaryDetailScroll, maxResults))
+		for i := writtenDetailLines; i < maxResults; i++ {
 			visibleDetailBuilder.WriteString(strings.Repeat(" ", detailContentWidth) + "\n")
 		}
 
@@ -740,7 +831,8 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		}
 
 		// Fill remaining space
-		for i := len(m.dictionaryResults) - m.dictionaryScroll; i < maxResults; i++ {
+		writtenListLines := maxInt(0, minInt(len(m.dictionaryResults)-m.dictionaryScroll, maxResults))
+		for i := writtenListLines; i < maxResults; i++ {
 			listBuilder.WriteString(strings.Repeat(" ", layout.Width) + "\n")
 		}
 
@@ -998,7 +1090,7 @@ func (m *Model) renderSpotlightDictionary() string {
 				}
 			}
 			if res.Forms != "" {
-				detailBuilder.WriteString(boldStyle.Render("Forms: ") + highlightQuery(res.Forms, m.dictionarySearch, dictHighlightStyle) + "\n")
+				detailBuilder.WriteString(formatInflectionTable(res.WordClass, res.Gender, res.Forms, m.dictionarySearch))
 			}
 			if len(res.Examples) > 0 {
 				detailBuilder.WriteString(boldStyle.Render("Examples:") + "\n")
@@ -1020,7 +1112,8 @@ func (m *Model) renderSpotlightDictionary() string {
 			for i := m.dictionaryDetailScroll; i < m.dictionaryDetailScroll+maxResults && i < len(detailLines); i++ {
 				visibleDetailBuilder.WriteString(padString(detailLines[i], detailContentWidth) + "\n")
 			}
-			for i := len(detailLines) - m.dictionaryDetailScroll; i < maxResults; i++ {
+			writtenDetailLines := maxInt(0, minInt(len(detailLines)-m.dictionaryDetailScroll, maxResults))
+			for i := writtenDetailLines; i < maxResults; i++ {
 				visibleDetailBuilder.WriteString(strings.Repeat(" ", detailContentWidth) + "\n")
 			}
 
@@ -1078,7 +1171,8 @@ func (m *Model) renderSpotlightDictionary() string {
 					},
 				})
 			}
-			for i := len(m.dictionaryResults) - m.dictionaryScroll; i < maxResults; i++ {
+			writtenListLines := maxInt(0, minInt(len(m.dictionaryResults)-m.dictionaryScroll, maxResults))
+			for i := writtenListLines; i < maxResults; i++ {
 				listBuilder.WriteString(strings.Repeat(" ", listWidth) + "\n")
 			}
 
@@ -1124,7 +1218,8 @@ func (m *Model) renderSpotlightDictionary() string {
 			for i := m.dictionaryDetailScroll; i < m.dictionaryDetailScroll+maxResults && i < len(detailLines); i++ {
 				visibleDetailBuilder.WriteString(padString(detailLines[i], detailWidth-3) + "\n")
 			}
-			for i := len(detailLines) - m.dictionaryDetailScroll; i < maxResults; i++ {
+			writtenDetailLines := maxInt(0, minInt(len(detailLines)-m.dictionaryDetailScroll, maxResults))
+			for i := writtenDetailLines; i < maxResults; i++ {
 				visibleDetailBuilder.WriteString(strings.Repeat(" ", detailWidth-3) + "\n")
 			}
 
@@ -1185,7 +1280,8 @@ func (m *Model) renderSpotlightDictionary() string {
 					},
 				})
 			}
-			for i := len(m.dictionaryResults) - m.dictionaryScroll; i < maxResults; i++ {
+			writtenListLines := maxInt(0, minInt(len(m.dictionaryResults)-m.dictionaryScroll, maxResults))
+			for i := writtenListLines; i < maxResults; i++ {
 				listBuilder.WriteString(strings.Repeat(" ", maxInt(5, interiorWidth-1)) + "\n")
 			}
 
@@ -1251,4 +1347,59 @@ func (m *Model) renderSpotlightDictionary() string {
 	b.WriteString(footerStr)
 
 	return boxStyle.Render(b.String())
+}
+
+func formatInflectionTable(wordClass, gender, formsStr, query string) string {
+	if strings.TrimSpace(formsStr) == "" {
+		return ""
+	}
+	parts := strings.FieldsFunc(formsStr, func(r rune) bool {
+		return r == ';' || r == ','
+	})
+	var cleanParts []string
+	for _, p := range parts {
+		t := strings.TrimSpace(p)
+		if t != "" {
+			cleanParts = append(cleanParts, t)
+		}
+	}
+
+	wc := strings.ToLower(wordClass)
+	gen := strings.ToLower(gender)
+
+	var sb strings.Builder
+
+	if (strings.Contains(wc, "verb") || strings.Contains(wc, "v")) && len(cleanParts) == 3 {
+		sb.WriteString(boldStyle.Render("Verb Forms:") + "\n")
+		p3sg := highlightQuery(cleanParts[0], query, dictHighlightStyle)
+		prat := highlightQuery(cleanParts[1], query, dictHighlightStyle)
+		perf := highlightQuery(cleanParts[2], query, dictHighlightStyle)
+		sb.WriteString(fmt.Sprintf("  • Präsens (3sg): %s\n", p3sg))
+		sb.WriteString(fmt.Sprintf("  • Präteritum:    %s\n", prat))
+		sb.WriteString(fmt.Sprintf("  • Perfekt:       %s\n\n", perf))
+		return sb.String()
+	}
+
+	if (strings.Contains(wc, "noun") || gen == "m" || gen == "f" || gen == "n" || gen == "pl") && len(cleanParts) == 2 {
+		sb.WriteString(boldStyle.Render("Noun Forms:") + "\n")
+		genitiv := highlightQuery(cleanParts[0], query, dictHighlightStyle)
+		plural := highlightQuery(cleanParts[1], query, dictHighlightStyle)
+		sb.WriteString(fmt.Sprintf("  • Genitiv: %s\n", genitiv))
+		sb.WriteString(fmt.Sprintf("  • Plural:  %s\n\n", plural))
+		return sb.String()
+	}
+
+	if (strings.Contains(wc, "adj") || (len(cleanParts) == 2 && strings.HasPrefix(cleanParts[len(cleanParts)-1], "am "))) && len(cleanParts) == 2 {
+		sb.WriteString(boldStyle.Render("Adjective Comparison:") + "\n")
+		komp := highlightQuery(cleanParts[0], query, dictHighlightStyle)
+		sup := highlightQuery(cleanParts[1], query, dictHighlightStyle)
+		sb.WriteString(fmt.Sprintf("  • Komparativ: %s\n", komp))
+		sb.WriteString(fmt.Sprintf("  • Superlativ: %s\n\n", sup))
+		return sb.String()
+	}
+
+	sb.WriteString(boldStyle.Render("Word Forms:") + "\n")
+	highlightedForms := highlightQuery(formsStr, query, dictHighlightStyle)
+	sb.WriteString("  " + highlightedForms + "\n\n")
+	return sb.String()
 }

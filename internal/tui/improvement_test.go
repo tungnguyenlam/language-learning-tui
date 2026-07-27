@@ -226,9 +226,9 @@ func TestPracticeHubVisuals(t *testing.T) {
 	model.activeView = ViewPractice
 	model.practiceSubView = PracticeSubViewHub
 
-	view := model.renderPracticeHub(viewportLayout{Width: 80, Height: 24})
+	view := model.renderPracticeHub(viewportLayout{Width: 80, Height: 80})
 
-	// Check for icons/labels from all 10 trainers
+	// Check for icons/labels from all trainers
 	icons := []string{"🚻", "🔄", "📐", "🎨", "📍", "👥", "S/", "🔢", "🔗", "Kj"}
 	for _, icon := range icons {
 		if !strings.Contains(view, icon) {
@@ -315,16 +315,22 @@ func TestPracticeHubHitboxSpacing(t *testing.T) {
 	model.activeView = ViewPractice
 	model.practiceSubView = PracticeSubViewHub
 
-	// Test on short height layout (<40)
 	model.hitboxes = nil
-	layout := viewportLayout{X: 0, Y: 0, Width: 80, Height: 24}
+	layout := viewportLayout{X: 0, Y: 0, Width: 80, Height: 80}
 	model.renderPracticeHub(layout)
 
-	if len(model.hitboxes) != 12 {
-		t.Fatalf("Expected 12 hitboxes in Practice Hub, got %d", len(model.hitboxes))
+	var buttonHitboxes []Hitbox
+	for _, hb := range model.hitboxes {
+		if !strings.HasPrefix(hb.ID, "practice-scroll-") {
+			buttonHitboxes = append(buttonHitboxes, hb)
+		}
 	}
-	for i, hb := range model.hitboxes {
-		expectedY := layout.Y + 3 + (i * 5)
+
+	if len(buttonHitboxes) != 12 {
+		t.Fatalf("Expected 12 button hitboxes in Practice Hub, got %d", len(buttonHitboxes))
+	}
+	for i, hb := range buttonHitboxes {
+		expectedY := layout.Y + 2 + (i * 5)
 		if hb.Y != expectedY {
 			t.Errorf("Hitbox %d Y coordinate mismatch: expected %d, got %d", i, expectedY, hb.Y)
 		}

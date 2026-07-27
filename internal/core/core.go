@@ -191,6 +191,106 @@ type DictionaryRepository interface {
 	DictionaryCount(ctx context.Context) (int, error)
 }
 
+// ConsolidateDictionaryEntries merges dictionary entries sharing the same German headword
+// and gender, combining their translations, word classes, forms, tags, and examples.
+func ConsolidateDictionaryEntries(entries []DictionaryEntry) []DictionaryEntry {
+	if len(entries) <= 1 {
+		return entries
+	}
+
+	type key struct {
+		word   string
+		gender string
+	}
+
+	order := make([]key, 0, len(entries))
+	mergedMap := make(map[key]*DictionaryEntry, len(entries))
+
+	for _, entry := range entries {
+		wClean := strings.ToLower(strings.TrimSpace(entry.Word))
+		gClean := strings.ToLower(strings.TrimSpace(entry.Gender))
+		k := key{word: wClean, gender: gClean}
+
+		existing, found := mergedMap[k]
+		if !found {
+			entryCopy := entry
+			mergedMap[k] = &entryCopy
+			order = append(order, k)
+		} else {
+			existing.Translation = mergeSemicolonJoined(existing.Translation, entry.Translation)
+
+			if existing.WordClass == "" {
+				existing.WordClass = entry.WordClass
+			} else if entry.WordClass != "" && !strings.Contains(strings.ToLower(existing.WordClass), strings.ToLower(entry.WordClass)) {
+				existing.WordClass = existing.WordClass + ", " + entry.WordClass
+			}
+
+			existing.Forms = mergeSemicolonJoined(existing.Forms, entry.Forms)
+			existing.Tags = appendUniqueStrings(existing.Tags, entry.Tags)
+			existing.Examples = appendUniqueStrings(existing.Examples, entry.Examples)
+		}
+	}
+
+	result := make([]DictionaryEntry, 0, len(order))
+	for _, k := range order {
+		result = append(result, *mergedMap[k])
+	}
+	return result
+}
+
+func mergeSemicolonJoined(s1, s2 string) string {
+	parts1 := splitSemicolon(s1)
+	parts2 := splitSemicolon(s2)
+	seen := make(map[string]bool)
+	var res []string
+
+	for _, p := range append(parts1, parts2...) {
+		pTrim := strings.TrimSpace(p)
+		if pTrim == "" {
+			continue
+		}
+		pLower := strings.ToLower(pTrim)
+		if !seen[pLower] {
+			seen[pLower] = true
+			res = append(res, pTrim)
+		}
+	}
+	return strings.Join(res, "; ")
+}
+
+func splitSemicolon(s string) []string {
+	if strings.TrimSpace(s) == "" {
+		return nil
+	}
+	return strings.Split(s, ";")
+}
+
+func appendUniqueStrings(base []string, add []string) []string {
+	seen := make(map[string]bool, len(base)+len(add))
+	var res []string
+	for _, item := range base {
+		trimmed := strings.TrimSpace(item)
+		if trimmed != "" {
+			itemLower := strings.ToLower(trimmed)
+			if !seen[itemLower] {
+				seen[itemLower] = true
+				res = append(res, trimmed)
+			}
+		}
+	}
+	for _, item := range add {
+		trimmed := strings.TrimSpace(item)
+		if trimmed != "" {
+			itemLower := strings.ToLower(trimmed)
+			if !seen[itemLower] {
+				seen[itemLower] = true
+				res = append(res, trimmed)
+			}
+		}
+	}
+	return res
+}
+
 func ValidateCard(card Card) error {
 	if strings.TrimSpace(card.ID) == "" {
 		return errors.New("card id is required")
