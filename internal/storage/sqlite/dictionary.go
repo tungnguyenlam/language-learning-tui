@@ -102,10 +102,11 @@ func parseSearchFilters(query string) (cleanQuery string, classFilter string, ge
 	return strings.Join(textTerms, " "), classFilter, genderFilter, langFilter
 }
 
-func filterEntries(entries []core.DictionaryEntry, classFilter, genderFilter, langFilter string) []core.DictionaryEntry {
+func filterEntries(entries []core.DictionaryEntry, classFilter, genderFilter, langFilter, query string) []core.DictionaryEntry {
 	if classFilter == "" && genderFilter == "" && langFilter == "" {
 		return entries
 	}
+	q := strings.ToLower(strings.TrimSpace(query))
 	filtered := make([]core.DictionaryEntry, 0, len(entries))
 	for _, entry := range entries {
 		if classFilter != "" {
@@ -120,14 +121,63 @@ func filterEntries(entries []core.DictionaryEntry, classFilter, genderFilter, la
 				continue
 			}
 		}
+		if langFilter != "" && q != "" {
+			w := strings.ToLower(entry.Word)
+			t := strings.ToLower(entry.Translation)
+			f := strings.ToLower(entry.Forms)
+			switch langFilter {
+			case "de":
+				if !strings.Contains(w, q) && !strings.Contains(f, q) &&
+					!strings.Contains(stripArticle(w), stripArticle(q)) {
+					// Keep exact-ish form matches even when the bare query is only a prefix of a form token.
+					matchedForm := false
+					for _, form := range parseForms(entry.Forms) {
+						if strings.Contains(form, q) || strings.HasPrefix(form, q) {
+							matchedForm = true
+							break
+						}
+					}
+					if !matchedForm {
+						continue
+					}
+				}
+			case "en":
+				if !strings.Contains(t, q) {
+					continue
+				}
+			}
+		}
 		filtered = append(filtered, entry)
 	}
 	return filtered
 }
 
+func buildFTSMatchQuery(terms []string, langFilter string) string {
+	var matchQuery strings.Builder
+	for i, term := range terms {
+		if i > 0 {
+			matchQuery.WriteString(" ")
+		}
+		safeTerm := strings.ReplaceAll(term, `"`, `""`)
+		quoted := fmt.Sprintf(`"%s"*`, safeTerm)
+		switch langFilter {
+		case "de":
+			// Scope to German headwords (forms are UNINDEXED, handled via LIKE separately).
+			matchQuery.WriteString("word : " + quoted)
+		case "en":
+			matchQuery.WriteString("translation : " + quoted)
+		default:
+			matchQuery.WriteString(quoted)
+		}
+	}
+	return matchQuery.String()
+}
+
 func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.DictionaryEntry, error) {
 	cleanQuery, classFilter, genderFilter, langFilter := parseSearchFilters(rawQuery)
-	if cleanQuery == "" && (classFilter != "" || genderFilter != "" || langFilter != "") {
+	// Language scope alone has no browse semantics (every entry has DE+EN fields).
+	// Class/gender-only filters still support browsing a sample of matching entries.
+	if cleanQuery == "" && (classFilter != "" || genderFilter != "") {
 		q := `
 			SELECT id, word, translation, word_class, gender, forms, examples, tags
 			FROM dictionary_fts
@@ -137,7 +187,7 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 		if err != nil {
 			return nil, fmt.Errorf("search dictionary filter-only: %w", err)
 		}
-		filtered := filterEntries(entries, classFilter, genderFilter, langFilter)
+		filtered := filterEntries(entries, classFilter, genderFilter, "", "")
 		if len(filtered) > limit {
 			filtered = filtered[:limit]
 		}
@@ -169,7 +219,7 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 		if err != nil {
 			return nil, fmt.Errorf("search dictionary wildcard: %w", err)
 		}
-		filtered := filterEntries(entries, classFilter, genderFilter, langFilter)
+		filtered := filterEntries(entries, classFilter, genderFilter, langFilter, cleanQuery)
 		sortDictionaryEntries(filtered, cleanQuery)
 		if len(filtered) > limit {
 			filtered = filtered[:limit]
@@ -177,14 +227,7 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 		return filtered, nil
 	}
 
-	var matchQuery strings.Builder
-	for i, term := range terms {
-		if i > 0 {
-			matchQuery.WriteString(" ")
-		}
-		safeTerm := strings.ReplaceAll(term, `"`, `""`)
-		matchQuery.WriteString(fmt.Sprintf(`"%s"*`, safeTerm))
-	}
+	matchQuery := buildFTSMatchQuery(terms, langFilter)
 
 	q := `
 		SELECT id, word, translation, word_class, gender, forms, examples, tags
@@ -194,35 +237,37 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 		LIMIT ?
 	`
 
-	entries, err := s.queryDictionaryEntries(ctx, q, matchQuery.String(), limit*2)
+	entries, err := s.queryDictionaryEntries(ctx, q, matchQuery, limit*2)
 	if err != nil {
 		return nil, fmt.Errorf("search dictionary fts: %w", err)
 	}
 
-	// Also check forms via LIKE to catch unindexed inflected form matches
+	// Also check forms via LIKE to catch unindexed inflected form matches (German only).
 	likePattern := "%" + cleanQuery + "%"
-	qForms := `
-		SELECT id, word, translation, word_class, gender, forms, examples, tags
-		FROM dictionary_fts
-		WHERE forms LIKE ?
-		LIMIT ?
-	`
-	formEntries, _ := s.queryDictionaryEntries(ctx, qForms, likePattern, limit)
-	if len(formEntries) > 0 {
-		seen := make(map[string]bool, len(entries))
-		for _, e := range entries {
-			seen[e.ID] = true
-		}
-		for _, e := range formEntries {
-			if !seen[e.ID] {
-				entries = append(entries, e)
+	if langFilter != "en" {
+		qForms := `
+			SELECT id, word, translation, word_class, gender, forms, examples, tags
+			FROM dictionary_fts
+			WHERE forms LIKE ?
+			LIMIT ?
+		`
+		formEntries, _ := s.queryDictionaryEntries(ctx, qForms, likePattern, limit)
+		if len(formEntries) > 0 {
+			seen := make(map[string]bool, len(entries))
+			for _, e := range entries {
 				seen[e.ID] = true
+			}
+			for _, e := range formEntries {
+				if !seen[e.ID] {
+					entries = append(entries, e)
+					seen[e.ID] = true
+				}
 			}
 		}
 	}
 
 	if len(entries) > 0 {
-		filtered := filterEntries(entries, classFilter, genderFilter, langFilter)
+		filtered := filterEntries(entries, classFilter, genderFilter, langFilter, cleanQuery)
 		if len(filtered) > 0 {
 			sortDictionaryEntries(filtered, cleanQuery)
 			if len(filtered) > limit {
@@ -250,7 +295,7 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 		return nil, fmt.Errorf("search dictionary fallback like: %w", err)
 	}
 
-	filtered := filterEntries(entries, classFilter, genderFilter, langFilter)
+	filtered := filterEntries(entries, classFilter, genderFilter, langFilter, cleanQuery)
 	sortDictionaryEntries(filtered, cleanQuery)
 	if len(filtered) > limit {
 		filtered = filtered[:limit]
@@ -407,6 +452,26 @@ func (s *Store) GetEntry(ctx context.Context, id string) (core.DictionaryEntry, 
 	return entry, nil
 }
 
+func (s *Store) FindRelatedEntries(ctx context.Context, word string, limit int) ([]core.DictionaryEntry, error) {
+	bareWord := stripArticle(word)
+	if len(bareWord) < 3 {
+		return nil, nil
+	}
+
+	q := `
+		SELECT id, word, translation, word_class, gender, forms, examples, tags
+		FROM dictionary_fts
+		WHERE word LIKE ? AND word != ?
+		LIMIT ?
+	`
+	likePattern := "%" + bareWord + "%"
+	entries, err := s.queryDictionaryEntries(ctx, q, likePattern, word, limit)
+	if err != nil {
+		return nil, fmt.Errorf("find related entries: %w", err)
+	}
+	return entries, nil
+}
+
 func (s *Store) ImportEntries(ctx context.Context, entries []core.DictionaryEntry) error {
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
@@ -466,4 +531,20 @@ func (s *Store) DictionaryCount(ctx context.Context) (int, error) {
 		return 0, fmt.Errorf("dictionary count: %w", err)
 	}
 	return count, nil
+}
+
+func (s *Store) RandomEntries(ctx context.Context, limit int) ([]core.DictionaryEntry, error) {
+	// FTS5 content tables use rowid internally. We pick random rowids
+	// from the approximate range to avoid a full table scan + ORDER BY RANDOM().
+	q := `
+		SELECT id, word, translation, word_class, gender, forms, examples, tags
+		FROM dictionary_fts
+		WHERE rowid IN (
+			SELECT abs(random()) % (SELECT max(rowid) FROM dictionary_fts) + 1
+			FROM dictionary_fts
+			LIMIT ?
+		)
+		LIMIT ?
+	`
+	return s.queryDictionaryEntries(ctx, q, limit*3, limit)
 }

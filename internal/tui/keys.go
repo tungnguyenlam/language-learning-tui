@@ -1502,6 +1502,29 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 }
 
 func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
+	oldCursor := m.dictionaryCursor
+	oldDetailView := m.dictionaryDetailView
+
+	cmd, handled := m.doUpdateDictionaryKey(msg)
+	if handled {
+		wide := m.width > 80
+		detailVisible := m.dictionaryDetailView || wide
+		if detailVisible && (m.dictionaryCursor != oldCursor || m.dictionaryDetailView != oldDetailView) {
+			if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+				entry := m.dictionaryResults[m.dictionaryCursor]
+				relatedCmd := m.findRelatedEntries(entry.Word)
+				if cmd == nil {
+					cmd = relatedCmd
+				} else {
+					cmd = tea.Batch(cmd, relatedCmd)
+				}
+			}
+		}
+	}
+	return cmd, handled
+}
+
+func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	key := msg.String()
 	switch key {
 	case "up", "k":
@@ -1639,21 +1662,30 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			entry := m.dictionaryResults[m.dictionaryCursor]
 			return m.toggleStarDictionaryEntry(entry), true
 		}
-	case "ctrl+c":
-		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
-			m.recordDictionarySearch(m.dictionarySearch)
-			entry := m.dictionaryResults[m.dictionaryCursor]
-			m.recordDictionaryView(entry)
-			return m.addDictionaryClozeEntryCmd(entry), true
-		}
-		return nil, true
 	case "c":
+		// Note: ctrl+c is reserved for global quit; cloze is only on plain 'c'
+		// while results/detail are focused so typing in the search bar still works.
 		if (m.dictionaryFocusResults || m.dictionaryDetailView) && m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 			m.recordDictionarySearch(m.dictionarySearch)
 			entry := m.dictionaryResults[m.dictionaryCursor]
 			m.recordDictionaryView(entry)
 			return m.addDictionaryClozeEntryCmd(entry), true
 		}
+	case "r":
+		if (m.dictionaryFocusResults || m.dictionaryDetailView) && m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			m.recordDictionarySearch(m.dictionarySearch)
+			entry := m.dictionaryResults[m.dictionaryCursor]
+			m.recordDictionaryView(entry)
+			return m.addDictionaryReverseEntryCmd(entry), true
+		}
+	case "ctrl+r":
+		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			m.recordDictionarySearch(m.dictionarySearch)
+			entry := m.dictionaryResults[m.dictionaryCursor]
+			m.recordDictionaryView(entry)
+			return m.addDictionaryReverseEntryCmd(entry), true
+		}
+		return nil, true
 	case "ctrl+g":
 		return m.cycleDictionaryTargetDeck(), true
 	case "ctrl+e":
@@ -1687,6 +1719,8 @@ func (m *Model) updateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		m.dictionarySearchHistory = nil
 		m.saveDictionaryHistory()
 		return nil, true
+	case "ctrl+o":
+		return m.exportDictionaryResultsTSVCmd(), true
 	case "enter":
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 			m.recordDictionarySearch(m.dictionarySearch)

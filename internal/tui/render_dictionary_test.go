@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"errors"
+	"os"
 	"strings"
 	"testing"
 
@@ -390,8 +391,8 @@ func TestDictionarySingleColumnDetailView(t *testing.T) {
 
 	// Toggle details view using key or directly
 	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'd', Mod: tea.ModCtrl})
-	if !handled || cmd != nil {
-		t.Fatal("expected ctrl+d to be handled without cmd")
+	if !handled {
+		t.Fatal("expected ctrl+d to be handled")
 	}
 
 	if !m.dictionaryDetailView {
@@ -1109,5 +1110,57 @@ func TestDictionaryRecentlyViewedAndDomainTags(t *testing.T) {
 	viewDetail := stripANSI(m.renderDictionary(m.activeViewContentLayout()))
 	if !strings.Contains(viewDetail, "[ZOOL.]") {
 		t.Fatalf("expected detail view to contain domain tag badge [ZOOL.], got:\n%s", viewDetail)
+	}
+}
+
+func TestDictionaryExportTSVAndFilterPills(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.width = 100
+	m.height = 40
+	m.dictionaryResults = []core.DictionaryEntry{
+		{ID: "1", Word: "Hund", Translation: "dog", Gender: "m"},
+		{ID: "2", Word: "Katze", Translation: "cat", Gender: "f"},
+	}
+
+	// Test ctrl+o triggers export command
+	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'o', Mod: tea.ModCtrl})
+	if !handled || cmd == nil {
+		t.Fatal("expected ctrl+o to be handled with export command")
+	}
+
+	msg := cmd()
+	status, ok := msg.(statusMsg)
+	if !ok {
+		t.Fatalf("expected statusMsg, got %T", msg)
+	}
+	if !strings.Contains(status.text, "Exported 2 dictionary entries") {
+		t.Fatalf("unexpected export status text: %q", status.text)
+	}
+
+	// Verify file was created in exports/
+	if _, err := os.Stat("exports/dictionary_export.tsv"); os.IsNotExist(err) {
+		t.Fatal("expected exports/dictionary_export.tsv to exist")
+	}
+
+	// Test DE/EN filter pills hitboxes
+	_ = m.renderDictionary(m.activeViewContentLayout())
+	var deHitbox, deckPillHitbox bool
+	for _, hb := range m.hitboxes {
+		if strings.HasPrefix(hb.ID, "dict-filter-pill-") {
+			deHitbox = true
+		}
+		if hb.ID == "dict-target-deck-pill" {
+			deckPillHitbox = true
+			if hb.Action != nil {
+				hb.Action()
+			}
+		}
+	}
+	if !deHitbox {
+		t.Fatal("expected filter pills hitboxes to be registered")
+	}
+	if !deckPillHitbox {
+		t.Fatal("expected target deck pill hitbox to be registered")
 	}
 }

@@ -59,11 +59,13 @@ func (m *Model) renderHelp(layout viewportLayout) string {
 
 	dictionary := sectionStyle.Render("Dictionary:") + "\n" +
 		"  j/k      Navigate\n" +
-		"  PgUp/Dn  Fast scroll\n" +
 		"  Enter    Draft AI card\n" +
-		"  ctrl+a   Quick add to deck\n" +
-		"  ctrl+f   Find in Decks\n" +
-		"  ctrl+p   Play audio\n" +
+		"  ctrl+a   Quick add DE→EN\n" +
+		"  r        Reverse EN→DE\n" +
+		"  c        Cloze card\n" +
+		"  b        Star entry\n" +
+		"  ctrl+o   Export results\n" +
+		"  ctrl+g   Target deck\n" +
 		"  Esc      Back"
 
 	other := sectionStyle.Render("Other:") + "\n" +

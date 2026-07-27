@@ -116,156 +116,159 @@ type Model struct {
 	ankiWebScreen *ankiWebScreen
 	// ankiWeb is the shared-deck client, created lazily on first use so the app
 	// never opens a network stack unless the browser is opened.
-	ankiWeb                    ankiWebSearcher
-	width                      int
-	height                     int
-	activeView                 View
-	dictionaryPreviousView     View
-	breakpoint                 Breakpoint
-	decks                      []core.Deck
-	deckIndex                  int
-	deck                       core.Deck
-	deckCursor                 int
-	deckScroll                 int
-	deckTotalLines             int
-	browserScroll              int
-	cramScroll                 int
-	allDue                     []core.Card
-	dueCards                   []core.Card
-	cursor                     int
-	revealState                RevealState
-	revealProgress             float64
-	flipProgress               float64
-	flipFrame                  int
-	lastReviewedCardID         string
-	lastReviewedGrade          core.ReviewGrade
-	status                     string
-	mouseX                     int
-	mouseY                     int
-	hitboxes                   []Hitbox
-	prevView                   View
-	viewTransitionProgress     float64
-	viewTransitionFrame        int
-	viewTransitioning          bool
-	cardTransitionProgress     float64
-	cardTransitionFrame        int
-	cardTransitioning          bool
-	cardTransitionDir          int // -1 for up, 1 for down
-	aiProvider                 ai.Provider
-	aiProviderName             string
-	dictionaryProvider         string
-	dictCount                  int
-	aiTemplates                map[string]map[string]string
-	aiTemplateSets             []string
-	aiTemplateIndex            int
-	aiSecrets                  app.Secrets
-	editingSecretKey           string // "" or "api_key"/"model"/"base_url"
-	editingSecretProvider      string // "openai" or "anthropic"
-	originalSecretValue        string
-	onSecretsChange            func(app.Secrets)
-	autoPlayAudio              bool
-	revealSpeed                int // 0: instant, 1-10
-	speechSynthesizer          audio.Synthesizer
-	strictNormalization        bool
-	stats                      core.Statistics
-	settingsCursor             int
-	editingTemplate            bool
-	aiInput                    string
-	draftSource                string
-	drafts                     []ai.Draft
-	draftCursor                int
-	importPath                 string
-	exportPath                 string
-	exportDeckID               string
-	exportTag                  string
-	exportFilter               string // e.g. "All", "Mature", "Learning"
-	theme                      string
-	onConfigChange             func(string, string, string, map[string]map[string]string, bool, bool, int)
-	bookmarkFilter             bool
-	originalTemplateValue      string
-	mcqChoice                  int
-	mcqAnswered                bool
-	mcqCorrect                 bool
-	browserCards               []core.Card
-	browserCursor              int
-	browserSearch              string
-	browserTag                 string
-	browserSearchHistory       []string
-	browserDeckID              string
-	browserSelected            map[string]bool
-	dictionarySearch           string
-	dictionarySearchHistory    []string
-	deckSearchHistory          []string
-	dictionarySearchID         int
-	dictionarySearchTimerID    int
-	browserSearchTimerID       int
-	dictionaryResults          []core.DictionaryEntry
-	dictionaryCursor           int
-	dictionaryScroll           int
-	dictionaryDetailScroll     int
-	dictionaryDetailTotalLines int
-	dictionaryDetailView       bool
-	dictionaryFocusResults     bool
-	dictionaryOverlayActive    bool
-	dictionaryStarred          map[string]bool
-	dictionaryTargetDeckID     string
-	dictionaryRecentlyViewed   []core.DictionaryEntry
-	isErrorStatus              bool
-	searchingTags              bool
-	sessionReviewed            int
-	sessionCorrect             int
-	lastSessionReviewed        int
-	lastSessionCorrect         int
-	sessionStartTime           time.Time
-	lastSessionDuration        time.Duration
-	sessionGrades              map[core.ReviewGrade]int
-	showHelp                   bool
-	cramCards                  []core.Card
-	cramCursor                 int
-	cramType                   string
-	cramReviewed               int
-	cramCorrect                int
-	cramActive                 bool
-	cramRevealed               bool
-	reviewsPerDay              map[string]int
-	recentDecks                []string
-	reviewHistory              []core.ReviewLog
-	reviewHistoryCard          string
-	showReviewHistory          bool
-	reviewPredictions          map[core.ReviewGrade]time.Duration
-	spinnerFrame               int
-	deckFilter                 string
-	deckSelected               map[string]bool
-	drafting                   bool
-	statsScroll                int
-	settingsScroll             int
-	statsTotalLines            int
-	settingsTotalLines         int
-	isDragging                 bool
-	focusMode                  bool
-	dragView                   View
-	dragTrackStartY            int
-	dragVisible                int
-	dragTotal                  int
-	searchingAI                bool
-	searchingBrowser           bool
-	searchingDecks             bool
-	taggingCards               bool
-	tagInput                   string
-	statusSeq                  int
-	confirmingDelete           bool
-	deleteAction               func() tea.Cmd
-	deleteIDs                  []string
-	editingDeckLimits          bool
-	limitCursor                int                // 0: new limit, 1: review limit
-	gradingInProgress          bool               // Prevent double-grading
-	logger                     *app.LeveledLogger // Add logger field
-	typingMode                 bool               // Typing exercise mode
-	typedAnswer                string             // Current typed answer
-	typingChecked              bool               // Whether typing answer has been checked
-	typingCorrect              bool               // Whether typed answer was correct
-	showHint                   bool               // Whether to show hint for the current card
-	showCardInfo               bool               // Whether to show card info overlay
+	ankiWeb                        ankiWebSearcher
+	width                          int
+	height                         int
+	activeView                     View
+	dictionaryPreviousView         View
+	breakpoint                     Breakpoint
+	decks                          []core.Deck
+	deckIndex                      int
+	deck                           core.Deck
+	deckCursor                     int
+	deckScroll                     int
+	deckTotalLines                 int
+	browserScroll                  int
+	cramScroll                     int
+	allDue                         []core.Card
+	dueCards                       []core.Card
+	cursor                         int
+	revealState                    RevealState
+	revealProgress                 float64
+	flipProgress                   float64
+	flipFrame                      int
+	lastReviewedCardID             string
+	lastReviewedGrade              core.ReviewGrade
+	status                         string
+	mouseX                         int
+	mouseY                         int
+	hitboxes                       []Hitbox
+	prevView                       View
+	viewTransitionProgress         float64
+	viewTransitionFrame            int
+	viewTransitioning              bool
+	cardTransitionProgress         float64
+	cardTransitionFrame            int
+	cardTransitioning              bool
+	cardTransitionDir              int // -1 for up, 1 for down
+	aiProvider                     ai.Provider
+	aiProviderName                 string
+	dictionaryProvider             string
+	dictCount                      int
+	aiTemplates                    map[string]map[string]string
+	aiTemplateSets                 []string
+	aiTemplateIndex                int
+	aiSecrets                      app.Secrets
+	editingSecretKey               string // "" or "api_key"/"model"/"base_url"
+	editingSecretProvider          string // "openai" or "anthropic"
+	originalSecretValue            string
+	onSecretsChange                func(app.Secrets)
+	autoPlayAudio                  bool
+	revealSpeed                    int // 0: instant, 1-10
+	speechSynthesizer              audio.Synthesizer
+	strictNormalization            bool
+	stats                          core.Statistics
+	settingsCursor                 int
+	editingTemplate                bool
+	aiInput                        string
+	draftSource                    string
+	drafts                         []ai.Draft
+	draftCursor                    int
+	importPath                     string
+	exportPath                     string
+	exportDeckID                   string
+	exportTag                      string
+	exportFilter                   string // e.g. "All", "Mature", "Learning"
+	theme                          string
+	onConfigChange                 func(string, string, string, map[string]map[string]string, bool, bool, int)
+	bookmarkFilter                 bool
+	originalTemplateValue          string
+	mcqChoice                      int
+	mcqAnswered                    bool
+	mcqCorrect                     bool
+	browserCards                   []core.Card
+	browserCursor                  int
+	browserSearch                  string
+	browserTag                     string
+	browserSearchHistory           []string
+	browserDeckID                  string
+	browserSelected                map[string]bool
+	dictionarySearch               string
+	dictionarySearchHistory        []string
+	deckSearchHistory              []string
+	dictionarySearchID             int
+	dictionarySearchTimerID        int
+	browserSearchTimerID           int
+	dictionaryResults              []core.DictionaryEntry
+	dictionaryRelatedEntries       []core.DictionaryEntry
+	dictionaryCursor               int
+	dictionaryScroll               int
+	dictionaryDetailScroll         int
+	dictionaryDetailTotalLines     int
+	dictionaryDetailView           bool
+	dictionaryFocusResults         bool
+	dictionaryOverlayActive        bool
+	dictionaryStarred              map[string]bool
+	dictionaryTargetDeckID         string
+	dictionaryLastAddAttemptNoteID string
+	dictionaryRecentlyViewed       []core.DictionaryEntry
+	dictionaryDiscoverEntries      []core.DictionaryEntry
+	isErrorStatus                  bool
+	searchingTags                  bool
+	sessionReviewed                int
+	sessionCorrect                 int
+	lastSessionReviewed            int
+	lastSessionCorrect             int
+	sessionStartTime               time.Time
+	lastSessionDuration            time.Duration
+	sessionGrades                  map[core.ReviewGrade]int
+	showHelp                       bool
+	cramCards                      []core.Card
+	cramCursor                     int
+	cramType                       string
+	cramReviewed                   int
+	cramCorrect                    int
+	cramActive                     bool
+	cramRevealed                   bool
+	reviewsPerDay                  map[string]int
+	recentDecks                    []string
+	reviewHistory                  []core.ReviewLog
+	reviewHistoryCard              string
+	showReviewHistory              bool
+	reviewPredictions              map[core.ReviewGrade]time.Duration
+	spinnerFrame                   int
+	deckFilter                     string
+	deckSelected                   map[string]bool
+	drafting                       bool
+	statsScroll                    int
+	settingsScroll                 int
+	statsTotalLines                int
+	settingsTotalLines             int
+	isDragging                     bool
+	focusMode                      bool
+	dragView                       View
+	dragTrackStartY                int
+	dragVisible                    int
+	dragTotal                      int
+	searchingAI                    bool
+	searchingBrowser               bool
+	searchingDecks                 bool
+	taggingCards                   bool
+	tagInput                       string
+	statusSeq                      int
+	confirmingDelete               bool
+	deleteAction                   func() tea.Cmd
+	deleteIDs                      []string
+	editingDeckLimits              bool
+	limitCursor                    int                // 0: new limit, 1: review limit
+	gradingInProgress              bool               // Prevent double-grading
+	logger                         *app.LeveledLogger // Add logger field
+	typingMode                     bool               // Typing exercise mode
+	typedAnswer                    string             // Current typed answer
+	typingChecked                  bool               // Whether typing answer has been checked
+	typingCorrect                  bool               // Whether typed answer was correct
+	showHint                       bool               // Whether to show hint for the current card
+	showCardInfo                   bool               // Whether to show card info overlay
 
 	// Gender Trainer state
 	practiceItems      []practiceItem
@@ -584,6 +587,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		m.dictionaryResults = msg.results
+		m.dictionaryRelatedEntries = nil
 		m.dictionaryCursor = 0
 		m.dictionaryScroll = 0
 		m.dictionaryDetailScroll = 0
@@ -595,8 +599,21 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.status = fmt.Sprintf("No dictionary results for %q", query)
 		}
+
+		var cmd tea.Cmd
+		wide := m.width > 80
+		if (m.dictionaryDetailView || wide) && len(msg.results) > 0 {
+			cmd = m.findRelatedEntries(msg.results[0].Word)
+		}
+		return m, cmd
 	case dictHistoryLoadedMsg:
 		m.dictionarySearchHistory = msg
+	case dictRelatedEntriesMsg:
+		m.dictionaryRelatedEntries = msg.entries
+		return m, nil
+	case dictDiscoverEntriesMsg:
+		m.dictionaryDiscoverEntries = msg.entries
+		return m, nil
 	case dictStarredLoadedMsg:
 		if msg != nil {
 			m.dictionaryStarred = msg

@@ -35,6 +35,7 @@ func (m *Model) previousViewCmd() tea.Cmd {
 }
 
 func (m *Model) updateView(view View) tea.Cmd {
+	var cmd tea.Cmd
 	if m.activeView == ViewDictionary && m.dictionarySearch != "" {
 		m.recordDictionarySearch(m.dictionarySearch)
 	}
@@ -42,6 +43,9 @@ func (m *Model) updateView(view View) tea.Cmd {
 		m.dictionaryPreviousView = m.activeView
 		m.dictionaryDetailView = false
 		m.dictionaryFocusResults = false
+		if len(m.dictionaryDiscoverEntries) == 0 && m.dictionarySearch == "" {
+			cmd = tea.Batch(cmd, m.loadDictionaryDiscoverEntries())
+		}
 	}
 
 	// Start view transition animation
@@ -115,6 +119,10 @@ func (m *Model) updateView(view View) tea.Cmd {
 		if view == ViewDashboard {
 			return tea.Batch(m.loadStatistics(), m.loadRecentDecks(), m.loadReviewsPerDay())
 		}
+	}
+
+	if view == ViewDictionary && cmd != nil {
+		return cmd
 	}
 
 	return nil

@@ -199,3 +199,65 @@ func deduplicateStrings(slice []string) []string {
 func ParseDictCC(r io.Reader) ([]core.DictionaryEntry, error) {
 	return ParseDictCCStream(r)
 }
+
+// FormatDictionaryCardFront attaches the German definite article for nouns
+// based on gender, leaving words that already include der/die/das unchanged.
+func FormatDictionaryCardFront(word, gender string) string {
+	w := strings.TrimSpace(word)
+	lower := strings.ToLower(w)
+	if strings.HasPrefix(lower, "der ") || strings.HasPrefix(lower, "die ") || strings.HasPrefix(lower, "das ") {
+		return w
+	}
+	switch strings.ToLower(strings.TrimSpace(gender)) {
+	case "m", "masc", "der":
+		return "der " + w
+	case "f", "fem", "die":
+		return "die " + w
+	case "n", "neut", "das":
+		return "das " + w
+	case "pl", "plural":
+		return "die " + w + " (pl.)"
+	}
+	return w
+}
+
+// DictionaryEntryExtra builds the Extra metadata block used on dictionary-sourced flashcards.
+func DictionaryEntryExtra(entry core.DictionaryEntry) string {
+	var extraParts []string
+	if entry.Forms != "" {
+		extraParts = append(extraParts, "Forms: "+entry.Forms)
+	}
+	if entry.WordClass != "" {
+		extraParts = append(extraParts, "Class: ["+strings.ToUpper(entry.WordClass)+"]")
+	}
+	if entry.Gender != "" {
+		extraParts = append(extraParts, "Gender: {"+entry.Gender+"}")
+	}
+	if len(entry.Examples) > 0 {
+		extraParts = append(extraParts, "Examples:\n• "+strings.Join(entry.Examples, "\n• "))
+	}
+	return strings.Join(extraParts, "\n")
+}
+
+// DictionaryEntriesToNotes converts dictionary entries into Anki-friendly notes for TSV export.
+func DictionaryEntriesToNotes(entries []core.DictionaryEntry, deckID string) []core.Note {
+	notes := make([]core.Note, 0, len(entries))
+	for i, entry := range entries {
+		noteID := "dict-export-" + entry.ID
+		if entry.ID == "" {
+			noteID = fmt.Sprintf("dict-export-%d", i+1)
+		}
+		tags := append([]string(nil), entry.Tags...)
+		tags = append(tags, "dictionary")
+		notes = append(notes, core.Note{
+			ID:     noteID,
+			DeckID: deckID,
+			Type:   "flashcard",
+			Front:  FormatDictionaryCardFront(entry.Word, entry.Gender),
+			Back:   entry.Translation,
+			Extra:  DictionaryEntryExtra(entry),
+			Tags:   tags,
+		})
+	}
+	return notes
+}

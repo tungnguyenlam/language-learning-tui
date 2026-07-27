@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"deutsch-tui/internal/content"
+
 	"charm.land/lipgloss/v2"
 
 	tea "charm.land/bubbletea/v2"
@@ -58,6 +60,8 @@ func renderFilterPillsRow(m *Model, startX, startY int, targetView View) string 
 	}{
 		{"All", ""},
 		{"★ Starred", ":starred"},
+		{"DE", "de:"},
+		{"EN", "en:"},
 		{"Verb", ":verb"},
 		{"Noun", ":noun"},
 		{"Adj", ":adj"},
@@ -109,6 +113,36 @@ func renderFilterPillsRow(m *Model, startX, startY int, targetView View) string 
 		currentX += pillWidth + 1
 		parts = append(parts, rendered)
 	}
+
+	targetDeckName := "Dictionary"
+	if m.dictionaryTargetDeckID != "" {
+		for _, d := range m.decks {
+			if d.ID == m.dictionaryTargetDeckID {
+				targetDeckName = d.Name
+				break
+			}
+		}
+		if m.dictionaryTargetDeckID == "dictionary" {
+			targetDeckName = "Dictionary"
+		}
+	} else if m.deck.ID != "" && m.deck.ID != "all" {
+		targetDeckName = m.deck.Name
+	}
+	deckPillStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Background(lipgloss.Color("235")).Padding(0, 1)
+	renderedDeck := deckPillStyle.Render("Target: [" + targetDeckName + "]")
+	deckWidth := lipgloss.Width(renderedDeck)
+	m.hitboxes = append(m.hitboxes, Hitbox{
+		ID:     "dict-target-deck-pill",
+		View:   targetView,
+		X:      currentX + 1,
+		Y:      startY,
+		Width:  deckWidth,
+		Height: 1,
+		Action: func() tea.Cmd {
+			return m.cycleDictionaryTargetDeck()
+		},
+	})
+	parts = append(parts, renderedDeck)
 
 	return mutedStyle.Render("Filters: ") + strings.Join(parts, " ")
 }
@@ -258,6 +292,39 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 					})
 				}
 			}
+
+			if len(m.dictionaryDiscoverEntries) > 0 {
+				discoverIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Render("✦")
+				b.WriteString("\n" + discoverIcon + " " + boldStyle.Render("Discover:") + " " + mutedStyle.Render("random words to explore") + "\n")
+				for i, e := range m.dictionaryDiscoverEntries {
+					lineY := strings.Count(b.String(), "\n")
+					wordStr := e.Word
+					if e.Gender != "" {
+						wordStr += " " + renderGender(e.Gender)
+					}
+					if e.Translation != "" {
+						trans := e.Translation
+						if idx := strings.Index(trans, ";"); idx > 0 {
+							trans = strings.TrimSpace(trans[:idx])
+						}
+						wordStr += " — " + mutedStyle.Render(trans)
+					}
+					b.WriteString(fmt.Sprintf("  • %s\n", wordStr))
+					entry := e
+					m.hitboxes = append(m.hitboxes, Hitbox{
+						ID:     fmt.Sprintf("dict-discover-%d", i),
+						View:   ViewDictionary,
+						X:      layout.X + 4,
+						Y:      layout.Y + lineY,
+						Width:  lipgloss.Width(wordStr),
+						Height: 1,
+						Action: func() tea.Cmd {
+							m.dictionarySearch = entry.Word
+							return m.searchDictionary()
+						},
+					})
+				}
+			}
 		}
 		return b.String()
 	}
@@ -323,11 +390,53 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			detailBuilder.WriteString("  " + highlightedForms + "\n\n")
 		}
 
+		if compoundParts := content.DecomposeCompound(res.Word, nil); len(compoundParts) == 2 {
+			detailBuilder.WriteString(boldStyle.Render("Compound Breakdown:") + "\n")
+			detailBuilder.WriteString(fmt.Sprintf("  • %s + %s\n\n", compoundParts[0].Word, compoundParts[1].Word))
+		}
+
 		if len(res.Examples) > 0 {
 			detailBuilder.WriteString(boldStyle.Render("Examples:") + "\n")
 			for _, ex := range res.Examples {
 				highlightedEx := highlightQuery(ex, m.dictionarySearch, dictHighlightStyle)
 				detailBuilder.WriteString("  • " + highlightedEx + "\n")
+			}
+		}
+
+		if len(m.dictionaryRelatedEntries) > 0 {
+			if len(res.Examples) > 0 || res.Forms != "" || res.Translation != "" {
+				detailBuilder.WriteString("\n")
+			}
+			detailBuilder.WriteString(boldStyle.Render("Related Words:") + "\n")
+			for i, related := range m.dictionaryRelatedEntries {
+				lineY := strings.Count(detailBuilder.String(), "\n")
+				line := "  • " + related.Word
+				if related.Gender != "" {
+					line += " {" + related.Gender + "}"
+				}
+				if related.Translation != "" {
+					line += " - " + related.Translation
+				}
+				detailBuilder.WriteString(line + "\n")
+
+				// Register hitbox if visible
+				maxRows := dictionaryVisibleRows(layout)
+				if lineY >= m.dictionaryDetailScroll && lineY < m.dictionaryDetailScroll+maxRows {
+					screenY := layout.Y + strings.Count(b.String(), "\n") + (lineY - m.dictionaryDetailScroll)
+					relEntry := related
+					m.hitboxes = append(m.hitboxes, Hitbox{
+						ID:     fmt.Sprintf("dict-related-sc-%d", i),
+						View:   ViewDictionary,
+						X:      layout.X,
+						Y:      screenY,
+						Width:  lipgloss.Width(line),
+						Height: 1,
+						Action: func() tea.Cmd {
+							m.dictionarySearch = relEntry.Word
+							return m.searchDictionary()
+						},
+					})
+				}
 			}
 		}
 
@@ -476,12 +585,53 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 				detailBuilder.WriteString("  " + highlightedForms + "\n\n")
 			}
 
+			if compoundParts := content.DecomposeCompound(res.Word, nil); len(compoundParts) == 2 {
+				detailBuilder.WriteString(boldStyle.Render("Compound Breakdown:") + "\n")
+				detailBuilder.WriteString(fmt.Sprintf("  • %s + %s\n\n", compoundParts[0].Word, compoundParts[1].Word))
+			}
+
 			// Examples
 			if len(res.Examples) > 0 {
 				detailBuilder.WriteString(boldStyle.Render("Examples:") + "\n")
 				for _, ex := range res.Examples {
 					highlightedEx := highlightQuery(ex, m.dictionarySearch, dictHighlightStyle)
 					detailBuilder.WriteString("  • " + highlightedEx + "\n")
+				}
+			}
+
+			if len(m.dictionaryRelatedEntries) > 0 {
+				if len(res.Examples) > 0 || res.Forms != "" || res.Translation != "" {
+					detailBuilder.WriteString("\n")
+				}
+				detailBuilder.WriteString(boldStyle.Render("Related Words:") + "\n")
+				for i, related := range m.dictionaryRelatedEntries {
+					lineY := strings.Count(detailBuilder.String(), "\n")
+					line := "  • " + related.Word
+					if related.Gender != "" {
+						line += " {" + related.Gender + "}"
+					}
+					if related.Translation != "" {
+						line += " - " + related.Translation
+					}
+					detailBuilder.WriteString(line + "\n")
+
+					// Register hitbox if visible
+					if lineY >= m.dictionaryDetailScroll && lineY < m.dictionaryDetailScroll+maxResults {
+						screenY := layout.Y + listStartLine + (lineY - m.dictionaryDetailScroll)
+						relEntry := related
+						m.hitboxes = append(m.hitboxes, Hitbox{
+							ID:     fmt.Sprintf("dict-related-tc-%d", i),
+							View:   ViewDictionary,
+							X:      layout.X + listWidth + 3,
+							Y:      screenY,
+							Width:  lipgloss.Width(line),
+							Height: 1,
+							Action: func() tea.Cmd {
+								m.dictionarySearch = relEntry.Word
+								return m.searchDictionary()
+							},
+						})
+					}
 				}
 			}
 		}
@@ -762,6 +912,45 @@ func (m *Model) renderSpotlightDictionary() string {
 						Height: 1,
 						Action: func() tea.Cmd {
 							m.dictionarySearch = queryText
+							m.dictionaryResults = nil
+							m.dictionaryCursor = 0
+							m.dictionaryScroll = 0
+							m.dictionaryDetailScroll = 0
+							m.dictionaryDetailTotalLines = 0
+							m.dictionaryDetailView = false
+							return m.searchDictionary()
+						},
+					})
+				}
+			}
+
+			if len(m.dictionaryDiscoverEntries) > 0 {
+				discoverIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Render("✦")
+				b.WriteString("\n" + discoverIcon + " " + boldStyle.Render("Discover:") + "\n")
+				for i, e := range m.dictionaryDiscoverEntries {
+					lineY := strings.Count(b.String(), "\n")
+					wordStr := e.Word
+					if e.Gender != "" {
+						wordStr += " " + renderGender(e.Gender)
+					}
+					if e.Translation != "" {
+						trans := e.Translation
+						if idx := strings.Index(trans, ";"); idx > 0 {
+							trans = strings.TrimSpace(trans[:idx])
+						}
+						wordStr += " — " + mutedStyle.Render(trans)
+					}
+					b.WriteString(fmt.Sprintf("  • %s\n", wordStr))
+					entry := e
+					m.hitboxes = append(m.hitboxes, Hitbox{
+						ID:     fmt.Sprintf("dict-overlay-discover-%d", i),
+						View:   m.activeView,
+						X:      startX + 4,
+						Y:      startY + lineY + 2,
+						Width:  lipgloss.Width(wordStr),
+						Height: 1,
+						Action: func() tea.Cmd {
+							m.dictionarySearch = entry.Word
 							m.dictionaryResults = nil
 							m.dictionaryCursor = 0
 							m.dictionaryScroll = 0

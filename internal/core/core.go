@@ -185,6 +185,8 @@ type DictionaryEntry struct {
 type DictionaryRepository interface {
 	Search(ctx context.Context, query string, limit int) ([]DictionaryEntry, error)
 	GetEntry(ctx context.Context, id string) (DictionaryEntry, error)
+	FindRelatedEntries(ctx context.Context, word string, limit int) ([]DictionaryEntry, error)
+	RandomEntries(ctx context.Context, limit int) ([]DictionaryEntry, error)
 	ImportEntries(ctx context.Context, entries []DictionaryEntry) error
 	DictionaryCount(ctx context.Context) (int, error)
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"regexp"
 	"strings"
 	"time"
@@ -17,6 +19,14 @@ import (
 type dictionarySearchResultsMsg struct {
 	id      int
 	results []core.DictionaryEntry
+}
+
+type dictRelatedEntriesMsg struct {
+	entries []core.DictionaryEntry
+}
+
+type dictDiscoverEntriesMsg struct {
+	entries []core.DictionaryEntry
 }
 
 func (m *Model) searchDictionary() tea.Cmd {
@@ -69,6 +79,41 @@ func (m *Model) searchDictionary() tea.Cmd {
 	}
 }
 
+func (m *Model) findRelatedEntries(word string) tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+
+		dictRepo, ok := m.repo.(core.DictionaryRepository)
+		if !ok {
+			return nil
+		}
+
+		entries, err := dictRepo.FindRelatedEntries(ctx, word, 5)
+		if err != nil {
+			return nil
+		}
+		return dictRelatedEntriesMsg{entries: entries}
+	}
+}
+
+func (m *Model) loadDictionaryDiscoverEntries() tea.Cmd {
+	return func() tea.Msg {
+		dictRepo, ok := m.repo.(core.DictionaryRepository)
+		if !ok {
+			return nil
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+
+		entries, err := dictRepo.RandomEntries(ctx, 5)
+		if err != nil {
+			return nil
+		}
+		return dictDiscoverEntriesMsg{entries: entries}
+	}
+}
+
 var (
 	htmlTagRegex  = regexp.MustCompile(`<[^>]+>`)
 	clozeTagRegex = regexp.MustCompile(`\{\{c\d+::([^:}]+)(?:::[^}]*)?\}\}`)
@@ -106,56 +151,52 @@ func cleanLookupQuery(raw string) string {
 }
 
 func formatDictionaryCardFront(word, gender string) string {
-	w := strings.TrimSpace(word)
-	lower := strings.ToLower(w)
-	if strings.HasPrefix(lower, "der ") || strings.HasPrefix(lower, "die ") || strings.HasPrefix(lower, "das ") {
-		return w
+	return content.FormatDictionaryCardFront(word, gender)
+}
+
+func (m *Model) dictionaryTargetDeck() (deckID, deckName string) {
+	deckID = "dictionary"
+	deckName = "Dictionary"
+	if m.dictionaryTargetDeckID != "" {
+		deckID = m.dictionaryTargetDeckID
+		for _, d := range m.decks {
+			if d.ID == deckID {
+				deckName = d.Name
+				break
+			}
+		}
+		if deckID == "dictionary" {
+			deckName = "Dictionary"
+		}
+		return deckID, deckName
 	}
-	switch strings.ToLower(strings.TrimSpace(gender)) {
-	case "m", "masc", "der":
-		return "der " + w
-	case "f", "fem", "die":
-		return "die " + w
-	case "n", "neut", "das":
-		return "das " + w
-	case "pl", "plural":
-		return "die " + w + " (pl.)"
+	if m.deck.ID != "" && m.deck.ID != "all" {
+		return m.deck.ID, m.deck.Name
 	}
-	return w
+	return deckID, deckName
+}
+
+func (m *Model) ensureDictionaryTargetDeck(ctx context.Context) (core.Deck, error) {
+	deckID, deckName := m.dictionaryTargetDeck()
+	deck, err := m.repo.GetDeck(ctx, deckID)
+	if err != nil {
+		deck = core.Deck{ID: deckID, Name: deckName}
+		if err := m.repo.UpsertDeck(ctx, deck); err != nil {
+			return core.Deck{}, err
+		}
+	}
+	return deck, nil
 }
 
 func (m *Model) addDictionaryEntryCmd(entry core.DictionaryEntry) tea.Cmd {
 	return tea.Batch(
 		func() tea.Msg {
 			ctx := context.Background()
-
-			// 1. Ensure target deck exists
-			deckID := "dictionary"
-			deckName := "Dictionary"
-			if m.dictionaryTargetDeckID != "" {
-				deckID = m.dictionaryTargetDeckID
-				for _, d := range m.decks {
-					if d.ID == deckID {
-						deckName = d.Name
-						break
-					}
-				}
-			} else if m.deck.ID != "" && m.deck.ID != "all" {
-				deckID = m.deck.ID
-				deckName = m.deck.Name
-			}
-			deck, err := m.repo.GetDeck(ctx, deckID)
+			deck, err := m.ensureDictionaryTargetDeck(ctx)
 			if err != nil {
-				deck = core.Deck{
-					ID:   deckID,
-					Name: deckName,
-				}
-				if err := m.repo.UpsertDeck(ctx, deck); err != nil {
-					return err
-				}
+				return err
 			}
 
-			// 2. Create note
 			noteID := "dict-" + entry.ID
 			if entry.ID == "" {
 				noteID = fmt.Sprintf("dict-%d", time.Now().UnixNano())
@@ -163,28 +204,25 @@ func (m *Model) addDictionaryEntryCmd(entry core.DictionaryEntry) tea.Cmd {
 
 			frontText := formatDictionaryCardFront(entry.Word, entry.Gender)
 
-			extraParts := []string{}
-			if entry.Forms != "" {
-				extraParts = append(extraParts, "Forms: "+entry.Forms)
+			// Check for duplicates
+			if m.dictionaryLastAddAttemptNoteID != noteID {
+				if _, err := m.repo.GetNote(ctx, noteID); err == nil {
+					m.dictionaryLastAddAttemptNoteID = noteID
+					return statusMsg{text: fmt.Sprintf("'%s' already in %s deck (use a/ctrl+a again to update)", frontText, deck.Name)}
+				}
 			}
-			if entry.WordClass != "" {
-				extraParts = append(extraParts, "Class: ["+strings.ToUpper(entry.WordClass)+"]")
-			}
-			if entry.Gender != "" {
-				extraParts = append(extraParts, "Gender: {"+entry.Gender+"}")
-			}
-			if len(entry.Examples) > 0 {
-				extraParts = append(extraParts, "Examples:\n• "+strings.Join(entry.Examples, "\n• "))
-			}
+			m.dictionaryLastAddAttemptNoteID = ""
 
+			tags := append([]string(nil), entry.Tags...)
+			tags = append(tags, "dictionary")
 			note := core.Note{
 				ID:     noteID,
-				DeckID: deckID,
+				DeckID: deck.ID,
 				Type:   "flashcard",
 				Front:  frontText,
 				Back:   entry.Translation,
-				Extra:  strings.Join(extraParts, "\n"),
-				Tags:   append(entry.Tags, "dictionary"),
+				Extra:  content.DictionaryEntryExtra(entry),
+				Tags:   tags,
 			}
 			note.Cards = content.CardsForNote(note)
 
@@ -193,6 +231,65 @@ func (m *Model) addDictionaryEntryCmd(entry core.DictionaryEntry) tea.Cmd {
 			}
 
 			return statusMsg{text: fmt.Sprintf("Added '%s' to %s deck", frontText, deck.Name)}
+		},
+		m.loadDecks,
+		m.loadDueCards,
+	)
+}
+
+// addDictionaryReverseEntryCmd creates an EN→DE production flashcard
+// (English translation on the front, German headword on the back).
+func (m *Model) addDictionaryReverseEntryCmd(entry core.DictionaryEntry) tea.Cmd {
+	return tea.Batch(
+		func() tea.Msg {
+			ctx := context.Background()
+			deck, err := m.ensureDictionaryTargetDeck(ctx)
+			if err != nil {
+				return err
+			}
+
+			noteID := "dict-rev-" + entry.ID
+			if entry.ID == "" {
+				noteID = fmt.Sprintf("dict-rev-%d", time.Now().UnixNano())
+			}
+
+			backText := formatDictionaryCardFront(entry.Word, entry.Gender)
+			frontText := strings.TrimSpace(entry.Translation)
+			if frontText == "" {
+				return statusMsg{text: "Cannot create reverse card without a translation"}
+			}
+			// Prefer the first sense when multiple translations are semicolon-separated.
+			if parts := strings.Split(frontText, ";"); len(parts) > 0 {
+				frontText = strings.TrimSpace(parts[0])
+			}
+
+			// Check for duplicates
+			if m.dictionaryLastAddAttemptNoteID != noteID {
+				if _, err := m.repo.GetNote(ctx, noteID); err == nil {
+					m.dictionaryLastAddAttemptNoteID = noteID
+					return statusMsg{text: fmt.Sprintf("'%s' already in %s deck (use r/ctrl+r again to update)", frontText, deck.Name)}
+				}
+			}
+			m.dictionaryLastAddAttemptNoteID = ""
+
+			tags := append([]string(nil), entry.Tags...)
+			tags = append(tags, "dictionary", "reverse")
+			note := core.Note{
+				ID:     noteID,
+				DeckID: deck.ID,
+				Type:   "flashcard",
+				Front:  frontText,
+				Back:   backText,
+				Extra:  content.DictionaryEntryExtra(entry),
+				Tags:   tags,
+			}
+			note.Cards = content.CardsForNote(note)
+
+			if err := m.repo.UpsertNote(ctx, note); err != nil {
+				return err
+			}
+
+			return statusMsg{text: fmt.Sprintf("Added reverse '%s → %s' to %s deck", frontText, backText, deck.Name)}
 		},
 		m.loadDecks,
 		m.loadDueCards,
@@ -308,6 +405,9 @@ func (m *Model) openDictionaryOverlayWithQuery(query string) tea.Cmd {
 		return m.searchDictionary()
 	}
 	m.status = "Spotlight dictionary open"
+	if len(m.dictionaryDiscoverEntries) == 0 {
+		return m.loadDictionaryDiscoverEntries()
+	}
 	return nil
 }
 
@@ -356,22 +456,37 @@ func (m *Model) lookupCramCardInDictionary() tea.Cmd {
 	return m.openDictionaryOverlayWithQuery(card.Prompt)
 }
 
+func isLangFilterTerm(term string) bool {
+	lower := strings.ToLower(term)
+	return lower == ":de" || lower == ":en" || lower == "lang:de" || lower == "lang:en" ||
+		strings.HasPrefix(lower, "de:") || strings.HasPrefix(lower, "en:")
+}
+
 func isFilterActive(query, tag string) bool {
 	if tag == "" {
 		filterTags := map[string]bool{
 			":verb": true, ":v": true, ":noun": true, ":adj": true, ":adv": true,
 			":m": true, ":f": true, ":n": true, ":pl": true,
 			":starred": true, ":star": true, ":fav": true, ":favorite": true,
+			":de": true, ":en": true, "lang:de": true, "lang:en": true,
 		}
 		for _, t := range strings.Fields(query) {
-			if filterTags[strings.ToLower(t)] {
+			lower := strings.ToLower(t)
+			if filterTags[lower] || strings.HasPrefix(lower, "de:") || strings.HasPrefix(lower, "en:") {
 				return false
 			}
 		}
 		return true
 	}
+	tagLower := strings.ToLower(tag)
 	for _, t := range strings.Fields(query) {
-		if strings.EqualFold(t, tag) {
+		lower := strings.ToLower(t)
+		if lower == tagLower {
+			return true
+		}
+		// Treat bare "de:" / "en:" language pills as active for any de:/en: scoped term.
+		if (tagLower == "de:" && (lower == ":de" || lower == "lang:de" || strings.HasPrefix(lower, "de:"))) ||
+			(tagLower == "en:" && (lower == ":en" || lower == "lang:en" || strings.HasPrefix(lower, "en:"))) {
 			return true
 		}
 	}
@@ -382,12 +497,33 @@ func toggleFilterTag(query, tag string) string {
 	terms := strings.Fields(query)
 	found := false
 	var newTerms []string
+	tagLower := strings.ToLower(tag)
+	langToggle := tagLower == "de:" || tagLower == "en:" || tagLower == ":de" || tagLower == ":en"
+
 	for _, t := range terms {
-		if strings.EqualFold(t, tag) {
+		lower := strings.ToLower(t)
+		if lower == tagLower {
 			found = true
-		} else {
-			newTerms = append(newTerms, t)
+			continue
 		}
+		// Language pills are mutually exclusive — drop the other side when switching.
+		if langToggle && isLangFilterTerm(t) {
+			if (tagLower == "de:" || tagLower == ":de") && (lower == ":de" || lower == "lang:de" || strings.HasPrefix(lower, "de:")) {
+				found = true
+				continue
+			}
+			if (tagLower == "en:" || tagLower == ":en") && (lower == ":en" || lower == "lang:en" || strings.HasPrefix(lower, "en:")) {
+				found = true
+				continue
+			}
+			if (tagLower == "de:" || tagLower == ":de") && (lower == ":en" || lower == "lang:en" || strings.HasPrefix(lower, "en:")) {
+				continue
+			}
+			if (tagLower == "en:" || tagLower == ":en") && (lower == ":de" || lower == "lang:de" || strings.HasPrefix(lower, "de:")) {
+				continue
+			}
+		}
+		newTerms = append(newTerms, t)
 	}
 	if !found && tag != "" {
 		newTerms = append(newTerms, tag)
@@ -503,29 +639,9 @@ func (m *Model) addDictionaryEntriesBatchCmd(entries []core.DictionaryEntry) tea
 	return tea.Batch(
 		func() tea.Msg {
 			ctx := context.Background()
-			deckID := "dictionary"
-			deckName := "Dictionary"
-			if m.dictionaryTargetDeckID != "" {
-				deckID = m.dictionaryTargetDeckID
-				for _, d := range m.decks {
-					if d.ID == deckID {
-						deckName = d.Name
-						break
-					}
-				}
-			} else if m.deck.ID != "" && m.deck.ID != "all" {
-				deckID = m.deck.ID
-				deckName = m.deck.Name
-			}
-			deck, err := m.repo.GetDeck(ctx, deckID)
+			deck, err := m.ensureDictionaryTargetDeck(ctx)
 			if err != nil {
-				deck = core.Deck{
-					ID:   deckID,
-					Name: deckName,
-				}
-				if err := m.repo.UpsertDeck(ctx, deck); err != nil {
-					return err
-				}
+				return err
 			}
 
 			count := 0
@@ -534,29 +650,16 @@ func (m *Model) addDictionaryEntriesBatchCmd(entries []core.DictionaryEntry) tea
 				if entry.ID == "" {
 					noteID = fmt.Sprintf("dict-%d-%d", time.Now().UnixNano(), count)
 				}
-				frontText := formatDictionaryCardFront(entry.Word, entry.Gender)
-				extraParts := []string{}
-				if entry.Forms != "" {
-					extraParts = append(extraParts, "Forms: "+entry.Forms)
-				}
-				if entry.WordClass != "" {
-					extraParts = append(extraParts, "Class: ["+strings.ToUpper(entry.WordClass)+"]")
-				}
-				if entry.Gender != "" {
-					extraParts = append(extraParts, "Gender: {"+entry.Gender+"}")
-				}
-				if len(entry.Examples) > 0 {
-					extraParts = append(extraParts, "Examples:\n• "+strings.Join(entry.Examples, "\n• "))
-				}
-
+				tags := append([]string(nil), entry.Tags...)
+				tags = append(tags, "dictionary")
 				note := core.Note{
 					ID:     noteID,
-					DeckID: deckID,
+					DeckID: deck.ID,
 					Type:   "flashcard",
-					Front:  frontText,
+					Front:  formatDictionaryCardFront(entry.Word, entry.Gender),
 					Back:   entry.Translation,
-					Extra:  strings.Join(extraParts, "\n"),
-					Tags:   append(entry.Tags, "dictionary"),
+					Extra:  content.DictionaryEntryExtra(entry),
+					Tags:   tags,
 				}
 				note.Cards = content.CardsForNote(note)
 				if err := m.repo.UpsertNote(ctx, note); err == nil {
@@ -564,7 +667,7 @@ func (m *Model) addDictionaryEntriesBatchCmd(entries []core.DictionaryEntry) tea
 				}
 			}
 
-			return statusMsg{text: fmt.Sprintf("Added %d entries to %s deck", count, deckName)}
+			return statusMsg{text: fmt.Sprintf("Added %d entries to %s deck", count, deck.Name)}
 		},
 		m.loadDecks,
 		m.loadDueCards,
@@ -601,30 +704,9 @@ func (m *Model) addDictionaryClozeEntryCmd(entry core.DictionaryEntry) tea.Cmd {
 	return tea.Batch(
 		func() tea.Msg {
 			ctx := context.Background()
-
-			deckID := "dictionary"
-			deckName := "Dictionary"
-			if m.dictionaryTargetDeckID != "" {
-				deckID = m.dictionaryTargetDeckID
-				for _, d := range m.decks {
-					if d.ID == deckID {
-						deckName = d.Name
-						break
-					}
-				}
-			} else if m.deck.ID != "" && m.deck.ID != "all" {
-				deckID = m.deck.ID
-				deckName = m.deck.Name
-			}
-			deck, err := m.repo.GetDeck(ctx, deckID)
+			deck, err := m.ensureDictionaryTargetDeck(ctx)
 			if err != nil {
-				deck = core.Deck{
-					ID:   deckID,
-					Name: deckName,
-				}
-				if err := m.repo.UpsertDeck(ctx, deck); err != nil {
-					return err
-				}
+				return err
 			}
 
 			noteID := "dict-cloze-" + entry.ID
@@ -649,28 +731,25 @@ func (m *Model) addDictionaryClozeEntryCmd(entry core.DictionaryEntry) tea.Cmd {
 				frontText = fmt.Sprintf("Das deutsche Wort für '%s' ist {{c1::%s}}.", entry.Translation, formatDictionaryCardFront(entry.Word, entry.Gender))
 			}
 
-			extraParts := []string{}
-			if entry.Forms != "" {
-				extraParts = append(extraParts, "Forms: "+entry.Forms)
+			// Check for duplicates
+			if m.dictionaryLastAddAttemptNoteID != noteID {
+				if _, err := m.repo.GetNote(ctx, noteID); err == nil {
+					m.dictionaryLastAddAttemptNoteID = noteID
+					return statusMsg{text: fmt.Sprintf("'%s' already in %s deck (use c/ctrl+c again to update)", wordClean, deck.Name)}
+				}
 			}
-			if entry.WordClass != "" {
-				extraParts = append(extraParts, "Class: ["+strings.ToUpper(entry.WordClass)+"]")
-			}
-			if entry.Gender != "" {
-				extraParts = append(extraParts, "Gender: {"+entry.Gender+"}")
-			}
-			if len(entry.Examples) > 0 {
-				extraParts = append(extraParts, "Examples:\n• "+strings.Join(entry.Examples, "\n• "))
-			}
+			m.dictionaryLastAddAttemptNoteID = ""
 
+			tags := append([]string(nil), entry.Tags...)
+			tags = append(tags, "dictionary", "cloze")
 			note := core.Note{
 				ID:     noteID,
-				DeckID: deckID,
+				DeckID: deck.ID,
 				Type:   "cloze",
 				Front:  frontText,
 				Back:   entry.Translation,
-				Extra:  strings.Join(extraParts, "\n"),
-				Tags:   append(entry.Tags, "dictionary", "cloze"),
+				Extra:  content.DictionaryEntryExtra(entry),
+				Tags:   tags,
 			}
 			note.Cards = content.CardsForNote(note)
 
@@ -683,4 +762,39 @@ func (m *Model) addDictionaryClozeEntryCmd(entry core.DictionaryEntry) tea.Cmd {
 		m.loadDecks,
 		m.loadDueCards,
 	)
+}
+
+func (m *Model) exportDictionaryResultsTSVCmd() tea.Cmd {
+	entries := m.dictionaryResults
+	if len(entries) == 0 {
+		m.status = "No dictionary entries to export"
+		return nil
+	}
+	starred := isFilterActive(m.dictionarySearch, ":starred") || isFilterActive(m.dictionarySearch, ":star")
+	deckID, _ := m.dictionaryTargetDeck()
+	return func() tea.Msg {
+		dir := "exports"
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return fmt.Errorf("create export dir: %w", err)
+		}
+		prefix := "dictionary_export"
+		if starred {
+			prefix = "dictionary_starred"
+		}
+		filename := fmt.Sprintf("%s_%s.tsv", prefix, time.Now().Format("20060102_150405"))
+		exportPath := filepath.Join(dir, filename)
+
+		notes := content.DictionaryEntriesToNotes(entries, deckID)
+		file, err := os.Create(exportPath)
+		if err != nil {
+			return fmt.Errorf("create export file: %w", err)
+		}
+		defer file.Close()
+
+		if err := content.ExportAnkiTSV(file, notes); err != nil {
+			return fmt.Errorf("export TSV: %w", err)
+		}
+
+		return statusMsg{text: fmt.Sprintf("Exported %d dictionary entries to %s", len(notes), exportPath)}
+	}
 }

@@ -238,3 +238,48 @@ func TestDictionarySearchWildcardAndLanguagePrefix(t *testing.T) {
 		t.Errorf("expected 2 results for 'en:walk', got %d", len(resEn))
 	}
 }
+
+func TestFindRelatedEntries(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	entries := []core.DictionaryEntry{
+		{ID: "1", Word: "Haus", Translation: "house"},
+		{ID: "2", Word: "das Haus", Translation: "house (with article)"},
+		{ID: "3", Word: "Haustier", Translation: "pet"},
+		{ID: "4", Word: "Krankenhaus", Translation: "hospital"},
+		{ID: "5", Word: "Auto", Translation: "car"},
+	}
+
+	if err := store.ImportEntries(ctx, entries); err != nil {
+		t.Fatalf("import entries: %v", err)
+	}
+
+	res, err := store.FindRelatedEntries(ctx, "das Haus", 10)
+	if err != nil {
+		t.Fatalf("FindRelatedEntries failed: %v", err)
+	}
+
+	// Should not include "das Haus" itself.
+	// But it might include "Haus" if "das Haus" is treated as the original word.
+	// Actually, the implementation excludes the exact `word` parameter.
+	if len(res) != 3 {
+		t.Errorf("expected 3 related entries, got %d", len(res))
+	}
+
+	expected := map[string]bool{
+		"Haus":        true,
+		"Haustier":    true,
+		"Krankenhaus": true,
+	}
+
+	for _, e := range res {
+		if !expected[e.Word] {
+			t.Errorf("unexpected related entry: %s", e.Word)
+		}
+	}
+}

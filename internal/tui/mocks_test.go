@@ -379,7 +379,7 @@ func (m *mockRepo) GetNote(ctx context.Context, noteID string) (core.Note, error
 			}, nil
 		}
 	}
-	return core.Note{ID: noteID}, nil
+	return core.Note{}, context.Canceled
 }
 
 func (m *mockRepo) UpsertNote(ctx context.Context, note core.Note) error {
@@ -422,6 +422,25 @@ type mockScheduler struct{}
 
 func (m *mockScheduler) Review(state core.ReviewState, grade core.ReviewGrade, now time.Time) (core.ReviewState, error) {
 	return state, nil
+}
+
+func (m *mockRepo) Search(ctx context.Context, query string, limit int) ([]core.DictionaryEntry, error) {
+	return nil, nil
+}
+func (m *mockRepo) GetEntry(ctx context.Context, id string) (core.DictionaryEntry, error) {
+	return core.DictionaryEntry{}, nil
+}
+func (m *mockRepo) FindRelatedEntries(ctx context.Context, word string, limit int) ([]core.DictionaryEntry, error) {
+	return nil, nil
+}
+func (m *mockRepo) ImportEntries(ctx context.Context, entries []core.DictionaryEntry) error {
+	return nil
+}
+func (m *mockRepo) DictionaryCount(ctx context.Context) (int, error) {
+	return 0, nil
+}
+func (m *mockRepo) RandomEntries(ctx context.Context, limit int) ([]core.DictionaryEntry, error) {
+	return nil, nil
 }
 
 func (m *mockScheduler) Predict(state core.ReviewState, now time.Time) map[core.ReviewGrade]time.Duration {
