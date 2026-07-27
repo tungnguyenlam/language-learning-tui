@@ -1,5 +1,16 @@
 # Done Backlog
 
+## 2026-07-27 (Dictionary Continuity & Safe Batch Add)
+
+### Dictionary UX & Safety
+- **Persistent Recent Lookups:** Recently inspected dictionary entries now persist in local SQLite-backed settings and are restored when the app starts, keeping the learner's lookup trail available across sessions.
+- **Persistent Mouse History Clearing:** Clicking the Dictionary view's `[Clear]` recent-search action now writes the empty state to settings, matching the `ctrl+x` behavior.
+- **Duplicate-Safe Batch Add:** `ctrl+s` skips dictionary cards that already exist instead of silently overwriting them. Its status line separately reports added, skipped, and failed entries.
+
+### Verification
+- Added regression coverage for restored recent lookups, persistent mouse clearing, and duplicate-safe batch add.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dictionary import, smoke test, binary build, and core E2E suite.
+
 ## 2026-07-27 (Relative Clauses Trainer & Practice Hub Shortcuts Polish)
 
 ### Features & Grammar Content

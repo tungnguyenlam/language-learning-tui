@@ -381,6 +381,30 @@ func (m *Model) loadDictionaryHistory() tea.Cmd {
 	}
 }
 
+func (m *Model) saveDictionaryRecentlyViewed() {
+	data, err := json.Marshal(m.dictionaryRecentlyViewed)
+	if err == nil {
+		_ = m.repo.SetSetting(context.Background(), "dict_recently_viewed", string(data))
+	}
+}
+
+func (m *Model) loadDictionaryRecentlyViewed() tea.Cmd {
+	return func() tea.Msg {
+		raw, err := m.repo.GetSetting(context.Background(), "dict_recently_viewed")
+		if err != nil || raw == "" {
+			return dictRecentlyViewedLoadedMsg{}
+		}
+		var entries []core.DictionaryEntry
+		if err := json.Unmarshal([]byte(raw), &entries); err != nil {
+			return dictRecentlyViewedLoadedMsg{}
+		}
+		if len(entries) > 10 {
+			entries = entries[:10]
+		}
+		return dictRecentlyViewedLoadedMsg(entries)
+	}
+}
+
 func (m *Model) resetDictionarySearchState() {
 	m.dictionarySearch = ""
 	m.dictionaryResults = nil
@@ -644,11 +668,17 @@ func (m *Model) addDictionaryEntriesBatchCmd(entries []core.DictionaryEntry) tea
 				return err
 			}
 
-			count := 0
+			added, skipped, failed := 0, 0, 0
 			for _, entry := range entries {
 				noteID := "dict-" + entry.ID
 				if entry.ID == "" {
-					noteID = fmt.Sprintf("dict-%d-%d", time.Now().UnixNano(), count)
+					noteID = fmt.Sprintf("dict-%d-%d", time.Now().UnixNano(), added)
+				}
+				if entry.ID != "" {
+					if _, err := m.repo.GetNote(ctx, noteID); err == nil {
+						skipped++
+						continue
+					}
 				}
 				tags := append([]string(nil), entry.Tags...)
 				tags = append(tags, "dictionary")
@@ -663,11 +693,20 @@ func (m *Model) addDictionaryEntriesBatchCmd(entries []core.DictionaryEntry) tea
 				}
 				note.Cards = content.CardsForNote(note)
 				if err := m.repo.UpsertNote(ctx, note); err == nil {
-					count++
+					added++
+				} else {
+					failed++
 				}
 			}
 
-			return statusMsg{text: fmt.Sprintf("Added %d entries to %s deck", count, deck.Name)}
+			status := fmt.Sprintf("Added %d entries to %s deck", added, deck.Name)
+			if skipped > 0 {
+				status += fmt.Sprintf("; skipped %d already added", skipped)
+			}
+			if failed > 0 {
+				status += fmt.Sprintf("; %d failed", failed)
+			}
+			return statusMsg{text: status}
 		},
 		m.loadDecks,
 		m.loadDueCards,
@@ -688,6 +727,7 @@ func (m *Model) recordDictionaryView(entry core.DictionaryEntry) {
 	if len(m.dictionaryRecentlyViewed) > 10 {
 		m.dictionaryRecentlyViewed = m.dictionaryRecentlyViewed[:10]
 	}
+	m.saveDictionaryRecentlyViewed()
 }
 
 func stripWordArticle(word string) string {

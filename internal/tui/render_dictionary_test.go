@@ -193,11 +193,24 @@ func TestDictionarySearchResultsStatus(t *testing.T) {
 type captureRepo struct {
 	mockRepo
 	upsertedNote *core.Note
+	notes        map[string]core.Note
 }
 
 func (r *captureRepo) UpsertNote(ctx context.Context, note core.Note) error {
 	r.upsertedNote = &note
+	if r.notes == nil {
+		r.notes = make(map[string]core.Note)
+	}
+	r.notes[note.ID] = note
 	return nil
+}
+
+func (r *captureRepo) GetNote(ctx context.Context, noteID string) (core.Note, error) {
+	note, ok := r.notes[noteID]
+	if !ok {
+		return core.Note{}, context.Canceled
+	}
+	return note, nil
 }
 
 func (r *captureRepo) UpsertDeck(ctx context.Context, deck core.Deck) error {
@@ -417,7 +430,8 @@ func TestDictionarySingleColumnDetailView(t *testing.T) {
 }
 
 func TestDictionaryClearSearchHistory(t *testing.T) {
-	m := NewModel(&mockRepo{}, &mockScheduler{})
+	repo := &mockRepo{}
+	m := NewModel(repo, &mockScheduler{})
 	m.activeView = ViewDictionary
 	m.width = 100
 	m.height = 40
@@ -445,6 +459,9 @@ func TestDictionaryClearSearchHistory(t *testing.T) {
 
 	if len(m.dictionarySearchHistory) != 0 {
 		t.Errorf("expected search history to be cleared, got %v", m.dictionarySearchHistory)
+	}
+	if saved, _ := repo.GetSetting(context.Background(), "dict_search_history"); saved != "null" {
+		t.Errorf("expected click clear to persist an empty history, got %q", saved)
 	}
 
 	// Re-populate and test via ctrl+x keypress
@@ -1023,7 +1040,7 @@ func TestDictionaryTargetDeckCyclingAndBatchAdd(t *testing.T) {
 	for _, msg := range batchMsgs {
 		if s, ok := msg.(statusMsg); ok {
 			foundBatchStatus = true
-			if !strings.Contains(s.text, "Added 1 entries to German A1 deck") {
+			if !strings.Contains(s.text, "Added 0 entries to German A1 deck; skipped 1 already added") {
 				t.Fatalf("unexpected batch status: %q", s.text)
 			}
 		}
@@ -1080,7 +1097,8 @@ func TestDictionaryClozeCardGeneration(t *testing.T) {
 }
 
 func TestDictionaryRecentlyViewedAndDomainTags(t *testing.T) {
-	m := NewModel(&mockRepo{}, &mockScheduler{})
+	repo := &mockRepo{}
+	m := NewModel(repo, &mockScheduler{})
 	m.activeView = ViewDictionary
 	m.width = 100
 	m.height = 40
@@ -1093,6 +1111,14 @@ func TestDictionaryRecentlyViewedAndDomainTags(t *testing.T) {
 
 	if len(m.dictionaryRecentlyViewed) != 2 || m.dictionaryRecentlyViewed[0].Word != "Anapher" {
 		t.Fatalf("unexpected recently viewed stack: %v", m.dictionaryRecentlyViewed)
+	}
+
+	// Recent words are part of the learner's lookup workflow and survive a restart.
+	m2 := NewModel(repo, &mockScheduler{})
+	msg := m2.loadDictionaryRecentlyViewed()()
+	loaded, ok := msg.(dictRecentlyViewedLoadedMsg)
+	if !ok || len(loaded) != 2 || loaded[0].Word != "Anapher" {
+		t.Fatalf("unexpected persisted recently viewed entries: %v", msg)
 	}
 
 	// 1. Verify Recently Inspected Words section rendered on empty search

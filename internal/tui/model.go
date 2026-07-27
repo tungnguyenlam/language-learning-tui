@@ -553,11 +553,12 @@ type debounceSearchMsg struct {
 type deckDeletedMsg struct{}
 
 type dictHistoryLoadedMsg []string
+type dictRecentlyViewedLoadedMsg []core.DictionaryEntry
 type deckHistoryLoadedMsg []string
 type dictStarredLoadedMsg map[string]bool
 
 func (m *Model) Init() tea.Cmd {
-	return tea.Sequence(m.loadDueCards, m.loadDecks, m.loadStatistics(), m.loadReviewsPerDay(), m.loadRecentDecks(), m.loadDictionaryHistory(), m.loadDeckHistory(), m.loadDictionaryStarred())
+	return tea.Sequence(m.loadDueCards, m.loadDecks, m.loadStatistics(), m.loadReviewsPerDay(), m.loadRecentDecks(), m.loadDictionaryHistory(), m.loadDictionaryRecentlyViewed(), m.loadDeckHistory(), m.loadDictionaryStarred())
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -609,6 +610,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	case dictHistoryLoadedMsg:
 		m.dictionarySearchHistory = msg
+	case dictRecentlyViewedLoadedMsg:
+		m.dictionaryRecentlyViewed = msg
 	case dictRelatedEntriesMsg:
 		m.dictionaryRelatedEntries = msg.entries
 		return m, nil

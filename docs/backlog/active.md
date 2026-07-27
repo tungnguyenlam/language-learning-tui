@@ -16,6 +16,8 @@ None active.
 
 ## Completed Work
 
+- [x] **Dictionary Continuity & Safe Batch Add:** Persisted the "Recently Inspected Words" stack in local settings and restored it at startup; made the mouse `[Clear]` recent-search control persist its clearing action; changed `ctrl+s` dictionary batch-add to skip existing notes rather than rewriting them (with accurate added/skipped/failed feedback). Added regression coverage for persisted recent words, persistent mouse clearing, and duplicate-safe batch add.
+
 - [x] **Cram Review Mouse Hitboxes:** Registered interactive mouse hitboxes `cram-grade-again`, `cram-grade-hard`, `cram-grade-good`, and `cram-grade-easy` in `render_cram.go` when `m.cramRevealed` is true. Added `TestCramGradeHitboxes`.
 - [x] **Gender Trainer Options Hitbox Alignment:** Fixed `gender-opt-der`, `gender-opt-die`, and `gender-opt-das` mouse hitbox Y coordinates (`layout.Y + 8`) in `render_gender_trainer.go` to align with rendered option buttons. Added `TestGenderTrainerOptionsHitboxYOffset`.
 - [x] **AnkiWeb Shared Deck Search Hitboxes:** Registered `ankiweb-result-` hitboxes on search result rows in `screen_ankiweb.go` so clicking any deck in the public library selects it and loads its details. Added `TestAnkiWebSearchResultHitboxes`.
@@ -114,6 +116,8 @@ None active.
   the real `1-9` trainer keys.
 
 ## Verification
+
+- `./scripts/verify.sh` passed on 2026-07-27: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite.
 
 - `./scripts/verify.sh` passed: gofmt, all Go unit tests, `go vet`, smoke test,
   binary build, and the E2E suite (353 tests, including the two new
