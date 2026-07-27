@@ -769,12 +769,12 @@ func (m *Model) renderSpotlightDictionary() string {
 		boxWidth = 30
 	}
 
-	boxHeight := 16
-	if m.height < 22 {
+	boxHeight := 18
+	if m.height < 24 {
 		boxHeight = m.height - 6
 	}
-	if boxHeight < 8 {
-		boxHeight = 8
+	if boxHeight < 10 {
+		boxHeight = 10
 	}
 
 	startX := (m.width - boxWidth) / 2
@@ -808,7 +808,7 @@ func (m *Model) renderSpotlightDictionary() string {
 	}
 	titleStr := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("205")).Render(title)
 	closeHint := mutedStyle.Render("Press = or Esc to close")
-	b.WriteString(titleStr + "  " + closeHint + "\n\n")
+	b.WriteString(titleStr + "  " + closeHint + "\n")
 
 	searchBarWidth := boxWidth - 6
 	if searchBarWidth < 10 {
@@ -824,7 +824,7 @@ func (m *Model) renderSpotlightDictionary() string {
 	searchText := m.dictionarySearch
 	if searchText == "" {
 		searchText = mutedStyle.Render("Search German or English...")
-		b.WriteString(searchBar.Render("🔍 "+searchText) + "\n\n")
+		b.WriteString(searchBar.Render("🔍 "+searchText) + "\n")
 	} else {
 		// Clip query if it's too long for the search bar width
 		availableWidth := searchBarWidth - 8
@@ -841,7 +841,7 @@ func (m *Model) renderSpotlightDictionary() string {
 		} else {
 			clearBtn = " " + clearText
 		}
-		b.WriteString(searchBar.Render("🔍 "+displaySearch+editStyle.Render("█")+clearBtn) + "\n\n")
+		b.WriteString(searchBar.Render("🔍 "+displaySearch+editStyle.Render("█")+clearBtn) + "\n")
 
 		m.hitboxes = append(m.hitboxes, Hitbox{
 			ID:     "dict-overlay-search-clear",
@@ -857,39 +857,35 @@ func (m *Model) renderSpotlightDictionary() string {
 		})
 	}
 	overlayFilterLineY := strings.Count(b.String(), "\n")
-	b.WriteString(renderFilterPillsRow(m, startX+2, startY+overlayFilterLineY+1, m.activeView) + "\n\n")
+	b.WriteString(renderFilterPillsRow(m, startX+2, startY+overlayFilterLineY+1, m.activeView) + "\n")
 
-	usedLines := 9
-	interiorHeight := boxHeight - usedLines - 2
-	if interiorHeight < 1 {
-		interiorHeight = 1
-	}
-
+	headerLines := strings.Count(b.String(), "\n") // Header takes 5 lines (title:1, searchBar:3, filterRow:1)
 	interiorWidth := boxWidth - 4
 	if interiorWidth < 10 {
 		interiorWidth = 10
 	}
 
-	maxResults := interiorHeight - 1
+	// Calculate maximum result lines that fit cleanly before the 1-line footer
+	maxResults := boxHeight - 2 - headerLines - 1
 	if maxResults < 1 {
 		maxResults = 1
 	}
 
 	if len(m.dictionaryResults) == 0 {
 		if m.dictionarySearch != "" {
-			b.WriteString(mutedStyle.Render("No results found."))
+			b.WriteString(mutedStyle.Render("No results found.\n"))
 		} else {
-			b.WriteString(mutedStyle.Render("Type to search local dict.cc dictionary."))
+			b.WriteString(mutedStyle.Render("Type to search local dict.cc dictionary.\n"))
 			if len(m.dictionarySearchHistory) > 0 {
 				clearHistoryText := lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Render("[Clear]")
-				b.WriteString("\n\n" + boldStyle.Render("Recent Searches:") + "  " + clearHistoryText + " " + mutedStyle.Render("(ctrl+x)") + "\n")
+				b.WriteString(boldStyle.Render("Recent Searches:") + "  " + clearHistoryText + " " + mutedStyle.Render("(ctrl+x)") + "\n")
 
 				clearHistoryLineY := strings.Count(b.String(), "\n") - 1
 				m.hitboxes = append(m.hitboxes, Hitbox{
 					ID:     "dict-overlay-history-clear",
 					View:   m.activeView,
 					X:      startX + 20,
-					Y:      startY + clearHistoryLineY + 2,
+					Y:      startY + clearHistoryLineY + 1,
 					Width:  7,
 					Height: 1,
 					Action: func() tea.Cmd {
@@ -907,7 +903,7 @@ func (m *Model) renderSpotlightDictionary() string {
 						ID:     fmt.Sprintf("dict-overlay-history-%d", i),
 						View:   m.activeView,
 						X:      startX + 4,
-						Y:      startY + lineY + 2,
+						Y:      startY + lineY + 1,
 						Width:  len([]rune(queryText)),
 						Height: 1,
 						Action: func() tea.Cmd {
@@ -926,7 +922,7 @@ func (m *Model) renderSpotlightDictionary() string {
 
 			if len(m.dictionaryDiscoverEntries) > 0 {
 				discoverIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Render("✦")
-				b.WriteString("\n" + discoverIcon + " " + boldStyle.Render("Discover:") + "\n")
+				b.WriteString(discoverIcon + " " + boldStyle.Render("Discover:") + "\n")
 				for i, e := range m.dictionaryDiscoverEntries {
 					lineY := strings.Count(b.String(), "\n")
 					wordStr := e.Word
@@ -946,7 +942,7 @@ func (m *Model) renderSpotlightDictionary() string {
 						ID:     fmt.Sprintf("dict-overlay-discover-%d", i),
 						View:   m.activeView,
 						X:      startX + 4,
-						Y:      startY + lineY + 2,
+						Y:      startY + lineY + 1,
 						Width:  lipgloss.Width(wordStr),
 						Height: 1,
 						Action: func() tea.Cmd {
@@ -1036,6 +1032,7 @@ func (m *Model) renderSpotlightDictionary() string {
 		} else if interiorWidth > 70 {
 			listWidth := maxInt(25, minInt(40, interiorWidth*4/10))
 			detailWidth := interiorWidth - listWidth - 3
+			listStartLine := strings.Count(b.String(), "\n")
 
 			var listBuilder strings.Builder
 			for i := m.dictionaryScroll; i < len(m.dictionaryResults) && i < m.dictionaryScroll+maxResults; i++ {
@@ -1071,7 +1068,7 @@ func (m *Model) renderSpotlightDictionary() string {
 					ID:     fmt.Sprintf("dict-overlay-result-%d", idx),
 					View:   m.activeView,
 					X:      startX + 2,
-					Y:      startY + usedLines + (idx - m.dictionaryScroll),
+					Y:      startY + 1 + listStartLine + (idx - m.dictionaryScroll),
 					Width:  listWidth,
 					Height: 1,
 					Action: func() tea.Cmd {
@@ -1146,6 +1143,7 @@ func (m *Model) renderSpotlightDictionary() string {
 			joined := lipgloss.JoinHorizontal(lipgloss.Top, listWithScroll, detailPanel)
 			b.WriteString(joined)
 		} else {
+			listStartLine := strings.Count(b.String(), "\n")
 			var listBuilder strings.Builder
 			for i := m.dictionaryScroll; i < len(m.dictionaryResults) && i < m.dictionaryScroll+maxResults; i++ {
 				res := m.dictionaryResults[i]
@@ -1172,7 +1170,7 @@ func (m *Model) renderSpotlightDictionary() string {
 					ID:     fmt.Sprintf("dict-overlay-result-%d", idx),
 					View:   m.activeView,
 					X:      startX + 2,
-					Y:      startY + usedLines + (idx - m.dictionaryScroll),
+					Y:      startY + 1 + listStartLine + (idx - m.dictionaryScroll),
 					Width:  interiorWidth,
 					Height: 1,
 					Action: func() tea.Cmd {
@@ -1204,45 +1202,51 @@ func (m *Model) renderSpotlightDictionary() string {
 		b.WriteString(strings.Repeat("\n", targetBodyLines-currentLines))
 	}
 
-	var footerStr string
+	// Always render key hints in footer so user knows available shortcuts
+	var keys []string
+	if m.dictionaryDetailView {
+		keys = []string{
+			keyHint("esc", "back"),
+			keyHint("Enter", "draft"),
+			keyHint("ctrl+a", "add"),
+			keyHint("c", "cloze"),
+			keyHint("b", "star"),
+			keyHint("ctrl+e", "explain"),
+			keyHint("ctrl+p", "play"),
+			keyHint("ctrl+g", "deck"),
+		}
+	} else {
+		keys = []string{
+			keyHint("Enter", "draft"),
+			keyHint("ctrl+a", "add"),
+			keyHint("c", "cloze"),
+			keyHint("b", "star"),
+			keyHint("ctrl+e", "explain"),
+			keyHint("ctrl+p", "play"),
+			keyHint("ctrl+d", "details"),
+			keyHint("ctrl+g", "deck"),
+		}
+	}
+	footerStr := strings.Join(keys, " │ ")
+
+	// If status message is present, show status on top of footer or appended nicely
 	if m.status != "" {
 		statusText := m.status
 		var statusStyle lipgloss.Style
 		lowerStatus := strings.ToLower(statusText)
 		if strings.Contains(lowerStatus, "added") || strings.Contains(lowerStatus, "found") || strings.Contains(lowerStatus, "ready") || strings.Contains(lowerStatus, "starred") {
-			statusStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("120")).Bold(true) // Success (green)
+			statusStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("120")).Bold(true)
 		} else if strings.Contains(lowerStatus, "no") || strings.Contains(lowerStatus, "failed") || strings.Contains(lowerStatus, "error") {
-			statusStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Bold(true) // Error (red)
+			statusStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Bold(true)
 		} else {
-			statusStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("39")) // Info (blue)
+			statusStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("39"))
 		}
-		footerStr = statusStyle.Render(statusText)
-	} else {
-		var keys []string
-		if m.dictionaryDetailView {
-			keys = []string{
-				keyHint("esc", "back"),
-				keyHint("Enter", "draft"),
-				keyHint("ctrl+a", "add"),
-				keyHint("c", "cloze"),
-				keyHint("b", "star"),
-				keyHint("ctrl+e", "explain"),
-				keyHint("ctrl+p", "play"),
-				keyHint("ctrl+g", "deck"),
-			}
+		// Pad status text nicely next to key hints if width permits
+		if lipgloss.Width(footerStr)+lipgloss.Width(statusText)+4 <= interiorWidth {
+			footerStr = footerStr + "  " + statusStyle.Render(statusText)
 		} else {
-			keys = []string{
-				keyHint("Enter", "draft"),
-				keyHint("ctrl+a", "add"),
-				keyHint("c", "cloze"),
-				keyHint("b", "star"),
-				keyHint("ctrl+e", "explain"),
-				keyHint("ctrl+p", "play"),
-				keyHint("ctrl+d", "details"),
-				keyHint("ctrl+g", "deck"),
-			}
+			footerStr = statusStyle.Render(statusText)
 		}
-		footerStr = strings.Join(keys, " │ ")
 	}
 	b.WriteString(footerStr)
 
