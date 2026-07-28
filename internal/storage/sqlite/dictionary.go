@@ -554,3 +554,23 @@ func (s *Store) RandomEntries(ctx context.Context, limit int) ([]core.Dictionary
 	`
 	return s.queryDictionaryEntries(ctx, q, limit*3, limit)
 }
+
+func (s *Store) Exists(ctx context.Context, word string) (bool, error) {
+	w := strings.TrimSpace(word)
+	if w == "" {
+		return false, nil
+	}
+	var dummy int
+	err := s.db.QueryRowContext(ctx, `
+		SELECT 1 FROM dictionary_fts
+		WHERE word = ? COLLATE NOCASE OR forms LIKE ?
+		LIMIT 1
+	`, w, "%"+w+"%").Scan(&dummy)
+	if err == sql.ErrNoRows {
+		return false, nil
+	}
+	if err != nil {
+		return false, fmt.Errorf("exists query: %w", err)
+	}
+	return true, nil
+}

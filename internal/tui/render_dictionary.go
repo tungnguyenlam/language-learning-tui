@@ -1,10 +1,12 @@
 package tui
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
 	"deutsch-tui/internal/content"
+	"deutsch-tui/internal/core"
 
 	"charm.land/lipgloss/v2"
 
@@ -386,43 +388,42 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			detailBuilder.WriteString(formatInflectionTable(res.WordClass, res.Gender, res.Forms, m.dictionarySearch))
 		}
 
-		if compoundParts := content.DecomposeCompound(res.Word, nil); len(compoundParts) == 2 {
+		var validate content.WordValidator
+		if dictRepo, ok := m.repo.(core.DictionaryRepository); ok {
+			validate = func(w string) bool {
+				ok, _ := dictRepo.Exists(context.Background(), w)
+				return ok
+			}
+		}
+		if compoundParts := content.DecomposeCompound(res.Word, validate); len(compoundParts) >= 2 {
 			lineY := strings.Count(detailBuilder.String(), "\n")
 			detailBuilder.WriteString(boldStyle.Render("Compound Breakdown:") + "\n")
-			part1 := compoundParts[0].Word
-			part2 := compoundParts[1].Word
-			detailBuilder.WriteString(fmt.Sprintf("  • %s + %s\n\n", part1, part2))
+			var partWords []string
+			for _, p := range compoundParts {
+				partWords = append(partWords, p.Word)
+			}
+			detailBuilder.WriteString(fmt.Sprintf("  • %s\n\n", strings.Join(partWords, " + ")))
 
 			maxRows := dictionaryVisibleRows(layout)
 			if lineY+1 >= m.dictionaryDetailScroll && lineY+1 < m.dictionaryDetailScroll+maxRows {
 				screenY := layout.Y + strings.Count(b.String(), "\n") + (lineY + 1 - m.dictionaryDetailScroll)
-				p1Word := part1
-				p2Word := part2
-				m.hitboxes = append(m.hitboxes, Hitbox{
-					ID:     "dict-compound-sc-0",
-					View:   ViewDictionary,
-					X:      layout.X + 4,
-					Y:      screenY,
-					Width:  lipgloss.Width(p1Word),
-					Height: 1,
-					Action: func() tea.Cmd {
-						m.dictionarySearch = p1Word
-						return m.searchDictionary()
-					},
-				})
-				p2X := layout.X + 4 + lipgloss.Width(p1Word) + 3
-				m.hitboxes = append(m.hitboxes, Hitbox{
-					ID:     "dict-compound-sc-1",
-					View:   ViewDictionary,
-					X:      p2X,
-					Y:      screenY,
-					Width:  lipgloss.Width(p2Word),
-					Height: 1,
-					Action: func() tea.Cmd {
-						m.dictionarySearch = p2Word
-						return m.searchDictionary()
-					},
-				})
+				currX := layout.X + 4
+				for idx, pWord := range partWords {
+					word := pWord
+					m.hitboxes = append(m.hitboxes, Hitbox{
+						ID:     fmt.Sprintf("dict-compound-sc-%d", idx),
+						View:   ViewDictionary,
+						X:      currX,
+						Y:      screenY,
+						Width:  lipgloss.Width(word),
+						Height: 1,
+						Action: func() tea.Cmd {
+							m.dictionarySearch = word
+							return m.searchDictionary()
+						},
+					})
+					currX += lipgloss.Width(word) + 3 // word + " + "
+				}
 			}
 		}
 
@@ -645,43 +646,42 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 				detailBuilder.WriteString(formatInflectionTable(res.WordClass, res.Gender, res.Forms, m.dictionarySearch))
 			}
 
-			if compoundParts := content.DecomposeCompound(res.Word, nil); len(compoundParts) == 2 {
+			var validate content.WordValidator
+			if dictRepo, ok := m.repo.(core.DictionaryRepository); ok {
+				validate = func(w string) bool {
+					ok, _ := dictRepo.Exists(context.Background(), w)
+					return ok
+				}
+			}
+			if compoundParts := content.DecomposeCompound(res.Word, validate); len(compoundParts) >= 2 {
 				lineY := strings.Count(detailBuilder.String(), "\n")
 				detailBuilder.WriteString(boldStyle.Render("Compound Breakdown:") + "\n")
-				part1 := compoundParts[0].Word
-				part2 := compoundParts[1].Word
-				detailBuilder.WriteString(fmt.Sprintf("  • %s + %s\n\n", part1, part2))
+				var partWords []string
+				for _, p := range compoundParts {
+					partWords = append(partWords, p.Word)
+				}
+				detailBuilder.WriteString(fmt.Sprintf("  • %s\n\n", strings.Join(partWords, " + ")))
 
 				if lineY+1 >= m.dictionaryDetailScroll && lineY+1 < m.dictionaryDetailScroll+maxResults {
 					screenY := layout.Y + listStartLine + (lineY + 1 - m.dictionaryDetailScroll)
-					p1Word := part1
-					p2Word := part2
 					detailLeftX := layout.X + listWidth + 3
-					m.hitboxes = append(m.hitboxes, Hitbox{
-						ID:     "dict-compound-tc-0",
-						View:   ViewDictionary,
-						X:      detailLeftX + 4,
-						Y:      screenY,
-						Width:  lipgloss.Width(p1Word),
-						Height: 1,
-						Action: func() tea.Cmd {
-							m.dictionarySearch = p1Word
-							return m.searchDictionary()
-						},
-					})
-					p2X := detailLeftX + 4 + lipgloss.Width(p1Word) + 3
-					m.hitboxes = append(m.hitboxes, Hitbox{
-						ID:     "dict-compound-tc-1",
-						View:   ViewDictionary,
-						X:      p2X,
-						Y:      screenY,
-						Width:  lipgloss.Width(p2Word),
-						Height: 1,
-						Action: func() tea.Cmd {
-							m.dictionarySearch = p2Word
-							return m.searchDictionary()
-						},
-					})
+					currX := detailLeftX + 4
+					for idx, pWord := range partWords {
+						word := pWord
+						m.hitboxes = append(m.hitboxes, Hitbox{
+							ID:     fmt.Sprintf("dict-compound-tc-%d", idx),
+							View:   ViewDictionary,
+							X:      currX,
+							Y:      screenY,
+							Width:  lipgloss.Width(word),
+							Height: 1,
+							Action: func() tea.Cmd {
+								m.dictionarySearch = word
+								return m.searchDictionary()
+							},
+						})
+						currX += lipgloss.Width(word) + 3 // word + " + "
+					}
 				}
 			}
 

@@ -44,7 +44,37 @@ func (m *Model) renderAI(x, y int) string {
 	ctx.WriteLine(currTitleStyle.Render("AI Drafts") + spinner)
 	if len(m.drafts) > 0 {
 		countStyle := lipgloss.NewStyle().Foreground(colorPink).Bold(true)
-		ctx.Write(" " + countStyle.Render(fmt.Sprintf("[%d pending]", len(m.drafts))))
+		btnStyle := lipgloss.NewStyle().Foreground(colorBlue)
+		approveAllBtn := " [Approve All]"
+		discardAllBtn := " [Discard All]"
+		ctx.Write(" " + countStyle.Render(fmt.Sprintf("[%d pending]", len(m.drafts))) + btnStyle.Render(approveAllBtn) + btnStyle.Render(discardAllBtn))
+
+		btnY := ctx.currY
+		approveAllX := layout.X + lipgloss.Width("AI Drafts") + 1 + lipgloss.Width(fmt.Sprintf("[%d pending]", len(m.drafts)))
+		discardAllX := approveAllX + lipgloss.Width(approveAllBtn)
+
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     "draft-approve-all",
+			View:   ViewAI,
+			X:      approveAllX,
+			Y:      btnY,
+			Width:  lipgloss.Width(approveAllBtn),
+			Height: 1,
+			Action: func() tea.Cmd {
+				return m.approveAllDrafts()
+			},
+		})
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     "draft-discard-all",
+			View:   ViewAI,
+			X:      discardAllX,
+			Y:      btnY,
+			Width:  lipgloss.Width(discardAllBtn),
+			Height: 1,
+			Action: func() tea.Cmd {
+				return m.discardAllDrafts()
+			},
+		})
 	}
 	ctx.NewLine()
 	ctx.NewLine()
@@ -60,8 +90,8 @@ func (m *Model) renderAI(x, y int) string {
 		displayText = mutedStyle.Render("(e.g., business email, doctor visit, apartment viewing)") + "_"
 	}
 	ctx.WriteLine(searchStyle.Render(fmt.Sprintf("%s: %s", searchLabel, displayText)))
-	ctx.WriteLine(fmt.Sprintf("\nPress %s to edit topic | %s generate | %s approve | %s discard | %s clear",
-		keyStyle.Render("/"), keyStyle.Render("enter"), keyStyle.Render("a"), keyStyle.Render("d"), keyStyle.Render("esc")))
+	ctx.WriteLine(fmt.Sprintf("\nPress %s to edit topic | %s generate | %s approve (%s all) | %s discard (%s all) | %s clear",
+		keyStyle.Render("/"), keyStyle.Render("enter"), keyStyle.Render("a"), keyStyle.Render("A"), keyStyle.Render("d"), keyStyle.Render("D"), keyStyle.Render("esc")))
 	if m.aiProvider == nil {
 		ctx.WriteLine(warnStyle.Render("AI provider is disabled. Enable Offline, Template, OpenAI, or Anthropic in Settings to generate drafts."))
 	}

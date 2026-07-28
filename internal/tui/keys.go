@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -1197,18 +1198,17 @@ func (m *Model) updateAIKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.draftCursor++
 		}
 		return nil, true
-	case "A":
-		return m.approveAllDrafts(), true
+	case "A", "ctrl+a":
+		if len(m.drafts) > 0 {
+			return m.approveAllDrafts(), true
+		}
 	case "a":
 		if len(m.drafts) > 0 {
 			return m.approveDraft(), true
 		}
-	case "D":
+	case "D", "ctrl+d":
 		if len(m.drafts) > 0 {
-			m.drafts = nil
-			m.draftCursor = 0
-			m.status = "All drafts discarded"
-			return nil, true
+			return m.discardAllDrafts(), true
 		}
 	case "d":
 		if len(m.drafts) > 0 {
@@ -1686,15 +1686,20 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	case "1", "2", "3", "4", "5":
 		if (m.dictionaryFocusResults || m.dictionaryDetailView) && m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 			entry := m.dictionaryResults[m.dictionaryCursor]
-			compoundParts := content.DecomposeCompound(entry.Word, nil)
+			var validate content.WordValidator
+			if dictRepo, ok := m.repo.(core.DictionaryRepository); ok {
+				validate = func(w string) bool {
+					ok, _ := dictRepo.Exists(context.Background(), w)
+					return ok
+				}
+			}
+			compoundParts := content.DecomposeCompound(entry.Word, validate)
 			targetWord := ""
 			idx := int(key[0] - '1')
-			if len(compoundParts) == 2 {
-				if idx == 0 {
-					targetWord = compoundParts[0].Word
-				} else if idx == 1 {
-					targetWord = compoundParts[1].Word
-				} else if relIdx := idx - 2; relIdx >= 0 && relIdx < len(m.dictionaryRelatedEntries) {
+			if len(compoundParts) >= 2 {
+				if idx >= 0 && idx < len(compoundParts) {
+					targetWord = compoundParts[idx].Word
+				} else if relIdx := idx - len(compoundParts); relIdx >= 0 && relIdx < len(m.dictionaryRelatedEntries) {
 					targetWord = m.dictionaryRelatedEntries[relIdx].Word
 				}
 			} else if idx < len(m.dictionaryRelatedEntries) {

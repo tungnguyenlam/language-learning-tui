@@ -142,3 +142,21 @@ func TestCapitalizeFirst(t *testing.T) {
 		}
 	}
 }
+
+func TestMultiPartDecomposeCompound(t *testing.T) {
+	dict := map[string]bool{
+		"kranken": true, "haus": true, "arzt": true,
+		"flug": true, "hafen": true, "halle": true,
+	}
+	validate := func(word string) bool {
+		return dict[strings.ToLower(word)]
+	}
+
+	parts := DecomposeCompound("Krankenhausarzt", validate)
+	if len(parts) != 3 {
+		t.Fatalf("expected 3 parts for Krankenhausarzt, got %d: %v", len(parts), parts)
+	}
+	if parts[0].Word != "Kranken" || parts[1].Word != "Haus" || parts[2].Word != "Arzt" {
+		t.Errorf("got %v, want [Kranken, Haus, Arzt]", parts)
+	}
+}

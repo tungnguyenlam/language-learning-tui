@@ -491,6 +491,18 @@ func (m *Model) discardDraft() tea.Cmd {
 	return nil
 }
 
+func (m *Model) discardAllDrafts() tea.Cmd {
+	if len(m.drafts) == 0 {
+		m.status = "No drafts to discard"
+		return nil
+	}
+	count := len(m.drafts)
+	m.drafts = nil
+	m.draftCursor = 0
+	m.status = fmt.Sprintf("Discarded %d drafts", count)
+	return nil
+}
+
 func (m *Model) generateDrafts() tea.Cmd {
 	return m.startDrafting()
 }

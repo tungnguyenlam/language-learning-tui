@@ -1,6 +1,6 @@
 # Active Backlog
 
-Last updated: 2026-07-27
+Last updated: 2026-07-28
 
 ## Current Milestone
 
@@ -8,13 +8,16 @@ Dictionary Feature Enhancements & Lemmatization Search.
 
 ## Exact Next Action
 
-Continue dictionary UX refinements (compound decomposition validation), vocabulary deck expansion, or AI tutor enhancements.
+Continue dictionary UX refinements, vocabulary deck expansion, or AI tutor enhancements.
 
 ## Top Issues
 
 None active.
 
 ## Completed Work
+
+- [x] **Multi-Part German Compound Decomposition & SQLite Dictionary Validation:** Enhanced `DecomposeCompound` in `internal/content/compound.go` to recursively decompose German compound words with 3+ components (e.g. `Krankenhausarzt` -> `Kranken` + `Haus` + `Arzt`). Added `Exists` to `DictionaryRepository` interface and `sqlite/dictionary.go` to validate sub-compounds against the local dictionary DB. Updated single-column and two-column dictionary views in `render_dictionary.go` to display multi-part breakdowns with interactive hitboxes (`dict-compound-sc-` and `dict-compound-tc-`) and expanded number key shortcuts (`1`-`5`) in `keys.go` for all compound parts. Added `TestMultiPartDecomposeCompound` and `TestMultiPartCompoundDecompositionAndHitboxes`.
+- [x] **AI Flashcard Draft Batch Operations (`A` / `D` & Hitboxes):** Added `approveAllDrafts()` and `discardAllDrafts()` batch operations for AI flashcard generation. Added `A` / `ctrl+a` (Approve All) and `D` / `ctrl+d` (Discard All) keyboard shortcuts in `updateAIKey` (`keys.go`), rendered `[Approve All]` and `[Discard All]` action buttons with mouse hitboxes (`draft-approve-all` and `draft-discard-all`) in `render_ai.go`, and updated shortcut help footers. Added `TestAIApproveAllAndDiscardAllShortcuts`.
 
 - [x] **Practice Hub `=` vs Dictionary Spotlight Conflict:** Global `=` spotlight handler no longer steals the Practice Hub Relative Clauses trainer shortcut. Outside the hub, `=` still opens Spotlight. Added `TestPracticeHubEqualsOpensRelativeNotDictionary`.
 - [x] **Recently Inspected Words Auto-Record & Spotlight Parity:** Navigating/selecting dictionary entries with a visible detail pane now records them via `inspectDictionaryCursor()` / `updateDictionaryKey`; Spotlight empty state renders the same Recently Inspected section with clickable hitboxes.

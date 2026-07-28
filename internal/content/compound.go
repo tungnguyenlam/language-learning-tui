@@ -24,6 +24,14 @@ type WordValidator func(word string) bool
 //
 // Returns nil if the word is too short or no valid split is found.
 func DecomposeCompound(word string, validate WordValidator) []CompoundPart {
+	return decomposeCompoundInternal(word, validate, 0)
+}
+
+func decomposeCompoundInternal(word string, validate WordValidator, depth int) []CompoundPart {
+	if depth > 2 {
+		return nil
+	}
+
 	// Strip common articles
 	w := strings.TrimSpace(word)
 	lower := strings.ToLower(w)
@@ -79,9 +87,11 @@ func DecomposeCompound(word string, validate WordValidator) []CompoundPart {
 			rightCap := capitalizeFirst(strings.ToLower(right))
 			leftCap := capitalizeFirst(strings.ToLower(left))
 
-			// If validator provided, both parts must be real words
+			// If validator provided, both parts must be real words or valid compounds themselves
 			if validate != nil {
-				if !validate(leftCap) || !validate(rightCap) {
+				leftValid := validate(leftCap) || len(decomposeCompoundInternal(leftCap, validate, depth+1)) > 0
+				rightValid := validate(rightCap) || len(decomposeCompoundInternal(rightCap, validate, depth+1)) > 0
+				if !leftValid || !rightValid {
 					continue
 				}
 			}
@@ -126,10 +136,24 @@ func DecomposeCompound(word string, validate WordValidator) []CompoundPart {
 		}
 	}
 
-	return []CompoundPart{
-		{Word: best.left},
-		{Word: best.right},
+	// Check if left or right can be further decomposed recursively
+	leftParts := decomposeCompoundInternal(best.left, validate, depth+1)
+	rightParts := decomposeCompoundInternal(best.right, validate, depth+1)
+
+	var result []CompoundPart
+	if len(leftParts) > 0 {
+		result = append(result, leftParts...)
+	} else {
+		result = append(result, CompoundPart{Word: best.left})
 	}
+
+	if len(rightParts) > 0 {
+		result = append(result, rightParts...)
+	} else {
+		result = append(result, CompoundPart{Word: best.right})
+	}
+
+	return result
 }
 
 // capitalizeFirst uppercases the first rune of a string (German nouns are capitalized).

@@ -2046,6 +2046,40 @@ func TestApproveAllDraftsPropagatesDeckReloadError(t *testing.T) {
 	}
 }
 
+func TestAIApproveAllAndDiscardAllShortcuts(t *testing.T) {
+	repo := &mockRepo{
+		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
+	}
+	model := NewModelWithAI(repo, &mockScheduler{}, ai.OfflineProvider{})
+	model.activeView = ViewAI
+	model.drafts = []ai.Draft{
+		{Note: core.Note{ID: "n1", DeckID: "deck-1", Front: "Eins", Back: "One"}},
+		{Note: core.Note{ID: "n2", DeckID: "deck-1", Front: "Zwei", Back: "Two"}},
+	}
+
+	// Test 'D' shortcut to discard all drafts
+	cmd, handled := model.updateAIKey(tea.KeyPressMsg{Code: 'D', Text: "D"})
+	if !handled || len(model.drafts) != 0 {
+		t.Fatalf("expected 'D' shortcut to discard all drafts, got handled=%v, len(drafts)=%d", handled, len(model.drafts))
+	}
+	_ = cmd
+
+	// Restore drafts and test 'A' shortcut to approve all drafts
+	model.drafts = []ai.Draft{
+		{Note: core.Note{ID: "n1", DeckID: "deck-1", Front: "Eins", Back: "One"}},
+		{Note: core.Note{ID: "n2", DeckID: "deck-1", Front: "Zwei", Back: "Two"}},
+	}
+	cmd, handled = model.updateAIKey(tea.KeyPressMsg{Code: 'A', Text: "A"})
+	if !handled || cmd == nil {
+		t.Fatalf("expected 'A' shortcut to return approveAllDrafts command")
+	}
+	resMsg := cmd()
+	impDone, ok := resMsg.(importDoneMsg)
+	if !ok || impDone.count != 2 {
+		t.Fatalf("expected importDoneMsg with count 2, got %T (%v)", resMsg, resMsg)
+	}
+}
+
 func TestBulkBrowserBookmarkPropagatesError(t *testing.T) {
 	repo := &mockRepo{
 		dueCards: []core.Card{

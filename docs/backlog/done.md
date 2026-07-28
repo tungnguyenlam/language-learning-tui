@@ -1,5 +1,15 @@
 # Done Backlog
 
+## 2026-07-28 (Multi-Part Compound Decomposition & AI Draft Batch Operations)
+
+### Features & Polish
+- **Multi-Part German Compound Decomposition & SQLite Dictionary Validation:** Enhanced `DecomposeCompound` in `internal/content/compound.go` to recursively decompose German compound words with 3+ components (e.g. `Krankenhausarzt` -> `Kranken` + `Haus` + `Arzt`). Added `Exists` to `DictionaryRepository` interface and `sqlite/dictionary.go` to validate sub-compounds against the local dictionary DB. Updated single-column and two-column dictionary views in `render_dictionary.go` to display multi-part breakdowns with interactive hitboxes (`dict-compound-sc-` and `dict-compound-tc-`) and expanded number key shortcuts (`1`-`5`) in `keys.go` for all compound parts.
+- **AI Flashcard Draft Batch Operations (`A` / `D` & Hitboxes):** Added `approveAllDrafts()` and `discardAllDrafts()` batch operations for AI flashcard generation. Added `A` / `ctrl+a` (Approve All) and `D` / `ctrl+d` (Discard All) keyboard shortcuts in `updateAIKey` (`keys.go`), rendered `[Approve All]` and `[Discard All]` action buttons with mouse hitboxes (`draft-approve-all` and `draft-discard-all`) in `render_ai.go`, and updated shortcut help footers.
+
+### Verification
+- Added `TestMultiPartDecomposeCompound`, `TestMultiPartCompoundDecompositionAndHitboxes`, and `TestAIApproveAllAndDiscardAllShortcuts`.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed).
+
 ## 2026-07-27 (Practice Hub Shortcut Fix & Dictionary Continuity)
 
 ### Bug Fixes

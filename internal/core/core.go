@@ -189,6 +189,7 @@ type DictionaryRepository interface {
 	RandomEntries(ctx context.Context, limit int) ([]DictionaryEntry, error)
 	ImportEntries(ctx context.Context, entries []DictionaryEntry) error
 	DictionaryCount(ctx context.Context) (int, error)
+	Exists(ctx context.Context, word string) (bool, error)
 }
 
 // ConsolidateDictionaryEntries merges dictionary entries sharing the same German headword

@@ -907,6 +907,23 @@ func (r *mockDictRepo) DictionaryCount(ctx context.Context) (int, error) {
 	return len(r.entries), nil
 }
 
+func (r *mockDictRepo) FindRelatedEntries(ctx context.Context, word string, limit int) ([]core.DictionaryEntry, error) {
+	return nil, nil
+}
+
+func (r *mockDictRepo) RandomEntries(ctx context.Context, limit int) ([]core.DictionaryEntry, error) {
+	return nil, nil
+}
+
+func (r *mockDictRepo) Exists(ctx context.Context, word string) (bool, error) {
+	for _, e := range r.entries {
+		if strings.EqualFold(e.Word, word) {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
 func TestDictionaryStarringAndFiltering(t *testing.T) {
 	repo := &mockDictRepo{
 		entries: map[string]core.DictionaryEntry{
@@ -1321,5 +1338,37 @@ func TestDictionaryNumberKeyNavigation(t *testing.T) {
 	}
 	if m.dictionarySearch != "Schuh" {
 		t.Fatalf("expected search to be 'Schuh', got %q", m.dictionarySearch)
+	}
+}
+
+func TestMultiPartCompoundDecompositionAndHitboxes(t *testing.T) {
+	repo := &mockDictRepo{
+		entries: map[string]core.DictionaryEntry{
+			"1": {ID: "1", Word: "Krankenhausarzt", Translation: "Hospital doctor"},
+			"2": {ID: "2", Word: "Kranken", Translation: "sick people"},
+			"3": {ID: "3", Word: "Haus", Translation: "house"},
+			"4": {ID: "4", Word: "Arzt", Translation: "doctor"},
+		},
+	}
+	m := NewModel(repo, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.width = 120
+	m.height = 40
+	m.dictionaryResults = []core.DictionaryEntry{repo.entries["1"]}
+	m.dictionaryCursor = 0
+
+	view := m.renderDictionary(m.activeViewContentLayout())
+	if !strings.Contains(view, "Kranken + Haus + Arzt") {
+		t.Fatalf("expected view to contain 'Kranken + Haus + Arzt', got:\n%s", view)
+	}
+
+	// Pressing '3' should jump search to 3rd compound part "Arzt"
+	m.dictionaryFocusResults = true
+	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Text: "3", Code: '3'})
+	if !handled || cmd == nil {
+		t.Fatalf("expected key '3' to be handled with search command")
+	}
+	if m.dictionarySearch != "Arzt" {
+		t.Fatalf("expected search to be 'Arzt', got %q", m.dictionarySearch)
 	}
 }
