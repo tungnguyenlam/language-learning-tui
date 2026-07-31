@@ -330,3 +330,84 @@ func TestTrainerEscKeyOnRevealedCard(t *testing.T) {
 		t.Fatalf("expected Esc on revealed card to return to Practice Hub, got subview %v", m.practiceSubView)
 	}
 }
+
+func TestBrowserLoadIgnoresStaleResults(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "apple", DeckID: "deck-1", Prompt: "Apple", Answer: "Apfel"},
+			{ID: "banana", DeckID: "deck-1", Prompt: "Banana", Answer: "Banane"},
+		},
+	}
+	m := NewModel(repo, &mockScheduler{})
+	m.activeView = ViewBrowser
+	m.browserDeckID = "deck-1"
+
+	m.browserSearch = "a"
+	stale := m.loadBrowserCards()
+	m.browserSearch = "b"
+	current := m.loadBrowserCards()
+
+	m.Update(current())
+	m.Update(stale())
+
+	if len(m.browserCards) != 1 || m.browserCards[0].ID != "banana" {
+		t.Fatalf("stale browser result overwrote current search: %#v", m.browserCards)
+	}
+}
+
+func TestDictionaryRelatedResultsIgnoreStaleSelection(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.dictionaryResults = []core.DictionaryEntry{{ID: "new", Word: "neu"}}
+	m.dictionaryCursor = 0
+	m.dictionaryRelatedID = 2
+
+	m.Update(dictRelatedEntriesMsg{
+		id:      1,
+		word:    "alt",
+		entries: []core.DictionaryEntry{{Word: "altmodisch"}},
+	})
+	if len(m.dictionaryRelatedEntries) != 0 {
+		t.Fatalf("stale related result was applied: %#v", m.dictionaryRelatedEntries)
+	}
+
+	m.Update(dictRelatedEntriesMsg{
+		id:      2,
+		word:    "neu",
+		entries: []core.DictionaryEntry{{Word: "neuartig"}},
+	})
+	if len(m.dictionaryRelatedEntries) != 1 || m.dictionaryRelatedEntries[0].Word != "neuartig" {
+		t.Fatalf("current related result was not applied: %#v", m.dictionaryRelatedEntries)
+	}
+}
+
+func TestDictionaryFindInBrowserKeepsLookupQuery(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "haus", DeckID: "deck-1", Prompt: "Haus", Answer: "house"},
+			{ID: "baum", DeckID: "deck-1", Prompt: "Baum", Answer: "tree"},
+		},
+	}
+	m := NewModel(repo, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.dictionaryResults = []core.DictionaryEntry{{ID: "dict-haus", Word: "Haus"}}
+	m.dictionaryCursor = 0
+	m.dictionaryFocusResults = true
+
+	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Text: "ctrl+f"})
+	if !handled {
+		t.Fatal("expected ctrl+f to be handled")
+	}
+	if m.activeView != ViewBrowser {
+		t.Fatalf("active view = %s, want browser", m.activeView)
+	}
+	if m.browserSearch != "Haus" {
+		t.Fatalf("browser search = %q, want Haus", m.browserSearch)
+	}
+	if cmd == nil {
+		t.Fatal("expected browser load command")
+	}
+	m.Update(cmd())
+	if len(m.browserCards) != 1 || m.browserCards[0].ID != "haus" {
+		t.Fatalf("browser lookup results = %#v, want Haus card", m.browserCards)
+	}
+}

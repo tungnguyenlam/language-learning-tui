@@ -1861,11 +1861,18 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 			m.recordDictionarySearch(m.dictionarySearch)
 			entry := m.dictionaryResults[m.dictionaryCursor]
-			m.browserSearch = entry.Word
 			if m.dictionaryOverlayActive {
 				m.closeDictionaryOverlay()
 			}
-			return tea.Batch(m.updateView(ViewBrowser), m.loadBrowserCards()), true
+			// updateView(ViewBrowser) resets transient browser filters. Apply
+			// the dictionary lookup after that reset, then issue one load so
+			// the requested word is not discarded and no duplicate query races.
+			m.updateView(ViewBrowser)
+			m.browserSearch = entry.Word
+			m.browserTag = ""
+			m.searchingBrowser = false
+			m.searchingTags = false
+			return m.loadBrowserCards(), true
 		}
 		return nil, true
 	case "ctrl+u":

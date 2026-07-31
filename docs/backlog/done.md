@@ -1,5 +1,18 @@
 # Done Backlog
 
+## 2026-08-01 (Bug Hunt & Performance Pass)
+
+### Bug Fixes & Performance
+- **Reset correctness:** Removed the stale `statistics` table from `Store.Reset`, which previously made the wipe action fail on every migrated database.
+- **Review undo state:** `GetReviewState` and `UndoLastReview` now read and restore `last_review_at`, including nullable legacy rows.
+- **Async result safety:** Browser loads and related dictionary lookups carry request identity and ignore out-of-order results. Dictionary `ctrl+f` now preserves the selected word and performs one browser query.
+- **Dictionary search performance:** Added migration 26 indexes for note/card/flag lookups and a companion FTS5 forms index, avoiding the unindexed inflection scan during normal searches. Quick-add reuses loaded deck metadata instead of loading every note and card.
+- **Input validation:** Non-positive dictionary search/random limits now use safe defaults.
+
+### Verification
+- Added SQLite reset/undo/limit tests and TUI regression tests for stale loads, stale related entries, and dictionary-to-Browser lookup.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed).
+
 ## 2026-07-31 (Bug Hunt: Session Steal, Paste Gaps, Dictionary Input/Wheel)
 
 ### Bug Fixes

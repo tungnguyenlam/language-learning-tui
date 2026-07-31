@@ -8,11 +8,30 @@ Dictionary Feature Enhancements & Lemmatization Search.
 
 ## Exact Next Action
 
-Continue dictionary UX refinements, vocabulary deck expansion, or AI tutor enhancements.
+Pick the next dictionary milestone item after this verified bug/performance pass.
 
 ## Top Issues
 
-None active.
+- [x] `Store.Reset` no longer references the absent `statistics` table; added a regression test.
+- [x] `UndoLastReview` and `GetReviewState` now preserve `last_review_at`; added a regression assertion.
+- [x] Browser and related-dictionary results carry request identity, and dictionary `ctrl+f` now preserves the lookup query without duplicate loads.
+- [x] Normal dictionary form matching uses a companion FTS5 index; quick-add uses loaded deck metadata, and SQLite child-table indexes were added in migration 26.
+
+No active issues remain from this pass.
+
+## Acceptance Criteria
+
+- Reset succeeds on a migrated SQLite store and clears content/progress without referring to absent tables.
+- Undo restores both the prior scheduling values and prior last-review timestamp.
+- Out-of-order Browser/Dictionary results are ignored.
+- Dictionary search keeps inflection matching while avoiding the current unindexed form scan for normal searches.
+- `./scripts/verify.sh` passes and the completed work is recorded in `docs/backlog/done.md`.
+
+## Last Verification
+
+- `go test -race ./internal/storage/sqlite`
+- `go test -race ./internal/tui`
+- `./scripts/verify.sh` passed on 2026-08-01: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed).
 
 ## Completed Work
 

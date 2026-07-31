@@ -28,6 +28,7 @@ Last updated: 2026-06-11
 - `docs/agent/notices/2026-06-11-spotlight-dictionary-overlay.md`: Dictionary is a Spotlight-like overlay (`=` key), not a tab. Removed from nav cycle.
 - `docs/agent/notices/2026-07-26-trainer-input-vs-global-shortcuts.md`: new single-letter global shortcuts must be guarded with `trainerInputActive()` or they are unreachable as typed characters in the practice trainers.
 - `docs/agent/notices/2026-07-26-ankiweb-undocumented-endpoints.md`: AnkiWeb's shared-deck protobuf endpoints have no published schema; decode defensively, refresh download tokens, and keep the browser out of the tab cycle.
+- `docs/agent/notices/2026-08-01-dictionary-forms-fts.md`: normal inflection searches use a companion FTS5 table whose rowids must stay aligned with the main dictionary table.
 
 ## Verification Status
 

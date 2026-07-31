@@ -372,12 +372,47 @@ func TestUndoLastReviewRestoresPreviousReviewState(t *testing.T) {
 	if state.Reviews != 1 || !state.Due.Equal(first.Due) {
 		t.Fatalf("state after undo = reviews %d due %s, want reviews 1 due %s", state.Reviews, state.Due, first.Due)
 	}
+	if !state.LastReview.Equal(now) {
+		t.Fatalf("last review after undo = %s, want %s", state.LastReview, now)
+	}
 	stats, err := store.Statistics(ctx)
 	if err != nil {
 		t.Fatalf("statistics: %v", err)
 	}
 	if stats.TotalReviews != 1 {
 		t.Fatalf("total reviews after undo = %d, want 1", stats.TotalReviews)
+	}
+}
+
+func TestResetClearsStoreWithoutMissingTableError(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	deck := content.StarterDeck()
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+	if err := store.Reset(ctx); err != nil {
+		t.Fatalf("reset store: %v", err)
+	}
+
+	decks, err := store.Decks(ctx)
+	if err != nil {
+		t.Fatalf("decks after reset: %v", err)
+	}
+	if len(decks) != 0 {
+		t.Fatalf("decks after reset = %d, want 0", len(decks))
+	}
+	cards, err := store.DueCards(ctx, time.Now(), 0)
+	if err != nil {
+		t.Fatalf("due cards after reset: %v", err)
+	}
+	if len(cards) != 0 {
+		t.Fatalf("due cards after reset = %d, want 0", len(cards))
 	}
 }
 

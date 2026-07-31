@@ -24,6 +24,8 @@ type dictionarySearchResultsMsg struct {
 }
 
 type dictRelatedEntriesMsg struct {
+	id      int
+	word    string
 	entries []core.DictionaryEntry
 }
 
@@ -88,6 +90,8 @@ func (m *Model) searchDictionary() tea.Cmd {
 }
 
 func (m *Model) findRelatedEntries(word string) tea.Cmd {
+	m.dictionaryRelatedID++
+	id := m.dictionaryRelatedID
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
@@ -101,7 +105,7 @@ func (m *Model) findRelatedEntries(word string) tea.Cmd {
 		if err != nil {
 			return nil
 		}
-		return dictRelatedEntriesMsg{entries: entries}
+		return dictRelatedEntriesMsg{id: id, word: word, entries: entries}
 	}
 }
 
@@ -186,6 +190,24 @@ func (m *Model) dictionaryTargetDeck() (deckID, deckName string) {
 
 func (m *Model) ensureDictionaryTargetDeck(ctx context.Context) (core.Deck, error) {
 	deckID, deckName := m.dictionaryTargetDeck()
+	// Decks already loaded into the model contain all metadata needed for a
+	// quick-add. Avoid GetDeck here: it eagerly loads every note and card in
+	// the deck, which made adding a dictionary card increasingly slower as the
+	// target deck grew.
+	for _, known := range m.decks {
+		if known.ID == deckID {
+			if known.Name == "" {
+				known.Name = deckName
+			}
+			return known, nil
+		}
+	}
+	if m.deck.ID == deckID {
+		if m.deck.Name == "" {
+			m.deck.Name = deckName
+		}
+		return m.deck, nil
+	}
 	deck, err := m.repo.GetDeck(ctx, deckID)
 	if err != nil {
 		deck = core.Deck{ID: deckID, Name: deckName}

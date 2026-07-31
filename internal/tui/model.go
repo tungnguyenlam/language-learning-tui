@@ -188,6 +188,7 @@ type Model struct {
 	mcqCorrect                     bool
 	browserCards                   []core.Card
 	browserCursor                  int
+	browserLoadID                  int
 	browserSearch                  string
 	browserTag                     string
 	browserSearchHistory           []string
@@ -197,6 +198,7 @@ type Model struct {
 	dictionarySearchHistory        []string
 	deckSearchHistory              []string
 	dictionarySearchID             int
+	dictionaryRelatedID            int
 	dictionarySearchTimerID        int
 	browserSearchTimerID           int
 	dictionaryResults              []core.DictionaryEntry
@@ -524,6 +526,10 @@ type reviewUndoneMsg struct {
 }
 type cramCardsMsg []core.Card
 type browserCardsMsg []core.Card
+type browserCardsResultMsg struct {
+	id    int
+	cards []core.Card
+}
 type reviewsPerDayMsg map[string]int
 type reviewHistoryMsg struct {
 	cardID string
@@ -590,6 +596,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, nil
 		}
 		m.dictionaryResults = msg.results
+		m.dictionaryRelatedID++
 		m.dictionaryRelatedEntries = nil
 		m.dictionaryCursor = 0
 		m.dictionaryScroll = 0
@@ -614,6 +621,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case dictRecentlyViewedLoadedMsg:
 		m.dictionaryRecentlyViewed = msg
 	case dictRelatedEntriesMsg:
+		if msg.id != m.dictionaryRelatedID || (m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) && m.dictionaryResults[m.dictionaryCursor].Word != msg.word) {
+			return m, nil
+		}
 		m.dictionaryRelatedEntries = msg.entries
 		return m, nil
 	case dictDiscoverEntriesMsg:
@@ -960,6 +970,20 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.status = fmt.Sprintf("%d cards found", len(m.browserCards))
 		}
 		m.logger.Debug("Loaded %d browser cards", len(msg))
+	case browserCardsResultMsg:
+		if msg.id != m.browserLoadID {
+			return m, nil
+		}
+		m.browserCards = msg.cards
+		if m.browserCursor >= len(m.browserCards) {
+			m.browserCursor = maxInt(0, len(m.browserCards)-1)
+		}
+		if len(m.browserCards) == 0 {
+			m.status = "No cards found"
+		} else {
+			m.status = fmt.Sprintf("%d cards found", len(m.browserCards))
+		}
+		m.logger.Debug("Loaded %d browser cards for request %d", len(msg.cards), msg.id)
 	case cramCardsMsg:
 		allCards := []core.Card(msg)
 		m.cramCards = m.cramCards[:0]

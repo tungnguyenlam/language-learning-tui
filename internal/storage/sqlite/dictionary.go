@@ -175,6 +175,9 @@ func buildFTSMatchQuery(terms []string, langFilter string) string {
 }
 
 func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.DictionaryEntry, error) {
+	if limit <= 0 {
+		limit = 50
+	}
 	cleanQuery, classFilter, genderFilter, langFilter := parseSearchFilters(rawQuery)
 	// Filter-only browse: class/gender/lang pills with no typed text return a
 	// sample of matching entries so interactive filter pills are never empty.
@@ -253,15 +256,20 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 	likePattern := "%" + cleanQuery + "%"
 	entries, err := s.queryDictionaryEntries(ctx, q, matchQuery, limit*4)
 	if err == nil {
-		// Also check forms via LIKE to catch unindexed inflected form matches (German only).
+		// Forms are indexed in a companion FTS5 table because the main dictionary
+		// table keeps the denormalized forms column UNINDEXED for cheap imports.
+		// This avoids a full table scan on every normal dictionary keystroke.
 		if langFilter != "en" {
 			qForms := `
-				SELECT id, word, translation, word_class, gender, forms, examples, tags
-				FROM dictionary_fts
-				WHERE forms LIKE ?
+				SELECT d.id, d.word, d.translation, d.word_class, d.gender,
+				       d.forms, d.examples, d.tags
+				FROM dictionary_forms_fts f
+				INNER JOIN dictionary_fts d ON d.rowid = f.rowid
+				WHERE dictionary_forms_fts MATCH ?
 				LIMIT ?
 			`
-			formEntries, _ := s.queryDictionaryEntries(ctx, qForms, likePattern, limit*2)
+			formMatchQuery := buildFTSMatchQuery(strings.Fields(cleanQuery), "")
+			formEntries, _ := s.queryDictionaryEntries(ctx, qForms, formMatchQuery, limit*2)
 			if len(formEntries) > 0 {
 				seen := make(map[string]bool, len(entries))
 				for _, e := range entries {
@@ -490,15 +498,19 @@ func (s *Store) FindRelatedEntries(ctx context.Context, word string, limit int) 
 		ftsEntries, _ := s.queryDictionaryEntries(ctx, q, matchQuery, word, limit*3)
 		entries = append(entries, ftsEntries...)
 
-		// Suffix match for compounds ending with bareWord (e.g. Krankenhaus for Haus)
-		qSuffix := `
-			SELECT id, word, translation, word_class, gender, forms, examples, tags
-			FROM dictionary_fts
-			WHERE word LIKE ? AND word != ?
-			LIMIT 10
-		`
-		suffixEntries, _ := s.queryDictionaryEntries(ctx, qSuffix, "%"+bareWord, word)
-		entries = append(entries, suffixEntries...)
+		// Suffix matching is a fallback for compounds such as Krankenhaus for
+		// Haus. Skip the unindexed scan when the indexed prefix query already
+		// filled the requested result set.
+		if len(entries) < limit {
+			qSuffix := `
+				SELECT id, word, translation, word_class, gender, forms, examples, tags
+				FROM dictionary_fts
+				WHERE word LIKE ? AND word != ?
+				LIMIT ?
+			`
+			suffixEntries, _ := s.queryDictionaryEntries(ctx, qSuffix, "%"+bareWord, word, limit*2)
+			entries = append(entries, suffixEntries...)
+		}
 	} else {
 		// Short stems (< 4 runes): only match exact bare word (e.g. "das Haus" -> "Haus") or compounds ending with it
 		qExact := `
@@ -538,10 +550,13 @@ func (s *Store) ImportEntries(ctx context.Context, entries []core.DictionaryEntr
 	if _, err := tx.ExecContext(ctx, "DELETE FROM dictionary_fts"); err != nil {
 		return fmt.Errorf("clear dictionary: %w", err)
 	}
+	if _, err := tx.ExecContext(ctx, "DELETE FROM dictionary_forms_fts"); err != nil {
+		return fmt.Errorf("clear dictionary forms: %w", err)
+	}
 
 	q := `
-		INSERT INTO dictionary_fts (id, word, translation, word_class, gender, forms, examples, tags)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO dictionary_fts (rowid, id, word, translation, word_class, gender, forms, examples, tags)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 	`
 	stmt, err := tx.PrepareContext(ctx, q)
 	if err != nil {
@@ -549,7 +564,16 @@ func (s *Store) ImportEntries(ctx context.Context, entries []core.DictionaryEntr
 	}
 	defer stmt.Close()
 
-	for _, entry := range entries {
+	formsStmt, err := tx.PrepareContext(ctx, `
+		INSERT INTO dictionary_forms_fts (rowid, id, forms)
+		VALUES (?, ?, ?)
+	`)
+	if err != nil {
+		return fmt.Errorf("prepare forms insert: %w", err)
+	}
+	defer formsStmt.Close()
+
+	for i, entry := range entries {
 		var examplesStr, tagsStr string
 		if len(entry.Examples) > 0 {
 			b, _ := json.Marshal(entry.Examples)
@@ -560,7 +584,9 @@ func (s *Store) ImportEntries(ctx context.Context, entries []core.DictionaryEntr
 			tagsStr = string(b)
 		}
 
+		rowID := int64(i + 1)
 		if _, err := stmt.ExecContext(ctx,
+			rowID,
 			entry.ID,
 			entry.Word,
 			entry.Translation,
@@ -571,6 +597,9 @@ func (s *Store) ImportEntries(ctx context.Context, entries []core.DictionaryEntr
 			tagsStr,
 		); err != nil {
 			return fmt.Errorf("insert entry %s: %w", entry.ID, err)
+		}
+		if _, err := formsStmt.ExecContext(ctx, rowID, entry.ID, entry.Forms); err != nil {
+			return fmt.Errorf("insert entry forms %s: %w", entry.ID, err)
 		}
 	}
 
@@ -590,6 +619,9 @@ func (s *Store) DictionaryCount(ctx context.Context) (int, error) {
 }
 
 func (s *Store) RandomEntries(ctx context.Context, limit int) ([]core.DictionaryEntry, error) {
+	if limit <= 0 {
+		limit = 5
+	}
 	// FTS5 content tables use rowid internally. We pick random rowids
 	// from the approximate range to avoid a full table scan + ORDER BY RANDOM().
 	q := `

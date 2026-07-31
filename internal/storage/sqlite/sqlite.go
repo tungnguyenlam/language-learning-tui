@@ -30,6 +30,13 @@ func Open(path string) (*Store, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Each connection to SQLite's bare :memory: DSN gets a separate database.
+	// Keep the test/in-memory store on one connection so concurrent commands
+	// cannot observe missing migrated tables.
+	if strings.HasPrefix(path, ":memory:") {
+		db.SetMaxOpenConns(1)
+		db.SetMaxIdleConns(1)
+	}
 
 	store := &Store{db: db}
 	if err := store.Migrate(context.Background()); err != nil {
@@ -531,12 +538,12 @@ func (s *Store) UndoLastReview(ctx context.Context, cardID string) error {
 	var state core.ReviewState
 	var intervalSec int64
 	err = tx.QueryRowContext(ctx, `
-		SELECT card_id, due_at, interval_seconds, stability, difficulty, ease, reviews, lapses
+		SELECT card_id, due_at, reviewed_at, interval_seconds, stability, difficulty, ease, reviews, lapses
 		FROM reviews
 		WHERE card_id = ?
 		ORDER BY reviewed_at DESC, id DESC
 		LIMIT 1
-	`, cardID).Scan(&state.CardID, &state.Due, &intervalSec, &state.Stability, &state.Difficulty, &state.Ease, &state.Reviews, &state.Lapses)
+	`, cardID).Scan(&state.CardID, &state.Due, &state.LastReview, &intervalSec, &state.Stability, &state.Difficulty, &state.Ease, &state.Reviews, &state.Lapses)
 	if errors.Is(err, sql.ErrNoRows) {
 		if _, err := tx.ExecContext(ctx, `DELETE FROM review_states WHERE card_id = ?`, cardID); err != nil {
 			return err
@@ -547,17 +554,18 @@ func (s *Store) UndoLastReview(ctx context.Context, cardID string) error {
 		return err
 	}
 	if _, err := tx.ExecContext(ctx, `
-		INSERT INTO review_states (card_id, due_at, interval_seconds, stability, difficulty, ease, reviews, lapses)
-		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO review_states (card_id, due_at, last_review_at, interval_seconds, stability, difficulty, ease, reviews, lapses)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(card_id) DO UPDATE SET
 			due_at = excluded.due_at,
+			last_review_at = excluded.last_review_at,
 			interval_seconds = excluded.interval_seconds,
 			stability = excluded.stability,
 			difficulty = excluded.difficulty,
 			ease = excluded.ease,
 			reviews = excluded.reviews,
 			lapses = excluded.lapses
-	`, state.CardID, state.Due.UTC(), intervalSec, state.Stability, state.Difficulty, state.Ease, state.Reviews, state.Lapses); err != nil {
+	`, state.CardID, state.Due.UTC(), state.LastReview.UTC(), intervalSec, state.Stability, state.Difficulty, state.Ease, state.Reviews, state.Lapses); err != nil {
 		return err
 	}
 
@@ -1237,11 +1245,12 @@ func (s *Store) RecentDecks(ctx context.Context, limit int) ([]string, error) {
 func (s *Store) GetReviewState(ctx context.Context, cardID string) (core.ReviewState, error) {
 	var state core.ReviewState
 	var intervalSec int64
+	var lastReview sql.NullTime
 	err := s.db.QueryRowContext(ctx, `
-		SELECT card_id, due_at, interval_seconds, stability, difficulty, ease, reviews, lapses
+		SELECT card_id, due_at, last_review_at, interval_seconds, stability, difficulty, ease, reviews, lapses
 		FROM review_states
 		WHERE card_id = ?
-	`, cardID).Scan(&state.CardID, &state.Due, &intervalSec, &state.Stability, &state.Difficulty, &state.Ease, &state.Reviews, &state.Lapses)
+	`, cardID).Scan(&state.CardID, &state.Due, &lastReview, &intervalSec, &state.Stability, &state.Difficulty, &state.Ease, &state.Reviews, &state.Lapses)
 	if errors.Is(err, sql.ErrNoRows) {
 		return core.NewReviewState(cardID, time.Now()), nil
 	}
@@ -1249,6 +1258,9 @@ func (s *Store) GetReviewState(ctx context.Context, cardID string) (core.ReviewS
 		return core.ReviewState{}, err
 	}
 	state.Interval = time.Duration(intervalSec) * time.Second
+	if lastReview.Valid {
+		state.LastReview = lastReview.Time
+	}
 	return state, nil
 }
 
@@ -1396,7 +1408,7 @@ func (s *Store) Reset(ctx context.Context) error {
 	}
 	defer tx.Rollback()
 
-	tables := []string{"reviews", "review_states", "card_flags", "cards", "notes", "decks", "statistics"}
+	tables := []string{"reviews", "review_states", "card_flags", "cards", "notes", "decks"}
 	for _, table := range tables {
 		if _, err := tx.ExecContext(ctx, fmt.Sprintf("DELETE FROM %s", table)); err != nil {
 			return err

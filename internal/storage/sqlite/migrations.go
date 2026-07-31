@@ -196,4 +196,22 @@ var migrations = []migration{
 		);
 		`,
 	},
+	{
+		ID: 26,
+		SQL: `
+		CREATE INDEX IF NOT EXISTS idx_notes_deck ON notes(deck_id);
+		CREATE INDEX IF NOT EXISTS idx_cards_note ON cards(note_id);
+		CREATE INDEX IF NOT EXISTS idx_card_flags_bookmarked ON card_flags(bookmarked, card_id);
+		CREATE INDEX IF NOT EXISTS idx_card_flags_suspended ON card_flags(suspended, card_id);
+
+		CREATE VIRTUAL TABLE IF NOT EXISTS dictionary_forms_fts USING fts5(
+			id UNINDEXED,
+			forms
+		);
+		DELETE FROM dictionary_forms_fts;
+		INSERT INTO dictionary_forms_fts(rowid, id, forms)
+		SELECT rowid, id, forms
+		FROM dictionary_fts;
+		`,
+	},
 }

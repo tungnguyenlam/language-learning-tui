@@ -375,3 +375,28 @@ func TestDictionarySearchFTSFailureFallback(t *testing.T) {
 		t.Fatalf("expected Handtuch result, got %v", res)
 	}
 }
+
+func TestDictionarySearchNormalizesNonPositiveLimit(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	if err := store.ImportEntries(ctx, []core.DictionaryEntry{
+		{ID: "1", Word: "Haus", Translation: "house", Forms: "Häuser"},
+	}); err != nil {
+		t.Fatalf("import entries: %v", err)
+	}
+
+	for _, limit := range []int{0, -1} {
+		res, err := store.Search(ctx, "Häuser", limit)
+		if err != nil {
+			t.Fatalf("search with limit %d failed: %v", limit, err)
+		}
+		if len(res) != 1 || res[0].Word != "Haus" {
+			t.Fatalf("search with limit %d = %v, want Haus", limit, res)
+		}
+	}
+}

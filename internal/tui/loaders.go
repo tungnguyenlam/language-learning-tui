@@ -14,14 +14,19 @@ import (
 )
 
 func (m *Model) loadBrowserCards() tea.Cmd {
+	m.browserLoadID++
+	id := m.browserLoadID
+	deckID := m.browserDeckID
+	search := m.browserSearch
+	tag := m.browserTag
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		cards, err := m.repo.Cards(ctx, m.browserDeckID, m.browserSearch, m.browserTag)
+		cards, err := m.repo.Cards(ctx, deckID, search, tag)
 		if err != nil {
 			return err
 		}
-		return browserCardsMsg(cards)
+		return browserCardsResultMsg{id: id, cards: cards}
 	}
 }
 
