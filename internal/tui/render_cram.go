@@ -102,22 +102,22 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 			answer = answerStyle.Render(card.Answer) + extraDisplay
 
 			keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-			answer += fmt.Sprintf("\n\nGrade: %s Again | %s Hard | %s Good | %s Easy",
+			answer += fmt.Sprintf("\n\nGrade: %s Again (1) | %s Hard (2) | %s Good (3) | %s Easy (4)",
 				keyStyle.Render("a"), keyStyle.Render("h"), keyStyle.Render("g"), keyStyle.Render("e"))
 
 			cardX := layout.X + (layout.Width-cardWidth)/2 + 3
 			cardY := layout.Y + 5
 			gradeYOffset := cardY + strings.Count(fmt.Sprintf("%s\n\n%s%s\n\nGrade: ", promptDisplay, card.Answer, extraDisplay), "\n")
 
-			gaW := lipgloss.Width(keyStyle.Render("a") + " Again")
-			ghW := lipgloss.Width(keyStyle.Render("h") + " Hard")
-			ggW := lipgloss.Width(keyStyle.Render("g") + " Good")
-			geW := lipgloss.Width(keyStyle.Render("e") + " Easy")
+			gaW := lipgloss.Width(keyStyle.Render("a") + " Again (1)")
+			ghW := lipgloss.Width(keyStyle.Render("h") + " Hard (2)")
+			ggW := lipgloss.Width(keyStyle.Render("g") + " Good (3)")
+			geW := lipgloss.Width(keyStyle.Render("e") + " Easy (4)")
 
 			labelAgain := fmt.Sprintf("Grade: %s ", keyStyle.Render("a"))
-			labelHard := fmt.Sprintf("Grade: %s Again | %s ", keyStyle.Render("a"), keyStyle.Render("h"))
-			labelGood := fmt.Sprintf("Grade: %s Again | %s Hard | %s ", keyStyle.Render("a"), keyStyle.Render("h"), keyStyle.Render("g"))
-			labelEasy := fmt.Sprintf("Grade: %s Again | %s Hard | %s Good | %s ", keyStyle.Render("a"), keyStyle.Render("h"), keyStyle.Render("g"), keyStyle.Render("e"))
+			labelHard := fmt.Sprintf("Grade: %s Again (1) | %s ", keyStyle.Render("a"), keyStyle.Render("h"))
+			labelGood := fmt.Sprintf("Grade: %s Again (1) | %s Hard (2) | %s ", keyStyle.Render("a"), keyStyle.Render("h"), keyStyle.Render("g"))
+			labelEasy := fmt.Sprintf("Grade: %s Again (1) | %s Hard (2) | %s Good (3) | %s ", keyStyle.Render("a"), keyStyle.Render("h"), keyStyle.Render("g"), keyStyle.Render("e"))
 
 			m.hitboxes = append(m.hitboxes, Hitbox{
 				ID: "cram-grade-again", View: ViewCram, X: cardX + lipgloss.Width(labelAgain), Y: gradeYOffset, Width: gaW, Height: 1,

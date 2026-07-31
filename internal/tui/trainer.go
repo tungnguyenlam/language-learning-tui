@@ -134,10 +134,10 @@ func (m *Model) updateTrainerKey(kind PracticeSubView, msg tea.KeyPressMsg) (tea
 	key := msg.String()
 
 	if key == "esc" {
-		if st.input != "" {
-			st.input = ""
-		} else {
+		if st.revealed || st.input == "" {
 			m.practiceSubView = PracticeSubViewHub
+		} else {
+			st.input = ""
 		}
 		return nil, true
 	}

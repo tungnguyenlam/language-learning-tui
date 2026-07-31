@@ -1,6 +1,6 @@
 # Active Backlog
 
-Last updated: 2026-07-31
+Last updated: 2026-08-01
 
 ## Current Milestone
 
@@ -8,13 +8,17 @@ Dictionary Feature Enhancements & Lemmatization Search.
 
 ## Exact Next Action
 
-Continue dictionary UX refinements (spotlight detail parity with full view), vocabulary deck expansion, or AI tutor enhancements.
+Continue dictionary UX refinements, vocabulary deck expansion, or AI tutor enhancements.
 
 ## Top Issues
 
 None active.
 
 ## Completed Work
+
+- [x] **Bug Fix: Dictionary Search Mid-Typing Freeze:** Fixed TUI app freeze while typing in the dictionary search bar. `findRelatedEntries` (triggered automatically on every search result when screen width > 80 cols) was executing an unindexed `LIKE '%word%'` query across the 834,512-row `dictionary_fts` SQLite table, locking the database connection and blocking the event loop on keystrokes. Converted `FindRelatedEntries` and `Exists` in `internal/storage/sqlite/dictionary.go` to use fast indexed FTS5 `MATCH` queries (executing in <1ms instead of 1,000ms full table scans).
+
+- [x] **Bug Hunt: Cram 1-4 Digit Grading, FTS Fallback & Trainer Esc:** Added `1`, `2`, `3`, `4` digit grading shortcuts to Cram mode when revealed, with UI hint parity `(1)`, `(2)`, `(3)`, `(4)` matching standard Review mode; ensured SQLite dictionary search gracefully falls back to LIKE queries if FTS parsing fails on special/wildcard tokens; fixed `Esc` key navigation on revealed practice trainer items so it directly exits to the Practice Hub instead of consuming an Esc press on submitted text. Added regression unit tests `TestCramDigitGradingKeys`, `TestTrainerEscKeyOnRevealedCard`, and `TestDictionarySearchFTSFailureFallback`.
 
 - [x] **Bug Hunt: Session Steal, Paste Gaps, Dictionary Input/Wheel:** Fixed digit shortcuts abandoning active Cram mid-session; clipboard paste into Dictionary/Spotlight, Review typing, practice trainers, and AnkiWeb query; mouse-wheel (+ scrollbar drag) for Dictionary results/detail and AnkiWeb; dictionary `d` key stealing search typing (`der`/`das`) after the detail-toggle fix. Regression tests in `bugfix_input_test.go`.
 

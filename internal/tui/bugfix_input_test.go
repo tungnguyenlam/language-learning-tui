@@ -294,3 +294,39 @@ func TestDictionarySearchTypesD(t *testing.T) {
 		t.Fatal("expected 'd' on focused results to open detail view")
 	}
 }
+
+func TestCramDigitGradingKeys(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewCram
+	m.cramActive = true
+	m.cramRevealed = true
+	m.cramCards = []core.Card{{ID: "c1", Prompt: "Haus", Answer: "house"}}
+	m.cramCursor = 0
+	m.cramReviewed = 0
+
+	// 3 (Good) should grade card in Cram mode when revealed
+	updated, _ := m.Update(tea.KeyPressMsg{Text: "3", Code: '3'})
+	m = updated.(*Model)
+
+	if m.cramReviewed != 1 {
+		t.Fatalf("expected digit '3' to grade card after reveal, got cramReviewed=%d", m.cramReviewed)
+	}
+}
+
+func TestTrainerEscKeyOnRevealedCard(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewPractice
+	m.practiceSubView = PracticeSubViewPreposition
+	st := m.trainerStateFor(PracticeSubViewPreposition)
+	st.items = []trainerItem{{Answer: "in"}}
+	st.index = 0
+	st.input = "in"
+	st.revealed = true
+
+	updated, _ := m.Update(tea.KeyPressMsg{Text: "esc", Code: 0x1b})
+	m = updated.(*Model)
+
+	if m.practiceSubView != PracticeSubViewHub {
+		t.Fatalf("expected Esc on revealed card to return to Practice Hub, got subview %v", m.practiceSubView)
+	}
+}

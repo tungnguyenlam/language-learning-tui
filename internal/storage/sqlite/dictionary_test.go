@@ -350,3 +350,28 @@ func TestDictionarySearchLangFilterOnly(t *testing.T) {
 		}
 	}
 }
+
+func TestDictionarySearchFTSFailureFallback(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	entries := []core.DictionaryEntry{
+		{ID: "1", Word: "Handtuch", Translation: "towel", WordClass: "noun", Gender: "n"},
+	}
+	if err := store.ImportEntries(ctx, entries); err != nil {
+		t.Fatalf("import entries: %v", err)
+	}
+
+	// Search with special characters that could break raw FTS query string
+	res, err := store.Search(ctx, "Handtuch*", 10)
+	if err != nil {
+		t.Fatalf("search with special wildcards failed: %v", err)
+	}
+	if len(res) == 0 || res[0].Word != "Handtuch" {
+		t.Fatalf("expected Handtuch result, got %v", res)
+	}
+}

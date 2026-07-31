@@ -250,44 +250,42 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 		LIMIT ?
 	`
 
-	entries, err := s.queryDictionaryEntries(ctx, q, matchQuery, limit*4)
-	if err != nil {
-		return nil, fmt.Errorf("search dictionary fts: %w", err)
-	}
-
-	// Also check forms via LIKE to catch unindexed inflected form matches (German only).
 	likePattern := "%" + cleanQuery + "%"
-	if langFilter != "en" {
-		qForms := `
-			SELECT id, word, translation, word_class, gender, forms, examples, tags
-			FROM dictionary_fts
-			WHERE forms LIKE ?
-			LIMIT ?
-		`
-		formEntries, _ := s.queryDictionaryEntries(ctx, qForms, likePattern, limit*2)
-		if len(formEntries) > 0 {
-			seen := make(map[string]bool, len(entries))
-			for _, e := range entries {
-				seen[e.ID] = true
-			}
-			for _, e := range formEntries {
-				if !seen[e.ID] {
-					entries = append(entries, e)
+	entries, err := s.queryDictionaryEntries(ctx, q, matchQuery, limit*4)
+	if err == nil {
+		// Also check forms via LIKE to catch unindexed inflected form matches (German only).
+		if langFilter != "en" {
+			qForms := `
+				SELECT id, word, translation, word_class, gender, forms, examples, tags
+				FROM dictionary_fts
+				WHERE forms LIKE ?
+				LIMIT ?
+			`
+			formEntries, _ := s.queryDictionaryEntries(ctx, qForms, likePattern, limit*2)
+			if len(formEntries) > 0 {
+				seen := make(map[string]bool, len(entries))
+				for _, e := range entries {
 					seen[e.ID] = true
+				}
+				for _, e := range formEntries {
+					if !seen[e.ID] {
+						entries = append(entries, e)
+						seen[e.ID] = true
+					}
 				}
 			}
 		}
-	}
 
-	if len(entries) > 0 {
-		filtered := filterEntries(entries, classFilter, genderFilter, langFilter, cleanQuery)
-		if len(filtered) > 0 {
-			filtered = core.ConsolidateDictionaryEntries(filtered)
-			sortDictionaryEntries(filtered, cleanQuery)
-			if len(filtered) > limit {
-				filtered = filtered[:limit]
+		if len(entries) > 0 {
+			filtered := filterEntries(entries, classFilter, genderFilter, langFilter, cleanQuery)
+			if len(filtered) > 0 {
+				filtered = core.ConsolidateDictionaryEntries(filtered)
+				sortDictionaryEntries(filtered, cleanQuery)
+				if len(filtered) > limit {
+					filtered = filtered[:limit]
+				}
+				return filtered, nil
 			}
-			return filtered, nil
 		}
 	}
 
@@ -476,44 +474,48 @@ func (s *Store) FindRelatedEntries(ctx context.Context, word string, limit int) 
 		limit = 5
 	}
 
-	// Prefer morphological relatives: the bare lemma itself, compounds that
-	// end with it (Krankenhaus), and — for stems long enough to be meaningful
-	// (≥4 runes) — compounds that start with it (Haustier). Short stems like
-	// "und" must not pull in middle/prefix noise such as "undurchlässig".
-	args := []any{word, bareWord}
-	conds := []string{
-		"word != ?",
-		"(lower(word) = lower(?) OR word LIKE ?)",
-	}
-	args = append(args, "%"+bareWord)
+	safeWord := strings.ReplaceAll(bareWord, `"`, `""`)
+	var entries []core.DictionaryEntry
 
 	if utf8.RuneCountInString(bareWord) >= 4 {
-		conds = []string{
-			"word != ?",
-			"(lower(word) = lower(?) OR word LIKE ? OR word LIKE ?)",
-		}
-		args = []any{word, bareWord, bareWord + "%", "%" + bareWord}
-	}
+		// Fast FTS5 index prefix match for stems >= 4 runes (e.g. Haustier for Haus)
+		matchQuery := fmt.Sprintf(`word:"%s"*`, safeWord)
+		q := `
+			SELECT id, word, translation, word_class, gender, forms, examples, tags
+			FROM dictionary_fts
+			WHERE dictionary_fts MATCH ? AND word != ?
+			ORDER BY length(word), word COLLATE NOCASE, id
+			LIMIT ?
+		`
+		ftsEntries, _ := s.queryDictionaryEntries(ctx, q, matchQuery, word, limit*3)
+		entries = append(entries, ftsEntries...)
 
-	q := fmt.Sprintf(`
-		SELECT id, word, translation, word_class, gender, forms, examples, tags
-		FROM dictionary_fts
-		WHERE %s
-		ORDER BY length(word), word COLLATE NOCASE, id
-		LIMIT ?
-	`, strings.Join(conds, " AND "))
-	args = append(args, limit*3)
-
-	entries, err := s.queryDictionaryEntries(ctx, q, args...)
-	if err != nil {
-		return nil, fmt.Errorf("find related entries: %w", err)
+		// Suffix match for compounds ending with bareWord (e.g. Krankenhaus for Haus)
+		qSuffix := `
+			SELECT id, word, translation, word_class, gender, forms, examples, tags
+			FROM dictionary_fts
+			WHERE word LIKE ? AND word != ?
+			LIMIT 10
+		`
+		suffixEntries, _ := s.queryDictionaryEntries(ctx, qSuffix, "%"+bareWord, word)
+		entries = append(entries, suffixEntries...)
+	} else {
+		// Short stems (< 4 runes): only match exact bare word (e.g. "das Haus" -> "Haus") or compounds ending with it
+		qExact := `
+			SELECT id, word, translation, word_class, gender, forms, examples, tags
+			FROM dictionary_fts
+			WHERE (lower(word) = lower(?) OR word LIKE ?) AND word != ?
+			LIMIT ?
+		`
+		exactEntries, _ := s.queryDictionaryEntries(ctx, qExact, bareWord, "%"+bareWord, word, limit*2)
+		entries = append(entries, exactEntries...)
 	}
 
 	var out []core.DictionaryEntry
 	seen := make(map[string]bool)
 	for _, e := range entries {
 		key := strings.ToLower(e.Word)
-		if seen[key] {
+		if seen[key] || strings.EqualFold(e.Word, word) {
 			continue
 		}
 		seen[key] = true
@@ -611,14 +613,27 @@ func (s *Store) Exists(ctx context.Context, word string) (bool, error) {
 	var dummy int
 	err := s.db.QueryRowContext(ctx, `
 		SELECT 1 FROM dictionary_fts
-		WHERE word = ? COLLATE NOCASE OR forms LIKE ?
+		WHERE word = ? COLLATE NOCASE
 		LIMIT 1
-	`, w, "%"+w+"%").Scan(&dummy)
+	`, w).Scan(&dummy)
+	if err == nil {
+		return true, nil
+	}
+	if err != sql.ErrNoRows {
+		return false, fmt.Errorf("exists query: %w", err)
+	}
+
+	safeWord := strings.ReplaceAll(w, `"`, `""`)
+	err = s.db.QueryRowContext(ctx, `
+		SELECT 1 FROM dictionary_fts
+		WHERE dictionary_fts MATCH ?
+		LIMIT 1
+	`, fmt.Sprintf(`"%s"`, safeWord)).Scan(&dummy)
+	if err == nil {
+		return true, nil
+	}
 	if err == sql.ErrNoRows {
 		return false, nil
 	}
-	if err != nil {
-		return false, fmt.Errorf("exists query: %w", err)
-	}
-	return true, nil
+	return false, fmt.Errorf("exists fts query: %w", err)
 }

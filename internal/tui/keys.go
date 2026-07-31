@@ -1147,22 +1147,22 @@ func (m *Model) updateCramKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			}
 		case "d":
 			return m.lookupCramCardInDictionary(), true
-		case "a":
+		case "a", "1":
 			if !m.cramRevealed {
 				return nil, true
 			}
 			return m.gradeCramCard(core.GradeAgain), true
-		case "h":
+		case "h", "2":
 			if !m.cramRevealed {
 				return nil, true
 			}
 			return m.gradeCramCard(core.GradeHard), true
-		case "g":
+		case "g", "3":
 			if !m.cramRevealed {
 				return nil, true
 			}
 			return m.gradeCramCard(core.GradeGood), true
-		case "e":
+		case "e", "4":
 			if !m.cramRevealed {
 				return nil, true
 			}
