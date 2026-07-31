@@ -245,6 +245,74 @@ func (m *Model) addDictionaryEntryCmd(entry core.DictionaryEntry) tea.Cmd {
 	)
 }
 
+// addDictionaryInflectionEntryCmd creates a Grammar Inflection card focusing on word forms, declensions, or conjugations.
+func (m *Model) addDictionaryInflectionEntryCmd(entry core.DictionaryEntry) tea.Cmd {
+	return tea.Batch(
+		func() tea.Msg {
+			ctx := context.Background()
+			deck, err := m.ensureDictionaryTargetDeck(ctx)
+			if err != nil {
+				return err
+			}
+
+			noteID := "dict-infl-" + entry.ID
+			if entry.ID == "" {
+				noteID = fmt.Sprintf("dict-infl-%d", time.Now().UnixNano())
+			}
+
+			frontText := fmt.Sprintf("[Grammar] Forms of %q", entry.Word)
+			if entry.WordClass != "" {
+				frontText += fmt.Sprintf(" [%s]", strings.ToLower(entry.WordClass))
+			}
+
+			var backParts []string
+			if entry.Gender != "" {
+				backParts = append(backParts, fmt.Sprintf("Gender: %s (%s)", entry.Gender, formatDictionaryCardFront(entry.Word, entry.Gender)))
+			}
+			if entry.Forms != "" {
+				backParts = append(backParts, fmt.Sprintf("Forms: %s", entry.Forms))
+			}
+			if entry.Translation != "" {
+				backParts = append(backParts, fmt.Sprintf("Meaning: %s", entry.Translation))
+			}
+			backText := strings.Join(backParts, "\n")
+			if backText == "" {
+				backText = entry.Word
+			}
+
+			// Check for duplicates
+			if m.dictionaryLastAddAttemptNoteID != noteID {
+				if _, err := m.repo.GetNote(ctx, noteID); err == nil {
+					m.dictionaryLastAddAttemptNoteID = noteID
+					return statusMsg{text: fmt.Sprintf("'%s' already in %s deck (use i/ctrl+i again to update)", frontText, deck.Name)}
+				}
+			}
+			m.dictionaryLastAddAttemptNoteID = ""
+
+			tags := append([]string(nil), entry.Tags...)
+			tags = append(tags, "dictionary", "grammar", "inflection")
+			note := core.Note{
+				ID:     noteID,
+				DeckID: deck.ID,
+				Type:   "flashcard",
+				Front:  frontText,
+				Back:   backText,
+				Extra:  content.DictionaryEntryExtra(entry),
+				Tags:   tags,
+			}
+			note.Cards = content.CardsForNote(note)
+
+			if err := m.repo.UpsertNote(ctx, note); err != nil {
+				return err
+			}
+
+			return statusMsg{text: fmt.Sprintf("Added inflection card '%s' to %s deck", frontText, deck.Name)}
+		},
+		m.loadDecks,
+		m.loadDueCards,
+	)
+}
+
 // addDictionaryReverseEntryCmd creates an EN→DE production flashcard
 // (English translation on the front, German headword on the back).
 func (m *Model) addDictionaryReverseEntryCmd(entry core.DictionaryEntry) tea.Cmd {

@@ -1737,6 +1737,21 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return m.addDictionaryReverseEntryCmd(entry), true
 		}
 		return nil, true
+	case "ctrl+i":
+		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			m.recordDictionarySearch(m.dictionarySearch)
+			entry := m.dictionaryResults[m.dictionaryCursor]
+			m.recordDictionaryView(entry)
+			return m.addDictionaryInflectionEntryCmd(entry), true
+		}
+		return nil, true
+	case "i":
+		if (m.dictionaryFocusResults || m.dictionaryDetailView) && m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			m.recordDictionarySearch(m.dictionarySearch)
+			entry := m.dictionaryResults[m.dictionaryCursor]
+			m.recordDictionaryView(entry)
+			return m.addDictionaryInflectionEntryCmd(entry), true
+		}
 	case "ctrl+g":
 		return m.cycleDictionaryTargetDeck(), true
 	case "ctrl+f":

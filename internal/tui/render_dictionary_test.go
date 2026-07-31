@@ -1432,3 +1432,90 @@ func TestMultiPartCompoundDecompositionAndHitboxes(t *testing.T) {
 		t.Fatalf("expected search to be 'Arzt', got %q", m.dictionarySearch)
 	}
 }
+
+func TestSpotlightDictionaryDetailParity(t *testing.T) {
+	repo := &mockDictRepo{
+		entries: map[string]core.DictionaryEntry{
+			"1": {
+				ID:          "1",
+				Word:        "Handschuh",
+				WordClass:   "noun",
+				Gender:      "m",
+				Translation: "glove",
+				Forms:       "Genitiv: des Handschuhs, Plural: die Handschuhe",
+				Examples:    []string{"Der Handschuh ist warm."},
+			},
+			"2": {ID: "2", Word: "Hand", Translation: "hand"},
+			"3": {ID: "3", Word: "Schuh", Translation: "shoe"},
+		},
+	}
+	m := NewModel(repo, &mockScheduler{})
+	m.width = 120
+	m.height = 40
+	m.dictionaryOverlayActive = true
+	m.dictionaryResults = []core.DictionaryEntry{repo.entries["1"]}
+	m.dictionaryCursor = 0
+	m.dictionaryRelatedEntries = []core.DictionaryEntry{repo.entries["2"]}
+
+	view := stripANSI(m.renderSpotlightDictionary())
+	if !strings.Contains(view, "SPOTLIGHT DICTIONARY") {
+		t.Fatalf("expected view to contain spotlight title, got:\n%s", view)
+	}
+	if !strings.Contains(view, "Compound Breakdown:") || !strings.Contains(view, "Hand + Schuh") {
+		t.Fatalf("expected spotlight detail to render compound breakdown, got:\n%s", view)
+	}
+	if !strings.Contains(view, "Related Words:") || !strings.Contains(view, "Hand") {
+		t.Fatalf("expected spotlight detail to render related words, got:\n%s", view)
+	}
+
+	// Verify hitboxes registered
+	hasCompoundHb := false
+	hasRelatedHb := false
+	for _, hb := range m.hitboxes {
+		if strings.HasPrefix(hb.ID, "dict-overlay-compound-tc-") {
+			hasCompoundHb = true
+		}
+		if strings.HasPrefix(hb.ID, "dict-overlay-related-tc-") {
+			hasRelatedHb = true
+		}
+	}
+	if !hasCompoundHb {
+		t.Errorf("expected dict-overlay-compound-tc- hitbox to be registered")
+	}
+	if !hasRelatedHb {
+		t.Errorf("expected dict-overlay-related-tc- hitbox to be registered")
+	}
+}
+
+func TestDictionaryInflectionCardGeneration(t *testing.T) {
+	repo := &captureRepo{}
+	m := NewModel(repo, &mockScheduler{})
+	m.activeView = ViewDictionary
+	entry := core.DictionaryEntry{
+		ID:          "1",
+		Word:        "gehen",
+		WordClass:   "verb",
+		Translation: "to go; walk",
+		Forms:       "Präsens: geht, Präteritum: ging, Perfekt: ist gegangen",
+	}
+	m.dictionaryResults = []core.DictionaryEntry{entry}
+	m.dictionaryCursor = 0
+	m.dictionaryFocusResults = true
+
+	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'i'})
+	if !handled || cmd == nil {
+		t.Fatalf("expected 'i' key to trigger inflection card generation")
+	}
+	executeCmd(cmd)
+
+	note, err := repo.GetNote(context.Background(), "dict-infl-1")
+	if err != nil {
+		t.Fatalf("expected note 'dict-infl-1' to be created, got err: %v", err)
+	}
+	if !strings.Contains(note.Front, "[Grammar] Forms of \"gehen\"") {
+		t.Fatalf("expected front to contain '[Grammar] Forms of \"gehen\"', got %q", note.Front)
+	}
+	if !strings.Contains(note.Back, "Präsens: geht") || !strings.Contains(note.Back, "Meaning: to go; walk") {
+		t.Fatalf("expected back to contain forms and meaning, got %q", note.Back)
+	}
+}

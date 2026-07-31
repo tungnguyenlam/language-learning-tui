@@ -895,8 +895,10 @@ func (m *Model) renderSpotlightDictionary() string {
 		boxWidth = 30
 	}
 
-	boxHeight := 18
-	if m.height < 24 {
+	boxHeight := 24
+	if m.height >= 30 {
+		boxHeight = m.height - 8
+	} else if m.height < 24 {
 		boxHeight = m.height - 6
 	}
 	if boxHeight < 10 {
@@ -1182,6 +1184,92 @@ func (m *Model) renderSpotlightDictionary() string {
 				}
 			}
 
+			detailStartLine := strings.Count(b.String(), "\n")
+			var validate content.WordValidator
+			if dictRepo, ok := m.repo.(core.DictionaryRepository); ok {
+				validate = func(w string) bool {
+					ok, _ := dictRepo.Exists(context.Background(), w)
+					return ok
+				}
+			}
+			if compoundParts := content.DecomposeCompound(res.Word, validate); len(compoundParts) >= 2 {
+				lineY := strings.Count(detailBuilder.String(), "\n")
+				detailBuilder.WriteString(boldStyle.Render("Compound Breakdown:") + "\n")
+				var partWords []string
+				for _, p := range compoundParts {
+					partWords = append(partWords, p.Word)
+				}
+				detailBuilder.WriteString(fmt.Sprintf("  • %s\n\n", strings.Join(partWords, " + ")))
+
+				if lineY+1 >= m.dictionaryDetailScroll && lineY+1 < m.dictionaryDetailScroll+maxResults {
+					screenY := startY + 1 + detailStartLine + (lineY + 1 - m.dictionaryDetailScroll)
+					currX := startX + 6
+					for idx, pWord := range partWords {
+						word := pWord
+						m.hitboxes = append(m.hitboxes, Hitbox{
+							ID:     fmt.Sprintf("dict-overlay-compound-sc-%d", idx),
+							View:   m.activeView,
+							X:      currX,
+							Y:      screenY,
+							Width:  lipgloss.Width(word),
+							Height: 1,
+							Action: func() tea.Cmd {
+								m.dictionarySearch = word
+								m.dictionaryResults = nil
+								m.dictionaryCursor = 0
+								m.dictionaryScroll = 0
+								m.dictionaryDetailScroll = 0
+								m.dictionaryDetailTotalLines = 0
+								m.dictionaryDetailView = false
+								return m.searchDictionary()
+							},
+						})
+						currX += lipgloss.Width(word) + 3
+					}
+				}
+			}
+
+			if len(m.dictionaryRelatedEntries) > 0 {
+				if len(res.Examples) > 0 || res.Forms != "" || res.Translation != "" {
+					detailBuilder.WriteString("\n")
+				}
+				detailBuilder.WriteString(boldStyle.Render("Related Words:") + "\n")
+				for i, related := range m.dictionaryRelatedEntries {
+					lineY := strings.Count(detailBuilder.String(), "\n")
+					line := "  • " + related.Word
+					if related.Gender != "" {
+						line += " {" + related.Gender + "}"
+					}
+					if related.Translation != "" {
+						line += " - " + related.Translation
+					}
+					detailBuilder.WriteString(line + "\n")
+
+					if lineY >= m.dictionaryDetailScroll && lineY < m.dictionaryDetailScroll+maxResults {
+						screenY := startY + 1 + detailStartLine + (lineY - m.dictionaryDetailScroll)
+						relEntry := related
+						m.hitboxes = append(m.hitboxes, Hitbox{
+							ID:     fmt.Sprintf("dict-overlay-related-sc-%d", i),
+							View:   m.activeView,
+							X:      startX + 2,
+							Y:      screenY,
+							Width:  lipgloss.Width(line),
+							Height: 1,
+							Action: func() tea.Cmd {
+								m.dictionarySearch = relEntry.Word
+								m.dictionaryResults = nil
+								m.dictionaryCursor = 0
+								m.dictionaryScroll = 0
+								m.dictionaryDetailScroll = 0
+								m.dictionaryDetailTotalLines = 0
+								m.dictionaryDetailView = false
+								return m.searchDictionary()
+							},
+						})
+					}
+				}
+			}
+
 			detailLines := strings.Split(detailBuilder.String(), "\n")
 			m.dictionaryDetailTotalLines = len(detailLines)
 			if m.dictionaryDetailScroll > m.dictionaryDetailTotalLines-maxResults {
@@ -1289,9 +1377,103 @@ func (m *Model) renderSpotlightDictionary() string {
 				detailBuilder.WriteString(mutedStyle.Render(strings.Repeat("─", detailWidth-4)) + "\n")
 
 				if res.Translation != "" {
+					detailBuilder.WriteString(boldStyle.Render("Translations:") + "\n")
 					translations := strings.Split(res.Translation, ";")
 					for _, t := range translations {
 						detailBuilder.WriteString("  " + highlightQuery(strings.TrimSpace(t), m.dictionarySearch, dictHighlightStyle) + "\n")
+					}
+				}
+				if res.Forms != "" {
+					detailBuilder.WriteString(formatInflectionTable(res.WordClass, res.Gender, res.Forms, m.dictionarySearch))
+				}
+				var validate content.WordValidator
+				if dictRepo, ok := m.repo.(core.DictionaryRepository); ok {
+					validate = func(w string) bool {
+						ok, _ := dictRepo.Exists(context.Background(), w)
+						return ok
+					}
+				}
+				if compoundParts := content.DecomposeCompound(res.Word, validate); len(compoundParts) >= 2 {
+					lineY := strings.Count(detailBuilder.String(), "\n")
+					detailBuilder.WriteString(boldStyle.Render("Compound Breakdown:") + "\n")
+					var partWords []string
+					for _, p := range compoundParts {
+						partWords = append(partWords, p.Word)
+					}
+					detailBuilder.WriteString(fmt.Sprintf("  • %s\n\n", strings.Join(partWords, " + ")))
+
+					if lineY+1 >= m.dictionaryDetailScroll && lineY+1 < m.dictionaryDetailScroll+maxResults {
+						screenY := startY + 1 + listStartLine + (lineY + 1 - m.dictionaryDetailScroll)
+						detailLeftX := startX + 2 + listWidth + 3
+						currX := detailLeftX + 4
+						for idx, pWord := range partWords {
+							word := pWord
+							m.hitboxes = append(m.hitboxes, Hitbox{
+								ID:     fmt.Sprintf("dict-overlay-compound-tc-%d", idx),
+								View:   m.activeView,
+								X:      currX,
+								Y:      screenY,
+								Width:  lipgloss.Width(word),
+								Height: 1,
+								Action: func() tea.Cmd {
+									m.dictionarySearch = word
+									m.dictionaryResults = nil
+									m.dictionaryCursor = 0
+									m.dictionaryScroll = 0
+									m.dictionaryDetailScroll = 0
+									m.dictionaryDetailTotalLines = 0
+									m.dictionaryDetailView = false
+									return m.searchDictionary()
+								},
+							})
+							currX += lipgloss.Width(word) + 3
+						}
+					}
+				}
+				if len(res.Examples) > 0 {
+					detailBuilder.WriteString(boldStyle.Render("Examples:") + "\n")
+					for _, ex := range res.Examples {
+						detailBuilder.WriteString("  • " + highlightQuery(ex, m.dictionarySearch, dictHighlightStyle) + "\n")
+					}
+				}
+				if len(m.dictionaryRelatedEntries) > 0 {
+					if len(res.Examples) > 0 || res.Forms != "" || res.Translation != "" {
+						detailBuilder.WriteString("\n")
+					}
+					detailBuilder.WriteString(boldStyle.Render("Related Words:") + "\n")
+					for i, related := range m.dictionaryRelatedEntries {
+						lineY := strings.Count(detailBuilder.String(), "\n")
+						line := "  • " + related.Word
+						if related.Gender != "" {
+							line += " {" + related.Gender + "}"
+						}
+						if related.Translation != "" {
+							line += " - " + related.Translation
+						}
+						detailBuilder.WriteString(line + "\n")
+
+						if lineY >= m.dictionaryDetailScroll && lineY < m.dictionaryDetailScroll+maxResults {
+							screenY := startY + 1 + listStartLine + (lineY - m.dictionaryDetailScroll)
+							relEntry := related
+							m.hitboxes = append(m.hitboxes, Hitbox{
+								ID:     fmt.Sprintf("dict-overlay-related-tc-%d", i),
+								View:   m.activeView,
+								X:      startX + 2 + listWidth + 3,
+								Y:      screenY,
+								Width:  lipgloss.Width(line),
+								Height: 1,
+								Action: func() tea.Cmd {
+									m.dictionarySearch = relEntry.Word
+									m.dictionaryResults = nil
+									m.dictionaryCursor = 0
+									m.dictionaryScroll = 0
+									m.dictionaryDetailScroll = 0
+									m.dictionaryDetailTotalLines = 0
+									m.dictionaryDetailView = false
+									return m.searchDictionary()
+								},
+							})
+						}
 					}
 				}
 			}
@@ -1397,6 +1579,7 @@ func (m *Model) renderSpotlightDictionary() string {
 			keyHint("esc", "back"),
 			keyHint("Enter", "draft"),
 			keyHint("ctrl+a", "add"),
+			keyHint("i", "inflect"),
 			keyHint("c", "cloze"),
 			keyHint("b", "star"),
 			keyHint("ctrl+e", "explain"),
@@ -1407,6 +1590,7 @@ func (m *Model) renderSpotlightDictionary() string {
 		keys = []string{
 			keyHint("Enter", "draft"),
 			keyHint("ctrl+a", "add"),
+			keyHint("i", "inflect"),
 			keyHint("c", "cloze"),
 			keyHint("b", "star"),
 			keyHint("ctrl+e", "explain"),

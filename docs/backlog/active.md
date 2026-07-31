@@ -16,6 +16,9 @@ None active.
 
 ## Completed Work
 
+- [x] **Spotlight Dictionary Detail Parity & Dynamic Height Scaling:** Extended `renderSpotlightDictionary` in `render_dictionary.go` to render complete inflection tables, compound breakdowns (with `dict-overlay-compound-` hitboxes), example sentences, and related words (with `dict-overlay-related-` hitboxes) in both single-column and 2-column Spotlight overlay modes. Made Spotlight height scale dynamically with terminal height (`boxHeight = m.height - 8` on 30+ row screens). Added `TestSpotlightDictionaryDetailParity`.
+- [x] **Dictionary Inflection / Grammar Flashcard Quick-Generator (`i` / `ctrl+i`):** Added `addDictionaryInflectionEntryCmd()` in `actions_dictionary.go` and `i` / `ctrl+i` shortcuts in `keys.go` to generate dedicated Grammar Inflection flashcards (`[Grammar] Forms of "..."`) containing word class, gender declensions, and inflection tables. Updated dictionary footer help hints and added `TestDictionaryInflectionCardGeneration`.
+
 - [x] **Dictionary ctrl+e Real Explain Flow:** `ctrl+e` now calls `ai.ExplainDictionaryEntry` (pedagogical tutor explanation) instead of `startDrafting()` flashcard generation. Results render in the AI view with dismiss via `H`/`Esc`. Added `TestExplainDictionaryEntry` and updated `TestDictionaryCtrlEExplainAndFilterTagHelpers`.
 - [x] **Two-Column / Spotlight Domain Tag Badges:** Shared `formatDictionaryDomainTags()` so wide two-column dictionary detail and Spotlight detail show the same `[ZOOL.]` / field badges as single-column detail.
 - [x] **Clear Recently Inspected Words:** Added `[Clear]` hitboxes (`dict-recent-clear` / `dict-overlay-recent-clear`) and made `ctrl+x` clear recently inspected when search history is already empty. Persists via `clearDictionaryRecentlyViewed()`.
