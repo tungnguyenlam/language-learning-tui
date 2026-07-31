@@ -992,13 +992,83 @@ func TestSetCardsTags(t *testing.T) {
 		}
 	}
 
-	// Verify searching by tag
+	// Verify searching by tag via general search (substring OK for search)
 	searchResult, err := store.Cards(ctx, "d1", "tag1", "")
 	if err != nil {
 		t.Fatalf("search browser cards: %v", err)
 	}
 	if len(searchResult) != 2 {
 		t.Errorf("search result length = %d, want 2", len(searchResult))
+	}
+
+	// Dedicated tag filter must match whole tags only.
+	tagFilter, err := store.Cards(ctx, "d1", "", "tag1")
+	if err != nil {
+		t.Fatalf("tag filter cards: %v", err)
+	}
+	if len(tagFilter) != 2 {
+		t.Errorf("tag filter length = %d, want 2", len(tagFilter))
+	}
+}
+
+func TestCardsTagFilterMatchesWholeTagsOnly(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	deck := core.Deck{ID: "d1", Name: "Test Deck"}
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+
+	note := core.Note{
+		ID:     "n1",
+		DeckID: "d1",
+		Front:  "Front",
+		Back:   "Back",
+		Tags:   []string{"smart", "german"},
+	}
+	note.Cards = []core.Card{
+		{ID: "c1", NoteID: "n1", DeckID: "d1", Kind: core.CardKindFlashcard, Prompt: "Front", Answer: "Back", Tags: []string{"smart", "german"}},
+	}
+	if err := store.UpsertNote(ctx, note); err != nil {
+		t.Fatalf("upsert note: %v", err)
+	}
+
+	// Substring of a tag must not match.
+	got, err := store.Cards(ctx, "d1", "", "art")
+	if err != nil {
+		t.Fatalf("tag filter: %v", err)
+	}
+	if len(got) != 0 {
+		t.Fatalf("expected no match for substring 'art' in tag 'smart', got %d cards", len(got))
+	}
+
+	got, err = store.Cards(ctx, "d1", "", "en")
+	if err != nil {
+		t.Fatalf("tag filter: %v", err)
+	}
+	if len(got) != 0 {
+		t.Fatalf("expected no match for substring 'en' in tag 'german', got %d cards", len(got))
+	}
+
+	got, err = store.Cards(ctx, "d1", "", "smart")
+	if err != nil {
+		t.Fatalf("tag filter: %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("expected exact tag 'smart' to match, got %d cards", len(got))
+	}
+
+	got, err = store.Cards(ctx, "d1", "", "GERMAN")
+	if err != nil {
+		t.Fatalf("tag filter: %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("expected case-insensitive exact tag match, got %d cards", len(got))
 	}
 }
 

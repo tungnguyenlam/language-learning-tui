@@ -31,14 +31,25 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 
 	// Toggle dictionary overlay on '='.
 	// Practice Hub reserves '=' for the Relative Clauses trainer (#12).
-	if key == "=" && !m.textInputActive() {
+	// Inside a text-input trainer (including Relative), '=' must be typed /
+	// used to advance after reveal — not open Spotlight.
+	if key == "=" && !m.textInputActive() && !m.practiceBlocksGlobalShortcut() {
 		if !(m.activeView == ViewPractice && m.practiceSubView == PracticeSubViewHub) {
 			return m, m.openDictionaryOverlay()
 		}
 	}
 
 	// 0. High-priority learning mode trapping
-	if m.typingMode || (m.activeView == ViewCram && m.cramActive) {
+	// Review typing mode must receive 'q' (Qualität, Quelle). Cram uses 'q'
+	// to exit the active session, so only Cram exempts it from the trap.
+	if m.typingMode {
+		if key != "tab" && key != "shift+tab" && key != "ctrl+c" {
+			if cmd, handled := m.updateActiveViewKey(msg); handled {
+				return m, cmd
+			}
+		}
+	}
+	if m.activeView == ViewCram && m.cramActive {
 		if key != "tab" && key != "shift+tab" && key != "ctrl+c" && key != "q" {
 			if cmd, handled := m.updateActiveViewKey(msg); handled {
 				return m, cmd
@@ -94,8 +105,8 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case "q":
 		// "q" is a legitimate character in German answers (Qualität, Quelle),
-		// so let an actively-typing trainer consume it before quitting.
-		if m.trainerInputActive() {
+		// and after reveal "any key" advances — don't quit mid-session.
+		if m.practiceBlocksGlobalShortcut() {
 			if cmd, handled := m.updateActiveViewKey(msg); handled {
 				return m, cmd
 			}
@@ -108,7 +119,7 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 	case "?":
-		if m.trainerInputActive() {
+		if m.practiceBlocksGlobalShortcut() {
 			if cmd, handled := m.updateActiveViewKey(msg); handled {
 				return m, cmd
 			}
@@ -267,7 +278,7 @@ func (m *Model) textInputActive() bool {
 }
 
 // trainerInputActive reports whether a generic text-input trainer is waiting
-// for the learner to type an answer.
+// for the learner to type an answer (not yet revealed).
 //
 // Trainers deliberately stay out of textInputActive(): that predicate also
 // disables Tab/arrow view switching, which trainers must keep. This narrower
@@ -281,9 +292,34 @@ func (m *Model) trainerInputActive() bool {
 	return ok && len(st.items) > 0 && !st.revealed
 }
 
+// practiceBlocksGlobalShortcut reports whether a practice trainer should
+// consume single-letter global shortcuts ("q", "?", "=") instead of letting
+// them quit, open help, or open the dictionary overlay.
+//
+// Covers: typing into a generic trainer, the post-reveal "press any key"
+// advance step for generic trainers, and the Gender trainer's advance step.
+func (m *Model) practiceBlocksGlobalShortcut() bool {
+	if m.activeView != ViewPractice {
+		return false
+	}
+	if m.practiceSubView == PracticeSubViewGender {
+		return len(m.practiceItems) > 0 && m.practiceRevealed
+	}
+	if !isGenericTrainer(m.practiceSubView) {
+		return false
+	}
+	st, ok := m.trainers[m.practiceSubView]
+	return ok && len(st.items) > 0
+}
+
 func (m *Model) updateNumberKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	key := msg.String()
 	if (m.activeView == ViewDictionary || m.dictionaryOverlayActive) && (m.dictionaryFocusResults || m.dictionaryDetailView) {
+		return nil, false
+	}
+	// Inside a practice sub-trainer, number keys belong to the trainer
+	// (der/die/das, typed answers). Don't jump to global views mid-exercise.
+	if m.activeView == ViewPractice && m.practiceSubView != PracticeSubViewHub {
 		return nil, false
 	}
 	if m.textInputActive() {
@@ -1106,12 +1142,24 @@ func (m *Model) updateCramKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		case "d":
 			return m.lookupCramCardInDictionary(), true
 		case "a":
+			if !m.cramRevealed {
+				return nil, true
+			}
 			return m.gradeCramCard(core.GradeAgain), true
 		case "h":
+			if !m.cramRevealed {
+				return nil, true
+			}
 			return m.gradeCramCard(core.GradeHard), true
 		case "g":
+			if !m.cramRevealed {
+				return nil, true
+			}
 			return m.gradeCramCard(core.GradeGood), true
 		case "e":
+			if !m.cramRevealed {
+				return nil, true
+			}
 			return m.gradeCramCard(core.GradeEasy), true
 		case "q", "esc":
 			m.cramActive = false
@@ -1179,6 +1227,12 @@ func (m *Model) updateAIKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		m.searchingAI = true
 		return nil, true
 	case "esc", "escape":
+		if m.drafting {
+			m.drafting = false
+			m.draftCancelled = true
+			m.status = "AI drafting cancelled"
+			return nil, true
+		}
 		if m.explanation != "" || m.explainError != "" || m.explainingCard {
 			m.explanation = ""
 			m.explainError = ""

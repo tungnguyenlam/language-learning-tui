@@ -1435,8 +1435,9 @@ func (s *Store) Cards(ctx context.Context, deckID string, search string, tag str
 		args = append(args, searchPattern, searchPattern, searchPattern, searchPattern)
 	}
 	if tag != "" {
-		query += ` AND c.tags LIKE ?`
-		args = append(args, "%"+tag+"%")
+		// Match whole space-separated tags only (avoid "art" matching "smart").
+		query += ` AND (' ' || LOWER(c.tags) || ' ') LIKE ('% ' || LOWER(?) || ' %')`
+		args = append(args, tag)
 	}
 	query += ` ORDER BY c.id LIMIT 1000`
 

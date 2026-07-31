@@ -16,6 +16,8 @@ None active.
 
 ## Completed Work
 
+- [x] **Bug Hunt: Input Routing & Browser/AI Safety:** Fixed Review typing `q` quitting; Cram grading before reveal; Practice reveal-advance stealing `q`/`?`; Relative trainer `=` opening Spotlight; Gender trainer `0` jumping views; Browser tag filter substring false positives; AI Esc not cancelling drafting; Browser multi-select surviving deck switches. Added `practiceBlocksGlobalShortcut()`, whole-tag SQL match, `draftCancelled`, and selection clearing/visibility filters. Regression tests in `bugfix_input_test.go`, `trainer_test.go`, `sqlite_test.go`.
+
 - [x] **Spotlight Dictionary Detail Parity & Dynamic Height Scaling:** Extended `renderSpotlightDictionary` in `render_dictionary.go` to render complete inflection tables, compound breakdowns (with `dict-overlay-compound-` hitboxes), example sentences, and related words (with `dict-overlay-related-` hitboxes) in both single-column and 2-column Spotlight overlay modes. Made Spotlight height scale dynamically with terminal height (`boxHeight = m.height - 8` on 30+ row screens). Added `TestSpotlightDictionaryDetailParity`.
 - [x] **Dictionary Inflection / Grammar Flashcard Quick-Generator (`i` / `ctrl+i`):** Added `addDictionaryInflectionEntryCmd()` in `actions_dictionary.go` and `i` / `ctrl+i` shortcuts in `keys.go` to generate dedicated Grammar Inflection flashcards (`[Grammar] Forms of "..."`) containing word class, gender declensions, and inflection tables. Updated dictionary footer help hints and added `TestDictionaryInflectionCardGeneration`.
 
@@ -135,6 +137,8 @@ None active.
   the real `1-9` trainer keys.
 
 ## Verification
+
+- `./scripts/verify.sh` passed on 2026-07-31: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed) after input-routing / browser / AI drafting bug fixes.
 
 - `./scripts/verify.sh` passed on 2026-07-31: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed) after dictionary explain flow, domain-tag parity, recently-inspected clear, AI draft row hitboxes, filter-only ordering, and related-word matching.
 

@@ -65,13 +65,37 @@ func TestGlobalShortcutsStillWorkOutsideTrainers(t *testing.T) {
 	}
 }
 
-// A revealed trainer still treats any key as "advance", including q.
-func TestTrainerRevealedStateDoesNotTrapShortcuts(t *testing.T) {
-	m, st := trainerModel(t, PracticeSubViewPlural, 3)
-	st.revealed = true
+// A revealed trainer still treats any key as "advance", including q and ?.
+func TestTrainerRevealedStateAdvancesOnGlobalShortcuts(t *testing.T) {
+	for _, key := range []rune{'q', '?'} {
+		t.Run(string(key), func(t *testing.T) {
+			m, st := trainerModel(t, PracticeSubViewPlural, 3)
+			st.revealed = true
+			st.index = 0
 
-	if m.trainerInputActive() {
-		t.Fatal("expected a revealed trainer not to be treated as accepting input")
+			if m.trainerInputActive() {
+				t.Fatal("expected a revealed trainer not to be treated as accepting typed input")
+			}
+			if !m.practiceBlocksGlobalShortcut() {
+				t.Fatal("expected revealed trainer to block global shortcuts so advance wins")
+			}
+
+			updated, cmd := m.Update(tea.KeyPressMsg{Code: key})
+			m = updated.(*Model)
+
+			if cmd != nil {
+				t.Fatalf("expected %q to advance (no quit/help cmd), got a command", key)
+			}
+			if st.revealed {
+				t.Fatal("expected reveal to clear after advance")
+			}
+			if st.index != 1 {
+				t.Fatalf("expected advance to next item, index=%d", st.index)
+			}
+			if m.showHelp {
+				t.Fatal("expected help overlay to stay closed on revealed advance")
+			}
+		})
 	}
 }
 

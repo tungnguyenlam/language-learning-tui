@@ -159,6 +159,7 @@ func (m *Model) reloadBrowserForSelectedDeck() tea.Cmd {
 	m.browserSearch = ""
 	m.browserCards = nil
 	m.browserCursor = 0
+	m.browserSelected = make(map[string]bool)
 	m.clearReviewHistory()
 	m.status = fmt.Sprintf("Browsing %s", m.deckLabel())
 	return m.loadBrowserCards()

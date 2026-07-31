@@ -1,5 +1,21 @@
 # Done Backlog
 
+## 2026-07-31 (Bug Hunt: Input Routing & Browser/AI Safety)
+
+### Bug Fixes
+- **Review typing `q`:** Typing mode no longer shares Cram's `q`-exit exemption; `q` is typed into answers (*Qualität*, *Quelle*).
+- **Cram pre-reveal grades:** `a`/`h`/`g`/`e` ignored until the card is revealed.
+- **Practice reveal advance:** `q`/`?` advance to the next item instead of quitting / opening help (generic trainers + Gender).
+- **Relative trainer `=`:** Types into the answer / advances after reveal instead of opening Dictionary Spotlight.
+- **Gender unused numbers:** `0` (and other global number nav) no longer jumps views mid-trainer.
+- **Browser tag filter:** Whole-tag match only (`art` no longer matches `smart`).
+- **AI drafting Esc:** Cancels the drafting lock and discards late draft results.
+- **Browser deck switch selection:** `[`/`]` clears multi-select; bulk actions only affect visible cards.
+
+### Verification
+- Added `bugfix_input_test.go` coverage plus `TestCardsTagFilterMatchesWholeTagsOnly`; updated trainer reveal shortcut test and trainer-input notice.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed).
+
 ## 2026-07-31 (Dictionary Explain Flow & AI/Dictionary Polish)
 
 ### Features & Polish

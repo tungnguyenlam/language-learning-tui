@@ -240,7 +240,7 @@ func (m *mockRepo) Cards(ctx context.Context, deckID string, search string, tag 
 		if tag != "" {
 			found := false
 			for _, t := range card.Tags {
-				if containsIgnoreCase(t, tag) {
+				if strings.EqualFold(t, tag) {
 					found = true
 					break
 				}

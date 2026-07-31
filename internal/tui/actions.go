@@ -541,6 +541,7 @@ func (m *Model) startDrafting() tea.Cmd {
 	}
 
 	m.drafting = true
+	m.draftCancelled = false
 	m.status = "AI is drafting flashcards..."
 	return tea.Batch(
 		m.tickSpinner(),

@@ -240,6 +240,7 @@ type Model struct {
 	deckFilter                     string
 	deckSelected                   map[string]bool
 	drafting                       bool
+	draftCancelled                 bool // discard late draft results after Esc cancel
 	statsScroll                    int
 	settingsScroll                 int
 	practiceScroll                 int
@@ -696,6 +697,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case error:
 		m.drafting = false
+		m.draftCancelled = false
 		m.gradingInProgress = false
 		m.isErrorStatus = true
 		m.status = friendlyError(msg)
@@ -745,6 +747,10 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.logger.Debug("Received review predictions")
 	case draftsMsg:
 		m.drafting = false
+		if m.draftCancelled {
+			m.draftCancelled = false
+			return m, nil
+		}
 		m.drafts = []ai.Draft(msg)
 		m.draftCursor = clampInt(m.draftCursor, 0, maxInt(0, len(m.drafts)-1))
 		if len(m.drafts) == 0 {

@@ -320,9 +320,13 @@ func (m *Model) executeBulkBrowserDelete() tea.Cmd {
 }
 
 func (m *Model) getSelectedCardIDs() []string {
+	visible := make(map[string]bool, len(m.browserCards))
+	for _, card := range m.browserCards {
+		visible[card.ID] = true
+	}
 	var ids []string
 	for id, selected := range m.browserSelected {
-		if selected {
+		if selected && visible[id] {
 			ids = append(ids, id)
 		}
 	}
