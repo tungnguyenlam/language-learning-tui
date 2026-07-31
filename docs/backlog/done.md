@@ -1,5 +1,17 @@
 # Done Backlog
 
+## 2026-07-31 (Bug Hunt: Session Steal, Paste Gaps, Dictionary Input/Wheel)
+
+### Bug Fixes
+- **Cram digit nav:** `0-9` no longer jump to other views during an active Cram session.
+- **Paste into learning inputs:** Clipboard paste works for Dictionary/Spotlight search, Review typing, practice trainers, and AnkiWeb query.
+- **Dictionary mouse wheel / drag:** Wheel scrolls results or detail; scrollbar drag updates `dictionaryScroll` / `dictionaryDetailScroll`. AnkiWeb wheel moves the result cursor.
+- **Dictionary `d` typing:** Detail toggle only when results are focused; search bar can type `d` (`der`, `das`, `denken`).
+
+### Verification
+- Extended `bugfix_input_test.go` with Cram digit, paste, wheel, and `d`-typing coverage.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed).
+
 ## 2026-07-31 (Bug Hunt: Input Routing & Browser/AI Safety)
 
 ### Bug Fixes

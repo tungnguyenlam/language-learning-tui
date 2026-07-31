@@ -188,3 +188,109 @@ func TestGetSelectedCardIDsOnlyVisible(t *testing.T) {
 		t.Fatalf("expected only visible selected IDs, got %v", ids)
 	}
 }
+
+// Digit shortcuts must not abandon an active Cram session.
+func TestCramNumberKeysDoNotLeaveSession(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewCram
+	m.cramActive = true
+	m.cramRevealed = false
+	m.cramCards = []core.Card{{ID: "c1", Prompt: "Haus", Answer: "house"}}
+
+	updated, _ := m.Update(tea.KeyPressMsg{Text: "2", Code: '2'})
+	m = updated.(*Model)
+	if m.activeView != ViewCram {
+		t.Fatalf("expected to stay on Cram after '2', got %v", m.activeView)
+	}
+	if !m.cramActive {
+		t.Fatal("expected cram session to remain active")
+	}
+}
+
+func TestPasteIntoDictionarySearch(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.dictionaryFocusResults = false
+	m.dictionaryDetailView = false
+
+	updated, cmd := m.Update(tea.PasteMsg{Content: "gehen"})
+	m = updated.(*Model)
+	if m.dictionarySearch != "gehen" {
+		t.Fatalf("expected pasted dictionary search, got %q", m.dictionarySearch)
+	}
+	if cmd == nil {
+		t.Fatal("expected debounce search command after paste")
+	}
+}
+
+func TestPasteIntoReviewTypingAndTrainer(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewReview
+	m.typingMode = true
+	m.typedAnswer = ""
+	m.typingChecked = false
+
+	updated, _ := m.Update(tea.PasteMsg{Content: "Qualität"})
+	m = updated.(*Model)
+	if m.typedAnswer != "Qualität" {
+		t.Fatalf("expected pasted review answer, got %q", m.typedAnswer)
+	}
+
+	m, st := trainerModel(t, PracticeSubViewRelative, 2)
+	updated, _ = m.Update(tea.PasteMsg{Content: "dessen"})
+	m = updated.(*Model)
+	if st.input != "dessen" {
+		t.Fatalf("expected pasted trainer answer, got %q", st.input)
+	}
+}
+
+func TestDictionaryMouseWheelScrollsResults(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.width, m.height = 100, 40
+	m.dictionaryResults = []core.DictionaryEntry{
+		{Word: "a"}, {Word: "b"}, {Word: "c"},
+	}
+	m.dictionaryCursor = 0
+	m.dictionaryFocusResults = true
+
+	updated, _ := m.Update(tea.MouseWheelMsg(tea.Mouse{Button: tea.MouseWheelDown}))
+	m = updated.(*Model)
+	if m.dictionaryCursor != 1 {
+		t.Fatalf("expected wheel down to advance cursor, got %d", m.dictionaryCursor)
+	}
+
+	updated, _ = m.Update(tea.MouseWheelMsg(tea.Mouse{Button: tea.MouseWheelUp}))
+	m = updated.(*Model)
+	if m.dictionaryCursor != 0 {
+		t.Fatalf("expected wheel up to move cursor back, got %d", m.dictionaryCursor)
+	}
+}
+
+// Typing "d" in the dictionary search bar must not open detail when results exist.
+func TestDictionarySearchTypesD(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.dictionaryFocusResults = false
+	m.dictionaryDetailView = false
+	m.dictionarySearch = ""
+	m.dictionaryResults = []core.DictionaryEntry{{Word: "Haus"}}
+
+	updated, _ := m.Update(tea.KeyPressMsg{Text: "d", Code: 'd'})
+	m = updated.(*Model)
+	if m.dictionaryDetailView {
+		t.Fatal("expected 'd' in search bar not to open detail view")
+	}
+	if m.dictionarySearch != "d" {
+		t.Fatalf("expected 'd' typed into search, got %q", m.dictionarySearch)
+	}
+
+	// From results focus, 'd' still toggles detail.
+	m.dictionarySearch = "haus"
+	m.dictionaryFocusResults = true
+	updated, _ = m.Update(tea.KeyPressMsg{Text: "d", Code: 'd'})
+	m = updated.(*Model)
+	if !m.dictionaryDetailView {
+		t.Fatal("expected 'd' on focused results to open detail view")
+	}
+}

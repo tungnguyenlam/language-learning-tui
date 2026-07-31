@@ -16,6 +16,8 @@ None active.
 
 ## Completed Work
 
+- [x] **Bug Hunt: Session Steal, Paste Gaps, Dictionary Input/Wheel:** Fixed digit shortcuts abandoning active Cram mid-session; clipboard paste into Dictionary/Spotlight, Review typing, practice trainers, and AnkiWeb query; mouse-wheel (+ scrollbar drag) for Dictionary results/detail and AnkiWeb; dictionary `d` key stealing search typing (`der`/`das`) after the detail-toggle fix. Regression tests in `bugfix_input_test.go`.
+
 - [x] **Bug Hunt: Input Routing & Browser/AI Safety:** Fixed Review typing `q` quitting; Cram grading before reveal; Practice reveal-advance stealing `q`/`?`; Relative trainer `=` opening Spotlight; Gender trainer `0` jumping views; Browser tag filter substring false positives; AI Esc not cancelling drafting; Browser multi-select surviving deck switches. Added `practiceBlocksGlobalShortcut()`, whole-tag SQL match, `draftCancelled`, and selection clearing/visibility filters. Regression tests in `bugfix_input_test.go`, `trainer_test.go`, `sqlite_test.go`.
 
 - [x] **Spotlight Dictionary Detail Parity & Dynamic Height Scaling:** Extended `renderSpotlightDictionary` in `render_dictionary.go` to render complete inflection tables, compound breakdowns (with `dict-overlay-compound-` hitboxes), example sentences, and related words (with `dict-overlay-related-` hitboxes) in both single-column and 2-column Spotlight overlay modes. Made Spotlight height scale dynamically with terminal height (`boxHeight = m.height - 8` on 30+ row screens). Added `TestSpotlightDictionaryDetailParity`.
@@ -137,6 +139,8 @@ None active.
   the real `1-9` trainer keys.
 
 ## Verification
+
+- `./scripts/verify.sh` passed on 2026-07-31: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed) after Cram digit-nav, paste, dictionary `d` typing, and dictionary/AnkiWeb mouse-wheel bug fixes.
 
 - `./scripts/verify.sh` passed on 2026-07-31: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed) after input-routing / browser / AI drafting bug fixes.
 

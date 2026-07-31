@@ -799,6 +799,61 @@ func (m *Model) handleMouseDrag(mouseY int) {
 	case ViewSettings:
 		maxScroll := maxInt(0, m.settingsTotalLines-m.dragVisible)
 		m.settingsScroll = clampInt(scrollOffsetForTrackRow(m.dragTotal, m.dragVisible, row), 0, maxScroll)
+	case ViewDictionary:
+		if m.dictionaryDetailView {
+			m.dictionaryDetailScroll = scrollOffsetForTrackRow(m.dragTotal, m.dragVisible, row)
+		} else {
+			m.dictionaryScroll = scrollOffsetForTrackRow(m.dragTotal, m.dragVisible, row)
+		}
+	}
+}
+
+// scrollDictionaryWheel moves the dictionary result cursor or detail pane
+// with the mouse wheel (full Dictionary tab and Spotlight overlay).
+func (m *Model) scrollDictionaryWheel(delta int) {
+	if m.dictionaryDetailView {
+		if delta < 0 {
+			m.dictionaryDetailScroll = maxInt(0, m.dictionaryDetailScroll-1)
+			return
+		}
+		maxScroll := maxInt(0, m.dictionaryDetailTotalLines-dictionaryVisibleRows(m.activeViewContentLayout()))
+		if m.dictionaryDetailScroll < maxScroll {
+			m.dictionaryDetailScroll++
+		}
+		return
+	}
+	if len(m.dictionaryResults) == 0 {
+		return
+	}
+	m.dictionaryFocusResults = true
+	if delta < 0 {
+		if m.dictionaryCursor > 0 {
+			m.dictionaryCursor--
+			m.dictionaryDetailScroll = 0
+		}
+		return
+	}
+	if m.dictionaryCursor < len(m.dictionaryResults)-1 {
+		m.dictionaryCursor++
+		m.dictionaryDetailScroll = 0
+	}
+}
+
+func (m *Model) scrollAnkiWebWheel(delta int) {
+	if m.ankiWebScreen == nil || len(m.ankiWebScreen.results) == 0 {
+		return
+	}
+	s := m.ankiWebScreen
+	if delta < 0 {
+		if s.cursor > 0 {
+			s.cursor--
+			s.details = nil
+		}
+		return
+	}
+	if s.cursor < len(s.results)-1 {
+		s.cursor++
+		s.details = nil
 	}
 }
 

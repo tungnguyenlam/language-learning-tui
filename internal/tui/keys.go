@@ -322,6 +322,12 @@ func (m *Model) updateNumberKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	if m.activeView == ViewPractice && m.practiceSubView != PracticeSubViewHub {
 		return nil, false
 	}
+	// Active Cram uses a/h/g/e for grading; digit view-shortcuts must not
+	// abandon the session. Review still allows 0-9 view switching (E2E and
+	// day-to-day nav rely on it); grading digits are handled earlier when revealed.
+	if m.activeView == ViewCram && m.cramActive {
+		return nil, false
+	}
 	if m.textInputActive() {
 		// Exception: allow view switching from Dictionary if search is empty
 		if (m.activeView == ViewDictionary || m.dictionaryOverlayActive) && m.dictionarySearch == "" {
@@ -1303,6 +1309,9 @@ func (m *Model) handlePaste(text string) tea.Cmd {
 	text = strings.ReplaceAll(text, "\n", "")
 	text = strings.ReplaceAll(text, "\r", "")
 	text = strings.ReplaceAll(text, "\t", " ")
+	if text == "" {
+		return nil
+	}
 
 	if m.activeView == ViewSettings {
 		if m.editingSecretKey != "" {
@@ -1359,6 +1368,36 @@ func (m *Model) handlePaste(text string) tea.Cmd {
 	if m.activeView == ViewDecks && m.searchingDecks {
 		m.deckFilter += text
 		m.deckCursor = 0
+		return nil
+	}
+
+	if m.activeView == ViewAnkiWeb && m.ankiWebScreen != nil && m.ankiWebScreen.editingQuery {
+		m.ankiWebScreen.query += text
+		return nil
+	}
+
+	// Dictionary search (full tab or Spotlight overlay) — same debounce as typing.
+	if !m.dictionaryDetailView && (m.dictionaryOverlayActive || m.activeView == ViewDictionary) {
+		m.dictionarySearch += text
+		m.dictionarySearchTimerID++
+		id := m.dictionarySearchTimerID
+		return tea.Tick(time.Millisecond*250, func(t time.Time) tea.Msg {
+			return debounceSearchMsg{id: id, view: ViewDictionary}
+		})
+	}
+
+	// Review typing mode: paste into the answer buffer before check.
+	if m.activeView == ViewReview && m.typingMode && !m.typingChecked {
+		m.typedAnswer += text
+		return nil
+	}
+
+	// Practice text-input trainers: paste into the answer while waiting.
+	if m.activeView == ViewPractice && isGenericTrainer(m.practiceSubView) {
+		st := m.trainerStateFor(m.practiceSubView)
+		if len(st.items) > 0 && !st.revealed {
+			st.input += text
+		}
 		return nil
 	}
 
@@ -1653,16 +1692,17 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "d":
+		// Toggle detail only when results/detail are focused — otherwise "d"
+		// must type into the search bar (der, das, denken, …).
 		if m.dictionaryDetailView {
 			m.dictionaryDetailView = false
 			return nil, true
 		}
-		if len(m.dictionaryResults) > 0 {
+		if m.dictionaryFocusResults && len(m.dictionaryResults) > 0 {
 			m.dictionaryDetailView = true
 			m.dictionaryDetailScroll = 0
 			return nil, true
 		}
-		return nil, false
 	case "shift+up":
 		if m.dictionaryDetailScroll > 0 {
 			m.dictionaryDetailScroll--
