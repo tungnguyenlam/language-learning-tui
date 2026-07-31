@@ -1573,20 +1573,18 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		return nil, false
 	case "down", "j":
-		if key == "j" && !m.dictionaryFocusResults && !m.dictionaryDetailView {
-			break
-		}
 		if !m.dictionaryFocusResults && !m.dictionaryDetailView {
+			if len(m.dictionaryResults) > 0 {
+				m.dictionaryFocusResults = true
+				return nil, true
+			}
 			if key == "down" {
-				if len(m.dictionaryResults) > 0 {
-					m.dictionaryFocusResults = true
-					return nil, true
-				}
 				if len(m.dictionarySearchHistory) > 0 {
 					return m.cycleDictionaryHistory(1), true
 				}
+				return nil, false
 			}
-			return nil, false
+			break
 		}
 		if m.dictionaryDetailView {
 			maxScroll := maxInt(0, m.dictionaryDetailTotalLines-dictionaryVisibleRows(m.activeViewContentLayout()))
@@ -1600,6 +1598,17 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.dictionaryDetailScroll = 0
 		}
 		return nil, true
+	case "d":
+		if m.dictionaryDetailView {
+			m.dictionaryDetailView = false
+			return nil, true
+		}
+		if len(m.dictionaryResults) > 0 {
+			m.dictionaryDetailView = true
+			m.dictionaryDetailScroll = 0
+			return nil, true
+		}
+		return nil, false
 	case "shift+up":
 		if m.dictionaryDetailScroll > 0 {
 			m.dictionaryDetailScroll--
@@ -1873,6 +1882,13 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	}
 
 	if ch, ok := singlePrintableInput(key); ok {
+		if m.dictionaryDetailView {
+			if ch == "i" && m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+				entry := m.dictionaryResults[m.dictionaryCursor]
+				return m.addDictionaryInflectionEntryCmd(entry), true
+			}
+			return nil, true // Swallowed while viewing details
+		}
 		// If search is empty and it's a number key, don't handle it here to allow global navigation.
 		// Standard German/English searches rarely start with a single digit, and nav parity is more important.
 		if m.dictionarySearch == "" && unicode.IsDigit([]rune(ch)[0]) {
@@ -1887,6 +1903,14 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}), true
 	}
 	if key == "space" {
+		if m.dictionaryDetailView {
+			maxScroll := maxInt(0, m.dictionaryDetailTotalLines-dictionaryVisibleRows(m.activeViewContentLayout()))
+			m.dictionaryDetailScroll += 5
+			if m.dictionaryDetailScroll > maxScroll {
+				m.dictionaryDetailScroll = maxScroll
+			}
+			return nil, true
+		}
 		m.dictionarySearch += " "
 		m.dictionarySearchTimerID++
 		id := m.dictionarySearchTimerID
