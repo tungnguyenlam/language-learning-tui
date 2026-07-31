@@ -731,7 +731,7 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.deckCursor = len(filtered) - 1
 		}
 		return nil, true
-	case " ":
+	case " ", "space":
 		if len(filtered) > 0 {
 			id := filtered[m.deckCursor].ID
 			m.deckSelected[id] = !m.deckSelected[id]
@@ -1019,7 +1019,7 @@ func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		m.searchingTags = true
 		m.browserTag = ""
 		return nil, true
-	case "m":
+	case "m", " ", "space":
 		if len(m.browserCards) > 0 {
 			cardID := m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)].ID
 			m.browserSelected[cardID] = !m.browserSelected[cardID]
@@ -1118,11 +1118,7 @@ func (m *Model) updateCramKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		switch msg.String() {
 		case "enter", "space", "\r", "\n", " ":
 			if m.cramRevealed {
-				m.cramRevealed = false
-				m.revealState = RevealIdle
-				m.revealProgress = 0
-				m.flipProgress = 0
-				m.flipFrame = 0
+				return m.gradeCramCard(core.GradeGood), true
 			} else {
 				switch m.revealState {
 				case RevealIdle:

@@ -411,3 +411,96 @@ func TestDictionaryFindInBrowserKeepsLookupQuery(t *testing.T) {
 		t.Fatalf("browser lookup results = %#v, want Haus card", m.browserCards)
 	}
 }
+
+func TestCramMultiCardProgression(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewCram
+	m.cramActive = true
+	m.cramCards = []core.Card{
+		{ID: "c1", Prompt: "Haus", Answer: "house"},
+		{ID: "c2", Prompt: "Baum", Answer: "tree"},
+	}
+	m.cramCursor = 0
+	m.cramRevealed = true
+
+	// Pressing Enter on a revealed card should grade Good, recording review count and advancing cramCursor
+	updated, _ := m.Update(tea.KeyPressMsg{Text: "enter", Code: '\r'})
+	m = updated.(*Model)
+
+	if m.cramCursor != 1 {
+		t.Fatalf("expected cramCursor=1, got %d", m.cramCursor)
+	}
+	if m.cramReviewed != 1 || m.cramCorrect != 1 {
+		t.Fatalf("expected 1/1 reviewed/correct, got %d/%d", m.cramCorrect, m.cramReviewed)
+	}
+
+	// Activate card 2 and reveal
+	m.cramActive = true
+	m.cramRevealed = true
+	updated, _ = m.Update(tea.KeyPressMsg{Text: "space", Code: ' '})
+	m = updated.(*Model)
+
+	if m.cramReviewed != 2 || m.cramCorrect != 2 {
+		t.Fatalf("expected 2/2 reviewed/correct on completion, got %d/%d", m.cramCorrect, m.cramReviewed)
+	}
+}
+
+func TestSpaceKeySelectionParity(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+
+	// 1. Decks View Space key toggle ("space")
+	m.activeView = ViewDecks
+	m.decks = []core.Deck{{ID: "d1", Name: "Deck 1"}}
+	m.deckCursor = 0
+
+	m.Update(tea.KeyPressMsg{Text: "space"})
+	if !m.deckSelected["d1"] {
+		t.Fatal("expected 'space' key in Decks view to select deck d1")
+	}
+
+	// 2. Browser View Space key toggle ("space")
+	m.activeView = ViewBrowser
+	m.browserCards = []core.Card{{ID: "b1", Prompt: "Word"}}
+	m.browserCursor = 0
+
+	m.Update(tea.KeyPressMsg{Text: "space"})
+	if !m.browserSelected["b1"] {
+		t.Fatal("expected 'space' key in Browser view to select card b1")
+	}
+}
+
+func TestSettingsTemplateEditNilMapSafety(t *testing.T) {
+	// Case 1: no active template set
+	m1 := NewModel(&mockRepo{}, &mockScheduler{})
+	m1.activeView = ViewSettings
+	m1.settingsCursor = 2 // Front Template
+	m1.aiTemplateSets = nil
+	m1.aiTemplates = nil
+
+	updated1, _ := m1.Update(tea.KeyPressMsg{Text: "enter", Code: '\r'})
+	m1 = updated1.(*Model)
+
+	if m1.editingTemplate {
+		t.Fatal("expected editingTemplate to be false when no template set is active")
+	}
+	if m1.status != "No template set available to edit" {
+		t.Fatalf("expected status message for missing template set, got %q", m1.status)
+	}
+
+	// Case 2: active template set present, but aiTemplates map is nil
+	m2 := NewModel(&mockRepo{}, &mockScheduler{})
+	m2.activeView = ViewSettings
+	m2.settingsCursor = 2
+	m2.aiTemplateSets = []string{"default"}
+	m2.aiTemplates = nil
+
+	updated2, _ := m2.Update(tea.KeyPressMsg{Text: "enter", Code: '\r'})
+	m2 = updated2.(*Model)
+
+	if !m2.editingTemplate {
+		t.Fatal("expected editingTemplate to be true after initializing nil template map")
+	}
+	if m2.aiTemplates["default"] == nil {
+		t.Fatal("expected aiTemplates['default'] to be safely initialized")
+	}
+}

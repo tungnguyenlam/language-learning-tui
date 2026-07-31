@@ -736,10 +736,15 @@ func (m *Model) gradeCramCard(grade core.ReviewGrade) tea.Cmd {
 		m.cramCorrect++
 	}
 	m.cramActive = false
+	m.cramRevealed = false
+	m.revealState = RevealIdle
+	m.revealProgress = 0
+	m.flipProgress = 0
+	m.flipFrame = 0
 	m.cramCursor++
 	if m.cramCursor >= len(m.cramCards) {
 		m.cramCursor = 0
-		m.status = "Cram session finished"
+		m.status = fmt.Sprintf("Cram session finished (%d/%d correct)", m.cramCorrect, m.cramReviewed)
 	}
 	return nil
 }
@@ -780,8 +785,18 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		}
 
 	case 2, 3, 4:
-		m.editingTemplate = true
 		activeSet := m.currentAITemplateSet()
+		if activeSet == "" {
+			m.status = "No template set available to edit"
+			return nil
+		}
+		if m.aiTemplates == nil {
+			m.aiTemplates = make(map[string]map[string]string)
+		}
+		if m.aiTemplates[activeSet] == nil {
+			m.aiTemplates[activeSet] = make(map[string]string)
+		}
+		m.editingTemplate = true
 		key := ""
 		switch m.settingsCursor {
 		case 2:
