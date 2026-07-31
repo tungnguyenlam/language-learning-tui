@@ -287,8 +287,10 @@ type Model struct {
 	// conjunctions), keyed by sub-view. See trainer.go / trainer_content.go.
 	trainers map[PracticeSubView]*trainerState
 
-	practiceSubView   PracticeSubView
-	practiceHubCursor int
+	practiceSubView     PracticeSubView
+	practiceHubCursor   int
+	practiceFilter      string
+	practiceFilterFocus bool
 
 	// Card-explanation flow: AI provides a brief pedagogical explanation.
 	explainingCard bool

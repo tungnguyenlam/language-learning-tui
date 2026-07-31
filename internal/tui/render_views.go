@@ -427,8 +427,8 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 			footer = fmt.Sprintf("%d decks selected. Press %s to delete, %s to merge into current.", selectedCount,
 				keyStyle.Render("Backspace"), keyStyle.Render("M"))
 		} else {
-			footer = fmt.Sprintf("%s select | %s search | %s stats | %s/%s multi-select | %s clear\nPress enter to select deck.",
-				keyStyle.Render("enter"), keyStyle.Render("/"), keyStyle.Render("v"), keyStyle.Render("m"), keyStyle.Render("x"), keyStyle.Render("Esc"))
+			footer = fmt.Sprintf("%s select | %s search | %s export | %s stats | %s/%s multi-select | %s clear\nPress enter to select deck.",
+				keyStyle.Render("enter"), keyStyle.Render("/"), keyStyle.Render("e"), keyStyle.Render("v"), keyStyle.Render("m"), keyStyle.Render("x"), keyStyle.Render("Esc"))
 		}
 	}
 

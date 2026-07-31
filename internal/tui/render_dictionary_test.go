@@ -1519,3 +1519,45 @@ func TestDictionaryInflectionCardGeneration(t *testing.T) {
 		t.Fatalf("expected back to contain forms and meaning, got %q", note.Back)
 	}
 }
+
+func TestDictionaryAudioPronunciationAndHitboxes(t *testing.T) {
+	repo := &captureRepo{}
+	m := NewModel(repo, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.width = 100
+	m.height = 30
+
+	entry := core.DictionaryEntry{
+		ID:          "dict-1",
+		Word:        "Wörterbuch",
+		WordClass:   "noun",
+		Gender:      "n",
+		Translation: "dictionary",
+	}
+	m.dictionaryResults = []core.DictionaryEntry{entry}
+	m.dictionaryCursor = 0
+	m.dictionaryFocusResults = true
+
+	// Render view and check for [Listen (a)] and dict-audio hitbox
+	out := m.renderDictionary(m.activeViewContentLayout())
+	if !strings.Contains(out, "[Listen (a)]") {
+		t.Fatalf("expected output to contain '[Listen (a)]', got: %s", out)
+	}
+
+	foundAudioHitbox := false
+	for _, hb := range m.hitboxes {
+		if hb.ID == "dict-audio" {
+			foundAudioHitbox = true
+			break
+		}
+	}
+	if !foundAudioHitbox {
+		t.Fatalf("expected 'dict-audio' hitbox to be registered")
+	}
+
+	// Test 'a' key shortcut in dictionary mode
+	_, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'a'})
+	if !handled {
+		t.Fatalf("expected 'a' key to be handled in dictionary results focus")
+	}
+}

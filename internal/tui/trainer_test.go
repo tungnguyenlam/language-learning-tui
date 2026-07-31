@@ -223,3 +223,43 @@ func TestTrainerRendersItemPosition(t *testing.T) {
 		t.Fatalf("expected round counter after a completed pass, got: %s", view)
 	}
 }
+
+func TestPracticeHubSearchFilter(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewPractice
+	m.practiceSubView = PracticeSubViewHub
+	m.width = 100
+	m.height = 30
+
+	// 1. Press '/' to open filter
+	m.updatePracticeKey(tea.KeyPressMsg{Text: "/"})
+	if !m.practiceFilterFocus {
+		t.Fatalf("expected practiceFilterFocus to be true after '/' key")
+	}
+
+	// 2. Type "passive"
+	for _, char := range "passive" {
+		m.updatePracticeKey(tea.KeyPressMsg{Text: string(char)})
+	}
+	if m.practiceFilter != "passive" {
+		t.Fatalf("expected practiceFilter to be 'passive', got %q", m.practiceFilter)
+	}
+
+	// 3. Render Practice Hub and assert filtered title is visible
+	out := m.renderPracticeHub(m.activeViewContentLayout())
+	if !strings.Contains(out, "Filter: passive") {
+		t.Fatalf("expected rendered output to contain 'Filter: passive', got: %s", out)
+	}
+	if !strings.Contains(out, "Passive Voice Trainer") {
+		t.Fatalf("expected rendered output to contain 'Passive Voice Trainer'")
+	}
+	if strings.Contains(out, "Gender Trainer") {
+		t.Fatalf("expected rendered output to NOT contain 'Gender Trainer'")
+	}
+
+	// 4. Press Esc to clear filter
+	m.updatePracticeKey(tea.KeyPressMsg{Code: tea.KeyEscape})
+	if m.practiceFilter != "" {
+		t.Fatalf("expected practiceFilter to be cleared on Esc, got %q", m.practiceFilter)
+	}
+}

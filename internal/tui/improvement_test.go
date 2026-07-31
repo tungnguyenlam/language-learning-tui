@@ -484,3 +484,43 @@ func TestPracticeHubEqualsOpensRelativeNotDictionary(t *testing.T) {
 		t.Fatal("expected '=' on Dashboard to open dictionary spotlight")
 	}
 }
+
+func TestDecksViewDirectExportShortcut(t *testing.T) {
+	repo := &mockRepo{
+		decks: []core.Deck{
+			{ID: "test_deck", Name: "Test Deck"},
+		},
+		dueCards: []core.Card{
+			{ID: "c1", NoteID: "n1", DeckID: "test_deck", Prompt: "Hund", Answer: "dog"},
+		},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewDecks
+	model.decks = repo.decks
+	model.deckCursor = 0
+	model.width = 100
+	model.height = 30
+
+	// Assert footer hint contains 'e export'
+	out := stripANSI(model.renderDecks(model.activeViewContentLayout()))
+	if !strings.Contains(out, "e export") {
+		t.Fatalf("expected Decks view footer to contain 'e export', got: %s", out)
+	}
+
+	// Press 'e' key to trigger deck export
+	cmd, handled := model.updateDecksKey(tea.KeyPressMsg{Code: 'e'})
+	if !handled || cmd == nil {
+		t.Fatalf("expected 'e' key to trigger deck export command")
+	}
+	msgs := executeCmd(cmd)
+	foundExportStatus := false
+	for _, m := range msgs {
+		if status, ok := m.(statusMsg); ok && strings.Contains(status.text, "Exported") {
+			foundExportStatus = true
+			break
+		}
+	}
+	if !foundExportStatus {
+		t.Fatalf("expected status message confirming export, got msgs: %v", msgs)
+	}
+}

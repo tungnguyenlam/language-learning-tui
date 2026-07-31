@@ -49,6 +49,43 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 		{"practice-relative", "=", "Relative Clauses Trainer", "Practice Relativpronomen & Relativsätze", PracticeSubViewRelative, colorGreen, "Rl"},
 	}
 
+	var displayModes []struct {
+		id    string
+		key   string
+		label string
+		desc  string
+		sub   PracticeSubView
+		color color.Color
+		icon  string
+	}
+	if m.practiceFilter != "" {
+		q := strings.ToLower(m.practiceFilter)
+		for _, mde := range modes {
+			if strings.Contains(strings.ToLower(mde.label), q) || strings.Contains(strings.ToLower(mde.desc), q) || strings.EqualFold(mde.key, q) {
+				displayModes = append(displayModes, mde)
+			}
+		}
+	} else {
+		displayModes = modes
+	}
+
+	if len(displayModes) > 0 {
+		m.practiceHubCursor = clampInt(m.practiceHubCursor, 0, len(displayModes)-1)
+	} else {
+		m.practiceHubCursor = 0
+	}
+
+	var filterBar string
+	if m.practiceFilterFocus || m.practiceFilter != "" {
+		cursorStr := ""
+		if m.practiceFilterFocus {
+			cursorStr = "█"
+		}
+		filterText := fmt.Sprintf("🔍 Filter: %s%s (%d/%d trainers)", m.practiceFilter, cursorStr, len(displayModes), len(modes))
+		filterBar = lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, lipgloss.NewStyle().Foreground(colorCyan).Bold(true).Render(filterText)) + "\n\n"
+		headerHeight += 2
+	}
+
 	spacing := 5
 	listHeight := maxInt(1, layout.Height-headerHeight)
 
@@ -87,65 +124,69 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 	}
 
 	itemStartLine := m.practiceHubCursor * spacing
-	totalContentLines := (len(modes) * spacing) + 3
+	totalContentLines := (len(displayModes) * spacing) + 3
 	m.practiceScroll = AutoScroll(itemStartLine, m.practiceScroll, listHeight, totalContentLines)
 
 	var b strings.Builder
-	for i, mode := range modes {
-		borderCol := lipgloss.Color("240") // Default border
-		prefix := "  "
-		if i == m.practiceHubCursor {
-			borderCol = colorPink
-			prefix = "▶ "
-		}
+	if len(displayModes) == 0 {
+		b.WriteString("\n" + lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, mutedStyle.Render("No practice trainers found matching query")) + "\n")
+	} else {
+		for i, mode := range displayModes {
+			borderCol := lipgloss.Color("240") // Default border
+			prefix := "  "
+			if i == m.practiceHubCursor {
+				borderCol = colorPink
+				prefix = "▶ "
+			}
 
-		btnStyle := lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			Padding(0, 2).
-			Width(btnWidth).
-			BorderForeground(borderCol)
+			btnStyle := lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				Padding(0, 2).
+				Width(btnWidth).
+				BorderForeground(borderCol)
 
-		count := getItemCount(mode.sub)
-		countStr := ""
-		if count > 0 {
-			countStr = fmt.Sprintf(" (%d)", count)
-		}
+			count := getItemCount(mode.sub)
+			countStr := ""
+			if count > 0 {
+				countStr = fmt.Sprintf(" (%d)", count)
+			}
 
-		scoreStr := getScoreStr(mode.sub)
+			scoreStr := getScoreStr(mode.sub)
 
-		titlePlain := truncateLine(
-			fmt.Sprintf("%s[%s] %s %s%s", prefix, mode.key, mode.icon, mode.label, countStr),
-			btnWidth-4,
-		)
-		titleStyle := lipgloss.NewStyle().Bold(true).Foreground(mode.color)
-		if i == m.practiceHubCursor {
-			titleStyle = lipgloss.NewStyle().Bold(true).Foreground(colorPink)
-		}
-		descText := mode.desc
-		if scoreStr != "" {
-			descText = strings.TrimSpace(scoreStr) + " — " + mode.desc
-		}
-		descRendered := mutedStyle.Render(truncateLine(descText, btnWidth-4))
-		content := titleStyle.Render(titlePlain) + "\n" + descRendered
+			titlePlain := truncateLine(
+				fmt.Sprintf("%s[%s] %s %s%s", prefix, mode.key, mode.icon, mode.label, countStr),
+				btnWidth-4,
+			)
+			titleStyle := lipgloss.NewStyle().Bold(true).Foreground(mode.color)
+			if i == m.practiceHubCursor {
+				titleStyle = lipgloss.NewStyle().Bold(true).Foreground(colorPink)
+			}
+			descText := mode.desc
+			if scoreStr != "" {
+				descText = strings.TrimSpace(scoreStr) + " — " + mode.desc
+			}
+			descRendered := mutedStyle.Render(truncateLine(descText, btnWidth-4))
+			content := titleStyle.Render(titlePlain) + "\n" + descRendered
 
-		btn := btnStyle.Render(content)
-		b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, btn) + "\n")
+			btn := btnStyle.Render(content)
+			b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, btn) + "\n")
 
-		btnY := headerHeight + (i * spacing) - m.practiceScroll
-		if btnY >= headerHeight && btnY < layout.Height {
-			m.hitboxes = append(m.hitboxes, Hitbox{
-				ID:     mode.id,
-				View:   ViewPractice,
-				X:      layout.X + (layout.Width-btnWidth)/2,
-				Y:      layout.Y + btnY,
-				Width:  btnWidth,
-				Height: minInt(spacing, layout.Height-btnY),
-			})
+			btnY := headerHeight + (i * spacing) - m.practiceScroll
+			if btnY >= headerHeight && btnY < layout.Height {
+				m.hitboxes = append(m.hitboxes, Hitbox{
+					ID:     mode.id,
+					View:   ViewPractice,
+					X:      layout.X + (layout.Width-btnWidth)/2,
+					Y:      layout.Y + btnY,
+					Width:  btnWidth,
+					Height: minInt(spacing, layout.Height-btnY),
+				})
+			}
 		}
 	}
 
 	b.WriteString("\n" + lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, "Press a key to select a trainer") + "\n")
-	b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, mutedStyle.Render("r Reset scores  •  Esc Dashboard")))
+	b.WriteString(lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, mutedStyle.Render("/ Filter  •  r Reset scores  •  Esc Dashboard")))
 
 	listLayout := viewportLayout{
 		X:      layout.X,
@@ -154,5 +195,5 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 		Height: listHeight,
 	}
 
-	return header + AutoScrollViewport(b.String(), listLayout, &m.practiceScroll, "practice", ViewPractice, m)
+	return header + filterBar + AutoScrollViewport(b.String(), listLayout, &m.practiceScroll, "practice", ViewPractice, m)
 }

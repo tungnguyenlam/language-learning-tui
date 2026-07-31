@@ -210,6 +210,26 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			detailBuilder.WriteString(meta + "\n")
 		}
 
+		audioLabel := "🔊 [Listen (a)]"
+		audioLineY := strings.Count(detailBuilder.String(), "\n")
+		detailBuilder.WriteString(lipgloss.NewStyle().Foreground(colorCyan).Bold(true).Render(audioLabel) + "\n")
+		maxRows := maxInt(3, layout.Height-4)
+		if audioLineY >= m.dictionaryDetailScroll && audioLineY < m.dictionaryDetailScroll+maxRows {
+			screenY := layout.Y + strings.Count(b.String(), "\n") + (audioLineY - m.dictionaryDetailScroll)
+			wordToPlay := res.Word
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID:     "dict-audio",
+				View:   ViewDictionary,
+				X:      layout.X,
+				Y:      screenY,
+				Width:  lipgloss.Width(audioLabel),
+				Height: 1,
+				Action: func() tea.Cmd {
+					return m.playDictionaryAudio(wordToPlay)
+				},
+			})
+		}
+
 		detailBuilder.WriteString(mutedStyle.Render(strings.Repeat("─", maxInt(10, detailWidth-6))) + "\n\n")
 
 		if res.Translation != "" {
@@ -673,6 +693,26 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			meta += formatDictionaryDomainTags(res.Tags)
 			if meta != "" {
 				detailBuilder.WriteString(meta + "\n")
+			}
+
+			audioLabel := "🔊 [Listen (a)]"
+			audioLineY := strings.Count(detailBuilder.String(), "\n")
+			detailBuilder.WriteString(lipgloss.NewStyle().Foreground(colorCyan).Bold(true).Render(audioLabel) + "\n")
+			maxRows := maxInt(3, layout.Height-4)
+			if audioLineY >= m.dictionaryDetailScroll && audioLineY < m.dictionaryDetailScroll+maxRows {
+				screenY := layout.Y + (audioLineY - m.dictionaryDetailScroll)
+				wordToPlay := res.Word
+				m.hitboxes = append(m.hitboxes, Hitbox{
+					ID:     "dict-audio",
+					View:   ViewDictionary,
+					X:      layout.X + listWidth + 2,
+					Y:      screenY,
+					Width:  lipgloss.Width(audioLabel),
+					Height: 1,
+					Action: func() tea.Cmd {
+						return m.playDictionaryAudio(wordToPlay)
+					},
+				})
 			}
 
 			detailBuilder.WriteString(mutedStyle.Render(strings.Repeat("─", detailWidth-6)) + "\n\n")
@@ -1186,6 +1226,27 @@ func (m *Model) renderSpotlightDictionary() string {
 			if meta != "" {
 				detailBuilder.WriteString(meta + "\n")
 			}
+
+			detailStartLine := strings.Count(b.String(), "\n")
+			audioLabel := "🔊 [Listen (a)]"
+			audioLineY := strings.Count(detailBuilder.String(), "\n")
+			detailBuilder.WriteString(lipgloss.NewStyle().Foreground(colorCyan).Bold(true).Render(audioLabel) + "\n")
+			if audioLineY >= m.dictionaryDetailScroll && audioLineY < m.dictionaryDetailScroll+maxResults {
+				screenY := startY + 1 + detailStartLine + (audioLineY - m.dictionaryDetailScroll)
+				wordToPlay := res.Word
+				m.hitboxes = append(m.hitboxes, Hitbox{
+					ID:     "dict-overlay-audio",
+					View:   m.activeView,
+					X:      startX + 2,
+					Y:      screenY,
+					Width:  lipgloss.Width(audioLabel),
+					Height: 1,
+					Action: func() tea.Cmd {
+						return m.playDictionaryAudio(wordToPlay)
+					},
+				})
+			}
+
 			detailBuilder.WriteString(mutedStyle.Render(strings.Repeat("─", maxInt(10, interiorWidth-6))) + "\n")
 
 			if res.Translation != "" {
@@ -1207,7 +1268,7 @@ func (m *Model) renderSpotlightDictionary() string {
 				}
 			}
 
-			detailStartLine := strings.Count(b.String(), "\n")
+			detailStartLine = strings.Count(b.String(), "\n")
 			var validate content.WordValidator
 			if dictRepo, ok := m.repo.(core.DictionaryRepository); ok {
 				validate = func(w string) bool {
@@ -1397,6 +1458,26 @@ func (m *Model) renderSpotlightDictionary() string {
 				if meta != "" {
 					detailBuilder.WriteString(meta + "\n")
 				}
+
+				audioLabel := "🔊 [Listen (a)]"
+				audioLineY := strings.Count(detailBuilder.String(), "\n")
+				detailBuilder.WriteString(lipgloss.NewStyle().Foreground(colorCyan).Bold(true).Render(audioLabel) + "\n")
+				if audioLineY >= m.dictionaryDetailScroll && audioLineY < m.dictionaryDetailScroll+maxResults {
+					screenY := startY + 1 + (audioLineY - m.dictionaryDetailScroll)
+					wordToPlay := res.Word
+					m.hitboxes = append(m.hitboxes, Hitbox{
+						ID:     "dict-overlay-audio",
+						View:   m.activeView,
+						X:      startX + 2 + listWidth + 2,
+						Y:      screenY,
+						Width:  lipgloss.Width(audioLabel),
+						Height: 1,
+						Action: func() tea.Cmd {
+							return m.playDictionaryAudio(wordToPlay)
+						},
+					})
+				}
+
 				detailBuilder.WriteString(mutedStyle.Render(strings.Repeat("─", detailWidth-4)) + "\n")
 
 				if res.Translation != "" {

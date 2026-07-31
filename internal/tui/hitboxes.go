@@ -92,6 +92,12 @@ func (m *Model) activateHitboxByID(id string) tea.Cmd {
 	case id == "dict-recent-clear" || id == "dict-overlay-recent-clear":
 		m.clearDictionaryRecentlyViewed()
 		return nil
+	case id == "dict-audio" || id == "dict-overlay-audio":
+		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			entry := m.dictionaryResults[m.dictionaryCursor]
+			return m.playDictionaryAudio(entry.Word)
+		}
+		return nil
 	case strings.HasPrefix(id, "ai-topic-"):
 		topic := strings.TrimPrefix(id, "ai-topic-")
 		m.aiInput = topic

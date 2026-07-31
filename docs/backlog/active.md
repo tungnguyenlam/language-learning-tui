@@ -29,11 +29,14 @@ No active issues remain from this pass.
 
 ## Last Verification
 
-- `go test -race ./internal/storage/sqlite`
-- `go test -race ./internal/tui`
-- `./scripts/verify.sh` passed on 2026-08-01: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed).
+- `go test ./...`
+- `./scripts/verify.sh` passed on 2026-08-01: Go unit tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed).
 
 ## Completed Work
+
+- [x] **Direct Deck TSV Export (`e` / `ctrl+e` in Decks view):** Added `e` and `ctrl+e` key shortcuts in the Decks browser (`updateDecksKey` in `keys.go`) to export any selected deck directly to an Anki-compatible TSV file (`exports/deck_<id>_<timestamp>.tsv`) without leaving the deck browser. Added `exportDeckTSVCmd` in `actions_decks.go`, updated footer hints in `render_views.go`, and added `TestDecksViewDirectExportShortcut`.
+- [x] **Practice Hub Interactive Search & Filter Bar (`/` key filter):** Added `/` shortcut to activate search filter bar in the Practice Hub (`render_practice.go`), enabling real-time filtering of trainer items by title, description, or shortcut key with live match counter (e.g. `Filter: passive (1/12 trainers)`). Handled `Esc`, `Backspace`, and character input in `keys.go` with keyboard navigation within filtered trainers. Added `TestPracticeHubSearchFilter`.
+- [x] **Dictionary Audio Pronunciation (`a` key & `dict-audio` / `dict-overlay-audio` hitboxes):** Added `🔊 [Listen (a)]` audio playback buttons and interactive mouse hitboxes (`dict-audio` and `dict-overlay-audio`) to single-column, 2-column, and Spotlight overlay dictionary detail views in `render_dictionary.go`. Connected `a` key in dictionary focus state to `playDictionaryAudio()`, playing synthesized TTS German pronunciation for selected vocabulary. Added `TestDictionaryAudioPronunciationAndHitboxes`.
 
 - [x] **Bug Fix: Dictionary Search Mid-Typing Freeze:** Fixed TUI app freeze while typing in the dictionary search bar. `findRelatedEntries` (triggered automatically on every search result when screen width > 80 cols) was executing an unindexed `LIKE '%word%'` query across the 834,512-row `dictionary_fts` SQLite table, locking the database connection and blocking the event loop on keystrokes. Converted `FindRelatedEntries` and `Exists` in `internal/storage/sqlite/dictionary.go` to use fast indexed FTS5 `MATCH` queries (executing in <1ms instead of 1,000ms full table scans).
 

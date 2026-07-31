@@ -752,6 +752,12 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		m.deckFilter = ""
 		m.deckCursor = 0
 		return nil, true
+	case "e", "ctrl+e":
+		if len(filtered) > 0 {
+			deckID := filtered[m.deckCursor].ID
+			return m.exportDeckTSVCmd(deckID), true
+		}
+		return nil, true
 	case "v":
 		if len(filtered) > 0 {
 			m.selectDeckByID(filtered[m.deckCursor].ID)
@@ -1495,6 +1501,38 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 
 	switch m.practiceSubView {
 	case PracticeSubViewHub:
+		if m.practiceFilterFocus {
+			switch key {
+			case "esc":
+				m.practiceFilterFocus = false
+				m.practiceFilter = ""
+				return nil, true
+			case "backspace":
+				if len(m.practiceFilter) > 0 {
+					runes := []rune(m.practiceFilter)
+					m.practiceFilter = string(runes[:len(runes)-1])
+				}
+				if len(m.practiceFilter) == 0 {
+					m.practiceFilterFocus = false
+				}
+				return nil, true
+			case "enter", "down", "up", "tab":
+				m.practiceFilterFocus = false
+				return nil, true
+			default:
+				if len(msg.Text) == 1 && msg.Text != "/" {
+					m.practiceFilter += msg.Text
+					m.practiceHubCursor = 0
+					return nil, true
+				}
+			}
+		}
+
+		if key == "/" {
+			m.practiceFilterFocus = true
+			return nil, true
+		}
+
 		switch key {
 		case "up", "k":
 			if m.practiceHubCursor > 0 {
@@ -1556,6 +1594,10 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.status = "Reset all practice session scores"
 			return nil, true
 		case "q", "esc":
+			if m.practiceFilter != "" {
+				m.practiceFilter = ""
+				return nil, true
+			}
 			return m.updateView(ViewDashboard), true
 		}
 		return nil, false
@@ -1784,6 +1826,12 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.recordDictionarySearch(m.dictionarySearch)
 			entry := m.dictionaryResults[m.dictionaryCursor]
 			return m.toggleStarDictionaryEntry(entry), true
+		}
+	case "a":
+		if (m.dictionaryFocusResults || m.dictionaryDetailView || m.dictionaryOverlayActive) && m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			m.recordDictionarySearch(m.dictionarySearch)
+			entry := m.dictionaryResults[m.dictionaryCursor]
+			return m.playDictionaryAudio(entry.Word), true
 		}
 	case "c":
 		// Note: ctrl+c is reserved for global quit; cloze is only on plain 'c'
