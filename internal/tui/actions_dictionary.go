@@ -11,6 +11,7 @@ import (
 	"strings"
 	"time"
 
+	"deutsch-tui/internal/ai"
 	"deutsch-tui/internal/content"
 	"deutsch-tui/internal/core"
 
@@ -390,9 +391,16 @@ func (m *Model) loadDictionaryHistory() tea.Cmd {
 
 func (m *Model) saveDictionaryRecentlyViewed() {
 	data, err := json.Marshal(m.dictionaryRecentlyViewed)
-	if err == nil {
-		_ = m.repo.SetSetting(context.Background(), "dict_recently_viewed", string(data))
+	if err != nil {
+		return
 	}
+	_ = m.repo.SetSetting(context.Background(), "dict_recently_viewed", string(data))
+}
+
+func (m *Model) clearDictionaryRecentlyViewed() {
+	m.dictionaryRecentlyViewed = nil
+	m.saveDictionaryRecentlyViewed()
+	m.status = "Cleared recently inspected words"
 }
 
 func (m *Model) loadDictionaryRecentlyViewed() tea.Cmd {
@@ -762,6 +770,36 @@ func (m *Model) recordDictionaryView(entry core.DictionaryEntry) {
 		m.dictionaryRecentlyViewed = m.dictionaryRecentlyViewed[:10]
 	}
 	m.saveDictionaryRecentlyViewed()
+}
+
+// explainDictionaryEntry asks the AI tutor for a pedagogical explanation of a
+// dictionary entry and surfaces it in the AI view (same explainMsg pipeline as Review).
+func (m *Model) explainDictionaryEntry(entry core.DictionaryEntry) tea.Cmd {
+	provider := m.aiProvider
+	if provider == nil {
+		m.status = "Enable an AI provider in Settings to get explanations"
+		return nil
+	}
+	if m.explainingCard {
+		return nil
+	}
+	m.explainingCard = true
+	m.explanation = ""
+	m.explainError = ""
+	m.status = fmt.Sprintf("Asking AI tutor about '%s'…", entry.Word)
+	cardID := "dict:" + entry.ID
+	if entry.ID == "" {
+		cardID = "dict:" + entry.Word
+	}
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancel()
+		explanation, err := ai.ExplainDictionaryEntry(ctx, provider, entry)
+		if err != nil {
+			return explainErrorMsg{cardID: cardID, err: err}
+		}
+		return explainMsg{cardID: cardID, explanation: explanation}
+	}
 }
 
 func stripWordArticle(word string) string {

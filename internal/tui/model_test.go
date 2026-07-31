@@ -2080,6 +2080,49 @@ func TestAIApproveAllAndDiscardAllShortcuts(t *testing.T) {
 	}
 }
 
+func TestAIDraftRowHitboxesAndDictionaryContextBanner(t *testing.T) {
+	model := NewModelWithAI(&mockRepo{}, &mockScheduler{}, ai.OfflineProvider{})
+	model.activeView = ViewAI
+	model.width = 100
+	model.height = 40
+	model.draftSource = "Word: geheim\nTranslation: secret\n"
+	model.drafts = []ai.Draft{
+		{Note: core.Note{ID: "n1", DeckID: "deck-1", Front: "Eins", Back: "One"}},
+		{Note: core.Note{ID: "n2", DeckID: "deck-1", Front: "Zwei", Back: "Two"}},
+	}
+	model.draftCursor = 0
+
+	view := stripANSI(model.renderAI(0, 0))
+	if !strings.Contains(view, "Dictionary Context: geheim") {
+		t.Fatalf("expected dictionary context banner with headword, got:\n%s", view)
+	}
+
+	foundRow := false
+	for _, hb := range model.hitboxes {
+		if hb.ID == "draft-row-1" {
+			foundRow = true
+			hb.Action()
+			break
+		}
+	}
+	if !foundRow {
+		t.Fatal("expected draft-row-1 hitbox for mouse selection")
+	}
+	if model.draftCursor != 1 {
+		t.Fatalf("expected clicking draft row to set cursor to 1, got %d", model.draftCursor)
+	}
+
+	model.explanation = "geheim is an adjective meaning secret."
+	view = stripANSI(model.renderAI(0, 0))
+	if !strings.Contains(view, "AI Tutor Explanation") || !strings.Contains(view, "geheim is an adjective") {
+		t.Fatalf("expected AI explanation panel, got:\n%s", view)
+	}
+	_, handled := model.updateAIKey(tea.KeyPressMsg{Code: 'H', Text: "H"})
+	if !handled || model.explanation != "" {
+		t.Fatalf("expected H to dismiss explanation, handled=%v explanation=%q", handled, model.explanation)
+	}
+}
+
 func TestBulkBrowserBookmarkPropagatesError(t *testing.T) {
 	repo := &mockRepo{
 		dueCards: []core.Card{

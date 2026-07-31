@@ -1,6 +1,6 @@
 # Active Backlog
 
-Last updated: 2026-07-28
+Last updated: 2026-07-31
 
 ## Current Milestone
 
@@ -8,13 +8,20 @@ Dictionary Feature Enhancements & Lemmatization Search.
 
 ## Exact Next Action
 
-Continue dictionary UX refinements, vocabulary deck expansion, or AI tutor enhancements.
+Continue dictionary UX refinements (spotlight detail parity with full view), vocabulary deck expansion, or AI tutor enhancements.
 
 ## Top Issues
 
 None active.
 
 ## Completed Work
+
+- [x] **Dictionary ctrl+e Real Explain Flow:** `ctrl+e` now calls `ai.ExplainDictionaryEntry` (pedagogical tutor explanation) instead of `startDrafting()` flashcard generation. Results render in the AI view with dismiss via `H`/`Esc`. Added `TestExplainDictionaryEntry` and updated `TestDictionaryCtrlEExplainAndFilterTagHelpers`.
+- [x] **Two-Column / Spotlight Domain Tag Badges:** Shared `formatDictionaryDomainTags()` so wide two-column dictionary detail and Spotlight detail show the same `[ZOOL.]` / field badges as single-column detail.
+- [x] **Clear Recently Inspected Words:** Added `[Clear]` hitboxes (`dict-recent-clear` / `dict-overlay-recent-clear`) and made `ctrl+x` clear recently inspected when search history is already empty. Persists via `clearDictionaryRecentlyViewed()`.
+- [x] **AI Draft Row Hitboxes & Context Banner:** Draft text rows are clickable (`draft-row-N`); dictionary context banner shows the headword (`★ Dictionary Context: geheim`) instead of a bare label. Added `TestAIDraftRowHitboxesAndDictionaryContextBanner`.
+- [x] **Filter-Only Browse Alphabetical Order:** Filter-pill browse (`:noun`, `:verb`, etc.) uses `ORDER BY word` plus stable in-memory sort. Added `TestDictionaryFilterOnlyBrowseOrdered`.
+- [x] **Related Words Compound-Aware Matching:** `FindRelatedEntries` prefers lemma / prefix (≥4 runes) / suffix compounds and drops short-stem middle noise (e.g. `und` → `undurchlässig`). Extended `TestFindRelatedEntries`.
 
 - [x] **Multi-Part German Compound Decomposition & SQLite Dictionary Validation:** Enhanced `DecomposeCompound` in `internal/content/compound.go` to recursively decompose German compound words with 3+ components (e.g. `Krankenhausarzt` -> `Kranken` + `Haus` + `Arzt`). Added `Exists` to `DictionaryRepository` interface and `sqlite/dictionary.go` to validate sub-compounds against the local dictionary DB. Updated single-column and two-column dictionary views in `render_dictionary.go` to display multi-part breakdowns with interactive hitboxes (`dict-compound-sc-` and `dict-compound-tc-`) and expanded number key shortcuts (`1`-`5`) in `keys.go` for all compound parts. Added `TestMultiPartDecomposeCompound` and `TestMultiPartCompoundDecompositionAndHitboxes`.
 - [x] **AI Flashcard Draft Batch Operations (`A` / `D` & Hitboxes):** Added `approveAllDrafts()` and `discardAllDrafts()` batch operations for AI flashcard generation. Added `A` / `ctrl+a` (Approve All) and `D` / `ctrl+d` (Discard All) keyboard shortcuts in `updateAIKey` (`keys.go`), rendered `[Approve All]` and `[Discard All]` action buttons with mouse hitboxes (`draft-approve-all` and `draft-discard-all`) in `render_ai.go`, and updated shortcut help footers. Added `TestAIApproveAllAndDiscardAllShortcuts`.
@@ -125,6 +132,8 @@ None active.
   the real `1-9` trainer keys.
 
 ## Verification
+
+- `./scripts/verify.sh` passed on 2026-07-31: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed) after dictionary explain flow, domain-tag parity, recently-inspected clear, AI draft row hitboxes, filter-only ordering, and related-word matching.
 
 - `./scripts/verify.sh` passed on 2026-07-27: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed) after Practice Hub `=` fix, recently-inspected auto-record/spotlight parity, DE/EN filter-only browse, and starred browse ordering.
 

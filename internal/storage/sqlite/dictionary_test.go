@@ -253,6 +253,7 @@ func TestFindRelatedEntries(t *testing.T) {
 		{ID: "3", Word: "Haustier", Translation: "pet"},
 		{ID: "4", Word: "Krankenhaus", Translation: "hospital"},
 		{ID: "5", Word: "Auto", Translation: "car"},
+		{ID: "6", Word: "undurchlässig", Translation: "impermeable"},
 	}
 
 	if err := store.ImportEntries(ctx, entries); err != nil {
@@ -264,23 +265,61 @@ func TestFindRelatedEntries(t *testing.T) {
 		t.Fatalf("FindRelatedEntries failed: %v", err)
 	}
 
-	// Should not include "das Haus" itself.
-	// But it might include "Haus" if "das Haus" is treated as the original word.
-	// Actually, the implementation excludes the exact `word` parameter.
-	if len(res) != 3 {
-		t.Errorf("expected 3 related entries, got %d", len(res))
-	}
-
 	expected := map[string]bool{
 		"Haus":        true,
 		"Haustier":    true,
 		"Krankenhaus": true,
 	}
 
+	if len(res) != 3 {
+		t.Errorf("expected 3 related entries, got %d (%v)", len(res), res)
+	}
+
 	for _, e := range res {
 		if !expected[e.Word] {
 			t.Errorf("unexpected related entry: %s", e.Word)
 		}
+	}
+
+	// Middle/prefix noise: short stem "und" must not surface undurchlässig.
+	noisy, err := store.FindRelatedEntries(ctx, "und", 10)
+	if err != nil {
+		t.Fatalf("FindRelatedEntries(und) failed: %v", err)
+	}
+	for _, e := range noisy {
+		if e.Word == "undurchlässig" {
+			t.Fatalf("middle-substring match should be excluded, got %q", e.Word)
+		}
+	}
+}
+
+func TestDictionaryFilterOnlyBrowseOrdered(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	entries := []core.DictionaryEntry{
+		{ID: "3", Word: "Zebra", Translation: "zebra", WordClass: "noun", Gender: "n"},
+		{ID: "1", Word: "Apfel", Translation: "apple", WordClass: "noun", Gender: "m"},
+		{ID: "2", Word: "Birne", Translation: "pear", WordClass: "noun", Gender: "f"},
+		{ID: "4", Word: "gehen", Translation: "to go", WordClass: "verb"},
+	}
+	if err := store.ImportEntries(ctx, entries); err != nil {
+		t.Fatalf("import entries: %v", err)
+	}
+
+	res, err := store.Search(ctx, ":noun", 10)
+	if err != nil {
+		t.Fatalf("filter-only search failed: %v", err)
+	}
+	if len(res) != 3 {
+		t.Fatalf("expected 3 nouns, got %d", len(res))
+	}
+	if res[0].Word != "Apfel" || res[1].Word != "Birne" || res[2].Word != "Zebra" {
+		t.Fatalf("expected alphabetical noun browse, got %v %v %v", res[0].Word, res[1].Word, res[2].Word)
 	}
 }
 

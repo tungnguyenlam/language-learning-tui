@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"unicode/utf8"
 
 	"deutsch-tui/internal/core"
 )
@@ -183,6 +184,7 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 		q := `
 			SELECT id, word, translation, word_class, gender, forms, examples, tags
 			FROM dictionary_fts
+			ORDER BY word COLLATE NOCASE, id
 			LIMIT 200
 		`
 		entries, err := s.queryDictionaryEntries(ctx, q)
@@ -190,6 +192,14 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 			return nil, fmt.Errorf("search dictionary filter-only: %w", err)
 		}
 		filtered := filterEntries(entries, classFilter, genderFilter, "", "")
+		sort.SliceStable(filtered, func(i, j int) bool {
+			wi := strings.ToLower(filtered[i].Word)
+			wj := strings.ToLower(filtered[j].Word)
+			if wi != wj {
+				return wi < wj
+			}
+			return filtered[i].ID < filtered[j].ID
+		})
 		if len(filtered) > limit {
 			filtered = filtered[:limit]
 		}
@@ -462,19 +472,57 @@ func (s *Store) FindRelatedEntries(ctx context.Context, word string, limit int) 
 	if len(bareWord) < 3 {
 		return nil, nil
 	}
+	if limit <= 0 {
+		limit = 5
+	}
 
-	q := `
+	// Prefer morphological relatives: the bare lemma itself, compounds that
+	// end with it (Krankenhaus), and — for stems long enough to be meaningful
+	// (≥4 runes) — compounds that start with it (Haustier). Short stems like
+	// "und" must not pull in middle/prefix noise such as "undurchlässig".
+	args := []any{word, bareWord}
+	conds := []string{
+		"word != ?",
+		"(lower(word) = lower(?) OR word LIKE ?)",
+	}
+	args = append(args, "%"+bareWord)
+
+	if utf8.RuneCountInString(bareWord) >= 4 {
+		conds = []string{
+			"word != ?",
+			"(lower(word) = lower(?) OR word LIKE ? OR word LIKE ?)",
+		}
+		args = []any{word, bareWord, bareWord + "%", "%" + bareWord}
+	}
+
+	q := fmt.Sprintf(`
 		SELECT id, word, translation, word_class, gender, forms, examples, tags
 		FROM dictionary_fts
-		WHERE word LIKE ? AND word != ?
+		WHERE %s
+		ORDER BY length(word), word COLLATE NOCASE, id
 		LIMIT ?
-	`
-	likePattern := "%" + bareWord + "%"
-	entries, err := s.queryDictionaryEntries(ctx, q, likePattern, word, limit)
+	`, strings.Join(conds, " AND "))
+	args = append(args, limit*3)
+
+	entries, err := s.queryDictionaryEntries(ctx, q, args...)
 	if err != nil {
 		return nil, fmt.Errorf("find related entries: %w", err)
 	}
-	return entries, nil
+
+	var out []core.DictionaryEntry
+	seen := make(map[string]bool)
+	for _, e := range entries {
+		key := strings.ToLower(e.Word)
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		out = append(out, e)
+		if len(out) >= limit {
+			break
+		}
+	}
+	return out, nil
 }
 
 func (s *Store) ImportEntries(ctx context.Context, entries []core.DictionaryEntry) error {

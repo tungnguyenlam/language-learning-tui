@@ -3,10 +3,23 @@ package tui
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
+
+// draftSourceHeadline extracts a short label from dictionary draft context.
+func draftSourceHeadline(source string) string {
+	for _, line := range strings.Split(source, "\n") {
+		line = strings.TrimSpace(line)
+		if strings.HasPrefix(line, "Word:") {
+			word := strings.TrimSpace(strings.TrimPrefix(line, "Word:"))
+			return word
+		}
+	}
+	return strings.TrimSpace(strings.Split(source, "\n")[0])
+}
 
 func (m *Model) renderAI(x, y int) string {
 	width, height := m.activePanelSize()
@@ -99,11 +112,38 @@ func (m *Model) renderAI(x, y int) string {
 	ctx.WriteLine(mutedStyle.Render("Tip: include level and use case, e.g. B1 workplace small talk with 2 examples."))
 
 	if m.draftSource != "" {
-		ctx.WriteLine(lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true).Render("★ Dictionary Context Active"))
+		contextLabel := draftSourceHeadline(m.draftSource)
+		banner := "★ Dictionary Context Active"
+		if contextLabel != "" {
+			banner = fmt.Sprintf("★ Dictionary Context: %s", truncateLine(contextLabel, maxInt(20, width-30)))
+		}
+		ctx.WriteLine(lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Bold(true).Render(banner))
+	}
+
+	if m.explainingCard {
+		spin := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}[int(time.Now().UnixNano()/1e8)%10]
+		ctx.WriteLine(lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("81")).
+			Padding(0, 1).
+			Width(maxInt(40, width-10)).
+			Render(lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("Asking AI tutor for explanation…") + "  " + spin))
+	} else if m.explainError != "" {
+		ctx.WriteLine(warnStyle.Render("Explanation error: " + m.explainError))
+	} else if m.explanation != "" {
+		title := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("AI Tutor Explanation")
+		explanationStyle := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(lipgloss.Color("81")).
+			Padding(0, 1).
+			Width(maxInt(40, width-10))
+		ctx.NewLine()
+		ctx.WriteLine(explanationStyle.Render(title + "\n\n" + m.explanation))
+		ctx.WriteLine(mutedStyle.Render("Press H or Esc to dismiss explanation"))
 	}
 
 	// Suggested Topics Section
-	if (m.aiInput == "" || m.aiInput == "der Kaffee") && len(m.drafts) == 0 {
+	if (m.aiInput == "" || m.aiInput == "der Kaffee") && len(m.drafts) == 0 && m.explanation == "" && !m.explainingCard {
 		ctx.WriteLine("\n" + infoStyle.Bold(true).Render("Click a topic or type your own, then press Enter:"))
 
 		suggestions := []struct {
@@ -298,10 +338,23 @@ func (m *Model) renderAI(x, y int) string {
 		approveBtn := " [Approve]"
 		discardBtn := " [Discard]"
 
-		approveX := layout.X + listBoxStyle.GetBorderLeftSize() + listBoxStyle.GetPaddingLeft() + itemWidth
+		itemX := layout.X + listBoxStyle.GetBorderLeftSize() + listBoxStyle.GetPaddingLeft()
+		approveX := itemX + itemWidth
 		discardX := approveX + lipgloss.Width(approveBtn)
 		rowY := listY + (i - start)
 
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     fmt.Sprintf("draft-row-%d", i),
+			View:   ViewAI,
+			X:      itemX,
+			Y:      rowY,
+			Width:  itemWidth,
+			Height: 1,
+			Action: func() tea.Cmd {
+				m.draftCursor = draftIdx
+				return nil
+			},
+		})
 		m.hitboxes = append(m.hitboxes, Hitbox{
 			ID:     fmt.Sprintf("draft-approve-%d", i),
 			View:   ViewAI,

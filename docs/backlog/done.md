@@ -1,5 +1,19 @@
 # Done Backlog
 
+## 2026-07-31 (Dictionary Explain Flow & AI/Dictionary Polish)
+
+### Features & Polish
+- **Dictionary `ctrl+e` Real Explain:** Routes to `ai.ExplainDictionaryEntry` pedagogical explanations in the AI view (not flashcard drafting). Dismiss with `H`/`Esc`.
+- **Domain Tag Parity:** Two-column and Spotlight dictionary detail show the same field/domain badges as single-column detail via `formatDictionaryDomainTags()`.
+- **Clear Recently Inspected:** `[Clear]` hitboxes plus `ctrl+x` fallback when search history is empty; persists cleared state.
+- **AI Draft Row Hitboxes & Context Banner:** Clickable draft rows; banner shows dictionary headword.
+- **Filter-Only Browse Order:** Alphabetical `:noun`/`:verb`/… browse samples.
+- **Related Words Matching:** Prefix/suffix compound preference; drops short-stem middle noise.
+
+### Verification
+- Added/updated `TestExplainDictionaryEntry`, `TestDictionaryCtrlEExplainAndFilterTagHelpers`, `TestDictionaryRecentlyViewedAndDomainTags`, `TestAIDraftRowHitboxesAndDictionaryContextBanner`, `TestDictionaryFilterOnlyBrowseOrdered`, `TestFindRelatedEntries`.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed).
+
 ## 2026-07-28 (Multi-Part Compound Decomposition & AI Draft Batch Operations)
 
 ### Features & Polish

@@ -69,6 +69,12 @@ func (m *Model) activateHitboxByID(id string) tea.Cmd {
 			return m.playCardAudio(m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)])
 		}
 		return nil
+	case strings.HasPrefix(id, "draft-row-"):
+		idx, err := strconv.Atoi(strings.TrimPrefix(id, "draft-row-"))
+		if err == nil && idx >= 0 && idx < len(m.drafts) {
+			m.draftCursor = idx
+		}
+		return nil
 	case strings.HasPrefix(id, "draft-approve-"):
 		idx, err := strconv.Atoi(strings.TrimPrefix(id, "draft-approve-"))
 		if err == nil && idx >= 0 && idx < len(m.drafts) {
@@ -82,6 +88,9 @@ func (m *Model) activateHitboxByID(id string) tea.Cmd {
 			m.draftCursor = idx
 			return m.discardDraft()
 		}
+		return nil
+	case id == "dict-recent-clear" || id == "dict-overlay-recent-clear":
+		m.clearDictionaryRecentlyViewed()
 		return nil
 	case strings.HasPrefix(id, "ai-topic-"):
 		topic := strings.TrimPrefix(id, "ai-topic-")

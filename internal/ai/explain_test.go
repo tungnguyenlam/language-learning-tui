@@ -49,3 +49,32 @@ func TestExplainCard(t *testing.T) {
 		}
 	})
 }
+
+func TestExplainDictionaryEntry(t *testing.T) {
+	entry := core.DictionaryEntry{
+		Word:        "geheim",
+		Translation: "secret",
+		WordClass:   "adj",
+	}
+
+	t.Run("Chat provider returns explanation", func(t *testing.T) {
+		provider := mockChatProvider{response: "geheim is an adjective."}
+		explanation, err := ExplainDictionaryEntry(context.Background(), provider, entry)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if explanation != "geheim is an adjective." {
+			t.Errorf("expected explanation, got %q", explanation)
+		}
+	})
+
+	t.Run("Offline provider returns placeholder", func(t *testing.T) {
+		explanation, err := ExplainDictionaryEntry(context.Background(), OfflineProvider{}, entry)
+		if err != nil {
+			t.Fatalf("unexpected error: %v", err)
+		}
+		if explanation != "Offline/template provider cannot provide detailed explanations." {
+			t.Errorf("unexpected explanation: %q", explanation)
+		}
+	})
+}

@@ -21,6 +21,24 @@ var (
 	genderNeutStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("42"))
 )
 
+// formatDictionaryDomainTags renders styled field/domain badges (e.g. [ZOOL.]).
+func formatDictionaryDomainTags(tags []string) string {
+	if len(tags) == 0 {
+		return ""
+	}
+	tagStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("86")).Background(lipgloss.Color("236")).Padding(0, 1)
+	var out strings.Builder
+	for _, tg := range tags {
+		cleanTag := strings.Trim(tg, "[] ")
+		if cleanTag == "" {
+			continue
+		}
+		out.WriteString(tagStyle.Render("[" + strings.ToUpper(cleanTag) + "]"))
+		out.WriteString(" ")
+	}
+	return out.String()
+}
+
 func renderGender(gender string) string {
 	if gender == "" {
 		return ""
@@ -266,7 +284,21 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			}
 
 			if len(m.dictionaryRecentlyViewed) > 0 {
-				b.WriteString("\n" + boldStyle.Render("Recently Inspected Words:") + "\n")
+				clearRecentText := lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Render("[Clear]")
+				b.WriteString("\n" + boldStyle.Render("Recently Inspected Words:") + "  " + clearRecentText + "\n")
+				clearRecentY := strings.Count(b.String(), "\n") - 1
+				m.hitboxes = append(m.hitboxes, Hitbox{
+					ID:     "dict-recent-clear",
+					View:   ViewDictionary,
+					X:      layout.X + 28,
+					Y:      layout.Y + clearRecentY,
+					Width:  7,
+					Height: 1,
+					Action: func() tea.Cmd {
+						m.clearDictionaryRecentlyViewed()
+						return nil
+					},
+				})
 				for i, e := range m.dictionaryRecentlyViewed {
 					lineY := strings.Count(b.String(), "\n")
 					wordStr := e.Word
@@ -358,15 +390,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		if res.Gender != "" {
 			meta += renderGender(res.Gender) + " "
 		}
-		if len(res.Tags) > 0 {
-			tagStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("86")).Background(lipgloss.Color("236")).Padding(0, 1)
-			for _, tg := range res.Tags {
-				cleanTag := strings.Trim(tg, "[] ")
-				if cleanTag != "" {
-					meta += tagStyle.Render("["+strings.ToUpper(cleanTag)+"]") + " "
-				}
-			}
-		}
+		meta += formatDictionaryDomainTags(res.Tags)
 		if meta != "" {
 			detailBuilder.WriteString(meta + "\n")
 		}
@@ -615,7 +639,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			}
 			detailBuilder.WriteString(titleStyle.Render(titleText) + "\n")
 
-			// Part of speech / Gender tags
+			// Part of speech / Gender / domain tags
 			meta := ""
 			if res.WordClass != "" {
 				meta += mutedStyle.Render("["+strings.ToUpper(res.WordClass)+"]") + " "
@@ -623,6 +647,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			if res.Gender != "" {
 				meta += renderGender(res.Gender) + " "
 			}
+			meta += formatDictionaryDomainTags(res.Tags)
 			if meta != "" {
 				detailBuilder.WriteString(meta + "\n")
 			}
@@ -1022,7 +1047,21 @@ func (m *Model) renderSpotlightDictionary() string {
 			}
 
 			if len(m.dictionaryRecentlyViewed) > 0 {
-				b.WriteString(boldStyle.Render("Recently Inspected Words:") + "\n")
+				clearRecentText := lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Render("[Clear]")
+				b.WriteString(boldStyle.Render("Recently Inspected Words:") + "  " + clearRecentText + "\n")
+				clearRecentLineY := strings.Count(b.String(), "\n") - 1
+				m.hitboxes = append(m.hitboxes, Hitbox{
+					ID:     "dict-overlay-recent-clear",
+					View:   m.activeView,
+					X:      startX + 30,
+					Y:      startY + clearRecentLineY + 1,
+					Width:  7,
+					Height: 1,
+					Action: func() tea.Cmd {
+						m.clearDictionaryRecentlyViewed()
+						return nil
+					},
+				})
 				for i, e := range m.dictionaryRecentlyViewed {
 					lineY := strings.Count(b.String(), "\n")
 					wordStr := e.Word
@@ -1118,6 +1157,7 @@ func (m *Model) renderSpotlightDictionary() string {
 			if res.Gender != "" {
 				meta += renderGender(res.Gender) + " "
 			}
+			meta += formatDictionaryDomainTags(res.Tags)
 			if meta != "" {
 				detailBuilder.WriteString(meta + "\n")
 			}
@@ -1242,6 +1282,7 @@ func (m *Model) renderSpotlightDictionary() string {
 				if res.Gender != "" {
 					meta += renderGender(res.Gender) + " "
 				}
+				meta += formatDictionaryDomainTags(res.Tags)
 				if meta != "" {
 					detailBuilder.WriteString(meta + "\n")
 				}

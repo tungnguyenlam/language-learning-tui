@@ -1179,9 +1179,24 @@ func (m *Model) updateAIKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		m.searchingAI = true
 		return nil, true
 	case "esc", "escape":
+		if m.explanation != "" || m.explainError != "" || m.explainingCard {
+			m.explanation = ""
+			m.explainError = ""
+			m.explainingCard = false
+			m.status = "Explanation dismissed"
+			return nil, true
+		}
 		m.aiInput = ""
 		m.draftSource = ""
 		return nil, true
+	case "H", "h":
+		if m.explanation != "" || m.explainError != "" {
+			m.explanation = ""
+			m.explainError = ""
+			m.explainingCard = false
+			m.status = "Explanation dismissed"
+			return nil, true
+		}
 	case "[":
 		m.previousAITemplate()
 		return nil, true
@@ -1724,19 +1739,6 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, true
 	case "ctrl+g":
 		return m.cycleDictionaryTargetDeck(), true
-	case "ctrl+e":
-		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
-			m.recordDictionarySearch(m.dictionarySearch)
-			entry := m.dictionaryResults[m.dictionaryCursor]
-			m.aiInput = fmt.Sprintf("Explain the German word '%s' (%s - %s). Provide grammar notes, gender usage, collocations, and example sentences.", entry.Word, entry.WordClass, entry.Translation)
-			if m.dictionaryOverlayActive {
-				m.closeDictionaryOverlay()
-			}
-			m.updateView(ViewAI)
-			m.status = fmt.Sprintf("Asking AI tutor about '%s'...", entry.Word)
-			return m.startDrafting(), true
-		}
-		return nil, true
 	case "ctrl+f":
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 			m.recordDictionarySearch(m.dictionarySearch)
@@ -1752,11 +1754,40 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		m.resetDictionarySearchState()
 		return nil, true
 	case "ctrl+x":
-		m.dictionarySearchHistory = nil
-		m.saveDictionaryHistory()
+		if len(m.dictionarySearchHistory) > 0 {
+			m.dictionarySearchHistory = nil
+			m.saveDictionaryHistory()
+			m.status = "Cleared recent searches"
+			return nil, true
+		}
+		if len(m.dictionaryRecentlyViewed) > 0 {
+			m.clearDictionaryRecentlyViewed()
+			return nil, true
+		}
 		return nil, true
 	case "ctrl+o":
 		return m.exportDictionaryResultsTSVCmd(), true
+	case "ctrl+e":
+		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+			m.recordDictionarySearch(m.dictionarySearch)
+			entry := m.dictionaryResults[m.dictionaryCursor]
+			m.recordDictionaryView(entry)
+			m.aiInput = entry.Word
+			if entry.Translation != "" {
+				m.aiInput = entry.Word + " — " + entry.Translation
+			}
+			m.draftSource = ""
+			m.drafts = nil
+			m.draftCursor = 0
+			m.explanation = ""
+			m.explainError = ""
+			if m.dictionaryOverlayActive {
+				m.closeDictionaryOverlay()
+			}
+			m.updateView(ViewAI)
+			return m.explainDictionaryEntry(entry), true
+		}
+		return nil, true
 	case "enter":
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 			m.recordDictionarySearch(m.dictionarySearch)

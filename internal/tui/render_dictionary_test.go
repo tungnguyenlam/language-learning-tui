@@ -9,6 +9,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"deutsch-tui/internal/ai"
 	"deutsch-tui/internal/core"
 )
 
@@ -808,23 +809,41 @@ func TestDictionaryCtrlEExplainAndFilterTagHelpers(t *testing.T) {
 		t.Errorf("expected clearFilterTags to return 'gehen', got %q", cleared)
 	}
 
-	// 2. Test ctrl+e shortcut switching to ViewAI with explain prompt
-	m := NewModel(&mockRepo{}, &mockScheduler{})
+	// 2. Test ctrl+e shortcut switches to ViewAI and starts a real explain flow
+	m := NewModelWithAI(&mockRepo{}, &mockScheduler{}, ai.OfflineProvider{})
 	m.activeView = ViewDictionary
 	m.dictionaryResults = []core.DictionaryEntry{
 		{ID: "1", Word: "geheim", Translation: "secret", WordClass: "adj"},
 	}
 	m.dictionaryCursor = 0
 
-	_, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'e', Mod: tea.ModCtrl})
+	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'e', Mod: tea.ModCtrl})
 	if !handled {
 		t.Fatal("expected ctrl+e to be handled")
 	}
 	if m.activeView != ViewAI {
 		t.Fatalf("expected activeView to switch to ViewAI, got %s", m.activeView)
 	}
-	if !strings.Contains(m.aiInput, "Explain the German word 'geheim'") {
-		t.Fatalf("expected aiInput to contain explain prompt, got %q", m.aiInput)
+	if !strings.Contains(m.aiInput, "geheim") {
+		t.Fatalf("expected aiInput to reference the headword, got %q", m.aiInput)
+	}
+	if strings.Contains(m.aiInput, "Explain the German word") {
+		t.Fatalf("ctrl+e should not stuff a flashcard-draft prompt into aiInput, got %q", m.aiInput)
+	}
+	if !m.explainingCard {
+		t.Fatal("expected explainingCard to be true after ctrl+e")
+	}
+	if cmd == nil {
+		t.Fatal("expected explainDictionaryEntry command from ctrl+e")
+	}
+	// Offline provider returns a graceful non-chat message via explainMsg.
+	msg := cmd()
+	explain, ok := msg.(explainMsg)
+	if !ok {
+		t.Fatalf("expected explainMsg, got %T (%v)", msg, msg)
+	}
+	if explain.explanation == "" {
+		t.Fatal("expected non-empty explanation from offline provider")
 	}
 }
 
@@ -1204,6 +1223,47 @@ func TestDictionaryRecentlyViewedAndDomainTags(t *testing.T) {
 	viewDetail := stripANSI(m.renderDictionary(m.activeViewContentLayout()))
 	if !strings.Contains(viewDetail, "[ZOOL.]") {
 		t.Fatalf("expected detail view to contain domain tag badge [ZOOL.], got:\n%s", viewDetail)
+	}
+
+	// 3. Two-column browse detail also shows domain tags
+	m.dictionaryDetailView = false
+	m.width = 120
+	m.dictionaryResults = []core.DictionaryEntry{entry1}
+	m.dictionaryCursor = 0
+	viewTwoCol := stripANSI(m.renderDictionary(m.activeViewContentLayout()))
+	if !strings.Contains(viewTwoCol, "[ZOOL.]") {
+		t.Fatalf("expected two-column detail to contain domain tag [ZOOL.], got:\n%s", viewTwoCol)
+	}
+
+	// 4. Clear recently inspected via hitbox and ctrl+x fallback
+	m.dictionarySearch = ""
+	m.dictionaryResults = nil
+	m.dictionarySearchHistory = nil
+	m.dictionaryRecentlyViewed = []core.DictionaryEntry{entry1, entry2}
+	m.renderDictionary(m.activeViewContentLayout())
+	foundClear := false
+	for _, hb := range m.hitboxes {
+		if hb.ID == "dict-recent-clear" {
+			foundClear = true
+			hb.Action()
+			break
+		}
+	}
+	if !foundClear {
+		t.Fatal("expected dict-recent-clear hitbox")
+	}
+	if len(m.dictionaryRecentlyViewed) != 0 {
+		t.Fatalf("expected clear hitbox to empty recently viewed, got %v", m.dictionaryRecentlyViewed)
+	}
+
+	m.dictionaryRecentlyViewed = []core.DictionaryEntry{entry1}
+	m.dictionarySearchHistory = nil
+	_, handled = m.updateDictionaryKey(tea.KeyPressMsg{Code: 'x', Mod: tea.ModCtrl})
+	if !handled {
+		t.Fatal("expected ctrl+x to clear recently viewed when history empty")
+	}
+	if len(m.dictionaryRecentlyViewed) != 0 {
+		t.Fatalf("expected ctrl+x to clear recently viewed, got %v", m.dictionaryRecentlyViewed)
 	}
 }
 
