@@ -73,7 +73,7 @@ func dictionaryVisibleRows(layout viewportLayout) int {
 	return rows
 }
 
-func renderFilterPillsRow(m *Model, startX, startY int, targetView View) string {
+func renderFilterPillsRow(m *Model, startX, startY int, targetView View, availWidth int) string {
 	pills := []struct {
 		Name string
 		Tag  string
@@ -95,6 +95,34 @@ func renderFilterPillsRow(m *Model, startX, startY int, targetView View) string 
 	activeStyle := lipgloss.NewStyle().Bold(true).Foreground(colorYellow).Background(lipgloss.Color("236")).Padding(0, 1)
 	inactiveStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("244")).Padding(0, 1)
 
+	if availWidth <= 0 {
+		availWidth = 80
+	}
+
+	targetDeckName := "Dictionary"
+	if m.dictionaryTargetDeckID != "" {
+		for _, d := range m.decks {
+			if d.ID == m.dictionaryTargetDeckID {
+				targetDeckName = d.Name
+				break
+			}
+		}
+		if m.dictionaryTargetDeckID == "dictionary" {
+			targetDeckName = "Dictionary"
+		}
+	} else if m.deck.ID != "" && m.deck.ID != "all" {
+		targetDeckName = m.deck.Name
+	}
+	deckPillStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Background(lipgloss.Color("235")).Padding(0, 1)
+	renderedDeck := deckPillStyle.Render("Target: [" + targetDeckName + "]")
+	deckWidth := lipgloss.Width(renderedDeck)
+
+	// Reserve space for "Filters: " prefix (9 cols) and target deck pill at right if wide enough
+	maxPillX := startX + availWidth
+	if availWidth > 50 {
+		maxPillX -= (deckWidth + 1)
+	}
+
 	var parts []string
 	currentX := startX + 9
 	for i, p := range pills {
@@ -107,6 +135,10 @@ func renderFilterPillsRow(m *Model, startX, startY int, targetView View) string 
 			rendered = inactiveStyle.Render(label)
 		}
 		pillWidth := lipgloss.Width(rendered)
+
+		if currentX+pillWidth > maxPillX && len(parts) > 1 {
+			break
+		}
 
 		tag := p.Tag
 		m.hitboxes = append(m.hitboxes, Hitbox{
@@ -131,40 +163,202 @@ func renderFilterPillsRow(m *Model, startX, startY int, targetView View) string 
 		parts = append(parts, rendered)
 	}
 
-	targetDeckName := "Dictionary"
-	if m.dictionaryTargetDeckID != "" {
-		for _, d := range m.decks {
-			if d.ID == m.dictionaryTargetDeckID {
-				targetDeckName = d.Name
-				break
-			}
-		}
-		if m.dictionaryTargetDeckID == "dictionary" {
-			targetDeckName = "Dictionary"
-		}
-	} else if m.deck.ID != "" && m.deck.ID != "all" {
-		targetDeckName = m.deck.Name
+	if availWidth > 50 {
+		m.hitboxes = append(m.hitboxes, Hitbox{
+			ID:     "dict-target-deck-pill",
+			View:   targetView,
+			X:      currentX + 1,
+			Y:      startY,
+			Width:  deckWidth,
+			Height: 1,
+			Action: func() tea.Cmd {
+				return m.cycleDictionaryTargetDeck()
+			},
+		})
+		parts = append(parts, renderedDeck)
 	}
-	deckPillStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("39")).Background(lipgloss.Color("235")).Padding(0, 1)
-	renderedDeck := deckPillStyle.Render("Target: [" + targetDeckName + "]")
-	deckWidth := lipgloss.Width(renderedDeck)
-	m.hitboxes = append(m.hitboxes, Hitbox{
-		ID:     "dict-target-deck-pill",
-		View:   targetView,
-		X:      currentX + 1,
-		Y:      startY,
-		Width:  deckWidth,
-		Height: 1,
-		Action: func() tea.Cmd {
-			return m.cycleDictionaryTargetDeck()
-		},
-	})
-	parts = append(parts, renderedDeck)
 
 	return mutedStyle.Render("Filters: ") + strings.Join(parts, " ")
 }
 
 func (m *Model) renderDictionary(layout viewportLayout) string {
+	// Single column detail view when narrow screen or detail toggle active
+	if m.dictionaryDetailView && m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+		res := m.dictionaryResults[m.dictionaryCursor]
+		detailWidth := layout.Width
+
+		var b strings.Builder
+		b.WriteString(titleStyle.Render(fmt.Sprintf("Dictionary Details: %s", res.Word)))
+		b.WriteString("\n\n")
+
+		var detailBuilder strings.Builder
+		titleText := res.Word
+		if m.dictionaryStarred != nil && m.dictionaryStarred[res.ID] {
+			titleText = lipgloss.NewStyle().Foreground(colorYellow).Render("★ ") + titleText
+		}
+		detailBuilder.WriteString(titleStyle.Render(titleText) + "\n")
+
+		meta := ""
+		if res.WordClass != "" {
+			meta += mutedStyle.Render("["+strings.ToUpper(res.WordClass)+"]") + " "
+		}
+		if res.Gender != "" {
+			meta += renderGender(res.Gender) + " "
+		}
+		meta += formatDictionaryDomainTags(res.Tags)
+		if meta != "" {
+			detailBuilder.WriteString(meta + "\n")
+		}
+
+		detailBuilder.WriteString(mutedStyle.Render(strings.Repeat("─", maxInt(10, detailWidth-6))) + "\n\n")
+
+		if res.Translation != "" {
+			detailBuilder.WriteString(boldStyle.Render("Translations:") + "\n")
+			translations := strings.Split(res.Translation, ";")
+			for _, t := range translations {
+				trimmed := strings.TrimSpace(t)
+				highlightedT := highlightQuery(trimmed, m.dictionarySearch, dictHighlightStyle)
+				detailBuilder.WriteString("  " + highlightedT + "\n")
+			}
+			detailBuilder.WriteString("\n")
+		}
+
+		if res.Forms != "" {
+			detailBuilder.WriteString(formatInflectionTable(res.WordClass, res.Gender, res.Forms, m.dictionarySearch))
+		}
+
+		var validate content.WordValidator
+		if dictRepo, ok := m.repo.(core.DictionaryRepository); ok {
+			validate = func(w string) bool {
+				ok, _ := dictRepo.Exists(context.Background(), w)
+				return ok
+			}
+		}
+		if compoundParts := content.DecomposeCompound(res.Word, validate); len(compoundParts) >= 2 {
+			lineY := strings.Count(detailBuilder.String(), "\n")
+			detailBuilder.WriteString(boldStyle.Render("Compound Breakdown:") + "\n")
+			var partWords []string
+			for _, p := range compoundParts {
+				partWords = append(partWords, p.Word)
+			}
+			detailBuilder.WriteString(fmt.Sprintf("  • %s\n\n", strings.Join(partWords, " + ")))
+
+			maxRows := maxInt(3, layout.Height-4)
+			if lineY+1 >= m.dictionaryDetailScroll && lineY+1 < m.dictionaryDetailScroll+maxRows {
+				screenY := layout.Y + strings.Count(b.String(), "\n") + (lineY + 1 - m.dictionaryDetailScroll)
+				currX := layout.X + 4
+				for idx, pWord := range partWords {
+					word := pWord
+					m.hitboxes = append(m.hitboxes, Hitbox{
+						ID:     fmt.Sprintf("dict-compound-sc-%d", idx),
+						View:   ViewDictionary,
+						X:      currX,
+						Y:      screenY,
+						Width:  lipgloss.Width(word),
+						Height: 1,
+						Action: func() tea.Cmd {
+							m.dictionarySearch = word
+							return m.searchDictionary()
+						},
+					})
+					currX += lipgloss.Width(word) + 3 // word + " + "
+				}
+			}
+		}
+
+		if len(res.Examples) > 0 {
+			detailBuilder.WriteString(boldStyle.Render("Examples:") + "\n")
+			for _, ex := range res.Examples {
+				highlightedEx := highlightQuery(ex, m.dictionarySearch, dictHighlightStyle)
+				detailBuilder.WriteString("  • " + highlightedEx + "\n")
+			}
+		}
+
+		if len(m.dictionaryRelatedEntries) > 0 {
+			if len(res.Examples) > 0 || res.Forms != "" || res.Translation != "" {
+				detailBuilder.WriteString("\n")
+			}
+			detailBuilder.WriteString(boldStyle.Render("Related Words:") + "\n")
+			for i, related := range m.dictionaryRelatedEntries {
+				lineY := strings.Count(detailBuilder.String(), "\n")
+				line := "  • " + related.Word
+				if related.Gender != "" {
+					line += " {" + related.Gender + "}"
+				}
+				if related.Translation != "" {
+					line += " - " + related.Translation
+				}
+				detailBuilder.WriteString(line + "\n")
+
+				// Register hitbox if visible
+				maxRows := maxInt(3, layout.Height-4)
+				if lineY >= m.dictionaryDetailScroll && lineY < m.dictionaryDetailScroll+maxRows {
+					screenY := layout.Y + strings.Count(b.String(), "\n") + (lineY - m.dictionaryDetailScroll)
+					relEntry := related
+					m.hitboxes = append(m.hitboxes, Hitbox{
+						ID:     fmt.Sprintf("dict-related-sc-%d", i),
+						View:   ViewDictionary,
+						X:      layout.X,
+						Y:      screenY,
+						Width:  lipgloss.Width(line),
+						Height: 1,
+						Action: func() tea.Cmd {
+							m.dictionarySearch = relEntry.Word
+							return m.searchDictionary()
+						},
+					})
+				}
+			}
+		}
+
+		detailLines := strings.Split(detailBuilder.String(), "\n")
+		if len(detailLines) > 0 && detailLines[len(detailLines)-1] == "" {
+			detailLines = detailLines[:len(detailLines)-1]
+		}
+		m.dictionaryDetailTotalLines = len(detailLines)
+
+		headerLines := strings.Count(b.String(), "\n")
+		maxResultsDetail := maxInt(3, layout.Height-headerLines-2)
+		if m.dictionaryDetailScroll > m.dictionaryDetailTotalLines-maxResultsDetail {
+			m.dictionaryDetailScroll = maxInt(0, m.dictionaryDetailTotalLines-maxResultsDetail)
+		}
+
+		detailContentWidth := detailWidth - 5
+		if detailContentWidth < 10 {
+			detailContentWidth = 10
+		}
+
+		var visibleDetailBuilder strings.Builder
+		for i := m.dictionaryDetailScroll; i < m.dictionaryDetailScroll+maxResultsDetail && i < len(detailLines); i++ {
+			visibleDetailBuilder.WriteString(padString(detailLines[i], detailContentWidth) + "\n")
+		}
+		writtenDetailLines := maxInt(0, minInt(len(detailLines)-m.dictionaryDetailScroll, maxResultsDetail))
+		for i := writtenDetailLines; i < maxResultsDetail; i++ {
+			visibleDetailBuilder.WriteString(strings.Repeat(" ", detailContentWidth) + "\n")
+		}
+
+		renderedDetailLines := strings.Split(strings.TrimSuffix(visibleDetailBuilder.String(), "\n"), "\n")
+		detailLinesWithScroll := renderScrollbarColumn(renderedDetailLines, maxResultsDetail, m.dictionaryDetailTotalLines, m.dictionaryDetailScroll)
+		if m.dictionaryDetailTotalLines > maxResultsDetail {
+			detailStartLine := strings.Count(b.String(), "\n")
+			for i := 0; i < maxResultsDetail; i++ {
+				m.hitboxes = append(m.hitboxes, Hitbox{
+					ID:     fmt.Sprintf("dict-detail-scroll-%d", i),
+					View:   ViewDictionary,
+					X:      layout.X + layout.Width - 1,
+					Y:      layout.Y + detailStartLine + i,
+					Width:  1,
+					Height: 1,
+				})
+			}
+		}
+		detailPanelContent := strings.Join(detailLinesWithScroll, "\n") + "\n"
+
+		b.WriteString(detailPanelContent)
+		b.WriteString("\n" + mutedStyle.Render("Press esc/ctrl+d to return to list | Enter to draft | ctrl+a to add | ctrl+e to explain | ctrl+p to play"))
+		return b.String()
+	}
+
 	var b strings.Builder
 	if len(m.dictionaryResults) > 0 {
 		countSuffix := fmt.Sprintf(" (%d results)", len(m.dictionaryResults))
@@ -233,7 +427,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 
 	// Render interactive filter pills row
 	filterLineY := strings.Count(b.String(), "\n")
-	b.WriteString(renderFilterPillsRow(m, layout.X, layout.Y+filterLineY, ViewDictionary))
+	b.WriteString(renderFilterPillsRow(m, layout.X, layout.Y+filterLineY, ViewDictionary, layout.Width))
 	b.WriteString("\n\n")
 
 	// Results
@@ -361,7 +555,8 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		return b.String()
 	}
 
-	maxResults := dictionaryVisibleRows(layout)
+	headerLines := strings.Count(b.String(), "\n")
+	maxResults := maxInt(3, layout.Height-headerLines-2)
 
 	// Adjust scroll for list
 	if m.dictionaryCursor < m.dictionaryScroll {
@@ -369,178 +564,6 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 	}
 	if m.dictionaryCursor >= m.dictionaryScroll+maxResults {
 		m.dictionaryScroll = m.dictionaryCursor - maxResults + 1
-	}
-
-	// Single column detail view
-	if m.dictionaryDetailView && m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
-		res := m.dictionaryResults[m.dictionaryCursor]
-		detailWidth := layout.Width
-
-		var detailBuilder strings.Builder
-		titleText := res.Word
-		if m.dictionaryStarred != nil && m.dictionaryStarred[res.ID] {
-			titleText = lipgloss.NewStyle().Foreground(colorYellow).Render("★ ") + titleText
-		}
-		detailBuilder.WriteString(titleStyle.Render(titleText) + "\n")
-
-		meta := ""
-		if res.WordClass != "" {
-			meta += mutedStyle.Render("["+strings.ToUpper(res.WordClass)+"]") + " "
-		}
-		if res.Gender != "" {
-			meta += renderGender(res.Gender) + " "
-		}
-		meta += formatDictionaryDomainTags(res.Tags)
-		if meta != "" {
-			detailBuilder.WriteString(meta + "\n")
-		}
-
-		detailBuilder.WriteString(mutedStyle.Render(strings.Repeat("─", maxInt(10, detailWidth-6))) + "\n\n")
-
-		if res.Translation != "" {
-			detailBuilder.WriteString(boldStyle.Render("Translations:") + "\n")
-			translations := strings.Split(res.Translation, ";")
-			for _, t := range translations {
-				trimmed := strings.TrimSpace(t)
-				highlightedT := highlightQuery(trimmed, m.dictionarySearch, dictHighlightStyle)
-				detailBuilder.WriteString("  " + highlightedT + "\n")
-			}
-			detailBuilder.WriteString("\n")
-		}
-
-		if res.Forms != "" {
-			detailBuilder.WriteString(formatInflectionTable(res.WordClass, res.Gender, res.Forms, m.dictionarySearch))
-		}
-
-		var validate content.WordValidator
-		if dictRepo, ok := m.repo.(core.DictionaryRepository); ok {
-			validate = func(w string) bool {
-				ok, _ := dictRepo.Exists(context.Background(), w)
-				return ok
-			}
-		}
-		if compoundParts := content.DecomposeCompound(res.Word, validate); len(compoundParts) >= 2 {
-			lineY := strings.Count(detailBuilder.String(), "\n")
-			detailBuilder.WriteString(boldStyle.Render("Compound Breakdown:") + "\n")
-			var partWords []string
-			for _, p := range compoundParts {
-				partWords = append(partWords, p.Word)
-			}
-			detailBuilder.WriteString(fmt.Sprintf("  • %s\n\n", strings.Join(partWords, " + ")))
-
-			maxRows := dictionaryVisibleRows(layout)
-			if lineY+1 >= m.dictionaryDetailScroll && lineY+1 < m.dictionaryDetailScroll+maxRows {
-				screenY := layout.Y + strings.Count(b.String(), "\n") + (lineY + 1 - m.dictionaryDetailScroll)
-				currX := layout.X + 4
-				for idx, pWord := range partWords {
-					word := pWord
-					m.hitboxes = append(m.hitboxes, Hitbox{
-						ID:     fmt.Sprintf("dict-compound-sc-%d", idx),
-						View:   ViewDictionary,
-						X:      currX,
-						Y:      screenY,
-						Width:  lipgloss.Width(word),
-						Height: 1,
-						Action: func() tea.Cmd {
-							m.dictionarySearch = word
-							return m.searchDictionary()
-						},
-					})
-					currX += lipgloss.Width(word) + 3 // word + " + "
-				}
-			}
-		}
-
-		if len(res.Examples) > 0 {
-			detailBuilder.WriteString(boldStyle.Render("Examples:") + "\n")
-			for _, ex := range res.Examples {
-				highlightedEx := highlightQuery(ex, m.dictionarySearch, dictHighlightStyle)
-				detailBuilder.WriteString("  • " + highlightedEx + "\n")
-			}
-		}
-
-		if len(m.dictionaryRelatedEntries) > 0 {
-			if len(res.Examples) > 0 || res.Forms != "" || res.Translation != "" {
-				detailBuilder.WriteString("\n")
-			}
-			detailBuilder.WriteString(boldStyle.Render("Related Words:") + "\n")
-			for i, related := range m.dictionaryRelatedEntries {
-				lineY := strings.Count(detailBuilder.String(), "\n")
-				line := "  • " + related.Word
-				if related.Gender != "" {
-					line += " {" + related.Gender + "}"
-				}
-				if related.Translation != "" {
-					line += " - " + related.Translation
-				}
-				detailBuilder.WriteString(line + "\n")
-
-				// Register hitbox if visible
-				maxRows := dictionaryVisibleRows(layout)
-				if lineY >= m.dictionaryDetailScroll && lineY < m.dictionaryDetailScroll+maxRows {
-					screenY := layout.Y + strings.Count(b.String(), "\n") + (lineY - m.dictionaryDetailScroll)
-					relEntry := related
-					m.hitboxes = append(m.hitboxes, Hitbox{
-						ID:     fmt.Sprintf("dict-related-sc-%d", i),
-						View:   ViewDictionary,
-						X:      layout.X,
-						Y:      screenY,
-						Width:  lipgloss.Width(line),
-						Height: 1,
-						Action: func() tea.Cmd {
-							m.dictionarySearch = relEntry.Word
-							return m.searchDictionary()
-						},
-					})
-				}
-			}
-		}
-
-		detailLines := strings.Split(detailBuilder.String(), "\n")
-		if len(detailLines) > 0 && detailLines[len(detailLines)-1] == "" {
-			detailLines = detailLines[:len(detailLines)-1]
-		}
-		m.dictionaryDetailTotalLines = len(detailLines)
-
-		maxResultsDetail := dictionaryVisibleRows(layout)
-		if m.dictionaryDetailScroll > m.dictionaryDetailTotalLines-maxResultsDetail {
-			m.dictionaryDetailScroll = maxInt(0, m.dictionaryDetailTotalLines-maxResultsDetail)
-		}
-
-		detailContentWidth := detailWidth - 5
-		if detailContentWidth < 10 {
-			detailContentWidth = 10
-		}
-
-		var visibleDetailBuilder strings.Builder
-		for i := m.dictionaryDetailScroll; i < m.dictionaryDetailScroll+maxResultsDetail && i < len(detailLines); i++ {
-			visibleDetailBuilder.WriteString(padString(detailLines[i], detailContentWidth) + "\n")
-		}
-		writtenDetailLines := maxInt(0, minInt(len(detailLines)-m.dictionaryDetailScroll, maxResultsDetail))
-		for i := writtenDetailLines; i < maxResultsDetail; i++ {
-			visibleDetailBuilder.WriteString(strings.Repeat(" ", detailContentWidth) + "\n")
-		}
-
-		renderedDetailLines := strings.Split(strings.TrimSuffix(visibleDetailBuilder.String(), "\n"), "\n")
-		detailLinesWithScroll := renderScrollbarColumn(renderedDetailLines, maxResultsDetail, m.dictionaryDetailTotalLines, m.dictionaryDetailScroll)
-		if m.dictionaryDetailTotalLines > maxResultsDetail {
-			detailStartLine := strings.Count(b.String(), "\n")
-			for i := 0; i < maxResultsDetail; i++ {
-				m.hitboxes = append(m.hitboxes, Hitbox{
-					ID:     fmt.Sprintf("dict-detail-scroll-%d", i),
-					View:   ViewDictionary,
-					X:      layout.X + layout.Width - 1,
-					Y:      layout.Y + detailStartLine + i,
-					Width:  1,
-					Height: 1,
-				})
-			}
-		}
-		detailPanelContent := strings.Join(detailLinesWithScroll, "\n") + "\n"
-
-		b.WriteString(detailPanelContent)
-		b.WriteString("\n" + mutedStyle.Render("Press esc/ctrl+d to return to list | Enter to draft | ctrl+a to add | ctrl+e to explain | ctrl+p to play"))
-		return b.String()
 	}
 
 	// Two-column layout if wide enough
@@ -985,7 +1008,7 @@ func (m *Model) renderSpotlightDictionary() string {
 		})
 	}
 	overlayFilterLineY := strings.Count(b.String(), "\n")
-	b.WriteString(renderFilterPillsRow(m, startX+2, startY+overlayFilterLineY+1, m.activeView) + "\n")
+	b.WriteString(renderFilterPillsRow(m, startX+2, startY+overlayFilterLineY+1, m.activeView, boxWidth-4) + "\n")
 
 	headerLines := strings.Count(b.String(), "\n") // Header takes 5 lines (title:1, searchBar:3, filterRow:1)
 	interiorWidth := boxWidth - 4

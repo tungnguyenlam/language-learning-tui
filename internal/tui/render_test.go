@@ -242,7 +242,7 @@ func TestFilterPillDisplayNames(t *testing.T) {
 	m := NewModel(nil, nil)
 	m.width = 120
 	m.height = 30
-	pillsRow := renderFilterPillsRow(m, 0, 0, ViewDictionary)
+	pillsRow := renderFilterPillsRow(m, 0, 0, ViewDictionary, 120)
 	plain := stripANSI(pillsRow)
 
 	expectedNames := []string{"★ Starred", "DE", "EN", "Verb", "Noun", "Adj", "Adv", "Der", "Die", "Das", "Pl"}
