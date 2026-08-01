@@ -274,6 +274,9 @@ func (m *Model) textInputActive() bool {
 		m.searchingAI ||
 		(m.activeView == ViewDictionary && !m.dictionaryFocusResults) ||
 		m.dictionaryOverlayActive ||
+		// Practice Hub `/` filter is a real text field — without this, `q`
+		// quits the app and digits jump to other views mid-filter.
+		(m.activeView == ViewPractice && m.practiceSubView == PracticeSubViewHub && m.practiceFilterFocus) ||
 		m.drafting // AI drafting also uses input
 }
 
@@ -1372,6 +1375,12 @@ func (m *Model) handlePaste(text string) tea.Cmd {
 	if m.activeView == ViewDecks && m.searchingDecks {
 		m.deckFilter += text
 		m.deckCursor = 0
+		return nil
+	}
+
+	if m.activeView == ViewPractice && m.practiceSubView == PracticeSubViewHub && m.practiceFilterFocus {
+		m.practiceFilter += text
+		m.practiceHubCursor = 0
 		return nil
 	}
 

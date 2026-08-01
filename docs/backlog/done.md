@@ -1,5 +1,19 @@
 # Done Backlog
 
+## 2026-08-01 (Bug Hunt: Practice Hub Filter & Async Queue Identity)
+
+### Bug Fixes
+- **Practice Hub `/` filter:** Included `practiceFilterFocus` in `textInputActive` so `q`/`?`/`=`/digits no longer quit or jump views mid-filter; clipboard paste appends to `practiceFilter`.
+- **Due-queue load identity:** `loadDueCards` / `loadBookmarkedDueCards` carry monotonic ids; stale or filter-mismatched results are ignored.
+- **Grade/undo/suspend vs bookmark filter:** Messages snapshot the filter used for the reload; if the live filter flipped mid-flight, session stats still update and the due queue is refreshed for the current filter.
+- **Cram stale loads:** Ignore mid-flight results when filter or deck no longer matches (plus load id).
+- **Gender practice stale loads:** `practiceItemsMsg` applies only while Gender is active and the load id is current.
+
+### Verification
+- Added regression coverage in `bugfix_input_test.go`.
+- Updated trainer-input notice for Practice Hub filter trapping.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed).
+
 ## 2026-08-01 (Bug Hunt & Performance: Due Queue, Async Safety, Cram Flags)
 
 ### Bug Fixes & Performance

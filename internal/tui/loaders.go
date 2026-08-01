@@ -30,28 +30,46 @@ func (m *Model) loadBrowserCards() tea.Cmd {
 	}
 }
 
-func (m *Model) loadDueCards() tea.Msg {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	cards, err := m.repo.DueCards(ctx, time.Now(), 0)
-	if err != nil {
-		return err
-	}
-	return dueCardsMsg(cards)
+func (m *Model) loadDueCards() tea.Cmd {
+	m.dueLoadID++
+	id := m.dueLoadID
+	return m.fetchDueCards(id, false)
 }
 
-func (m *Model) loadBookmarkedDueCards() tea.Msg {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
-	// Use default due limit (0) so bookmark filter matches Review's full queue.
-	cards, err := m.repo.DueCardsBookmarked(ctx, time.Now(), 0)
-	if err != nil {
-		return err
+func (m *Model) loadBookmarkedDueCards() tea.Cmd {
+	m.dueLoadID++
+	id := m.dueLoadID
+	return m.fetchDueCards(id, true)
+}
+
+// fetchDueCards loads the due queue for a captured request id. Prefer
+// loadDueCards / loadBookmarkedDueCards so the id is bumped on the model
+// thread; use this only when an outer cmd already reserved the id.
+func (m *Model) fetchDueCards(id int, bookmarked bool) tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		defer cancel()
+		var cards []core.Card
+		var err error
+		if bookmarked {
+			// Use default due limit (0) so bookmark filter matches Review's full queue.
+			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 0)
+		} else {
+			cards, err = m.repo.DueCards(ctx, time.Now(), 0)
+		}
+		if err != nil {
+			return err
+		}
+		if bookmarked {
+			return bookmarkedDueCardsMsg{id: id, cards: cards}
+		}
+		return dueCardsMsg{id: id, cards: cards}
 	}
-	return bookmarkedDueCardsMsg(cards)
 }
 
 func (m *Model) loadCramCards() tea.Cmd {
+	m.cramLoadID++
+	id := m.cramLoadID
 	deckID := m.deck.ID
 	cramType := m.cramType
 	return func() tea.Msg {
@@ -68,7 +86,7 @@ func (m *Model) loadCramCards() tea.Cmd {
 		if err != nil {
 			return err
 		}
-		return cramCardsMsg{cards: cards, cramType: cramType}
+		return cramCardsMsg{id: id, cards: cards, cramType: cramType, deckID: deckID}
 	}
 }
 
@@ -182,6 +200,8 @@ func (m *Model) reloadBrowserForSelectedDeck() tea.Cmd {
 }
 
 func (m *Model) loadPracticeItems() tea.Cmd {
+	m.practiceLoadID++
+	id := m.practiceLoadID
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
@@ -213,7 +233,7 @@ func (m *Model) loadPracticeItems() tea.Cmd {
 		// same nouns in the same sequence every session.
 		rand.Shuffle(len(items), func(i, j int) { items[i], items[j] = items[j], items[i] })
 
-		return practiceItemsMsg(items)
+		return practiceItemsMsg{id: id, items: items}
 	}
 }
 
@@ -230,7 +250,10 @@ func extractPlural(extra string) string {
 	return strings.TrimSpace(sub)
 }
 
-type practiceItemsMsg []practiceItem
+type practiceItemsMsg struct {
+	id    int
+	items []practiceItem
+}
 
 func (m *Model) filteredDecks() []core.Deck {
 	if m.deckFilter == "" {

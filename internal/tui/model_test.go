@@ -162,7 +162,7 @@ func TestReviewGrammarHintToggle(t *testing.T) {
 		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
 	}
 	model := NewModel(repo, &mockScheduler{})
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.activeView = ViewReview
 
 	if model.showGrammarHint {
@@ -199,7 +199,7 @@ func TestReviewFlow(t *testing.T) {
 	model := NewModel(repo, &mockScheduler{})
 
 	// Load cards
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 
 	if len(model.dueCards) != 2 {
 		t.Fatalf("expected 2 cards, got %d", len(model.dueCards))
@@ -238,7 +238,7 @@ func TestReviewFlow(t *testing.T) {
 
 	// Simulate re-loading with one less card
 	repo.dueCards = repo.dueCards[1:]
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 
 	if len(model.dueCards) != 1 {
 		t.Fatalf("expected 1 card, got %d", len(model.dueCards))
@@ -260,7 +260,7 @@ func TestReviewExtraRevealKeyDoesNotBlockGrading(t *testing.T) {
 		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},
 	}
 	model := NewModel(repo, &mockScheduler{})
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.activeView = ViewReview
 	model.revealState = RevealRevealed
 	model.revealProgress = 100
@@ -291,7 +291,7 @@ func TestReviewBookmarkToggleUpdatesCardAndRendering(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.activeView = ViewReview
 
 	if !strings.Contains(model.renderReview(0, 0), "Bookmark: off") {
@@ -321,7 +321,7 @@ func TestUndoLastReviewReloadsDueCards(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards[:1]))
+	model.Update(dueCardsMsg{cards: repo.dueCards[:1]})
 	model.activeView = ViewReview
 	model.lastReviewedCardID = "c1"
 
@@ -354,7 +354,7 @@ func TestDeckSwitchingFiltersDueCards(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 
 	if model.deck.ID != "deck-1" || len(model.dueCards) != 1 || model.dueCards[0].ID != "c1" {
 		t.Fatalf("initial deck/filter = %s/%v", model.deck.ID, model.dueCards)
@@ -951,7 +951,7 @@ func TestBookmarkFilterToggle(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.activeView = ViewReview
 
 	if model.bookmarkFilter {
@@ -986,7 +986,7 @@ func TestBookmarkFilterToggleOff(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.activeView = ViewReview
 	model.bookmarkFilter = true
 
@@ -1014,7 +1014,7 @@ func TestReviewViewShowsLeechIndicator(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.activeView = ViewReview
 
 	view := model.renderReview(0, 0)
@@ -1032,7 +1032,7 @@ func TestReviewViewShowsBookmarkFilterBanner(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.activeView = ViewReview
 	model.bookmarkFilter = true
 
@@ -1052,7 +1052,7 @@ func TestSuspendCardRefreshesQueueAndStats(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.activeView = ViewReview
 
 	cmd := model.suspendCard()
@@ -1175,7 +1175,7 @@ func TestDashboardShowsBookmarkedDueAndLeech(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.stats = core.Statistics{
 		BookmarkedCards: 1,
 		BookmarkedDue:   1,
@@ -1383,7 +1383,7 @@ func TestMCQCardRendersChoicesAfterReveal(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.activeView = ViewReview
 
 	view := model.renderReview(0, 0)
@@ -1419,7 +1419,7 @@ func TestMCQChoiceSelectionCorrect(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.activeView = ViewReview
 	model.revealState = RevealRevealed
 	model.revealProgress = 100
@@ -1445,7 +1445,7 @@ func TestMCQChoiceSelectionIncorrect(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.activeView = ViewReview
 	model.revealState = RevealRevealed
 	model.revealProgress = 100
@@ -1473,7 +1473,7 @@ func TestMCQChoiceSelectionShowsCorrectAnswer(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.activeView = ViewReview
 	model.revealState = RevealRevealed
 	model.revealProgress = 100
@@ -1499,7 +1499,7 @@ func TestMCQStateResetsOnCardNavigation(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.activeView = ViewReview
 	model.revealState = RevealRevealed
 	model.revealProgress = 100
@@ -1529,7 +1529,7 @@ func TestMCQFlashcardFlowUnchanged(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.activeView = ViewReview
 
 	if model.revealState == RevealRevealed {
@@ -1557,7 +1557,7 @@ func TestSessionStatsTracking(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.activeView = ViewReview
 	model.revealState = RevealRevealed
 	model.revealProgress = 100
@@ -1596,7 +1596,7 @@ func TestSessionGradeDistributionTracking(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 
 	model.Update(reviewRecordedMsg{cardID: "c1", cards: repo.dueCards, decks: repo.decks, stats: core.Statistics{}, grade: core.GradeAgain})
 	model.Update(reviewRecordedMsg{cardID: "c2", cards: repo.dueCards, decks: repo.decks, stats: core.Statistics{}, grade: core.GradeGood})
@@ -1626,7 +1626,7 @@ func TestSessionSummaryShowsGradeDistribution(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.sessionReviewed = 3
 	model.sessionCorrect = 2
 	model.sessionGrades = map[core.ReviewGrade]int{
@@ -1678,7 +1678,7 @@ func TestBrowserViewNavigation(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 
 	model.activeView = ViewBrowser
 	model.browserDeckID = "deck-1"
@@ -1747,7 +1747,7 @@ func TestBrowserDeckSwitchReloadsCards(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	load := model.updateView(ViewBrowser)
 	model.Update(load())
 
@@ -1922,7 +1922,7 @@ func TestReviewArrowNavigation(t *testing.T) {
 	model := NewModel(repo, &mockScheduler{})
 
 	// Load cards
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 
 	// Switch to Review view
 	model.Update(tea.KeyPressMsg{Code: '3'})
@@ -2181,7 +2181,7 @@ func TestReviewHeaderShowsDeckTagsAndCardType(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.activeView = ViewReview
 
 	view := ansi.Strip(model.renderReview(0, 0))

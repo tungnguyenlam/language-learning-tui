@@ -78,7 +78,7 @@ func TestReviewUndoAliases(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards[:1]))
+	model.Update(dueCardsMsg{cards: repo.dueCards[:1]})
 	model.activeView = ViewReview
 	model.lastReviewedCardID = "c1"
 
@@ -131,7 +131,7 @@ func TestReviewExplanationToggle(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.activeView = ViewReview
 
 	// First press: m.explanation is empty, so it should trigger explanation retrieval command if provider is enabled
@@ -191,7 +191,7 @@ func TestReviewMetadataClickHitboxes(t *testing.T) {
 	}
 	model := NewModel(repo, &mockScheduler{})
 	model.Update(decksMsg(repo.decks))
-	model.Update(dueCardsMsg(repo.dueCards))
+	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.activeView = ViewReview
 	model.focusMode = false
 

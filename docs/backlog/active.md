@@ -12,7 +12,7 @@ Pick the next dictionary milestone item, or continue bug/perf hardening if regre
 
 ## Top Issues
 
-No active issues remain from the due-queue / async-safety / Cram-flag pass.
+No active issues remain from the Practice Hub filter / due-queue / Cram stale-load pass.
 
 ## Acceptance Criteria
 
@@ -24,6 +24,6 @@ No active issues remain from the due-queue / async-safety / Cram-flag pass.
 
 ## Completed Work
 
-- [x] Browser/Review due reloads use default limit; undo restores `sessionGrades`.
-- [x] AI explain/fix and AnkiWeb search/info ignore stale/cancelled results.
-- [x] `CardsWithFlag` + raised Cards limit; Cram/bulk kind correctness; async field snapshots.
+- [x] Practice Hub `/` filter traps globals and accepts paste.
+- [x] Due-queue / Cram / Gender practice loads ignore stale async results.
+- [x] Grade/undo/suspend that finish after a bookmark-filter flip reload the live filter.

@@ -263,7 +263,7 @@ func (m *Model) addDictionaryEntryCmd(entry core.DictionaryEntry) tea.Cmd {
 			return statusMsg{text: fmt.Sprintf("Added '%s' to %s deck", frontText, deck.Name)}
 		},
 		m.loadDecks,
-		m.loadDueCards,
+		m.loadDueCards(),
 	)
 }
 
@@ -331,7 +331,7 @@ func (m *Model) addDictionaryInflectionEntryCmd(entry core.DictionaryEntry) tea.
 			return statusMsg{text: fmt.Sprintf("Added inflection card '%s' to %s deck", frontText, deck.Name)}
 		},
 		m.loadDecks,
-		m.loadDueCards,
+		m.loadDueCards(),
 	)
 }
 
@@ -390,7 +390,7 @@ func (m *Model) addDictionaryReverseEntryCmd(entry core.DictionaryEntry) tea.Cmd
 			return statusMsg{text: fmt.Sprintf("Added reverse '%s → %s' to %s deck", frontText, backText, deck.Name)}
 		},
 		m.loadDecks,
-		m.loadDueCards,
+		m.loadDueCards(),
 	)
 }
 
@@ -814,7 +814,7 @@ func (m *Model) addDictionaryEntriesBatchCmd(entries []core.DictionaryEntry) tea
 			return statusMsg{text: status}
 		},
 		m.loadDecks,
-		m.loadDueCards,
+		m.loadDueCards(),
 	)
 }
 
@@ -963,7 +963,7 @@ func (m *Model) addDictionaryClozeEntryCmd(entry core.DictionaryEntry) tea.Cmd {
 			return statusMsg{text: fmt.Sprintf("Created Cloze card for '%s' in %s deck", wordClean, deck.Name)}
 		},
 		m.loadDecks,
-		m.loadDueCards,
+		m.loadDueCards(),
 	)
 }
 

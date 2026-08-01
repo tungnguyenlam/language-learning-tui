@@ -452,7 +452,7 @@ func (m *Model) toggleBrowserSuspension() tea.Cmd {
 		if err != nil {
 			return err
 		}
-		return cardSuspendedMsg{cardID: card.ID, cards: cards, decks: decks, stats: stats}
+		return cardSuspendedMsg{cardID: card.ID, cards: cards, decks: decks, stats: stats, bookmarkFilter: bookmarkFilter}
 	}
 }
 

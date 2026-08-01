@@ -71,7 +71,7 @@ func (m *Model) gradeCard(grade core.ReviewGrade) tea.Cmd {
 		if err2 != nil {
 			return err2
 		}
-		return reviewRecordedMsg{cardID: card.ID, cards: cards, decks: decks, stats: stats, grade: grade}
+		return reviewRecordedMsg{cardID: card.ID, cards: cards, decks: decks, stats: stats, grade: grade, bookmarkFilter: bookmarkFilter}
 	}
 }
 
@@ -108,7 +108,7 @@ func (m *Model) undoLastReview() tea.Cmd {
 		if err != nil {
 			return err
 		}
-		return reviewUndoneMsg{cardID: cardID, cards: cards, decks: decks, stats: stats, grade: grade}
+		return reviewUndoneMsg{cardID: cardID, cards: cards, decks: decks, stats: stats, grade: grade, bookmarkFilter: bookmarkFilter}
 	}
 }
 
@@ -599,9 +599,19 @@ func (m *Model) toggleBookmark() tea.Cmd {
 func (m *Model) toggleBookmarkFilter() tea.Cmd {
 	m.bookmarkFilter = !m.bookmarkFilter
 	if m.bookmarkFilter {
-		return func() tea.Msg { return m.loadBookmarkedDueCards() }
+		return m.loadBookmarkedDueCards()
 	}
-	return func() tea.Msg { return m.loadDueCards() }
+	return m.loadDueCards()
+}
+
+// reloadDueForCurrentFilter starts a fresh due-queue load that matches the
+// live bookmark filter. Used when an async grade/undo/suspend finishes after
+// the user flipped the filter mid-flight.
+func (m *Model) reloadDueForCurrentFilter() tea.Cmd {
+	if m.bookmarkFilter {
+		return m.loadBookmarkedDueCards()
+	}
+	return m.loadDueCards()
 }
 
 func (m *Model) suspendCard() tea.Cmd {
@@ -634,7 +644,7 @@ func (m *Model) suspendCard() tea.Cmd {
 		if err != nil {
 			return err
 		}
-		return cardSuspendedMsg{cardID: card.ID, cards: cards, decks: decks, stats: stats}
+		return cardSuspendedMsg{cardID: card.ID, cards: cards, decks: decks, stats: stats, bookmarkFilter: bookmarkFilter}
 	}
 }
 
@@ -713,13 +723,29 @@ func (m *Model) executeDeleteReviewCard() tea.Cmd {
 	}
 	card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
 	m.status = "Deleting card..."
+	m.dueLoadID++
+	id := m.dueLoadID
+	bookmarkFilter := m.bookmarkFilter
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
 		if err := m.repo.DeleteCard(ctx, card.ID); err != nil {
 			return err
 		}
-		return m.loadDueCards()
+		var cards []core.Card
+		var err error
+		if bookmarkFilter {
+			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 0)
+		} else {
+			cards, err = m.repo.DueCards(ctx, time.Now(), 0)
+		}
+		if err != nil {
+			return err
+		}
+		if bookmarkFilter {
+			return bookmarkedDueCardsMsg{id: id, cards: cards}
+		}
+		return dueCardsMsg{id: id, cards: cards}
 	}
 }
 

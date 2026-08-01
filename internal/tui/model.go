@@ -182,6 +182,7 @@ type Model struct {
 	theme                          string
 	onConfigChange                 func(string, string, string, map[string]map[string]string, bool, bool, int)
 	bookmarkFilter                 bool
+	dueLoadID                      int
 	originalTemplateValue          string
 	mcqChoice                      int
 	mcqAnswered                    bool
@@ -230,6 +231,7 @@ type Model struct {
 	cramCards                      []core.Card
 	cramCursor                     int
 	cramType                       string
+	cramLoadID                     int
 	cramReviewed                   int
 	cramCorrect                    int
 	cramActive                     bool
@@ -278,6 +280,7 @@ type Model struct {
 
 	// Gender Trainer state
 	practiceItems      []practiceItem
+	practiceLoadID     int
 	practiceIndex      int
 	practiceCorrect    int
 	practiceTotal      int
@@ -486,8 +489,14 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 	return m
 }
 
-type dueCardsMsg []core.Card
-type bookmarkedDueCardsMsg []core.Card
+type dueCardsMsg struct {
+	id    int
+	cards []core.Card
+}
+type bookmarkedDueCardsMsg struct {
+	id    int
+	cards []core.Card
+}
 type decksMsg []core.Deck
 type draftsMsg []ai.Draft
 type draftApprovedMsg struct {
@@ -505,33 +514,38 @@ type exportDoneMsg struct {
 	path  string
 }
 type reviewRecordedMsg struct {
-	cardID string
-	cards  []core.Card
-	decks  []core.Deck
-	stats  core.Statistics
-	grade  core.ReviewGrade
+	cardID         string
+	cards          []core.Card
+	decks          []core.Deck
+	stats          core.Statistics
+	grade          core.ReviewGrade
+	bookmarkFilter bool
 }
 type bookmarkToggledMsg struct {
 	cardID     string
 	bookmarked bool
 }
 type cardSuspendedMsg struct {
-	cardID string
-	cards  []core.Card
-	decks  []core.Deck
-	stats  core.Statistics
+	cardID         string
+	cards          []core.Card
+	decks          []core.Deck
+	stats          core.Statistics
+	bookmarkFilter bool
 }
 type dailyGoalSetMsg core.Statistics
 type reviewUndoneMsg struct {
-	cardID string
-	cards  []core.Card
-	decks  []core.Deck
-	stats  core.Statistics
-	grade  core.ReviewGrade
+	cardID         string
+	cards          []core.Card
+	decks          []core.Deck
+	stats          core.Statistics
+	grade          core.ReviewGrade
+	bookmarkFilter bool
 }
 type cramCardsMsg struct {
+	id       int
 	cards    []core.Card
 	cramType string
+	deckID   string
 }
 type browserCardsMsg []core.Card
 type browserCardsResultMsg struct {
@@ -573,7 +587,7 @@ type deckHistoryLoadedMsg []string
 type dictStarredLoadedMsg map[string]bool
 
 func (m *Model) Init() tea.Cmd {
-	return tea.Sequence(m.loadDueCards, m.loadDecks, m.loadStatistics(), m.loadReviewsPerDay(), m.loadRecentDecks(), m.loadDictionaryHistory(), m.loadDictionaryRecentlyViewed(), m.loadDeckHistory(), m.loadDictionaryStarred())
+	return tea.Sequence(m.loadDueCards(), m.loadDecks, m.loadStatistics(), m.loadReviewsPerDay(), m.loadRecentDecks(), m.loadDictionaryHistory(), m.loadDictionaryRecentlyViewed(), m.loadDeckHistory(), m.loadDictionaryStarred())
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -724,12 +738,18 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.logger.Debug("Received %d decks", len(msg))
 		m.syncDecks([]core.Deck(msg))
 	case dueCardsMsg:
-		m.logger.Debug("Received %d due cards", len(msg))
-		m.allDue = []core.Card(msg)
+		if msg.id != m.dueLoadID || m.bookmarkFilter {
+			return m, nil
+		}
+		m.logger.Debug("Received %d due cards", len(msg.cards))
+		m.allDue = msg.cards
 		m.applyDeckFilter()
 		m.showHint = false
 	case bookmarkedDueCardsMsg:
-		m.allDue = []core.Card(msg)
+		if msg.id != m.dueLoadID || !m.bookmarkFilter {
+			return m, nil
+		}
+		m.allDue = msg.cards
 		m.applyDeckFilter()
 		m.showHint = false
 		if len(m.allDue) == 0 {
@@ -737,7 +757,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.status = fmt.Sprintf("%d bookmarked cards due", len(m.allDue))
 		}
-		m.logger.Debug("Received %d bookmarked due cards", len(msg))
+		m.logger.Debug("Received %d bookmarked due cards", len(msg.cards))
 
 	case statsMsg:
 		m.stats = msg.stats
@@ -859,9 +879,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, m.setStatus("Explanation failed: "+msg.err.Error(), 5*time.Second)
 	case deckDeletedMsg:
 		m.logger.Info("Deck deleted")
-		return m, tea.Batch(m.loadDecks, m.loadDueCards)
+		return m, tea.Batch(m.loadDecks, m.loadDueCards())
 	case practiceItemsMsg:
-		m.practiceItems = []practiceItem(msg)
+		// Ignore Gender loads that finished after leaving the trainer or
+		// after a newer Gender load was started.
+		if msg.id != m.practiceLoadID || m.practiceSubView != PracticeSubViewGender {
+			return m, nil
+		}
+		m.practiceItems = msg.items
 		if len(m.practiceItems) == 0 {
 			m.status = "No nouns found for practice"
 		} else {
@@ -890,8 +915,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.lastReviewedGrade = msg.grade
 		m.syncDecks(msg.decks)
 		m.stats = msg.stats
-		m.allDue = msg.cards
-		m.applyDeckFilter()
+		var dueReload tea.Cmd
+		if msg.bookmarkFilter != m.bookmarkFilter {
+			// Filter changed while grading; keep session stats but refresh
+			// the queue with the filter the user currently has selected.
+			dueReload = m.reloadDueForCurrentFilter()
+		} else {
+			m.allDue = msg.cards
+			m.applyDeckFilter()
+		}
 		m.showHint = false
 
 		// Only update session stats if a valid grade was provided
@@ -935,10 +967,14 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.typingChecked = false
 		m.typingCorrect = false
 
-		if len(m.dueCards) == 0 && m.sessionReviewed > 0 {
-			return m, tea.Batch(m.updateView(ViewSessionSummary), m.loadReviewsPerDay(), m.loadRecentDecks(), m.loadStatistics())
+		followUps := []tea.Cmd{m.loadReviewsPerDay(), m.loadRecentDecks(), m.loadStatistics()}
+		if dueReload != nil {
+			followUps = append([]tea.Cmd{dueReload}, followUps...)
 		}
-		return m, tea.Batch(m.loadReviewsPerDay(), m.loadRecentDecks(), m.loadStatistics())
+		if len(m.dueCards) == 0 && m.sessionReviewed > 0 && dueReload == nil {
+			return m, tea.Batch(append([]tea.Cmd{m.updateView(ViewSessionSummary)}, followUps...)...)
+		}
+		return m, tea.Batch(followUps...)
 	case bookmarkToggledMsg:
 		m.setCardBookmarkLocal(msg.cardID, msg.bookmarked)
 		if msg.bookmarked {
@@ -950,10 +986,18 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case cardSuspendedMsg:
 		m.syncDecks(msg.decks)
 		m.stats = msg.stats
-		m.allDue = msg.cards
-		m.applyDeckFilter()
+		var dueReload tea.Cmd
+		if msg.bookmarkFilter != m.bookmarkFilter {
+			dueReload = m.reloadDueForCurrentFilter()
+		} else {
+			m.allDue = msg.cards
+			m.applyDeckFilter()
+		}
 		m.status = "Card suspended"
 		m.logger.Info("Suspended card %s", msg.cardID)
+		if dueReload != nil {
+			return m, tea.Batch(dueReload, m.loadReviewsPerDay())
+		}
 		return m, m.loadReviewsPerDay()
 	case dailyGoalSetMsg:
 		newStats := core.Statistics(msg)
@@ -977,10 +1021,18 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.syncDecks(msg.decks)
 		m.stats = msg.stats
-		m.allDue = msg.cards
-		m.applyDeckFilter()
+		var dueReload tea.Cmd
+		if msg.bookmarkFilter != m.bookmarkFilter {
+			dueReload = m.reloadDueForCurrentFilter()
+		} else {
+			m.allDue = msg.cards
+			m.applyDeckFilter()
+		}
 		m.status = "Last review undone"
 		m.logger.Info("Undid last review for card %s", msg.cardID)
+		if dueReload != nil {
+			return m, tea.Batch(dueReload, m.loadReviewsPerDay())
+		}
 		return m, m.loadReviewsPerDay()
 	case browserCardsMsg:
 		m.browserCards = []core.Card(msg)
@@ -1008,6 +1060,16 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.logger.Debug("Loaded %d browser cards for request %d", len(msg.cards), msg.id)
 	case cramCardsMsg:
+		// Drop loads that finished after the user changed filter or deck.
+		if msg.id != 0 && msg.id != m.cramLoadID {
+			return m, nil
+		}
+		if msg.cramType != "" && msg.cramType != m.cramType {
+			return m, nil
+		}
+		if msg.deckID != m.deck.ID {
+			return m, nil
+		}
 		// Flag modes are filtered in SQL; keep a defensive in-memory filter
 		// using the request's snapshotted type so a mid-flight filter change
 		// cannot mis-attribute results.

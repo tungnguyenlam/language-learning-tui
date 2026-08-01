@@ -1,7 +1,7 @@
 # Trainer Input vs Global Single-Letter Shortcuts
 
 Status: active
-Scope: `internal/tui` key routing, practice trainers, Review typing, Cram
+Scope: `internal/tui` key routing, practice trainers, Review typing, Cram, Practice Hub filter
 Related: `internal/tui/keys.go` (`practiceBlocksGlobalShortcut`, `trainerInputActive`, `textInputActive`, `updatePracticeKey`), `internal/tui/trainer.go`
 
 ## Why It Matters
@@ -22,15 +22,21 @@ step. `trainerInputActive()` remains the narrower "typing only" check.
 Review typing mode is a separate trap: `q` must reach `updateReviewKey`, while
 Cram still uses `q` to exit an active session.
 
+The Practice Hub `/` filter **is** part of `textInputActive()` (when
+`practiceFilterFocus` is set). Without that, typing `q` quit the app, digits
+jumped to other views, and clipboard paste was ignored.
+
 ## Required Behavior
 
 - When adding a **new single-letter global shortcut** in step 1 of
   `Model.Update`, guard it with `m.practiceBlocksGlobalShortcut()` (or
   `trainerInputActive()` if only the typing phase matters), or it will steal
   keys from trainers / the reveal-advance step.
-- Do **not** "fix" this by adding trainers to `textInputActive()`: that breaks
+- Do **not** "fix" trainers by adding them to `textInputActive()`: that breaks
   Tab / arrow navigation out of a trainer, because `updateTrainerKey` does not
   handle those keys and the fallthrough is gated on `!textInputActive()`.
+- Do keep Practice Hub `practiceFilterFocus` in `textInputActive()`, and paste
+  into `practiceFilter` from `handlePaste`.
 - Chord shortcuts (`ctrl+…`) need no guard — `singlePrintableInput` rejects
   them, so they fall through on their own.
 - Inside a Practice sub-trainer (not Hub), do not let `updateNumberKey` jump

@@ -710,3 +710,171 @@ func TestBulkBrowserToggleKindUsesVisibleSelection(t *testing.T) {
 		t.Fatalf("visible MCQ should become flashcard, got %s", repo.dueCards[1].Kind)
 	}
 }
+
+// Practice Hub `/` filter must trap globals so typing "q" / digits / paste work.
+func TestPracticeHubFilterTrapsGlobalsAndPaste(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewPractice
+	m.practiceSubView = PracticeSubViewHub
+	m.practiceFilterFocus = true
+
+	updated, cmd := m.Update(tea.KeyPressMsg{Text: "q", Code: 'q'})
+	m = updated.(*Model)
+	if cmd != nil {
+		t.Fatal("expected 'q' in Practice Hub filter not to quit")
+	}
+	if m.practiceFilter != "q" {
+		t.Fatalf("expected 'q' typed into filter, got %q", m.practiceFilter)
+	}
+	if m.activeView != ViewPractice {
+		t.Fatalf("expected to stay on Practice, got %v", m.activeView)
+	}
+
+	updated, _ = m.Update(tea.KeyPressMsg{Text: "2", Code: '2'})
+	m = updated.(*Model)
+	if m.activeView != ViewPractice || m.practiceSubView != PracticeSubViewHub {
+		t.Fatal("expected digit in hub filter not to switch views")
+	}
+	if m.practiceFilter != "q2" {
+		t.Fatalf("expected filter 'q2', got %q", m.practiceFilter)
+	}
+
+	updated, _ = m.Update(tea.PasteMsg{Content: "passive"})
+	m = updated.(*Model)
+	if m.practiceFilter != "q2passive" {
+		t.Fatalf("expected paste into hub filter, got %q", m.practiceFilter)
+	}
+	if !m.practiceFilterFocus {
+		t.Fatal("expected filter focus to remain after paste")
+	}
+}
+
+// Rapid bookmark-filter toggles must not apply a stale due-queue load.
+func TestStaleDueQueueLoadIgnored(t *testing.T) {
+	allCards := []core.Card{{ID: "a1"}, {ID: "a2"}}
+	bookCards := []core.Card{{ID: "b1"}}
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.dueLoadID = 2
+	m.bookmarkFilter = true
+
+	// Stale unfiltered load from before the filter was enabled.
+	m.Update(dueCardsMsg{id: 1, cards: allCards})
+	if len(m.allDue) != 0 {
+		t.Fatalf("stale dueCardsMsg should be ignored, got %d cards", len(m.allDue))
+	}
+
+	m.Update(bookmarkedDueCardsMsg{id: 2, cards: bookCards})
+	if len(m.allDue) != 1 || m.allDue[0].ID != "b1" {
+		t.Fatalf("expected current bookmarked load, got %#v", m.allDue)
+	}
+
+	m.bookmarkFilter = false
+	m.dueLoadID = 3
+	m.Update(bookmarkedDueCardsMsg{id: 2, cards: bookCards})
+	if len(m.allDue) != 1 || m.allDue[0].ID != "b1" {
+		t.Fatalf("mismatched bookmarked load should leave prior queue, got %#v", m.allDue)
+	}
+	m.Update(dueCardsMsg{id: 3, cards: allCards})
+	if len(m.allDue) != 2 {
+		t.Fatalf("expected fresh unfiltered load, got %d cards", len(m.allDue))
+	}
+}
+
+// Cram filter/deck changes must drop mid-flight loads for the previous selection.
+func TestStaleCramLoadIgnored(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.deck = core.Deck{ID: "d2", Name: "D2"}
+	m.cramType = "suspended"
+	m.cramLoadID = 2
+	m.cramCards = []core.Card{{ID: "keep"}}
+
+	m.Update(cramCardsMsg{
+		id:       1,
+		cards:    []core.Card{{ID: "old", Bookmarked: true}},
+		cramType: "bookmarked",
+		deckID:   "d2",
+	})
+	if len(m.cramCards) != 1 || m.cramCards[0].ID != "keep" {
+		t.Fatalf("stale cram filter load applied: %#v", m.cramCards)
+	}
+
+	m.Update(cramCardsMsg{
+		id:       2,
+		cards:    []core.Card{{ID: "wrong-deck", Suspended: true}},
+		cramType: "suspended",
+		deckID:   "d1",
+	})
+	if len(m.cramCards) != 1 || m.cramCards[0].ID != "keep" {
+		t.Fatalf("stale cram deck load applied: %#v", m.cramCards)
+	}
+
+	m.Update(cramCardsMsg{
+		id:       2,
+		cards:    []core.Card{{ID: "ok", Suspended: true}, {ID: "skip"}},
+		cramType: "suspended",
+		deckID:   "d2",
+	})
+	if len(m.cramCards) != 1 || m.cramCards[0].ID != "ok" {
+		t.Fatalf("expected current cram load, got %#v", m.cramCards)
+	}
+}
+
+// Gender practice loads must not apply after leaving the trainer.
+func TestStalePracticeItemsIgnored(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.practiceSubView = PracticeSubViewHub
+	m.practiceLoadID = 2
+	m.practiceItems = []practiceItem{{Word: "Haus", Article: "das"}}
+
+	m.Update(practiceItemsMsg{
+		id:    1,
+		items: []practiceItem{{Word: "stale", Article: "der"}},
+	})
+	if len(m.practiceItems) != 1 || m.practiceItems[0].Word != "Haus" {
+		t.Fatalf("stale practice items applied off Gender: %#v", m.practiceItems)
+	}
+
+	m.practiceSubView = PracticeSubViewGender
+	m.Update(practiceItemsMsg{
+		id:    2,
+		items: []practiceItem{{Word: "Buch", Article: "das"}},
+	})
+	if len(m.practiceItems) != 1 || m.practiceItems[0].Word != "Buch" {
+		t.Fatalf("expected current Gender load, got %#v", m.practiceItems)
+	}
+}
+
+// Grading that finishes after a bookmark-filter flip must not install the old queue.
+func TestGradeRespectsLiveBookmarkFilter(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "c1", DeckID: "d1", Prompt: "P", Answer: "A", Bookmarked: true},
+			{ID: "c2", DeckID: "d1", Prompt: "P2", Answer: "A2"},
+		},
+		decks: []core.Deck{{ID: "d1", Name: "Deck"}},
+	}
+	m := NewModel(repo, &mockScheduler{})
+	m.bookmarkFilter = true
+	m.allDue = []core.Card{repo.dueCards[0]}
+	m.applyDeckFilter()
+
+	updated, cmd := m.Update(reviewRecordedMsg{
+		cardID:         "c1",
+		cards:          []core.Card{repo.dueCards[0]}, // snapshotted bookmarked queue
+		decks:          repo.decks,
+		stats:          core.Statistics{},
+		grade:          core.GradeGood,
+		bookmarkFilter: false, // grade started before filter was enabled
+	})
+	m = updated.(*Model)
+	if m.sessionReviewed != 1 {
+		t.Fatalf("expected session stats updated, sessionReviewed=%d", m.sessionReviewed)
+	}
+	if cmd == nil {
+		t.Fatal("expected reload cmd when bookmark filter mismatched")
+	}
+	// Stale unfiltered cards must not replace the live bookmarked queue.
+	if len(m.allDue) != 1 || m.allDue[0].ID != "c1" {
+		t.Fatalf("mismatched grade should keep prior queue until reload, got %#v", m.allDue)
+	}
+}
