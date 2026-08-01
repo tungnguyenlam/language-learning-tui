@@ -295,6 +295,36 @@ func TestDictionarySearchTypesD(t *testing.T) {
 	}
 }
 
+func TestSpotlightDictionarySearchTypesA(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewDashboard
+	m.dictionaryOverlayActive = true
+	m.dictionaryFocusResults = false
+	m.dictionaryDetailView = false
+	m.dictionarySearch = ""
+	// Prior results remain while typing a new query — 'a' must still type.
+	m.dictionaryResults = []core.DictionaryEntry{{ID: "1", Word: "Haus", Translation: "house"}}
+	m.dictionaryCursor = 0
+
+	updated, cmd := m.Update(tea.KeyPressMsg{Text: "a", Code: 'a'})
+	m = updated.(*Model)
+	if m.dictionarySearch != "a" {
+		t.Fatalf("expected 'a' typed into Spotlight search, got %q", m.dictionarySearch)
+	}
+	if cmd == nil {
+		t.Fatal("expected debounce search tick after typing 'a'")
+	}
+
+	// From results focus, 'a' still plays audio (handled, no search mutation).
+	m.dictionarySearch = "haus"
+	m.dictionaryFocusResults = true
+	updated, _ = m.Update(tea.KeyPressMsg{Text: "a", Code: 'a'})
+	m = updated.(*Model)
+	if m.dictionarySearch != "haus" {
+		t.Fatalf("expected focused 'a' not to type into search, got %q", m.dictionarySearch)
+	}
+}
+
 func TestCramDigitGradingKeys(t *testing.T) {
 	m := NewModel(&mockRepo{}, &mockScheduler{})
 	m.activeView = ViewCram

@@ -1,5 +1,17 @@
 # Done Backlog
 
+## 2026-08-01 (Dictionary Spotlight Input, Scroll & Browse Polish)
+
+### Bug Fixes & Polish
+- **Spotlight `a` typing:** Audio playback only when results/detail are focused, so Spotlight search can type words containing `a` while prior results remain.
+- **Detail scroll viewport:** Keyboard, wheel, scrollbar click, and drag use painted `dictionaryDetailVisibleRows` / `dictionaryListVisibleRows` instead of a fixed `Height-12` estimate that under-scrolled single-column detail.
+- **Filter-only browse:** `:verb` / gender / class pills query matching rows in SQL across the full dictionary rather than filtering the first 200 alphabetical rows in memory.
+- **Spotlight empty state:** History / recently inspected / discover sections respect the overlay body budget; generic `Ready` status no longer replaces footer shortcut hints on tight widths.
+
+### Verification
+- Added `TestSpotlightDictionarySearchTypesA`, `TestDictionaryFilterOnlyBrowseBeyondAlphabeticalSlice`, `TestSpotlightEmptyStateFitsShortTerminal`; updated detail-scroll coverage.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed).
+
 ## 2026-08-01 (Bug Hunt & Performance Pass)
 
 ### Bug Fixes & Performance

@@ -121,12 +121,27 @@ func TestRenderDictionary(t *testing.T) {
 func TestDictionaryDetailScrollClampsToVisibleRows(t *testing.T) {
 	m := NewModel(&mockRepo{}, &mockScheduler{})
 	m.activeView = ViewDictionary
-	m.width = 100
+	m.width = 60
 	m.height = 40
-	m.breakpoint = BreakpointWide
-	m.dictionaryDetailTotalLines = 40
+	m.breakpoint = BreakpointCompact
+	m.dictionaryDetailView = true
+	m.dictionaryResults = []core.DictionaryEntry{{
+		ID: "1", Word: "Test", Translation: "test",
+		Examples: []string{"one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten"},
+	}}
+	m.dictionaryCursor = 0
 
-	maxScroll := maxInt(0, m.dictionaryDetailTotalLines-dictionaryVisibleRows(m.activeViewContentLayout()))
+	// Paint once so detail viewport height is cached from the real layout.
+	_ = m.renderDictionary(m.activeViewContentLayout())
+	if m.dictionaryDetailVisibleRows <= 0 {
+		t.Fatal("expected render to cache dictionaryDetailVisibleRows")
+	}
+	// Single-column detail must use a taller viewport than the old Height-12 estimate.
+	if m.dictionaryDetailVisibleRows <= dictionaryVisibleRows(m.activeViewContentLayout()) {
+		t.Fatalf("detail visible rows = %d, want > estimate %d", m.dictionaryDetailVisibleRows, dictionaryVisibleRows(m.activeViewContentLayout()))
+	}
+
+	maxScroll := maxInt(0, m.dictionaryDetailTotalLines-m.dictionaryDetailViewportRows(m.activeViewContentLayout()))
 	for i := 0; i < 100; i++ {
 		cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: tea.KeyDown, Mod: tea.ModShift})
 		if cmd != nil {
@@ -516,6 +531,46 @@ func TestSpotlightDictionaryOverlayRendering(t *testing.T) {
 	}
 	if !strings.Contains(output, "Search German or English") {
 		t.Fatal("expected spotlight overlay to contain placeholder text")
+	}
+}
+
+func TestSpotlightEmptyStateFitsShortTerminal(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.width = 80
+	m.height = 20
+	m.activeView = ViewDashboard
+	m.dictionaryOverlayActive = true
+	m.status = "Ready"
+	m.dictionarySearchHistory = []string{"haus", "baum", "auto", "fahrrad", "schule"}
+	m.dictionaryRecentlyViewed = []core.DictionaryEntry{
+		{Word: "Haus", Translation: "house"},
+		{Word: "Baum", Translation: "tree"},
+		{Word: "Auto", Translation: "car"},
+		{Word: "Fahrrad", Translation: "bike"},
+		{Word: "Schule", Translation: "school"},
+	}
+	m.dictionaryDiscoverEntries = []core.DictionaryEntry{
+		{Word: "Zeit", Translation: "time"},
+		{Word: "Liebe", Translation: "love"},
+		{Word: "Freund", Translation: "friend"},
+		{Word: "Wasser", Translation: "water"},
+		{Word: "Brot", Translation: "bread"},
+	}
+
+	output := stripANSI(m.renderSpotlightDictionary())
+	if !strings.Contains(output, "SPOTLIGHT DICTIONARY") {
+		t.Fatal("expected spotlight title on short terminal")
+	}
+	if !strings.Contains(output, "Type to search") {
+		t.Fatal("expected search hint on short terminal")
+	}
+	// Generic Ready status must not wipe shortcut hints when the footer is tight.
+	if !strings.Contains(output, "draft") || !strings.Contains(output, "ctrl+a") {
+		t.Fatalf("expected footer shortcut hints on short terminal, got:\n%s", output)
+	}
+	// Overflow sections should truncate rather than dump every recent/discover row.
+	if !strings.Contains(output, "…") {
+		t.Fatalf("expected truncated empty-state section marker, got:\n%s", output)
 	}
 }
 

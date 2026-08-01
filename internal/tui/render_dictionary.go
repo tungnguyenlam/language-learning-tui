@@ -65,12 +65,37 @@ func padString(s string, width int) string {
 	return s + strings.Repeat(" ", width-w)
 }
 
+// dictionaryVisibleRows is a pre-paint estimate for dictionary list/detail
+// viewport height. Prefer Model.dictionaryListViewportRows /
+// dictionaryDetailViewportRows once a frame has rendered and cached sizes.
 func dictionaryVisibleRows(layout viewportLayout) int {
 	rows := layout.Height - 12
 	if rows < 1 {
 		return 1
 	}
 	return rows
+}
+
+// dictionaryListViewportRows returns the last painted list viewport height,
+// falling back to the layout estimate before the first render.
+func (m *Model) dictionaryListViewportRows(layout viewportLayout) int {
+	if m.dictionaryListVisibleRows > 0 {
+		return m.dictionaryListVisibleRows
+	}
+	return dictionaryVisibleRows(layout)
+}
+
+// dictionaryDetailViewportRows returns the last painted detail viewport height.
+// Single-column detail uses a short header (≈ Height-4); two-column / list
+// modes share the taller chrome estimate until paint caches the real size.
+func (m *Model) dictionaryDetailViewportRows(layout viewportLayout) int {
+	if m.dictionaryDetailVisibleRows > 0 {
+		return m.dictionaryDetailVisibleRows
+	}
+	if m.dictionaryDetailView {
+		return maxInt(1, layout.Height-4)
+	}
+	return dictionaryVisibleRows(layout)
 }
 
 func renderFilterPillsRow(m *Model, startX, startY int, targetView View, availWidth int) string {
@@ -339,6 +364,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 
 		headerLines := strings.Count(b.String(), "\n")
 		maxResultsDetail := maxInt(3, layout.Height-headerLines-2)
+		m.dictionaryDetailVisibleRows = maxResultsDetail
 		if m.dictionaryDetailScroll > m.dictionaryDetailTotalLines-maxResultsDetail {
 			m.dictionaryDetailScroll = maxInt(0, m.dictionaryDetailTotalLines-maxResultsDetail)
 		}
@@ -577,6 +603,8 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 
 	headerLines := strings.Count(b.String(), "\n")
 	maxResults := maxInt(3, layout.Height-headerLines-2)
+	m.dictionaryListVisibleRows = maxResults
+	m.dictionaryDetailVisibleRows = maxResults
 
 	// Adjust scroll for list
 	if m.dictionaryCursor < m.dictionaryScroll {
@@ -1050,7 +1078,7 @@ func (m *Model) renderSpotlightDictionary() string {
 	overlayFilterLineY := strings.Count(b.String(), "\n")
 	b.WriteString(renderFilterPillsRow(m, startX+2, startY+overlayFilterLineY+1, m.activeView, boxWidth-4) + "\n")
 
-	headerLines := strings.Count(b.String(), "\n") // Header takes 5 lines (title:1, searchBar:3, filterRow:1)
+	headerLines := strings.Count(b.String(), "\n") // Header: title + search bar + filter row
 	interiorWidth := boxWidth - 4
 	if interiorWidth < 10 {
 		interiorWidth = 10
@@ -1061,15 +1089,30 @@ func (m *Model) renderSpotlightDictionary() string {
 	if maxResults < 1 {
 		maxResults = 1
 	}
+	m.dictionaryListVisibleRows = maxResults
+	m.dictionaryDetailVisibleRows = maxResults
 
 	if len(m.dictionaryResults) == 0 {
 		if m.dictionarySearch != "" {
 			b.WriteString(mutedStyle.Render("No results found.\n"))
 		} else {
-			b.WriteString(mutedStyle.Render("Type to search local dict.cc dictionary.\n"))
-			if len(m.dictionarySearchHistory) > 0 {
+			// Keep empty-state sections inside the Spotlight body budget so
+			// short terminals still show the search box and footer hints.
+			bodyLinesUsed := 0
+			bodyBudget := maxResults
+			canWrite := func(n int) bool { return bodyLinesUsed+n <= bodyBudget }
+			writeLine := func(line string) {
+				b.WriteString(line)
+				if !strings.HasSuffix(line, "\n") {
+					b.WriteString("\n")
+				}
+				bodyLinesUsed++
+			}
+
+			writeLine(mutedStyle.Render("Type to search local dict.cc dictionary."))
+			if len(m.dictionarySearchHistory) > 0 && canWrite(2) {
 				clearHistoryText := lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Render("[Clear]")
-				b.WriteString(boldStyle.Render("Recent Searches:") + "  " + clearHistoryText + " " + mutedStyle.Render("(ctrl+x)") + "\n")
+				writeLine(boldStyle.Render("Recent Searches:") + "  " + clearHistoryText + " " + mutedStyle.Render("(ctrl+x)"))
 
 				clearHistoryLineY := strings.Count(b.String(), "\n") - 1
 				m.hitboxes = append(m.hitboxes, Hitbox{
@@ -1087,8 +1130,15 @@ func (m *Model) renderSpotlightDictionary() string {
 				})
 
 				for i, q := range m.dictionarySearchHistory {
+					if !canWrite(1) {
+						break
+					}
+					if i > 0 && bodyLinesUsed == bodyBudget-1 && i < len(m.dictionarySearchHistory)-1 {
+						writeLine(mutedStyle.Render("  …"))
+						break
+					}
 					lineY := strings.Count(b.String(), "\n")
-					b.WriteString(fmt.Sprintf("  • %s\n", q))
+					writeLine(fmt.Sprintf("  • %s", q))
 					queryText := q
 					m.hitboxes = append(m.hitboxes, Hitbox{
 						ID:     fmt.Sprintf("dict-overlay-history-%d", i),
@@ -1111,9 +1161,9 @@ func (m *Model) renderSpotlightDictionary() string {
 				}
 			}
 
-			if len(m.dictionaryRecentlyViewed) > 0 {
+			if len(m.dictionaryRecentlyViewed) > 0 && canWrite(2) {
 				clearRecentText := lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Render("[Clear]")
-				b.WriteString(boldStyle.Render("Recently Inspected Words:") + "  " + clearRecentText + "\n")
+				writeLine(boldStyle.Render("Recently Inspected Words:") + "  " + clearRecentText)
 				clearRecentLineY := strings.Count(b.String(), "\n") - 1
 				m.hitboxes = append(m.hitboxes, Hitbox{
 					ID:     "dict-overlay-recent-clear",
@@ -1128,6 +1178,13 @@ func (m *Model) renderSpotlightDictionary() string {
 					},
 				})
 				for i, e := range m.dictionaryRecentlyViewed {
+					if !canWrite(1) {
+						break
+					}
+					if i > 0 && bodyLinesUsed == bodyBudget-1 && i < len(m.dictionaryRecentlyViewed)-1 {
+						writeLine(mutedStyle.Render("  …"))
+						break
+					}
 					lineY := strings.Count(b.String(), "\n")
 					wordStr := e.Word
 					if e.Gender != "" {
@@ -1136,7 +1193,7 @@ func (m *Model) renderSpotlightDictionary() string {
 					if e.Translation != "" {
 						wordStr += " - " + e.Translation
 					}
-					b.WriteString(fmt.Sprintf("  • %s\n", wordStr))
+					writeLine(fmt.Sprintf("  • %s", wordStr))
 					entry := e
 					m.hitboxes = append(m.hitboxes, Hitbox{
 						ID:     fmt.Sprintf("dict-overlay-recent-%d", i),
@@ -1159,10 +1216,17 @@ func (m *Model) renderSpotlightDictionary() string {
 				}
 			}
 
-			if len(m.dictionaryDiscoverEntries) > 0 {
+			if len(m.dictionaryDiscoverEntries) > 0 && canWrite(2) {
 				discoverIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Render("✦")
-				b.WriteString(discoverIcon + " " + boldStyle.Render("Discover:") + "\n")
+				writeLine(discoverIcon + " " + boldStyle.Render("Discover:"))
 				for i, e := range m.dictionaryDiscoverEntries {
+					if !canWrite(1) {
+						break
+					}
+					if i > 0 && bodyLinesUsed == bodyBudget-1 && i < len(m.dictionaryDiscoverEntries)-1 {
+						writeLine(mutedStyle.Render("  …"))
+						break
+					}
 					lineY := strings.Count(b.String(), "\n")
 					wordStr := e.Word
 					if e.Gender != "" {
@@ -1175,7 +1239,7 @@ func (m *Model) renderSpotlightDictionary() string {
 						}
 						wordStr += " — " + mutedStyle.Render(trans)
 					}
-					b.WriteString(fmt.Sprintf("  • %s\n", wordStr))
+					writeLine(fmt.Sprintf("  • %s", wordStr))
 					entry := e
 					m.hitboxes = append(m.hitboxes, Hitbox{
 						ID:     fmt.Sprintf("dict-overlay-discover-%d", i),
@@ -1705,7 +1769,8 @@ func (m *Model) renderSpotlightDictionary() string {
 	}
 	footerStr := strings.Join(keys, " │ ")
 
-	// If status message is present, show status on top of footer or appended nicely
+	// Prefer shortcut hints over a mundane status. Only replace the footer when
+	// an actionable status won't fit beside the keys (never for bare "Ready").
 	if m.status != "" {
 		statusText := m.status
 		var statusStyle lipgloss.Style
@@ -1717,10 +1782,9 @@ func (m *Model) renderSpotlightDictionary() string {
 		} else {
 			statusStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("39"))
 		}
-		// Pad status text nicely next to key hints if width permits
 		if lipgloss.Width(footerStr)+lipgloss.Width(statusText)+4 <= interiorWidth {
 			footerStr = footerStr + "  " + statusStyle.Render(statusText)
-		} else {
+		} else if strings.TrimSpace(lowerStatus) != "ready" {
 			footerStr = statusStyle.Render(statusText)
 		}
 	}

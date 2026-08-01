@@ -184,29 +184,36 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 	// Language scope alone still returns a sample (every entry is bilingual);
 	// the scope matters once the learner types a term.
 	if cleanQuery == "" && (classFilter != "" || genderFilter != "" || langFilter != "") {
-		q := `
+		// Push class/gender predicates into SQL so browse samples come from the
+		// whole dictionary, not only the first 200 alphabetical rows (which
+		// silently dropped later matches for rare filters like :pl / :verb).
+		var conditions []string
+		var args []any
+		if classFilter != "" {
+			conditions = append(conditions, "lower(word_class) LIKE ?")
+			args = append(args, "%"+strings.ToLower(classFilter)+"%")
+		}
+		if genderFilter != "" {
+			conditions = append(conditions, "lower(gender) LIKE ?")
+			args = append(args, strings.ToLower(genderFilter)+"%")
+		}
+		where := ""
+		if len(conditions) > 0 {
+			where = "WHERE " + strings.Join(conditions, " AND ")
+		}
+		q := fmt.Sprintf(`
 			SELECT id, word, translation, word_class, gender, forms, examples, tags
 			FROM dictionary_fts
+			%s
 			ORDER BY word COLLATE NOCASE, id
-			LIMIT 200
-		`
-		entries, err := s.queryDictionaryEntries(ctx, q)
+			LIMIT ?
+		`, where)
+		args = append(args, limit)
+		entries, err := s.queryDictionaryEntries(ctx, q, args...)
 		if err != nil {
 			return nil, fmt.Errorf("search dictionary filter-only: %w", err)
 		}
-		filtered := filterEntries(entries, classFilter, genderFilter, "", "")
-		sort.SliceStable(filtered, func(i, j int) bool {
-			wi := strings.ToLower(filtered[i].Word)
-			wj := strings.ToLower(filtered[j].Word)
-			if wi != wj {
-				return wi < wj
-			}
-			return filtered[i].ID < filtered[j].ID
-		})
-		if len(filtered) > limit {
-			filtered = filtered[:limit]
-		}
-		return filtered, nil
+		return entries, nil
 	}
 
 	terms := strings.Fields(cleanQuery)

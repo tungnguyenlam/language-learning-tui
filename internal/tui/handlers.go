@@ -816,7 +816,7 @@ func (m *Model) scrollDictionaryWheel(delta int) {
 			m.dictionaryDetailScroll = maxInt(0, m.dictionaryDetailScroll-1)
 			return
 		}
-		maxScroll := maxInt(0, m.dictionaryDetailTotalLines-dictionaryVisibleRows(m.activeViewContentLayout()))
+		maxScroll := maxInt(0, m.dictionaryDetailTotalLines-m.dictionaryDetailViewportRows(m.activeViewContentLayout()))
 		if m.dictionaryDetailScroll < maxScroll {
 			m.dictionaryDetailScroll++
 		}

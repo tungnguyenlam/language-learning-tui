@@ -295,14 +295,14 @@ func (m *Model) activateHitboxByID(id string) tea.Cmd {
 	case strings.HasPrefix(id, "dict-scroll-"):
 		line, err := strconv.Atoi(strings.TrimPrefix(id, "dict-scroll-"))
 		if err == nil && len(m.dictionaryResults) > 0 {
-			visible := dictionaryVisibleRows(m.activeViewContentLayout())
+			visible := m.dictionaryListViewportRows(m.activeViewContentLayout())
 			m.dictionaryScroll = scrollOffsetForTrackRow(len(m.dictionaryResults), visible, line)
 		}
 		return nil
 	case strings.HasPrefix(id, "dict-detail-scroll-"):
 		line, err := strconv.Atoi(strings.TrimPrefix(id, "dict-detail-scroll-"))
 		if err == nil && m.dictionaryDetailTotalLines > 0 {
-			visible := dictionaryVisibleRows(m.activeViewContentLayout())
+			visible := m.dictionaryDetailViewportRows(m.activeViewContentLayout())
 			m.dictionaryDetailScroll = scrollOffsetForTrackRow(m.dictionaryDetailTotalLines, visible, line)
 		}
 		return nil

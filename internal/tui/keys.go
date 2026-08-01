@@ -1718,7 +1718,7 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			break
 		}
 		if m.dictionaryDetailView {
-			maxScroll := maxInt(0, m.dictionaryDetailTotalLines-dictionaryVisibleRows(m.activeViewContentLayout()))
+			maxScroll := maxInt(0, m.dictionaryDetailTotalLines-m.dictionaryDetailViewportRows(m.activeViewContentLayout()))
 			if m.dictionaryDetailScroll < maxScroll {
 				m.dictionaryDetailScroll++
 			}
@@ -1747,14 +1747,14 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "shift+down":
-		maxScroll := maxInt(0, m.dictionaryDetailTotalLines-dictionaryVisibleRows(m.activeViewContentLayout()))
+		maxScroll := maxInt(0, m.dictionaryDetailTotalLines-m.dictionaryDetailViewportRows(m.activeViewContentLayout()))
 		if m.dictionaryDetailScroll < maxScroll {
 			m.dictionaryDetailScroll++
 		}
 		return nil, true
 	case "pgdown":
 		if m.dictionaryDetailView {
-			maxScroll := maxInt(0, m.dictionaryDetailTotalLines-dictionaryVisibleRows(m.activeViewContentLayout()))
+			maxScroll := maxInt(0, m.dictionaryDetailTotalLines-m.dictionaryDetailViewportRows(m.activeViewContentLayout()))
 			m.dictionaryDetailScroll += 10
 			if m.dictionaryDetailScroll > maxScroll {
 				m.dictionaryDetailScroll = maxScroll
@@ -1824,7 +1824,10 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return m.toggleStarDictionaryEntry(entry), true
 		}
 	case "a":
-		if (m.dictionaryFocusResults || m.dictionaryDetailView || m.dictionaryOverlayActive) && m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
+		// Audio only when results/detail are focused — otherwise "a" must type
+		// into the search bar (Auto, haben, Fahrrad). Overlay alone is not enough:
+		// Spotlight keeps prior results while the search input is active.
+		if (m.dictionaryFocusResults || m.dictionaryDetailView) && m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 			m.recordDictionarySearch(m.dictionarySearch)
 			entry := m.dictionaryResults[m.dictionaryCursor]
 			return m.playDictionaryAudio(entry.Word), true
@@ -2049,7 +2052,7 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	}
 	if key == "space" {
 		if m.dictionaryDetailView {
-			maxScroll := maxInt(0, m.dictionaryDetailTotalLines-dictionaryVisibleRows(m.activeViewContentLayout()))
+			maxScroll := maxInt(0, m.dictionaryDetailTotalLines-m.dictionaryDetailViewportRows(m.activeViewContentLayout()))
 			m.dictionaryDetailScroll += 5
 			if m.dictionaryDetailScroll > maxScroll {
 				m.dictionaryDetailScroll = maxScroll

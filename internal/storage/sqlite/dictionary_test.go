@@ -2,6 +2,7 @@ package sqlite
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"deutsch-tui/internal/core"
@@ -320,6 +321,45 @@ func TestDictionaryFilterOnlyBrowseOrdered(t *testing.T) {
 	}
 	if res[0].Word != "Apfel" || res[1].Word != "Birne" || res[2].Word != "Zebra" {
 		t.Fatalf("expected alphabetical noun browse, got %v %v %v", res[0].Word, res[1].Word, res[2].Word)
+	}
+}
+
+func TestDictionaryFilterOnlyBrowseBeyondAlphabeticalSlice(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	// 220 nouns sorting before "ziehen" used to fill the old LIMIT 200 window
+	// and hide the only verb when browsing :verb.
+	entries := make([]core.DictionaryEntry, 0, 221)
+	for i := 0; i < 220; i++ {
+		entries = append(entries, core.DictionaryEntry{
+			ID:          fmt.Sprintf("n-%03d", i),
+			Word:        fmt.Sprintf("Alpha%03d", i),
+			Translation: "noun",
+			WordClass:   "noun",
+			Gender:      "n",
+		})
+	}
+	entries = append(entries, core.DictionaryEntry{
+		ID:          "v-1",
+		Word:        "ziehen",
+		Translation: "to pull",
+		WordClass:   "verb",
+	})
+	if err := store.ImportEntries(ctx, entries); err != nil {
+		t.Fatalf("import entries: %v", err)
+	}
+
+	res, err := store.Search(ctx, ":verb", 10)
+	if err != nil {
+		t.Fatalf("filter-only :verb search failed: %v", err)
+	}
+	if len(res) != 1 || res[0].Word != "ziehen" {
+		t.Fatalf("expected ziehen from full-dictionary :verb browse, got %#v", res)
 	}
 }
 

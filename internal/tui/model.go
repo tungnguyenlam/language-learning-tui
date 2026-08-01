@@ -207,6 +207,8 @@ type Model struct {
 	dictionaryScroll               int
 	dictionaryDetailScroll         int
 	dictionaryDetailTotalLines     int
+	dictionaryDetailVisibleRows    int
+	dictionaryListVisibleRows      int
 	dictionaryDetailView           bool
 	dictionaryFocusResults         bool
 	dictionaryOverlayActive        bool
@@ -1064,12 +1066,12 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 							m.dragTotal = m.settingsTotalLines
 						case strings.HasPrefix(hit.ID, "dict-detail-scroll-"):
 							m.dragView = ViewDictionary
-							m.dragVisible = dictionaryVisibleRows(layout)
+							m.dragVisible = m.dictionaryDetailViewportRows(layout)
 							m.dragTotal = m.dictionaryDetailTotalLines
 							m.isDragging = m.dragTotal > m.dragVisible
 						case strings.HasPrefix(hit.ID, "dict-scroll-"):
 							m.dragView = ViewDictionary
-							m.dragVisible = dictionaryVisibleRows(layout)
+							m.dragVisible = m.dictionaryListViewportRows(layout)
 							m.dragTotal = len(m.dictionaryResults)
 							m.isDragging = m.dragTotal > m.dragVisible
 						}
