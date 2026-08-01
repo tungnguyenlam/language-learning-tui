@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"sync"
 	"time"
@@ -252,6 +253,40 @@ func (m *mockRepo) Cards(ctx context.Context, deckID string, search string, tag 
 		cards = append(cards, card)
 	}
 	return cards, nil
+}
+
+func (m *mockRepo) CardsWithFlag(ctx context.Context, deckID string, flag string) ([]core.Card, error) {
+	cards, err := m.Cards(ctx, deckID, "", "")
+	if err != nil {
+		return nil, err
+	}
+	if flag == "" || flag == "all" {
+		return cards, nil
+	}
+	var filtered []core.Card
+	for _, card := range cards {
+		switch flag {
+		case "bookmarked":
+			if card.Bookmarked {
+				filtered = append(filtered, card)
+			}
+		case "suspended":
+			if card.Suspended {
+				filtered = append(filtered, card)
+			}
+		case "leech":
+			if card.Leech {
+				filtered = append(filtered, card)
+			}
+		case "flagged":
+			if card.Bookmarked || card.Suspended || card.Leech {
+				filtered = append(filtered, card)
+			}
+		default:
+			return nil, fmt.Errorf("unknown card flag filter %q", flag)
+		}
+	}
+	return filtered, nil
 }
 
 func (m *mockRepo) ReviewsPerDay(ctx context.Context, days int) (map[string]int, error) {

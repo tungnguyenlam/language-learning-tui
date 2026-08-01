@@ -1426,6 +1426,17 @@ func parseChoices(raw string) []string {
 }
 
 func (s *Store) Cards(ctx context.Context, deckID string, search string, tag string) ([]core.Card, error) {
+	return s.queryCards(ctx, deckID, search, tag, "")
+}
+
+// CardsWithFlag returns cards matching a card_flags filter for Cram and similar
+// bulk views. Filtering in SQL avoids missing flagged cards that sort after the
+// generic Cards() window.
+func (s *Store) CardsWithFlag(ctx context.Context, deckID string, flag string) ([]core.Card, error) {
+	return s.queryCards(ctx, deckID, "", "", flag)
+}
+
+func (s *Store) queryCards(ctx context.Context, deckID, search, tag, flag string) ([]core.Card, error) {
 	query := `
 		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.extra, c.hint, c.choices, c.audio, c.tags, 
 		       COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0), 
@@ -1451,9 +1462,24 @@ func (s *Store) Cards(ctx context.Context, deckID string, search string, tag str
 		query += ` AND (' ' || LOWER(c.tags) || ' ') LIKE ('% ' || LOWER(?) || ' %')`
 		args = append(args, tag)
 	}
-	query += ` ORDER BY c.id LIMIT 1000`
-
-	// log.Printf("Cards query: %s, args: %v", query, args)
+	switch flag {
+	case "bookmarked":
+		query += ` AND COALESCE(cf.bookmarked, 0) = 1`
+	case "suspended":
+		query += ` AND COALESCE(cf.suspended, 0) = 1`
+	case "leech":
+		query += ` AND COALESCE(cf.leech, 0) = 1`
+	case "flagged":
+		query += ` AND (COALESCE(cf.bookmarked, 0) = 1 OR COALESCE(cf.suspended, 0) = 1 OR COALESCE(cf.leech, 0) = 1)`
+	case "", "all":
+		// no flag filter
+	default:
+		return nil, fmt.Errorf("unknown card flag filter %q", flag)
+	}
+	// Match DueCards scale so Cram/Browser/practice are not capped below the
+	// seeded collection size.
+	query += ` ORDER BY c.id LIMIT ?`
+	args = append(args, defaultDueCardsLimit)
 
 	rows, err := s.db.QueryContext(ctx, query, args...)
 	if err != nil {

@@ -1239,3 +1239,78 @@ func TestCleanupTags(t *testing.T) {
 		t.Errorf("tag 'unused' should have been removed")
 	}
 }
+
+func TestCardsWithFlagFiltersInSQL(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	deck := core.Deck{ID: "d1", Name: "Flags"}
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+	for i, id := range []string{"c-book", "c-susp", "c-leech", "c-plain"} {
+		note := core.Note{
+			ID:     "n" + id,
+			DeckID: "d1",
+			Front:  id,
+			Back:   id,
+		}
+		note.Cards = []core.Card{{
+			ID: id, NoteID: note.ID, DeckID: "d1",
+			Kind: core.CardKindFlashcard, Prompt: id, Answer: id,
+		}}
+		if err := store.UpsertNote(ctx, note); err != nil {
+			t.Fatalf("upsert note %d: %v", i, err)
+		}
+	}
+	if err := store.SetCardBookmark(ctx, "c-book", true); err != nil {
+		t.Fatalf("bookmark: %v", err)
+	}
+	if err := store.SetCardSuspended(ctx, "c-susp", true); err != nil {
+		t.Fatalf("suspend: %v", err)
+	}
+	// Mark leech via direct flags write used by the store helpers.
+	if _, err := store.db.ExecContext(ctx, `
+		INSERT INTO card_flags(card_id, bookmarked, leech, suspended)
+		VALUES (?, 0, 1, 0)
+		ON CONFLICT(card_id) DO UPDATE SET leech = 1
+	`, "c-leech"); err != nil {
+		t.Fatalf("set leech: %v", err)
+	}
+
+	bookmarked, err := store.CardsWithFlag(ctx, "d1", "bookmarked")
+	if err != nil {
+		t.Fatalf("bookmarked: %v", err)
+	}
+	if len(bookmarked) != 1 || bookmarked[0].ID != "c-book" {
+		t.Fatalf("bookmarked = %+v", bookmarked)
+	}
+
+	suspended, err := store.CardsWithFlag(ctx, "d1", "suspended")
+	if err != nil {
+		t.Fatalf("suspended: %v", err)
+	}
+	if len(suspended) != 1 || suspended[0].ID != "c-susp" {
+		t.Fatalf("suspended = %+v", suspended)
+	}
+
+	leech, err := store.CardsWithFlag(ctx, "d1", "leech")
+	if err != nil {
+		t.Fatalf("leech: %v", err)
+	}
+	if len(leech) != 1 || leech[0].ID != "c-leech" {
+		t.Fatalf("leech = %+v", leech)
+	}
+
+	flagged, err := store.CardsWithFlag(ctx, "d1", "flagged")
+	if err != nil {
+		t.Fatalf("flagged: %v", err)
+	}
+	if len(flagged) != 3 {
+		t.Fatalf("flagged count = %d, want 3", len(flagged))
+	}
+}

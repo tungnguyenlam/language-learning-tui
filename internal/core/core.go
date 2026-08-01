@@ -149,6 +149,9 @@ type Repository interface {
 	Statistics(ctx context.Context) (Statistics, error)
 	DeckStatistics(ctx context.Context, deckID string) (Statistics, error)
 	Cards(ctx context.Context, deckID string, search string, tag string) ([]Card, error)
+	// CardsWithFlag returns cards matching a card_flags filter:
+	// "bookmarked", "suspended", "leech", or "flagged" (any of the three).
+	CardsWithFlag(ctx context.Context, deckID string, flag string) ([]Card, error)
 	ReviewsPerDay(ctx context.Context, days int) (map[string]int, error)
 	RecentDecks(ctx context.Context, limit int) ([]string, error)
 	ReviewHistory(ctx context.Context, cardID string, limit int) ([]ReviewLog, error)

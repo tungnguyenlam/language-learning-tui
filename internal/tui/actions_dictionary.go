@@ -876,11 +876,12 @@ func (m *Model) explainDictionaryEntry(entry core.DictionaryEntry) tea.Cmd {
 	m.explainingCard = true
 	m.explanation = ""
 	m.explainError = ""
-	m.status = fmt.Sprintf("Asking AI tutor about '%s'…", entry.Word)
 	cardID := "dict:" + entry.ID
 	if entry.ID == "" {
 		cardID = "dict:" + entry.Word
 	}
+	m.explainCardID = cardID
+	m.status = fmt.Sprintf("Asking AI tutor about '%s'…", entry.Word)
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 		defer cancel()

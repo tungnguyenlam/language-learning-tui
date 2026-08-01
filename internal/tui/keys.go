@@ -1245,6 +1245,7 @@ func (m *Model) updateAIKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.explanation = ""
 			m.explainError = ""
 			m.explainingCard = false
+			m.explainCardID = ""
 			m.status = "Explanation dismissed"
 			return nil, true
 		}
@@ -1256,6 +1257,7 @@ func (m *Model) updateAIKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			m.explanation = ""
 			m.explainError = ""
 			m.explainingCard = false
+			m.explainCardID = ""
 			m.status = "Explanation dismissed"
 			return nil, true
 		}

@@ -382,27 +382,32 @@ func (m *Model) bulkBrowserToggleKind() tea.Cmd {
 	if len(selectedIDs) == 0 {
 		return nil
 	}
+	// Snapshot toggles from the already-loaded browser rows. Reloading the
+	// whole collection via Cards("",…,…) was capped and silently skipped
+	// selected cards outside that window.
+	nextByID := make(map[string]core.CardKind, len(selectedIDs))
+	selected := make(map[string]bool, len(selectedIDs))
+	for _, id := range selectedIDs {
+		selected[id] = true
+	}
+	for _, card := range m.browserCards {
+		if !selected[card.ID] {
+			continue
+		}
+		next := core.CardKindFlashcard
+		if card.Kind == core.CardKindFlashcard {
+			next = core.CardKindMCQ
+		}
+		nextByID[card.ID] = next
+	}
+	if len(nextByID) == 0 {
+		return nil
+	}
 	m.status = "Bulk converting kinds..."
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		allCards, err := m.repo.Cards(ctx, "", "", "")
-		if err != nil {
-			return err
-		}
-		cardByID := make(map[string]core.Card, len(allCards))
-		for _, card := range allCards {
-			cardByID[card.ID] = card
-		}
-		for _, id := range selectedIDs {
-			card, ok := cardByID[id]
-			if !ok {
-				continue
-			}
-			next := core.CardKindFlashcard
-			if card.Kind == core.CardKindFlashcard {
-				next = core.CardKindMCQ
-			}
+		for id, next := range nextByID {
 			if err := m.repo.SetCardKind(ctx, id, next); err != nil {
 				return err
 			}
@@ -417,6 +422,7 @@ func (m *Model) toggleBrowserSuspension() tea.Cmd {
 	}
 	card := m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)]
 	next := !card.Suspended
+	bookmarkFilter := m.bookmarkFilter
 	m.status = "Updating suspension..."
 	// Update local state
 	m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)].Suspended = next
@@ -426,13 +432,14 @@ func (m *Model) toggleBrowserSuspension() tea.Cmd {
 		if err := m.repo.SetCardSuspended(ctx, card.ID, next); err != nil {
 			return err
 		}
-		// Refresh everything to ensure stats and lists are consistent
+		// Refresh with the same due-card limit as Review (0 → default).
+		// A hard 500 here previously truncated the in-memory review queue.
 		var cards []core.Card
 		var err error
-		if m.bookmarkFilter {
-			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
+		if bookmarkFilter {
+			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 0)
 		} else {
-			cards, err = m.repo.DueCards(ctx, time.Now(), 500)
+			cards, err = m.repo.DueCards(ctx, time.Now(), 0)
 		}
 		if err != nil {
 			return err
@@ -692,6 +699,7 @@ func (m *Model) resetMCQState() {
 	m.reviewPredictions = nil
 	m.explanation = ""
 	m.explainingCard = false
+	m.explainCardID = ""
 	m.explainError = ""
 }
 
@@ -725,6 +733,7 @@ func (m *Model) clearReviewHistory() {
 	m.reviewPredictions = nil
 	m.explanation = ""
 	m.explainingCard = false
+	m.explainCardID = ""
 	m.explainError = ""
 }
 

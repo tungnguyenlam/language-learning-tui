@@ -35,6 +35,11 @@ type ankiWebScreen struct {
 	details      *ankiweb.Details
 	detailsForID int64
 
+	// Monotonic request ids so out-of-order network replies cannot clobber
+	// a newer search or a different deck's details.
+	searchID int
+	infoID   int
+
 	busy    string // non-empty while a request is in flight
 	lastErr string
 }
@@ -42,11 +47,13 @@ type ankiWebScreen struct {
 // --- messages ---------------------------------------------------------------
 
 type ankiWebResultsMsg struct {
+	id      int
 	query   string
 	results []ankiweb.Deck
 }
 
 type ankiWebInfoMsg struct {
+	reqID   int
 	id      int64
 	details ankiweb.Details
 }
@@ -54,6 +61,7 @@ type ankiWebInfoMsg struct {
 type ankiWebErrorMsg struct {
 	action string
 	err    error
+	id     int // searchID or infoID for the failed request; 0 = unscoped
 }
 
 // --- key handling -----------------------------------------------------------
@@ -133,6 +141,8 @@ func (s *ankiWebScreen) search(m *Model) tea.Cmd {
 		return nil
 	}
 
+	s.searchID++
+	reqID := s.searchID
 	s.busy = "Searching AnkiWeb…"
 	s.lastErr = ""
 	m.status = s.busy
@@ -144,9 +154,9 @@ func (s *ankiWebScreen) search(m *Model) tea.Cmd {
 
 		results, err := client.Search(ctx, query)
 		if err != nil {
-			return ankiWebErrorMsg{action: "search", err: err}
+			return ankiWebErrorMsg{action: "search", err: err, id: reqID}
 		}
-		return ankiWebResultsMsg{query: query, results: results}
+		return ankiWebResultsMsg{id: reqID, query: query, results: results}
 	}
 }
 
@@ -159,6 +169,9 @@ func (s *ankiWebScreen) loadDetails(m *Model) tea.Cmd {
 		return nil
 	}
 
+	s.infoID++
+	reqID := s.infoID
+	deckID := deck.ID
 	s.busy = "Loading deck details…"
 	s.lastErr = ""
 	m.status = s.busy
@@ -168,11 +181,11 @@ func (s *ankiWebScreen) loadDetails(m *Model) tea.Cmd {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 
-		details, err := client.Info(ctx, deck.ID)
+		details, err := client.Info(ctx, deckID)
 		if err != nil {
-			return ankiWebErrorMsg{action: "info", err: err}
+			return ankiWebErrorMsg{action: "info", err: err, id: reqID}
 		}
-		return ankiWebInfoMsg{id: deck.ID, details: details}
+		return ankiWebInfoMsg{reqID: reqID, id: deckID, details: details}
 	}
 }
 
@@ -253,6 +266,9 @@ func (m *Model) handleAnkiWebMsg(msg tea.Msg) (bool, tea.Cmd) {
 	s := m.ankiWebScreen
 	switch msg := msg.(type) {
 	case ankiWebResultsMsg:
+		if msg.id != s.searchID {
+			return true, nil
+		}
 		s.busy = ""
 		s.results = msg.results
 		s.cursor = 0
@@ -266,6 +282,12 @@ func (m *Model) handleAnkiWebMsg(msg tea.Msg) (bool, tea.Cmd) {
 		return true, nil
 
 	case ankiWebInfoMsg:
+		if msg.reqID != s.infoID {
+			return true, nil
+		}
+		if deck, ok := s.selected(); !ok || deck.ID != msg.id {
+			return true, nil
+		}
 		s.busy = ""
 		details := msg.details
 		s.details = &details
@@ -274,6 +296,16 @@ func (m *Model) handleAnkiWebMsg(msg tea.Msg) (bool, tea.Cmd) {
 		return true, nil
 
 	case ankiWebErrorMsg:
+		switch msg.action {
+		case "search":
+			if msg.id != 0 && msg.id != s.searchID {
+				return true, nil
+			}
+		case "info":
+			if msg.id != 0 && msg.id != s.infoID {
+				return true, nil
+			}
+		}
 		s.busy = ""
 		s.lastErr = ankiWebErrorText(msg)
 		m.status = s.lastErr

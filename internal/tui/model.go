@@ -296,6 +296,7 @@ type Model struct {
 
 	// Card-explanation flow: AI provides a brief pedagogical explanation.
 	explainingCard bool
+	explainCardID  string // target id for in-flight explain (review card or dict:…)
 	explanation    string
 	explainError   string
 
@@ -528,7 +529,10 @@ type reviewUndoneMsg struct {
 	stats  core.Statistics
 	grade  core.ReviewGrade
 }
-type cramCardsMsg []core.Card
+type cramCardsMsg struct {
+	cards    []core.Card
+	cramType string
+}
 type browserCardsMsg []core.Card
 type browserCardsResultMsg struct {
 	id    int
@@ -807,6 +811,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.logger.Info("Updated tags for %d cards", len(msg.cardIDs))
 		return m, m.setStatus(fmt.Sprintf("Updated tags for %d cards", len(msg.cardIDs)), 3*time.Second)
 	case fixProposalMsg:
+		if !m.fixingCard || msg.cardID != m.fixCardID {
+			return m, nil
+		}
 		m.fixingCard = false
 		note := msg.oldNote
 		m.fixOldNote = &note
@@ -817,6 +824,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.status = "Review the proposed fix: y to apply, n to discard"
 		return m, nil
 	case fixErrorMsg:
+		if !m.fixingCard || msg.cardID != m.fixCardID {
+			return m, nil
+		}
 		m.fixingCard = false
 		m.fixOldNote = nil
 		m.fixProposal = nil
@@ -829,6 +839,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.logger.Info("Applied fix for card %s", msg.cardID)
 		return m, m.setStatus("Card updated by AI", 3*time.Second)
 	case explainMsg:
+		if !m.explainingCard || msg.cardID != m.explainCardID {
+			return m, nil
+		}
 		m.explainingCard = false
 		m.explanation = msg.explanation
 		m.explainError = ""
@@ -836,6 +849,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.status = "Pedagogical explanation received"
 		return m, nil
 	case explainErrorMsg:
+		if !m.explainingCard || msg.cardID != m.explainCardID {
+			return m, nil
+		}
 		m.explainingCard = false
 		m.explanation = ""
 		m.explainError = msg.err.Error()
@@ -956,6 +972,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.sessionCorrect--
 			}
 		}
+		if msg.grade != "" && m.sessionGrades != nil && m.sessionGrades[msg.grade] > 0 {
+			m.sessionGrades[msg.grade]--
+		}
 		m.syncDecks(msg.decks)
 		m.stats = msg.stats
 		m.allDue = msg.cards
@@ -989,10 +1008,16 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		m.logger.Debug("Loaded %d browser cards for request %d", len(msg.cards), msg.id)
 	case cramCardsMsg:
-		allCards := []core.Card(msg)
+		// Flag modes are filtered in SQL; keep a defensive in-memory filter
+		// using the request's snapshotted type so a mid-flight filter change
+		// cannot mis-attribute results.
+		filter := msg.cramType
+		if filter == "" {
+			filter = m.cramType
+		}
 		m.cramCards = m.cramCards[:0]
-		for _, card := range allCards {
-			switch m.cramType {
+		for _, card := range msg.cards {
+			switch filter {
 			case "bookmarked":
 				if card.Bookmarked {
 					m.cramCards = append(m.cramCards, card)
@@ -1011,6 +1036,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			case "all":
 				m.cramCards = append(m.cramCards, card)
+			default:
+				m.cramCards = append(m.cramCards, card)
 			}
 		}
 		if m.cramCursor >= len(m.cramCards) {
@@ -1021,7 +1048,7 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		} else {
 			m.status = fmt.Sprintf("%d cards in cram mode", len(m.cramCards))
 		}
-		m.logger.Debug("Loaded %d cram cards with filter %s", len(m.cramCards), m.cramType)
+		m.logger.Debug("Loaded %d cram cards with filter %s", len(m.cramCards), filter)
 	case tea.KeyPressMsg:
 		m.logger.Debug("Key pressed: %s", msg.String())
 		return m.updateKey(msg)

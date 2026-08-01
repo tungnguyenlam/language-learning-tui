@@ -1,5 +1,19 @@
 # Done Backlog
 
+## 2026-08-01 (Bug Hunt & Performance: Due Queue, Async Safety, Cram Flags)
+
+### Bug Fixes & Performance
+- **Browser suspend due reload:** Replaced the hard `DueCards(..., 500)` refresh with the Review default (`0` → 20k) so suspending from Browser no longer truncates the in-memory review queue. Grade/undo/suspend and bookmark-filter loads use the same default.
+- **Session undo histogram:** `reviewUndoneMsg` decrements `sessionGrades` so Session Summary grade distribution stays accurate after undo.
+- **AI explain/fix stale results:** Explain/fix handlers require an in-flight matching target id; dismiss clears `explainCardID`. Cancelled or mismatched responses are ignored.
+- **AnkiWeb request identity:** Search/info carry monotonic ids; out-of-order results/errors are ignored, and info also requires the current selection.
+- **Cram flag loading:** Added `CardsWithFlag` (SQL flag predicates) and raised the generic `Cards` limit to the due-card scale. Cram snapshots deck/filter; bulk kind toggle uses visible Browser selection instead of a capped full-table reload.
+- **Async field snapshots:** Grade/undo/suspend/stats cmds capture `bookmarkFilter` / deck id at kickoff instead of reading live model fields from the cmd goroutine.
+
+### Verification
+- Added regression coverage in `bugfix_input_test.go` and `TestCardsWithFlagFiltersInSQL`.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed).
+
 ## 2026-08-01 (Dictionary Spotlight Input, Scroll & Browse Polish)
 
 ### Bug Fixes & Polish

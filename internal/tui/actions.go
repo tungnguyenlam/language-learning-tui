@@ -26,6 +26,7 @@ func (m *Model) gradeCard(grade core.ReviewGrade) tea.Cmd {
 	m.gradingInProgress = true
 	m.status = fmt.Sprintf("Grade: %s", strings.ToUpper(string(grade[:1]))+string(grade[1:]))
 	card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
+	bookmarkFilter := m.bookmarkFilter
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
@@ -54,8 +55,8 @@ func (m *Model) gradeCard(grade core.ReviewGrade) tea.Cmd {
 
 		var cards []core.Card
 		var err2 error
-		if m.bookmarkFilter {
-			cards, err2 = m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
+		if bookmarkFilter {
+			cards, err2 = m.repo.DueCardsBookmarked(ctx, time.Now(), 0)
 		} else {
 			cards, err2 = m.repo.DueCards(ctx, time.Now(), 0)
 		}
@@ -82,6 +83,7 @@ func (m *Model) undoLastReview() tea.Cmd {
 	m.status = "Undoing last review..."
 	cardID := m.lastReviewedCardID
 	grade := m.lastReviewedGrade
+	bookmarkFilter := m.bookmarkFilter
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
@@ -90,8 +92,8 @@ func (m *Model) undoLastReview() tea.Cmd {
 		}
 		var cards []core.Card
 		var err error
-		if m.bookmarkFilter {
-			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
+		if bookmarkFilter {
+			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 0)
 		} else {
 			cards, err = m.repo.DueCards(ctx, time.Now(), 0)
 		}
@@ -607,6 +609,7 @@ func (m *Model) suspendCard() tea.Cmd {
 		return nil
 	}
 	card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
+	bookmarkFilter := m.bookmarkFilter
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
@@ -615,8 +618,8 @@ func (m *Model) suspendCard() tea.Cmd {
 		}
 		var cards []core.Card
 		var err error
-		if m.bookmarkFilter {
-			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
+		if bookmarkFilter {
+			cards, err = m.repo.DueCardsBookmarked(ctx, time.Now(), 0)
 		} else {
 			cards, err = m.repo.DueCards(ctx, time.Now(), 0)
 		}
@@ -1092,6 +1095,7 @@ func (m *Model) explainCard() tea.Cmd {
 		return nil
 	}
 	m.explainingCard = true
+	m.explainCardID = card.ID
 	m.explanation = ""
 	m.explainError = ""
 	m.status = "Asking AI for explanation…"

@@ -43,7 +43,8 @@ func (m *Model) loadDueCards() tea.Msg {
 func (m *Model) loadBookmarkedDueCards() tea.Msg {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	cards, err := m.repo.DueCardsBookmarked(ctx, time.Now(), 50)
+	// Use default due limit (0) so bookmark filter matches Review's full queue.
+	cards, err := m.repo.DueCardsBookmarked(ctx, time.Now(), 0)
 	if err != nil {
 		return err
 	}
@@ -51,14 +52,23 @@ func (m *Model) loadBookmarkedDueCards() tea.Msg {
 }
 
 func (m *Model) loadCramCards() tea.Cmd {
+	deckID := m.deck.ID
+	cramType := m.cramType
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
-		cards, err := m.repo.Cards(ctx, m.deck.ID, "", "")
+		var cards []core.Card
+		var err error
+		switch cramType {
+		case "bookmarked", "suspended", "leech", "flagged":
+			cards, err = m.repo.CardsWithFlag(ctx, deckID, cramType)
+		default:
+			cards, err = m.repo.Cards(ctx, deckID, "", "")
+		}
 		if err != nil {
 			return err
 		}
-		return cramCardsMsg(cards)
+		return cramCardsMsg{cards: cards, cramType: cramType}
 	}
 }
 
@@ -79,6 +89,7 @@ type statsMsg struct {
 }
 
 func (m *Model) loadStatistics() tea.Cmd {
+	deckID := m.deck.ID
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
@@ -86,8 +97,8 @@ func (m *Model) loadStatistics() tea.Cmd {
 		var stats core.Statistics
 		var err error
 
-		if m.deck.ID != "" {
-			stats, err = m.repo.DeckStatistics(ctx, m.deck.ID)
+		if deckID != "" {
+			stats, err = m.repo.DeckStatistics(ctx, deckID)
 		} else {
 			stats, err = m.repo.Statistics(ctx)
 		}

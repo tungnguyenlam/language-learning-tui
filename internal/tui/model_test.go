@@ -1785,12 +1785,12 @@ func TestCramModeFiltering(t *testing.T) {
 	model := NewModel(repo, &mockScheduler{})
 
 	// Mock cram cards loading
-	model.Update(cramCardsMsg(repo.dueCards))
+	model.Update(cramCardsMsg{cards: repo.dueCards, cramType: "all"})
 
 	// Test bookmarked filter
 	model.cramType = "bookmarked"
 	model.cramCards = nil
-	model.Update(cramCardsMsg(repo.dueCards))
+	model.Update(cramCardsMsg{cards: repo.dueCards, cramType: "bookmarked"})
 	if len(model.cramCards) != 1 {
 		t.Fatalf("cramCards = %d, want 1 for bookmarked filter", len(model.cramCards))
 	}
@@ -1801,7 +1801,7 @@ func TestCramModeFiltering(t *testing.T) {
 	// Test suspended filter
 	model.cramType = "suspended"
 	model.cramCards = nil
-	model.Update(cramCardsMsg(repo.dueCards))
+	model.Update(cramCardsMsg{cards: repo.dueCards, cramType: "suspended"})
 	if len(model.cramCards) != 1 {
 		t.Fatalf("cramCards = %d, want 1 for suspended filter", len(model.cramCards))
 	}
@@ -1812,7 +1812,7 @@ func TestCramModeFiltering(t *testing.T) {
 	// Test leech filter
 	model.cramType = "leech"
 	model.cramCards = nil
-	model.Update(cramCardsMsg(repo.dueCards))
+	model.Update(cramCardsMsg{cards: repo.dueCards, cramType: "leech"})
 	if len(model.cramCards) != 1 {
 		t.Fatalf("cramCards = %d, want 1 for leech filter", len(model.cramCards))
 	}
@@ -1823,7 +1823,7 @@ func TestCramModeFiltering(t *testing.T) {
 	// Test flagged filter (bookmarked, suspended, or leech)
 	model.cramType = "flagged"
 	model.cramCards = nil
-	model.Update(cramCardsMsg(repo.dueCards))
+	model.Update(cramCardsMsg{cards: repo.dueCards, cramType: "flagged"})
 	if len(model.cramCards) != 3 {
 		t.Fatalf("cramCards = %d, want 3 for flagged filter", len(model.cramCards))
 	}
@@ -1831,7 +1831,7 @@ func TestCramModeFiltering(t *testing.T) {
 	// Test all filter
 	model.cramType = "all"
 	model.cramCards = nil
-	model.Update(cramCardsMsg(repo.dueCards))
+	model.Update(cramCardsMsg{cards: repo.dueCards, cramType: "all"})
 	if len(model.cramCards) != 4 {
 		t.Fatalf("cramCards = %d, want 4 for all filter", len(model.cramCards))
 	}

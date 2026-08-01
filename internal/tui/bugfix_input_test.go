@@ -1,8 +1,11 @@
 package tui
 
 import (
+	"fmt"
 	"testing"
 
+	"deutsch-tui/internal/ai"
+	"deutsch-tui/internal/ankiweb"
 	"deutsch-tui/internal/core"
 
 	tea "charm.land/bubbletea/v2"
@@ -532,5 +535,178 @@ func TestSettingsTemplateEditNilMapSafety(t *testing.T) {
 	}
 	if m2.aiTemplates["default"] == nil {
 		t.Fatal("expected aiTemplates['default'] to be safely initialized")
+	}
+}
+
+func TestUndoRestoresSessionGradeHistogram(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{{ID: "c1", DeckID: "d1", Prompt: "P", Answer: "A"}},
+		decks:    []core.Deck{{ID: "d1", Name: "Deck"}},
+	}
+	m := NewModel(repo, &mockScheduler{})
+	m.Update(reviewRecordedMsg{
+		cardID: "c1",
+		cards:  repo.dueCards,
+		decks:  repo.decks,
+		stats:  core.Statistics{},
+		grade:  core.GradeGood,
+	})
+	if m.sessionGrades[core.GradeGood] != 1 {
+		t.Fatalf("expected Good=1 after grade, got %d", m.sessionGrades[core.GradeGood])
+	}
+
+	m.Update(reviewUndoneMsg{
+		cardID: "c1",
+		cards:  repo.dueCards,
+		decks:  repo.decks,
+		stats:  core.Statistics{},
+		grade:  core.GradeGood,
+	})
+	if m.sessionGrades[core.GradeGood] != 0 {
+		t.Fatalf("expected Good=0 after undo, got %d", m.sessionGrades[core.GradeGood])
+	}
+	if m.sessionReviewed != 0 {
+		t.Fatalf("expected sessionReviewed=0 after undo, got %d", m.sessionReviewed)
+	}
+}
+
+func TestExplainAndFixIgnoreStaleOrCancelledResults(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.explainingCard = true
+	m.explainCardID = "c-current"
+	m.fixingCard = true
+	m.fixCardID = "c-fix"
+
+	m.Update(explainMsg{cardID: "c-stale", explanation: "wrong card"})
+	if m.explanation != "" {
+		t.Fatalf("stale explain applied: %q", m.explanation)
+	}
+	if !m.explainingCard {
+		t.Fatal("explainingCard should remain true while waiting for matching result")
+	}
+
+	m.explainingCard = false
+	m.explainCardID = ""
+	m.Update(explainMsg{cardID: "c-current", explanation: "after cancel"})
+	if m.explanation != "" {
+		t.Fatalf("cancelled explain applied: %q", m.explanation)
+	}
+
+	m.explainingCard = true
+	m.explainCardID = "c-current"
+	m.Update(explainMsg{cardID: "c-current", explanation: "ok"})
+	if m.explanation != "ok" || m.explainingCard {
+		t.Fatalf("matching explain not applied: explanation=%q explaining=%v", m.explanation, m.explainingCard)
+	}
+
+	m.Update(fixProposalMsg{
+		cardID:   "other",
+		oldNote:  core.Note{ID: "n1"},
+		proposal: ai.FixedNote{Front: "x"},
+	})
+	if m.fixProposal != nil {
+		t.Fatal("mismatched fix proposal should be ignored")
+	}
+
+	m.fixingCard = false
+	m.Update(fixProposalMsg{
+		cardID:   "c-fix",
+		oldNote:  core.Note{ID: "n1"},
+		proposal: ai.FixedNote{Front: "y"},
+	})
+	if m.fixProposal != nil {
+		t.Fatal("cancelled fix proposal should be ignored")
+	}
+}
+
+func TestAnkiWebIgnoresStaleSearchAndInfo(t *testing.T) {
+	stub := &stubAnkiWeb{decks: []ankiweb.Deck{{ID: 1, Title: "Old Result"}}}
+	m, s := ankiWebModel(t, stub)
+	s.query = "german"
+
+	staleSearch := s.search(m)
+	stub.decks = []ankiweb.Deck{{ID: 2, Title: "Fresh Result"}, {ID: 3, Title: "Also Fresh"}}
+	freshSearch := s.search(m)
+	for _, msg := range executeCmd(freshSearch) {
+		m.Update(msg)
+	}
+	for _, msg := range executeCmd(staleSearch) {
+		m.Update(msg)
+	}
+	if len(s.results) != 2 || s.results[0].Title != "Fresh Result" {
+		t.Fatalf("stale search overwrote fresh results: %+v", s.results)
+	}
+
+	// Move cursor, then deliver info for the previous selection.
+	stub.details = ankiweb.Details{Title: "Fresh Result"}
+	s.cursor = 0
+	staleInfo := s.loadDetails(m)
+	s.cursor = 1
+	s.details = nil
+	for _, msg := range executeCmd(staleInfo) {
+		m.Update(msg)
+	}
+	if s.details != nil {
+		t.Fatalf("stale info for previous cursor should not apply after moving: %+v", s.details)
+	}
+}
+
+func TestBrowserSuspendUsesFullDueReloadLimit(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: make([]core.Card, 600),
+		decks:    []core.Deck{{ID: "d1", Name: "Deck"}},
+	}
+	for i := range repo.dueCards {
+		repo.dueCards[i] = core.Card{
+			ID:     fmt.Sprintf("c%04d", i),
+			DeckID: "d1",
+			Prompt: fmt.Sprintf("P%d", i),
+			Answer: fmt.Sprintf("A%d", i),
+		}
+	}
+	m := NewModel(repo, &mockScheduler{})
+	m.activeView = ViewBrowser
+	m.browserCards = []core.Card{repo.dueCards[0]}
+	m.browserCursor = 0
+	m.allDue = repo.dueCards[:500] // simulate previously truncated queue
+
+	cmd := m.toggleBrowserSuspension()
+	if cmd == nil {
+		t.Fatal("expected suspend command")
+	}
+	msg := cmd()
+	suspended, ok := msg.(cardSuspendedMsg)
+	if !ok {
+		t.Fatalf("expected cardSuspendedMsg, got %T", msg)
+	}
+	// One card was suspended; the rest of the 600-card collection must remain
+	// (previously a hard 500 limit truncated the review queue).
+	if len(suspended.cards) != 599 {
+		t.Fatalf("browser suspend due reload returned %d cards, want 599 (full queue minus suspended)", len(suspended.cards))
+	}
+}
+
+func TestBulkBrowserToggleKindUsesVisibleSelection(t *testing.T) {
+	repo := &mockRepo{
+		dueCards: []core.Card{
+			{ID: "visible", DeckID: "d1", Kind: core.CardKindFlashcard, Prompt: "V", Answer: "1"},
+			{ID: "also", DeckID: "d1", Kind: core.CardKindMCQ, Prompt: "A", Answer: "2"},
+		},
+	}
+	m := NewModel(repo, &mockScheduler{})
+	m.activeView = ViewBrowser
+	m.browserCards = []core.Card{repo.dueCards[0], repo.dueCards[1]}
+	m.browserSelected = map[string]bool{"visible": true, "also": true}
+
+	cmd := m.bulkBrowserToggleKind()
+	if cmd == nil {
+		t.Fatal("expected bulk toggle command")
+	}
+	_ = cmd()
+	if repo.dueCards[0].Kind != core.CardKindMCQ {
+		t.Fatalf("visible flashcard should become MCQ, got %s", repo.dueCards[0].Kind)
+	}
+	if repo.dueCards[1].Kind != core.CardKindFlashcard {
+		t.Fatalf("visible MCQ should become flashcard, got %s", repo.dueCards[1].Kind)
 	}
 }
