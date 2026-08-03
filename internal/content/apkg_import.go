@@ -389,7 +389,6 @@ func readAnkiDeckNames(ctx context.Context, db *sql.DB) map[int64]string {
 	names := make(map[int64]string)
 
 	if rows, err := db.QueryContext(ctx, `SELECT id, name FROM decks`); err == nil {
-		defer rows.Close()
 		for rows.Next() {
 			var id int64
 			var name string
@@ -399,6 +398,7 @@ func readAnkiDeckNames(ctx context.Context, db *sql.DB) map[int64]string {
 			// The modern schema separates sub-deck components with \x1f.
 			names[id] = strings.ReplaceAll(name, "\x1f", "::")
 		}
+		_ = rows.Close()
 		if len(names) > 0 {
 			return names
 		}

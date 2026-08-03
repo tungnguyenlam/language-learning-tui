@@ -37,6 +37,15 @@ func (m *Model) searchDictionary() tea.Cmd {
 	m.dictionarySearchID++
 	id := m.dictionarySearchID
 	query := m.dictionarySearch
+
+	var starredSnapshot map[string]bool
+	if len(m.dictionaryStarred) > 0 {
+		starredSnapshot = make(map[string]bool, len(m.dictionaryStarred))
+		for k, v := range m.dictionaryStarred {
+			starredSnapshot[k] = v
+		}
+	}
+
 	return func() tea.Msg {
 		if query == "" {
 			return dictionarySearchResultsMsg{id: id, results: nil}
@@ -55,7 +64,10 @@ func (m *Model) searchDictionary() tea.Cmd {
 		cleanText := clearFilterTags(query)
 		if starredOnly && cleanText == "" {
 			var results []core.DictionaryEntry
-			for entryID := range m.dictionaryStarred {
+			for entryID, isStarred := range starredSnapshot {
+				if !isStarred {
+					continue
+				}
 				entry, err := dictRepo.GetEntry(ctx, entryID)
 				if err == nil {
 					results = append(results, entry)
@@ -78,7 +90,7 @@ func (m *Model) searchDictionary() tea.Cmd {
 		if starredOnly {
 			var filtered []core.DictionaryEntry
 			for _, e := range results {
-				if m.dictionaryStarred[e.ID] {
+				if starredSnapshot[e.ID] {
 					filtered = append(filtered, e)
 				}
 			}

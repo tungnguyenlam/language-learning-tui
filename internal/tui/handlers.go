@@ -638,9 +638,17 @@ func (m *Model) selectDeckByID(id string) {
 		if d.ID == id {
 			m.deckIndex = i
 			m.deck = d
-			m.deckCursor = i
 			m.browserDeckID = id // Sync browser filter
 			m.applyDeckFilter()
+
+			filtered := m.filteredDecks()
+			m.deckCursor = 0
+			for fi, fd := range filtered {
+				if fd.ID == id {
+					m.deckCursor = fi
+					break
+				}
+			}
 			return
 		}
 	}
@@ -659,9 +667,17 @@ func (m *Model) selectDeck(index int) {
 	}
 	m.deckIndex = index
 	m.deck = m.decks[index]
-	m.deckCursor = index
 	m.browserDeckID = m.deck.ID // Sync browser filter
 	m.applyDeckFilter()
+
+	filtered := m.filteredDecks()
+	m.deckCursor = 0
+	for fi, fd := range filtered {
+		if fd.ID == m.deck.ID {
+			m.deckCursor = fi
+			break
+		}
+	}
 }
 
 func (m *Model) applyDeckFilter() {

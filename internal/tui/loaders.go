@@ -238,16 +238,16 @@ func (m *Model) loadPracticeItems() tea.Cmd {
 }
 
 func extractPlural(extra string) string {
-	lower := strings.ToLower(extra)
-	idx := strings.Index(lower, "plural:")
-	if idx == -1 {
-		return ""
+	for i := 0; i <= len(extra)-7; i++ {
+		if strings.EqualFold(extra[i:i+7], "plural:") {
+			sub := extra[i+7:]
+			if end := strings.IndexAny(sub, ";\n\r"); end != -1 {
+				sub = sub[:end]
+			}
+			return strings.TrimSpace(sub)
+		}
 	}
-	sub := extra[idx+7:]
-	if end := strings.IndexAny(sub, ";\n\r"); end != -1 {
-		sub = sub[:end]
-	}
-	return strings.TrimSpace(sub)
+	return ""
 }
 
 type practiceItemsMsg struct {

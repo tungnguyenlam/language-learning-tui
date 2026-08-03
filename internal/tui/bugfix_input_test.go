@@ -878,3 +878,30 @@ func TestGradeRespectsLiveBookmarkFilter(t *testing.T) {
 		t.Fatalf("mismatched grade should keep prior queue until reload, got %#v", m.allDue)
 	}
 }
+
+// extractPlural must handle UTF-8 characters whose ToLower changes byte size without slicing out of bounds.
+func TestExtractPluralUTF8Safety(t *testing.T) {
+	// "ẞ" (capital sharp S, 3 bytes) lowercases to "ß" (2 bytes).
+	extra := "ẞ Plural: die Bücher; context"
+	plural := extractPlural(extra)
+	if plural != "die Bücher" {
+		t.Fatalf("expected 'die Bücher', got %q", plural)
+	}
+}
+
+// selectDeckByID must position deckCursor within filteredDecks when a deck filter is active.
+func TestSelectDeckByIDFilteredDeckCursor(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.decks = []core.Deck{
+		{ID: "d1", Name: "Alpha"},
+		{ID: "d2", Name: "Beta"},
+		{ID: "d3", Name: "B1 Environment"},
+		{ID: "d4", Name: "B1 Transport"},
+	}
+	m.deckFilter = "B1"
+
+	m.selectDeckByID("d4") // 4th deck overall, but 2nd deck (index 1) in filtered
+	if m.deckCursor != 1 {
+		t.Fatalf("expected deckCursor=1 in filtered decks, got %d", m.deckCursor)
+	}
+}

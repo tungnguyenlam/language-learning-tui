@@ -1,5 +1,18 @@
 # Done Backlog
 
+## 2026-08-03 (Bug Hunting & Fixing Pass: Dictionary Map Race, UTF-8 Plural Extraction, DB Rows Leak & Filtered Deck Cursor)
+
+### Bug Fixes
+- **Dictionary Map Data Race (`searchDictionary` in `actions_dictionary.go`):** Created a `starredSnapshot` map copy on the main UI thread before launching the async command closure. This prevents Go runtime concurrent map read/write data races when starring or unstarring entries while searches run in background goroutines.
+- **UTF-8 Plural Extraction Safety (`extractPlural` in `loaders.go`):** Replaced `strings.Index` on `strings.ToLower(extra)` with sliding case-insensitive `strings.EqualFold` checks directly on `extra` byte slices. This guarantees valid byte slicing boundaries even when German strings contain characters whose `ToLower` byte length differs from the original (such as capital sharp S `ẞ`).
+- **SQLite Rows Leak (`readAnkiDeckNames` in `apkg_import.go`):** Explicitly closed `rows` iterators when scanning completed instead of using `defer` inside an `if` block, preventing unclosed database cursors when falling back to legacy collection schemas.
+- **Filtered Deck Cursor Alignment (`selectDeckByID` and `selectDeck` in `handlers.go`):** Updated `selectDeckByID` and `selectDeck` to look up and position `m.deckCursor` within `m.filteredDecks()`. This prevents out-of-bounds index panics when selecting decks while a filter is active in Decks view.
+
+### Verification
+- Added unit tests: `TestExtractPluralUTF8Safety`, `TestSelectDeckByIDFilteredDeckCursor`.
+- Ran `go test -race ./...` (passed with 0 data races).
+- `./scripts/verify.sh` passed: Go unit tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed in 36.50s).
+
 ## 2026-08-03 (Bug Hunting & Fixing Pass: Practice Trainers, Deck Merge, SQLite Tx, AI Draft IDs)
 
 ### Bug Fixes
