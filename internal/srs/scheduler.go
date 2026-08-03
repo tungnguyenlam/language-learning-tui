@@ -118,8 +118,18 @@ func stateFromFSRS(cardID string, card fsrs.Card, prevEase float64, now time.Tim
 		days = 36500
 	}
 	interval := time.Duration(days) * 24 * time.Hour
-	if card.Due.After(now) && interval == 0 {
-		interval = card.Due.Sub(now)
+	if interval == 0 && !card.Due.IsZero() {
+		ref := card.LastReview
+		if ref.IsZero() {
+			ref = now
+		}
+		if card.Due.After(ref) {
+			interval = card.Due.Sub(ref)
+		} else if card.Due.After(now) {
+			interval = card.Due.Sub(now)
+		} else {
+			interval = time.Minute
+		}
 	}
 	return core.ReviewState{
 		CardID:     cardID,

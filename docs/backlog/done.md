@@ -1,5 +1,18 @@
 # Done Backlog
 
+## 2026-08-03 (Bug Fixing Pass: UTF-8 Cloze, SQL Aggregates, Empty Store & Intra-Day SRS)
+
+### Bug Fixes
+- **UTF-8 Cloze Replacement (`addDictionaryClozeEntryCmd`):** Replaced `strings.Index` on lowercased strings with `regexp.FindStringIndex` using `(?i)` and `QuoteMeta`, avoiding UTF-8 byte boundary corruption when multi-byte German characters (e.g. `ẞ` -> `ß`) shift byte lengths.
+- **SQL `RecentDecks` Aggregation:** Replaced `SELECT DISTINCT c.deck_id` with `GROUP BY c.deck_id ORDER BY MAX(r.reviewed_at) DESC`, ensuring recent deck ordering sorts by actual latest review timestamp.
+- **Empty Store `RandomEntries` Safety:** Guarded `RandomEntries` against empty dictionary table (`count == 0`), preventing SQLite division-by-zero errors when picking random rowids before dictionary import.
+- **Streak Calculation Truncation (`currentStreak` / `deckCurrentStreak`):** Grouped reviews by `substr(reviewed_at, 1, 10)` in SQL instead of fetching 1000 raw review rows, allowing accurate streak calculation up to 365 days without capping active users doing high daily review volumes.
+- **Intra-Day Learning Intervals (`stateFromFSRS`):** Calculated non-zero intra-day intervals for learning/relearning cards (`days == 0`) using `card.Due.Sub(...)` or fallback minimum positive interval, preventing 0-second interval values in SQLite when cards are due right now.
+
+### Verification
+- Added unit tests: `TestDictionaryClozeUTF8Replacement`, `TestRandomEntriesEmptyStore`, `TestRecentDecksOrdering`, `TestStreakWithLargeReviewCount`, `TestIntraDayIntervalNonZero`.
+- `./scripts/verify.sh` passed: Go unit tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed).
+
 ## 2026-08-01 (Bug Hunt: Practice Hub Filter & Async Queue Identity)
 
 ### Bug Fixes

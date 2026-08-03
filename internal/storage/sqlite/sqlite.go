@@ -1110,12 +1110,13 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 
 func (s *Store) deckCurrentStreak(ctx context.Context, deckID string, now time.Time) (int, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT reviewed_at
+		SELECT MAX(reviewed_at) AS max_reviewed_at
 		FROM reviews r
 		INNER JOIN cards c ON c.id = r.card_id
 		WHERE c.deck_id = ? AND reviewed_at IS NOT NULL
-		ORDER BY reviewed_at DESC
-		LIMIT 1000
+		GROUP BY substr(reviewed_at, 1, 10)
+		ORDER BY max_reviewed_at DESC
+		LIMIT 365
 	`, deckID)
 	if err != nil {
 		return 0, err
@@ -1129,9 +1130,21 @@ func (s *Store) calculateStreak(rows *sql.Rows, now time.Time) (int, error) {
 	seen := make(map[string]bool)
 	var dates []time.Time
 	for rows.Next() {
-		var t time.Time
-		if err := rows.Scan(&t); err != nil {
+		var raw any
+		if err := rows.Scan(&raw); err != nil {
 			return 0, err
+		}
+		var t time.Time
+		switch v := raw.(type) {
+		case time.Time:
+			t = v
+		case string:
+			t = parseSQLiteTime(v)
+		case []byte:
+			t = parseSQLiteTime(string(v))
+		}
+		if t.IsZero() {
+			continue
 		}
 		d := t.In(time.Local).Format("2006-01-02")
 		if !seen[d] {
@@ -1170,15 +1183,49 @@ func (s *Store) calculateStreak(rows *sql.Rows, now time.Time) (int, error) {
 	return streak, nil
 }
 
+func parseSQLiteTime(s string) time.Time {
+	s = strings.TrimSpace(s)
+	if s == "" {
+		return time.Time{}
+	}
+	formats := []string{
+		time.RFC3339,
+		time.RFC3339Nano,
+		"2006-01-02 15:04:05.999999999 -0700 MST",
+		"2006-01-02 15:04:05 -0700 MST",
+		"2006-01-02 15:04:05.999999999 -0700 -0700",
+		"2006-01-02 15:04:05 -0700 -0700",
+		"2006-01-02 15:04:05.999999999-07:00",
+		"2006-01-02 15:04:05-07:00",
+		"2006-01-02 15:04:05.999999999 +0000 UTC",
+		"2006-01-02 15:04:05 +0000 UTC",
+		"2006-01-02 15:04:05.999999999",
+		"2006-01-02 15:04:05",
+		"2006-01-02T15:04:05",
+		"2006-01-02",
+	}
+	for _, f := range formats {
+		if t, err := time.Parse(f, s); err == nil {
+			return t
+		}
+	}
+	// Fallback to year-month-day substring if present
+	if len(s) >= 10 {
+		if t, err := time.Parse("2006-01-02", s[:10]); err == nil {
+			return t
+		}
+	}
+	return time.Time{}
+}
+
 func (s *Store) currentStreak(ctx context.Context, now time.Time) (int, error) {
-	// Query for unique dates where reviews happened, up to 1 year back
-	// We select the raw TIMESTAMP and convert to date in Go to avoid SQLite DATE() inconsistencies
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT reviewed_at
+		SELECT MAX(reviewed_at) AS max_reviewed_at
 		FROM reviews
 		WHERE reviewed_at IS NOT NULL
-		ORDER BY reviewed_at DESC
-		LIMIT 1000
+		GROUP BY substr(reviewed_at, 1, 10)
+		ORDER BY max_reviewed_at DESC
+		LIMIT 365
 	`)
 	if err != nil {
 		return 0, err
@@ -1220,10 +1267,11 @@ func (s *Store) RecentDecks(ctx context.Context, limit int) ([]string, error) {
 		limit = 5
 	}
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT DISTINCT c.deck_id
+		SELECT c.deck_id
 		FROM reviews r
 		JOIN cards c ON r.card_id = c.id
-		ORDER BY r.reviewed_at DESC
+		GROUP BY c.deck_id
+		ORDER BY MAX(r.reviewed_at) DESC
 		LIMIT ?
 	`, limit)
 	if err != nil {

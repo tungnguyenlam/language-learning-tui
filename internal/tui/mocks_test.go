@@ -23,6 +23,7 @@ type mockRepo struct {
 	errDecks     error
 	errCards     error
 	settings     map[string]string
+	notes        map[string]core.Note
 	mu           sync.Mutex
 }
 
@@ -402,6 +403,13 @@ func (m *mockRepo) ReviewHistory(ctx context.Context, cardID string, limit int) 
 }
 
 func (m *mockRepo) GetNote(ctx context.Context, noteID string) (core.Note, error) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.notes != nil {
+		if note, ok := m.notes[noteID]; ok {
+			return note, nil
+		}
+	}
 	for _, card := range m.dueCards {
 		if card.NoteID == noteID {
 			return core.Note{
@@ -418,6 +426,12 @@ func (m *mockRepo) GetNote(ctx context.Context, noteID string) (core.Note, error
 }
 
 func (m *mockRepo) UpsertNote(ctx context.Context, note core.Note) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	if m.notes == nil {
+		m.notes = make(map[string]core.Note)
+	}
+	m.notes[note.ID] = note
 	for i := range m.dueCards {
 		if m.dueCards[i].NoteID == note.ID {
 			m.dueCards[i].Prompt = note.Front

@@ -1,6 +1,6 @@
 # Active Backlog
 
-Last updated: 2026-08-01
+Last updated: 2026-08-03
 
 ## Current Milestone
 
@@ -12,7 +12,7 @@ Pick the next dictionary milestone item, or continue bug/perf hardening if regre
 
 ## Top Issues
 
-No active issues remain from the Practice Hub filter / due-queue / Cram stale-load pass.
+No active issues remain from the bug fixing pass (UTF-8 cloze, SQL aggregates, empty store & intra-day SRS).
 
 ## Acceptance Criteria
 
@@ -20,10 +20,12 @@ No active issues remain from the Practice Hub filter / due-queue / Cram stale-lo
 
 ## Last Verification
 
-- `./scripts/verify.sh` passed on 2026-08-01: Go unit tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed).
+- `./scripts/verify.sh` passed on 2026-08-03: Go unit tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed).
 
 ## Completed Work
 
-- [x] Practice Hub `/` filter traps globals and accepts paste.
-- [x] Due-queue / Cram / Gender practice loads ignore stale async results.
-- [x] Grade/undo/suspend that finish after a bookmark-filter flip reload the live filter.
+- [x] Fixed UTF-8 byte offset corruption in cloze card creation (`addDictionaryClozeEntryCmd`).
+- [x] Fixed SQL aggregation ordering in `RecentDecks`.
+- [x] Fixed empty-store division-by-zero guard in `RandomEntries`.
+- [x] Fixed 1000-row streak calculation cap in `currentStreak` / `deckCurrentStreak`.
+- [x] Fixed 0-second intra-day learning intervals in `stateFromFSRS`.

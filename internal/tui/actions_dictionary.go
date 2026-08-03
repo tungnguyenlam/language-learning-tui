@@ -922,11 +922,11 @@ func (m *Model) addDictionaryClozeEntryCmd(entry core.DictionaryEntry) tea.Cmd {
 			frontText := ""
 
 			for _, ex := range entry.Examples {
-				idx := strings.Index(strings.ToLower(ex), strings.ToLower(bareWord))
-				if idx != -1 {
-					matchStr := ex[idx : idx+len(bareWord)]
-					frontText = ex[:idx] + "{{c1::" + matchStr + "}}" + ex[idx+len(bareWord):]
-					break
+				if re, err := regexp.Compile("(?i)" + regexp.QuoteMeta(bareWord)); err == nil {
+					if loc := re.FindStringIndex(ex); loc != nil {
+						frontText = ex[:loc[0]] + "{{c1::" + ex[loc[0]:loc[1]] + "}}" + ex[loc[1]:]
+						break
+					}
 				}
 			}
 

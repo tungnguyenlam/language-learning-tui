@@ -629,6 +629,10 @@ func (s *Store) RandomEntries(ctx context.Context, limit int) ([]core.Dictionary
 	if limit <= 0 {
 		limit = 5
 	}
+	count, err := s.DictionaryCount(ctx)
+	if err != nil || count == 0 {
+		return nil, err
+	}
 	// FTS5 content tables use rowid internally. We pick random rowids
 	// from the approximate range to avoid a full table scan + ORDER BY RANDOM().
 	q := `

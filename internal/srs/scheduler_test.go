@@ -67,3 +67,17 @@ func TestPredict(t *testing.T) {
 		t.Errorf("Easy interval (%v) should be longer than Again (%v)", easy, again)
 	}
 }
+
+func TestIntraDayIntervalNonZero(t *testing.T) {
+	now := time.Date(2026, 4, 29, 10, 0, 0, 0, time.UTC)
+	s := NewScheduler(nil)
+	state := core.NewReviewState("card-intraday", now)
+
+	next, err := s.Review(state, core.GradeAgain, now)
+	if err != nil {
+		t.Fatalf("review error: %v", err)
+	}
+	if next.Interval <= 0 {
+		t.Errorf("expected non-zero intra-day interval on GradeAgain, got %v", next.Interval)
+	}
+}

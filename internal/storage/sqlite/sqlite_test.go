@@ -1314,3 +1314,121 @@ func TestCardsWithFlagFiltersInSQL(t *testing.T) {
 		t.Fatalf("flagged count = %d, want 3", len(flagged))
 	}
 }
+
+func TestRandomEntriesEmptyStore(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	defer store.Close()
+
+	entries, err := store.RandomEntries(ctx, 5)
+	if err != nil {
+		t.Fatalf("RandomEntries on empty store returned error: %v", err)
+	}
+	if len(entries) != 0 {
+		t.Fatalf("expected 0 entries from empty store, got %d", len(entries))
+	}
+}
+
+func TestRecentDecksOrdering(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	defer store.Close()
+
+	// Create 2 decks with cards
+	d1 := core.Deck{ID: "deck1", Name: "Deck 1"}
+	d2 := core.Deck{ID: "deck2", Name: "Deck 2"}
+	_ = store.UpsertDeck(ctx, d1)
+	_ = store.UpsertDeck(ctx, d2)
+
+	n1 := core.Note{ID: "n1", DeckID: "deck1", Type: "flashcard", Front: "F1", Back: "B1"}
+	n1.Cards = content.CardsForNote(n1)
+	_ = store.UpsertNote(ctx, n1)
+
+	n2 := core.Note{ID: "n2", DeckID: "deck2", Type: "flashcard", Front: "F2", Back: "B2"}
+	n2.Cards = content.CardsForNote(n2)
+	_ = store.UpsertNote(ctx, n2)
+
+	now := time.Now().UTC()
+
+	// Review deck1 2 days ago
+	_ = store.RecordReview(ctx, core.ReviewResult{
+		CardID:   n1.Cards[0].ID,
+		Grade:    core.GradeGood,
+		Reviewed: now.Add(-48 * time.Hour),
+		Next:     core.ReviewState{CardID: n1.Cards[0].ID, Due: now},
+	})
+	// Review deck2 1 day ago
+	_ = store.RecordReview(ctx, core.ReviewResult{
+		CardID:   n2.Cards[0].ID,
+		Grade:    core.GradeGood,
+		Reviewed: now.Add(-24 * time.Hour),
+		Next:     core.ReviewState{CardID: n2.Cards[0].ID, Due: now},
+	})
+	// Review deck1 today
+	_ = store.RecordReview(ctx, core.ReviewResult{
+		CardID:   n1.Cards[0].ID,
+		Grade:    core.GradeGood,
+		Reviewed: now,
+		Next:     core.ReviewState{CardID: n1.Cards[0].ID, Due: now.Add(24 * time.Hour)},
+	})
+
+	recent, err := store.RecentDecks(ctx, 5)
+	if err != nil {
+		t.Fatalf("RecentDecks error: %v", err)
+	}
+	if len(recent) < 2 {
+		t.Fatalf("expected at least 2 recent decks, got %d", len(recent))
+	}
+	if recent[0] != "deck1" {
+		t.Fatalf("expected most recent deck to be deck1, got %s", recent[0])
+	}
+	if recent[1] != "deck2" {
+		t.Fatalf("expected second most recent deck to be deck2, got %s", recent[1])
+	}
+}
+
+func TestStreakWithLargeReviewCount(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	defer store.Close()
+
+	deck := core.Deck{ID: "deck-streak", Name: "Streak Deck"}
+	_ = store.UpsertDeck(ctx, deck)
+
+	note := core.Note{ID: "n-streak", DeckID: "deck-streak", Type: "flashcard", Front: "SF", Back: "SB"}
+	note.Cards = content.CardsForNote(note)
+	_ = store.UpsertNote(ctx, note)
+
+	cardID := note.Cards[0].ID
+	now := time.Now().UTC()
+
+	// Insert 50 reviews per day for 30 consecutive days (1500 reviews total)
+	for day := 29; day >= 0; day-- {
+		reviewDay := now.AddDate(0, 0, -day)
+		for r := 0; r < 50; r++ {
+			_ = store.RecordReview(ctx, core.ReviewResult{
+				CardID:   cardID,
+				Grade:    core.GradeGood,
+				Reviewed: reviewDay.Add(time.Duration(r) * time.Minute),
+				Next:     core.ReviewState{CardID: cardID, Due: reviewDay.Add(24 * time.Hour)},
+			})
+		}
+	}
+
+	stats, err := store.Statistics(ctx)
+	if err != nil {
+		t.Fatalf("Statistics error: %v", err)
+	}
+	if stats.CurrentStreak < 30 {
+		t.Fatalf("expected streak of at least 30 days despite 1500 reviews, got %d", stats.CurrentStreak)
+	}
+}

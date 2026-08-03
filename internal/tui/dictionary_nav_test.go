@@ -1,7 +1,10 @@
 package tui
 
 import (
+	"context"
 	"testing"
+
+	"deutsch-tui/internal/core"
 
 	tea "charm.land/bubbletea/v2"
 )
@@ -95,5 +98,28 @@ func TestCleanLookupQueryAndCardFormat(t *testing.T) {
 	}
 	if got := formatDictionaryCardFront("der Tisch", "m"); got != "der Tisch" {
 		t.Errorf("expected 'der Tisch', got %q", got)
+	}
+}
+
+func TestDictionaryClozeUTF8Replacement(t *testing.T) {
+	repo := &mockRepo{}
+	m := NewModel(repo, &mockScheduler{})
+
+	entry := core.DictionaryEntry{
+		ID:          "test-utf8",
+		Word:        "groß",
+		Translation: "big",
+		Examples:    []string{"Ein SEHR GROßER Baum steht dort."},
+	}
+
+	executeCmd(m.addDictionaryClozeEntryCmd(entry))
+
+	note, err := repo.GetNote(context.Background(), "dict-cloze-test-utf8")
+	if err != nil {
+		t.Fatalf("GetNote error: %v", err)
+	}
+	expectedFront := "Ein SEHR {{c1::GROß}}ER Baum steht dort."
+	if note.Front != expectedFront {
+		t.Errorf("cloze front = %q, want %q", note.Front, expectedFront)
 	}
 }
