@@ -127,7 +127,11 @@ func isGenericTrainer(kind PracticeSubView) bool {
 // while revealed.
 func (m *Model) updateTrainerKey(kind PracticeSubView, msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	st := m.trainerStateFor(kind)
-	if len(st.items) == 0 {
+	if len(st.items) == 0 || st.index < 0 || st.index >= len(st.items) {
+		if msg.String() == "esc" {
+			m.practiceSubView = PracticeSubViewHub
+			return nil, true
+		}
 		return nil, false
 	}
 
@@ -193,7 +197,7 @@ func (m *Model) renderTrainer(kind PracticeSubView, layout viewportLayout) strin
 		return lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, s)
 	}
 
-	if len(st.items) == 0 {
+	if len(st.items) == 0 || st.index < 0 || st.index >= len(st.items) {
 		return lipgloss.NewStyle().
 			Width(layout.Width).
 			Height(layout.Height).

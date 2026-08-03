@@ -384,7 +384,7 @@ func (m *Model) renderAI(x, y int) string {
 	ctx.WriteLine(listBox)
 
 	// Show detailed preview for selected draft
-	if len(m.drafts) > 0 && m.draftCursor < len(m.drafts) {
+	if len(m.drafts) > 0 && m.draftCursor >= 0 && m.draftCursor < len(m.drafts) {
 		selected := m.drafts[m.draftCursor]
 		previewTitleLabelStyle := lipgloss.NewStyle().Bold(true).Foreground(colorAccent)
 

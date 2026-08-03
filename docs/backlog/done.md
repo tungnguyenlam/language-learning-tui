@@ -1,5 +1,18 @@
 # Done Backlog
 
+## 2026-08-03 (Bug Hunting & Fixing Pass: Practice Trainers, Deck Merge, SQLite Tx, AI Draft IDs)
+
+### Bug Fixes
+- **Gender & Generic Trainer Out-Of-Bounds Safety:** Guarded `renderGenderTrainer` and `updatePracticeKey` against empty `practiceItems` or invalid `practiceIndex` values, preventing index out of range panics when keypresses (`1-3`, `d/i/f`, `a/m/n`) or mouse hitboxes are triggered. Added bounds checks for `st.index` in generic trainers.
+- **Unclamped Deck Cursor in Deck Merge & View Navigation:** Fixed `mergeSelectedDecks` (`handlers.go`) and `updateDecksKey` (`keys.go`) where `filtered[m.deckCursor]` was accessed directly without `clampInt`, preventing panics when filtered deck lists shrink.
+- **SQLite Transaction Row Closure & Error Checks:** Fixed `SaveReview` (`sqlite.go`) where transaction query `rows` was left open before calling `tx.ExecContext(...)`, closing `rows` explicitly prior to the update and checking `rows.Err()`. Added missing `rows.Err()` checks in `Statistics`.
+- **AI Draft Note ID Collision for German Umlauts:** Transliterated German umlauts and Eszett (`ä` -> `ae`, `ö` -> `oe`, `ü` -> `ue`, `ß` -> `ss`) in `draftIDBase` (`ai.go`), preventing duplicate `"ai-draft"` note IDs and `ValidateDrafts` failures when drafting non-ASCII German words.
+- **Lower Bound Cursor Guards:** Added `>= 0` lower-bound checks for `m.browserCursor`, `m.cramCursor`, and `m.draftCursor` in view render functions (`render_browser.go`, `render_cram.go`, `render_ai.go`).
+
+### Verification
+- Added unit tests: `TestOfflineProviderGermanUmlauts`, `TestGenderTrainerEmptyItemsSafety`, `TestGenericTrainerInvalidIndexSafety`, `TestDecksViewMergeUnclampedCursorSafety`.
+- `./scripts/verify.sh` passed: Go unit tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite.
+
 ## 2026-08-03 (Bug Fixing Pass: UTF-8 Cloze, SQL Aggregates, Empty Store & Intra-Day SRS)
 
 ### Bug Fixes

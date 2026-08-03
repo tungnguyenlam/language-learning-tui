@@ -190,17 +190,32 @@ func draftIDBase(topic string) string {
 	var b strings.Builder
 	lastDash := false
 	for _, r := range topic {
-		switch {
-		case r >= 'a' && r <= 'z':
-			b.WriteRune(r)
+		switch r {
+		case 'ä':
+			b.WriteString("ae")
 			lastDash = false
-		case r >= '0' && r <= '9':
-			b.WriteRune(r)
+		case 'ö':
+			b.WriteString("oe")
+			lastDash = false
+		case 'ü':
+			b.WriteString("ue")
+			lastDash = false
+		case 'ß':
+			b.WriteString("ss")
 			lastDash = false
 		default:
-			if !lastDash && b.Len() > 0 {
-				b.WriteByte('-')
-				lastDash = true
+			switch {
+			case r >= 'a' && r <= 'z':
+				b.WriteRune(r)
+				lastDash = false
+			case r >= '0' && r <= '9':
+				b.WriteRune(r)
+				lastDash = false
+			default:
+				if !lastDash && b.Len() > 0 {
+					b.WriteByte('-')
+					lastDash = true
+				}
 			}
 		}
 	}

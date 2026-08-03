@@ -535,7 +535,8 @@ func (m *Model) handleDeckMerge() tea.Cmd {
 	if len(filtered) == 0 {
 		return nil
 	}
-	targetID := filtered[clampInt(m.deckCursor, 0, len(filtered)-1)].ID
+	targetDeck := filtered[clampInt(m.deckCursor, 0, len(filtered)-1)]
+	targetID := targetDeck.ID
 
 	// Remove target from sources if present
 	var cleanSources []string
@@ -549,7 +550,7 @@ func (m *Model) handleDeckMerge() tea.Cmd {
 		return nil
 	}
 
-	m.status = fmt.Sprintf("Merging %d decks into %s...", len(cleanSources), filtered[m.deckCursor].Name)
+	m.status = fmt.Sprintf("Merging %d decks into %s...", len(cleanSources), targetDeck.Name)
 	m.deckSelected = make(map[string]bool)
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)

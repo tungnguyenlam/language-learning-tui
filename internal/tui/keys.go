@@ -706,8 +706,8 @@ func (m *Model) updateDecksKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	}
 
 	filtered := m.filteredDecks()
-	if m.deckCursor >= len(filtered) && len(filtered) > 0 {
-		m.deckCursor = len(filtered) - 1
+	if len(filtered) > 0 {
+		m.deckCursor = clampInt(m.deckCursor, 0, len(filtered)-1)
 	}
 
 	switch msg.String() {
@@ -1610,12 +1610,12 @@ func (m *Model) updatePracticeKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, false
 
 	case PracticeSubViewGender:
-		if len(m.practiceItems) == 0 {
-			return nil, false
-		}
 		if key == "esc" {
 			m.practiceSubView = PracticeSubViewHub
 			return nil, true
+		}
+		if len(m.practiceItems) == 0 || m.practiceIndex < 0 || m.practiceIndex >= len(m.practiceItems) {
+			return nil, false
 		}
 		if m.practiceRevealed {
 			m.advanceGenderItem()

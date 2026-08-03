@@ -594,6 +594,12 @@ func (s *Store) UndoLastReview(ctx context.Context, cardID string) error {
 			break
 		}
 	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
+	if err := rows.Close(); err != nil {
+		return err
+	}
 
 	leech := 0
 	if lapseStreak >= 3 {
@@ -1076,6 +1082,9 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 		}
 		stats.Grades[core.ReviewGrade(grade)] = count
 	}
+	if err := rows.Err(); err != nil {
+		return stats, err
+	}
 
 	// Cards added per day (last 30 days)
 	stats.CardsAddedPerDay = make(map[string]int)
@@ -1104,6 +1113,9 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 		}
 		dateStr := t.In(time.Local).Format("2006-01-02")
 		stats.CardsAddedPerDay[dateStr] += count
+	}
+	if err := addedRows.Err(); err != nil {
+		return stats, err
 	}
 	return stats, nil
 }

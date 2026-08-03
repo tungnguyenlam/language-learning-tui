@@ -524,3 +524,64 @@ func TestDecksViewDirectExportShortcut(t *testing.T) {
 		t.Fatalf("expected status message confirming export, got msgs: %v", msgs)
 	}
 }
+
+func TestGenderTrainerEmptyItemsSafety(t *testing.T) {
+	repo := &mockRepo{}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewPractice
+	model.practiceSubView = PracticeSubViewGender
+	model.practiceItems = nil
+	model.practiceIndex = 5
+
+	// Render should not panic
+	out := model.renderGenderTrainer(model.activeViewContentLayout())
+	if !strings.Contains(out, "No nouns found for practice") {
+		t.Fatalf("expected empty message, got %q", out)
+	}
+
+	// Pressing keys should not panic
+	for _, k := range []string{"1", "2", "3", "d", "i", "f", "a", "m", "n"} {
+		_, _ = model.updatePracticeKey(tea.KeyPressMsg{Text: k})
+	}
+}
+
+func TestGenericTrainerInvalidIndexSafety(t *testing.T) {
+	repo := &mockRepo{}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewPractice
+	model.practiceSubView = PracticeSubViewCase
+	st := model.trainerStateFor(PracticeSubViewCase)
+	st.items = []trainerItem{{Title: "Test"}}
+	st.index = 99 // out of bounds
+
+	// Render should not panic
+	out := model.renderTrainer(PracticeSubViewCase, model.activeViewContentLayout())
+	if out == "" {
+		t.Fatal("expected non-empty output")
+	}
+
+	// Key update should not panic
+	_, _ = model.updatePracticeKey(tea.KeyPressMsg{Code: tea.KeyEnter})
+}
+
+func TestDecksViewMergeUnclampedCursorSafety(t *testing.T) {
+	repo := &mockRepo{
+		decks: []core.Deck{
+			{ID: "d1", Name: "Deck 1"},
+			{ID: "d2", Name: "Deck 2"},
+		},
+	}
+	model := NewModel(repo, &mockScheduler{})
+	model.activeView = ViewDecks
+	model.decks = repo.decks
+	model.deckSelected = map[string]bool{"d1": true}
+	model.deckCursor = 50 // out of bounds
+
+	cmd := model.handleDeckMerge()
+	if cmd == nil {
+		t.Fatal("expected merge command")
+	}
+	if !strings.Contains(model.status, "Merging 1 decks into Deck 2") {
+		t.Fatalf("expected status containing 'Merging 1 decks into Deck 2', got %q", model.status)
+	}
+}

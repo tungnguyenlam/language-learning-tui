@@ -9,7 +9,7 @@ import (
 )
 
 func (m *Model) renderGenderTrainer(layout viewportLayout) string {
-	if len(m.practiceItems) == 0 {
+	if len(m.practiceItems) == 0 || m.practiceIndex < 0 || m.practiceIndex >= len(m.practiceItems) {
 		return lipgloss.NewStyle().
 			Width(layout.Width).
 			Height(layout.Height).
@@ -61,7 +61,7 @@ func (m *Model) renderGenderTrainer(layout viewportLayout) string {
 			Action: func() tea.Cmd {
 				m.practiceTotal++
 				m.practiceRevealed = true
-				if m.practiceItems[m.practiceIndex].Article == "der" {
+				if m.practiceIndex >= 0 && m.practiceIndex < len(m.practiceItems) && m.practiceItems[m.practiceIndex].Article == "der" {
 					m.practiceCorrect++
 					m.practiceLastResult = true
 				} else {
@@ -80,7 +80,7 @@ func (m *Model) renderGenderTrainer(layout viewportLayout) string {
 			Action: func() tea.Cmd {
 				m.practiceTotal++
 				m.practiceRevealed = true
-				if m.practiceItems[m.practiceIndex].Article == "die" {
+				if m.practiceIndex >= 0 && m.practiceIndex < len(m.practiceItems) && m.practiceItems[m.practiceIndex].Article == "die" {
 					m.practiceCorrect++
 					m.practiceLastResult = true
 				} else {
@@ -99,7 +99,7 @@ func (m *Model) renderGenderTrainer(layout viewportLayout) string {
 			Action: func() tea.Cmd {
 				m.practiceTotal++
 				m.practiceRevealed = true
-				if m.practiceItems[m.practiceIndex].Article == "das" {
+				if m.practiceIndex >= 0 && m.practiceIndex < len(m.practiceItems) && m.practiceItems[m.practiceIndex].Article == "das" {
 					m.practiceCorrect++
 					m.practiceLastResult = true
 				} else {

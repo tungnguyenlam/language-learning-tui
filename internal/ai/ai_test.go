@@ -131,3 +131,26 @@ func TestTemplateProviderMultipleTopics(t *testing.T) {
 		t.Errorf("fronts = %q, %q; want One, Two", drafts[0].Note.Front, drafts[1].Note.Front)
 	}
 }
+
+func TestOfflineProviderGermanUmlauts(t *testing.T) {
+	provider := OfflineProvider{}
+	drafts, err := provider.GenerateDrafts(context.Background(), DraftRequest{
+		SourceText: "Häusern, über, groß",
+		DeckID:     "a1",
+	})
+	if err != nil {
+		t.Fatalf("generate: %v", err)
+	}
+	if err := ValidateDrafts(drafts); err != nil {
+		t.Fatalf("validate drafts: %v", err)
+	}
+	if len(drafts) != 3 {
+		t.Fatalf("len(drafts) = %d, want 3", len(drafts))
+	}
+	want := []string{"ai-haeusern", "ai-ueber", "ai-gross"}
+	for i, d := range drafts {
+		if d.Note.ID != want[i] {
+			t.Errorf("draft[%d].ID = %q, want %q", i, d.Note.ID, want[i])
+		}
+	}
+}

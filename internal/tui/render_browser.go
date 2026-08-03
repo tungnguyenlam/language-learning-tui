@@ -185,11 +185,11 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 	})
 	ctx.Write(listView)
 
-	if m.showReviewHistory && m.browserCursor < len(m.browserCards) && m.reviewHistoryCard == m.browserCards[m.browserCursor].ID {
+	if m.showReviewHistory && m.browserCursor >= 0 && m.browserCursor < len(m.browserCards) && m.reviewHistoryCard == m.browserCards[m.browserCursor].ID {
 		ctx.NewLine()
 		ctx.WriteLine(m.renderReviewHistory(m.browserCards[m.browserCursor].Prompt))
 		ctx.NewLine()
-	} else if layout.Height > 25 && len(m.browserCards) > 0 && m.browserCursor < len(m.browserCards) {
+	} else if layout.Height > 25 && len(m.browserCards) > 0 && m.browserCursor >= 0 && m.browserCursor < len(m.browserCards) {
 		selected := m.browserCards[m.browserCursor]
 		extra := selected.Extra
 		if extra == "" {
