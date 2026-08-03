@@ -1,5 +1,18 @@
 # Done Backlog
 
+## 2026-08-03 (Bug Hunting & Fixing Pass: Empty Grade Panic, UTF-8 Truncation, RecentDecks rows.Err, TSV Export Fields, Dictionary Hitbox Bounds)
+
+### Bug Fixes
+- **Empty Grade Panic (`gradeCard` in `actions.go`):** Guarded `gradeCard` against empty `core.ReviewGrade` string inputs, preventing slice out of bounds panics when `grade[:1]` is evaluated.
+- **Rune-Safe Truncation (`truncate` in `prompt.go`):** Converted byte slicing to rune slicing (`[]rune(s)`) in `truncate()`, preventing character corruption with multi-byte German UTF-8 characters (umlauts/eszett).
+- **SQLite `RecentDecks` Rows Error Check (`sqlite.go`):** Added missing `rows.Err()` check to `RecentDecks()`, ensuring database errors during row iteration are propagated instead of returning partial results.
+- **TSV Export Metadata Preservation (`exportDeckTSVCmd` in `actions_decks.go`):** Added `Extra: c.Extra` and `Hint: c.Hint` fields when populating `core.Note` for TSV deck exports, preserving note metadata.
+- **Dictionary Hitbox Cursor Bounds (`render_dictionary.go`):** Guarded `m.dictionaryCursor = idx` assignments in dictionary search result mouse hitboxes against out-of-bounds indices.
+
+### Verification
+- Added unit tests: `TestGradeCardEmptyGrade` in `model_test.go` and `TestTruncateRuneSafety` in `ai_test.go`.
+- `./scripts/verify.sh` passed: Go unit tests with `-race`, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite.
+
 ## 2026-08-03 (Bug Hunting & Fixing Pass: Dictionary Map Race, UTF-8 Plural Extraction, DB Rows Leak & Filtered Deck Cursor)
 
 ### Bug Fixes

@@ -154,3 +154,12 @@ func TestOfflineProviderGermanUmlauts(t *testing.T) {
 		}
 	}
 }
+
+func TestTruncateRuneSafety(t *testing.T) {
+	input := "Äpfel und Überraschung"
+	got := truncate(input, 5)
+	want := "Äpfel…"
+	if got != want {
+		t.Errorf("truncate(%q, 5) = %q, want %q", input, got, want)
+	}
+}

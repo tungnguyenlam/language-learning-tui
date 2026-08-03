@@ -19,7 +19,7 @@ import (
 )
 
 func (m *Model) gradeCard(grade core.ReviewGrade) tea.Cmd {
-	if m.activeView != ViewReview || len(m.dueCards) == 0 || m.revealState != RevealRevealed || m.gradingInProgress {
+	if m.activeView != ViewReview || len(m.dueCards) == 0 || m.revealState != RevealRevealed || m.gradingInProgress || len(grade) == 0 {
 		return nil
 	}
 

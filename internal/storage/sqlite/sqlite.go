@@ -1299,7 +1299,7 @@ func (s *Store) RecentDecks(ctx context.Context, limit int) ([]string, error) {
 		}
 		deckIDs = append(deckIDs, id)
 	}
-	return deckIDs, nil
+	return deckIDs, rows.Err()
 }
 
 func (s *Store) GetReviewState(ctx context.Context, cardID string) (core.ReviewState, error) {

@@ -107,6 +107,8 @@ func (m *Model) exportDeckTSVCmd(deckID string) tea.Cmd {
 				DeckID: c.DeckID,
 				Front:  c.Prompt,
 				Back:   c.Answer,
+				Extra:  c.Extra,
+				Hint:   c.Hint,
 				Tags:   c.Tags,
 				Audio:  c.Audio,
 			})

@@ -665,11 +665,13 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 				Width:  listWidth,
 				Height: 1,
 				Action: func() tea.Cmd {
-					m.dictionaryCursor = idx
-					m.dictionaryDetailScroll = 0
-					m.inspectDictionaryCursor()
-					if m.dictionaryDetailVisible() && idx >= 0 && idx < len(m.dictionaryResults) {
-						return m.findRelatedEntries(m.dictionaryResults[idx].Word)
+					if idx >= 0 && idx < len(m.dictionaryResults) {
+						m.dictionaryCursor = idx
+						m.dictionaryDetailScroll = 0
+						m.inspectDictionaryCursor()
+						if m.dictionaryDetailVisible() {
+							return m.findRelatedEntries(m.dictionaryResults[idx].Word)
+						}
 					}
 					return nil
 				},
@@ -939,14 +941,14 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 				Width:  layout.Width,
 				Height: 1,
 				Action: func() tea.Cmd {
+					if idx < 0 || idx >= len(m.dictionaryResults) {
+						return nil
+					}
 					if m.dictionaryCursor == idx {
 						m.dictionaryDetailView = true
 						m.dictionaryDetailScroll = 0
 						m.inspectDictionaryCursor()
-						if idx >= 0 && idx < len(m.dictionaryResults) {
-							return m.findRelatedEntries(m.dictionaryResults[idx].Word)
-						}
-						return nil
+						return m.findRelatedEntries(m.dictionaryResults[idx].Word)
 					}
 					m.dictionaryCursor = idx
 					m.dictionaryDetailScroll = 0

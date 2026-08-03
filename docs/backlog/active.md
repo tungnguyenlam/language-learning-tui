@@ -12,7 +12,7 @@ Pick the next dictionary milestone item, or continue bug/perf hardening if regre
 
 ## Top Issues
 
-No active issues remain from the bug fixing pass (Map data race in searchDictionary, UTF-8 string indexing in extractPlural, SQL rows leak in readAnkiDeckNames, unclamped deckCursor in selectDeckByID/selectDeck, Gender/Generic trainer OOB bounds, deck merge unclamped cursor, and SQLite transaction row closure).
+No active issues remain from the bug fixing pass (Empty grade panic in gradeCard, UTF-8 truncation in prompt.go, unchecked rows.Err in RecentDecks, lost Extra/Hint fields in TSV deck export, and unbounded dictionaryCursor in result hitboxes).
 
 ## Acceptance Criteria
 
@@ -24,6 +24,11 @@ No active issues remain from the bug fixing pass (Map data race in searchDiction
 
 ## Completed Work
 
+- [x] Fixed empty review grade slice bounds panic in `gradeCard` (`actions.go`).
+- [x] Fixed multi-byte UTF-8 string truncation character corruption in `truncate()` (`prompt.go`).
+- [x] Fixed unchecked `rows.Err()` in `RecentDecks()` (`sqlite.go`).
+- [x] Fixed lost `Extra` and `Hint` fields during TSV deck export in `exportDeckTSVCmd()` (`actions_decks.go`).
+- [x] Fixed unbounded `dictionaryCursor` state in dictionary result hitboxes (`render_dictionary.go`).
 - [x] Fixed map data race in `searchDictionary()` (`actions_dictionary.go`) by snapshotting `dictionaryStarred` on main UI thread before async command execution.
 - [x] Fixed unsafe string indexing in `extractPlural()` (`loaders.go`) by matching case-insensitively directly on `extra` byte boundaries, preventing UTF-8 byte corruption with multi-byte characters like `ẞ`.
 - [x] Fixed database `rows` leak in `readAnkiDeckNames()` (`apkg_import.go`) by closing `rows` explicitly when scanning completes.

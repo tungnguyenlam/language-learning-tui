@@ -2959,3 +2959,16 @@ func TestTestModeFreezesTimer(t *testing.T) {
 		t.Errorf("expected timer NOT to be 00:00 without test mode, got:\n%s", view)
 	}
 }
+
+func TestGradeCardEmptyGrade(t *testing.T) {
+	repo := &mockRepo{}
+	model := NewModelWithOptions(repo, &mockScheduler{}, ModelOptions{TestMode: true})
+	model.activeView = ViewReview
+	model.dueCards = []core.Card{{ID: "c1", Prompt: "P", Answer: "A"}}
+	model.revealState = RevealRevealed
+
+	cmd := model.gradeCard("")
+	if cmd != nil {
+		t.Fatal("expected nil command for empty grade")
+	}
+}
