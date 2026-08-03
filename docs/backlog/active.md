@@ -20,7 +20,7 @@ No active issues remain from the bug fixing pass (Gender trainer empty bounds, g
 
 ## Last Verification
 
-- `./scripts/verify.sh` running / passed on 2026-08-03: Go unit tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and E2E test suite.
+- `./scripts/verify.sh` passed on 2026-08-03: Go unit tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed in 36.97s).
 
 ## Completed Work
 
