@@ -1,12 +1,8 @@
 package tui
 
 import (
-	"context"
 	"fmt"
 	"strings"
-
-	"deutsch-tui/internal/content"
-	"deutsch-tui/internal/core"
 
 	"charm.land/lipgloss/v2"
 
@@ -272,14 +268,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			detailBuilder.WriteString(formatInflectionTable(res.WordClass, res.Gender, res.Forms, m.dictionarySearch))
 		}
 
-		var validate content.WordValidator
-		if dictRepo, ok := m.repo.(core.DictionaryRepository); ok {
-			validate = func(w string) bool {
-				ok, _ := dictRepo.Exists(context.Background(), w)
-				return ok
-			}
-		}
-		if compoundParts := content.DecomposeCompound(res.Word, validate); len(compoundParts) >= 2 {
+		if compoundParts := m.getCompoundBreakdown(res.Word); len(compoundParts) >= 2 {
 			lineY := strings.Count(detailBuilder.String(), "\n")
 			detailBuilder.WriteString(boldStyle.Render("Compound Breakdown:") + "\n")
 			var partWords []string
@@ -764,14 +753,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 				detailBuilder.WriteString(formatInflectionTable(res.WordClass, res.Gender, res.Forms, m.dictionarySearch))
 			}
 
-			var validate content.WordValidator
-			if dictRepo, ok := m.repo.(core.DictionaryRepository); ok {
-				validate = func(w string) bool {
-					ok, _ := dictRepo.Exists(context.Background(), w)
-					return ok
-				}
-			}
-			if compoundParts := content.DecomposeCompound(res.Word, validate); len(compoundParts) >= 2 {
+			if compoundParts := m.getCompoundBreakdown(res.Word); len(compoundParts) >= 2 {
 				lineY := strings.Count(detailBuilder.String(), "\n")
 				detailBuilder.WriteString(boldStyle.Render("Compound Breakdown:") + "\n")
 				var partWords []string
@@ -1335,14 +1317,7 @@ func (m *Model) renderSpotlightDictionary() string {
 			}
 
 			detailStartLine = strings.Count(b.String(), "\n")
-			var validate content.WordValidator
-			if dictRepo, ok := m.repo.(core.DictionaryRepository); ok {
-				validate = func(w string) bool {
-					ok, _ := dictRepo.Exists(context.Background(), w)
-					return ok
-				}
-			}
-			if compoundParts := content.DecomposeCompound(res.Word, validate); len(compoundParts) >= 2 {
+			if compoundParts := m.getCompoundBreakdown(res.Word); len(compoundParts) >= 2 {
 				lineY := strings.Count(detailBuilder.String(), "\n")
 				detailBuilder.WriteString(boldStyle.Render("Compound Breakdown:") + "\n")
 				var partWords []string
@@ -1556,14 +1531,7 @@ func (m *Model) renderSpotlightDictionary() string {
 				if res.Forms != "" {
 					detailBuilder.WriteString(formatInflectionTable(res.WordClass, res.Gender, res.Forms, m.dictionarySearch))
 				}
-				var validate content.WordValidator
-				if dictRepo, ok := m.repo.(core.DictionaryRepository); ok {
-					validate = func(w string) bool {
-						ok, _ := dictRepo.Exists(context.Background(), w)
-						return ok
-					}
-				}
-				if compoundParts := content.DecomposeCompound(res.Word, validate); len(compoundParts) >= 2 {
+				if compoundParts := m.getCompoundBreakdown(res.Word); len(compoundParts) >= 2 {
 					lineY := strings.Count(detailBuilder.String(), "\n")
 					detailBuilder.WriteString(boldStyle.Render("Compound Breakdown:") + "\n")
 					var partWords []string

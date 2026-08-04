@@ -218,6 +218,7 @@ type Model struct {
 	dictionaryLastAddAttemptNoteID string
 	dictionaryRecentlyViewed       []core.DictionaryEntry
 	dictionaryDiscoverEntries      []core.DictionaryEntry
+	compoundCache                  map[string][]content.CompoundPart
 	isErrorStatus                  bool
 	searchingTags                  bool
 	sessionReviewed                int
@@ -338,6 +339,11 @@ func buildProvider(name string, secrets app.Secrets, templates map[string]map[st
 			APIKey:  secrets.Anthropic.APIKey,
 			Model:   secrets.Anthropic.Model,
 			BaseURL: secrets.Anthropic.BaseURL,
+		}
+	case "ollama":
+		return ai.OllamaProvider{
+			Model:   secrets.Ollama.Model,
+			BaseURL: secrets.Ollama.BaseURL,
 		}
 	default:
 		return ai.OfflineProvider{}

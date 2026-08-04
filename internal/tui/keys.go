@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -868,7 +867,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "down", "j":
-		if m.settingsCursor < 14 {
+		if m.settingsCursor < 16 {
 			m.settingsCursor++
 		}
 		return nil, true
@@ -876,19 +875,19 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		m.settingsCursor = 0
 		return nil, true
 	case "G":
-		m.settingsCursor = 14
+		m.settingsCursor = 16
 		return nil, true
 	case "c":
 		return m.cycleTheme(), true
 	case "enter":
 		return m.handleSettingsEnter(), true
 	case "+":
-		if m.settingsCursor == 14 {
+		if m.settingsCursor == 16 {
 			return m.setRevealSpeed(m.revealSpeed + 1), true
 		}
 		return m.setDailyGoal(m.stats.DailyGoal + 1), true
 	case "-":
-		if m.settingsCursor == 14 {
+		if m.settingsCursor == 16 {
 			return m.setRevealSpeed(m.revealSpeed - 1), true
 		}
 		return m.setDailyGoal(m.stats.DailyGoal - 1), true
@@ -1862,14 +1861,7 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	case "1", "2", "3", "4", "5":
 		if (m.dictionaryFocusResults || m.dictionaryDetailView) && m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 			entry := m.dictionaryResults[m.dictionaryCursor]
-			var validate content.WordValidator
-			if dictRepo, ok := m.repo.(core.DictionaryRepository); ok {
-				validate = func(w string) bool {
-					ok, _ := dictRepo.Exists(context.Background(), w)
-					return ok
-				}
-			}
-			compoundParts := content.DecomposeCompound(entry.Word, validate)
+			compoundParts := m.getCompoundBreakdown(entry.Word)
 			targetWord := ""
 			idx := int(key[0] - '1')
 			if len(compoundParts) >= 2 {

@@ -37,6 +37,7 @@ func (m *Model) searchDictionary() tea.Cmd {
 	m.dictionarySearchID++
 	id := m.dictionarySearchID
 	query := m.dictionarySearch
+	m.compoundCache = make(map[string][]content.CompoundPart)
 
 	var starredSnapshot map[string]bool
 	if len(m.dictionaryStarred) > 0 {
@@ -461,8 +462,35 @@ func (m *Model) cycleDictionaryHistory(direction int) tea.Cmd {
 	return m.searchDictionary()
 }
 
+func (m *Model) getCompoundBreakdown(word string) []content.CompoundPart {
+	if word == "" {
+		return nil
+	}
+	if m.compoundCache == nil {
+		m.compoundCache = make(map[string][]content.CompoundPart)
+	}
+	if parts, ok := m.compoundCache[word]; ok {
+		return parts
+	}
+
+	var validate content.WordValidator
+	if dictRepo, ok := m.repo.(core.DictionaryRepository); ok {
+		validate = func(w string) bool {
+			ok, _ := dictRepo.Exists(context.Background(), w)
+			return ok
+		}
+	}
+	parts := content.DecomposeCompound(word, validate)
+	m.compoundCache[word] = parts
+	return parts
+}
+
 func (m *Model) saveDictionaryHistory() {
-	ctx := context.Background()
+	if m.repo == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
 	data, err := json.Marshal(m.dictionarySearchHistory)
 	if err == nil {
 		_ = m.repo.SetSetting(ctx, "dict_search_history", string(data))
@@ -492,17 +520,21 @@ func (m *Model) loadDictionaryHistory() tea.Cmd {
 }
 
 func (m *Model) saveDictionaryRecentlyViewed() {
-	data, err := json.Marshal(m.dictionaryRecentlyViewed)
-	if err != nil {
+	if m.repo == nil {
 		return
 	}
-	_ = m.repo.SetSetting(context.Background(), "dict_recently_viewed", string(data))
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	data, err := json.Marshal(m.dictionaryRecentlyViewed)
+	if err == nil {
+		_ = m.repo.SetSetting(ctx, "dict_recently_viewed", string(data))
+	}
 }
 
 func (m *Model) clearDictionaryRecentlyViewed() {
 	m.dictionaryRecentlyViewed = nil
-	m.saveDictionaryRecentlyViewed()
 	m.status = "Cleared recently inspected words"
+	m.saveDictionaryRecentlyViewed()
 }
 
 func (m *Model) loadDictionaryRecentlyViewed() tea.Cmd {

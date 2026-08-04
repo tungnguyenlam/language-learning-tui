@@ -166,6 +166,8 @@ func (m *Model) renderSettings(x, y int) string {
 		{11, "anthropic", "Anthropic Key:", app.MaskAPIKey(m.aiSecrets.Anthropic.APIKey)},
 		{12, "anthropic", "Anthropic Mod:", credValueOrDefault(m.aiSecrets.Anthropic.Model, "anthropic")},
 		{13, "anthropic", "Anthropic URL:", credValueOrDefault(m.aiSecrets.Anthropic.BaseURL, "anthropic-url")},
+		{14, "ollama", "Ollama Model: ", credValueOrDefault(m.aiSecrets.Ollama.Model, "ollama")},
+		{15, "ollama", "Ollama URL:   ", credValueOrDefault(m.aiSecrets.Ollama.BaseURL, "ollama-url")},
 	}
 	for _, row := range credRows {
 		prefix = "  "
@@ -190,7 +192,7 @@ func (m *Model) renderSettings(x, y int) string {
 		addContent(itemStyle.Render(fmt.Sprintf("%s%s%s", prefix, row.label, displayValue)), &lineInfo{itemIdx: row.idx, kind: "item"})
 	}
 
-	revealIdx := 14
+	revealIdx := 16
 	prefix = "  "
 	itemStyle = lipgloss.NewStyle()
 	if revealIdx == m.settingsCursor {
@@ -306,6 +308,10 @@ func credValueOrDefault(value, kind string) string {
 		return "(default: api.openai.com/v1)"
 	case "anthropic-url":
 		return "(default: api.anthropic.com)"
+	case "ollama":
+		return "(default: llama3.1)"
+	case "ollama-url":
+		return "(default: http://localhost:11434)"
 	}
 	return "(not set)"
 }

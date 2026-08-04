@@ -23,9 +23,13 @@ type ProviderCreds struct {
 // Secrets bundles credentials for every key-based provider. Add a new
 // field per provider — keep field names stable so existing secrets.json
 // files keep deserialising.
+//
+// Ollama is keyless (it runs on the user's own machine), but its model and
+// base URL live here too so all provider configuration stays in one place.
 type Secrets struct {
 	OpenAI    ProviderCreds `json:"openai"`
 	Anthropic ProviderCreds `json:"anthropic"`
+	Ollama    ProviderCreds `json:"ollama"`
 }
 
 // LoadSecrets reads secrets.json, creating an empty one on first run.

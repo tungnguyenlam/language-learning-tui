@@ -781,8 +781,8 @@ func (m *Model) gradeCramCard(grade core.ReviewGrade) tea.Cmd {
 func (m *Model) handleSettingsEnter() tea.Cmd {
 	switch m.settingsCursor {
 	case 0:
-		// Provider cycle: disabled → offline → template → openai → anthropic → disabled
-		cycle := []string{"disabled", "offline", "template", "openai", "anthropic"}
+		// Provider cycle: disabled → offline → template → openai → anthropic → ollama → disabled
+		cycle := []string{"disabled", "offline", "template", "openai", "anthropic", "ollama"}
 		next := "disabled"
 		for i, name := range cycle {
 			if name == m.aiProviderName {
@@ -856,7 +856,7 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		if m.onConfigChange != nil {
 			m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
 		}
-	case 8, 9, 10, 11, 12, 13:
+	case 8, 9, 10, 11, 12, 13, 14, 15:
 		var provider string
 		var key string
 		switch m.settingsCursor {
@@ -878,14 +878,20 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		case 13:
 			provider = "anthropic"
 			key = "base_url"
+		case 14:
+			provider = "ollama"
+			key = "model"
+		case 15:
+			provider = "ollama"
+			key = "base_url"
 		}
 		m.editingSecretProvider = provider
 		m.editingSecretKey = key
 		m.originalSecretValue = m.getCredValue(provider, key)
 		m.status = fmt.Sprintf("Editing %s %s — Enter to save, Esc to cancel", provider, key)
-	case 14:
-		if m.revealSpeed == 0 {
-			m.revealSpeed = 5
+	case 16:
+		if m.revealSpeed < 10 {
+			m.revealSpeed++
 		} else {
 			m.revealSpeed = 0
 		}
@@ -904,9 +910,9 @@ func credKeyForCursor(cursor int) string {
 	switch cursor {
 	case 8, 11:
 		return "api_key"
-	case 9, 12:
+	case 9, 12, 14:
 		return "model"
-	case 10, 13:
+	case 10, 13, 15:
 		return "base_url"
 	}
 	return ""
@@ -932,6 +938,8 @@ func (m *Model) credsFor(provider string) app.ProviderCreds {
 		return m.aiSecrets.OpenAI
 	case "anthropic":
 		return m.aiSecrets.Anthropic
+	case "ollama":
+		return m.aiSecrets.Ollama
 	}
 	return app.ProviderCreds{}
 }
@@ -951,6 +959,8 @@ func (m *Model) setCredValue(provider, key, value string) {
 		m.aiSecrets.OpenAI = c
 	case "anthropic":
 		m.aiSecrets.Anthropic = c
+	case "ollama":
+		m.aiSecrets.Ollama = c
 	}
 }
 

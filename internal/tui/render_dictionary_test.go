@@ -1616,3 +1616,38 @@ func TestDictionaryAudioPronunciationAndHitboxes(t *testing.T) {
 		t.Fatalf("expected 'a' key to be handled in dictionary results focus")
 	}
 }
+
+func TestSpotlightDictionaryArrowDownNoFreeze(t *testing.T) {
+	repo := &mockRepo{}
+	m := NewModel(repo, &mockScheduler{})
+	m.width = 110
+	m.height = 35
+	m.dictionaryOverlayActive = true
+	m.dictionaryResults = []core.DictionaryEntry{
+		{ID: "1", Word: "das Haustier", Translation: "pet"},
+		{ID: "2", Word: "die Katze", Translation: "cat"},
+		{ID: "3", Word: "der Hund", Translation: "dog"},
+	}
+	m.dictionaryCursor = 0
+	m.dictionaryFocusResults = true
+
+	// Send arrow down key press
+	cmd, handled := m.updateDictionaryOverlayKey(tea.KeyPressMsg{Code: tea.KeyDown})
+	if !handled {
+		t.Fatalf("expected down key to be handled in spotlight overlay")
+	}
+	if m.dictionaryCursor != 1 {
+		t.Fatalf("expected cursor to move to 1, got %d", m.dictionaryCursor)
+	}
+
+	// Verify View() renders cleanly without blocking or deadlocking
+	out := m.View()
+	if !strings.Contains(out.Content, "Katze") {
+		t.Fatalf("expected view output to include Katze, got content length %d", len(out.Content))
+	}
+
+	// Verify command executes safely without error
+	if cmd != nil {
+		_ = cmd()
+	}
+}

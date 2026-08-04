@@ -634,14 +634,15 @@ func TestSettingsProviderSwitching(t *testing.T) {
 		t.Fatalf("initial provider = %q, want offline", model.aiProviderName)
 	}
 
-	// New cycle: disabled -> offline -> template -> openai -> anthropic -> disabled
+	// New cycle: disabled -> offline -> template -> openai -> anthropic -> ollama -> disabled
 	steps := []struct {
 		want     string
-		wantType string // "nil", "template", "offline", "openai", "anthropic"
+		wantType string // "nil", "template", "offline", "openai", "anthropic", "ollama"
 	}{
 		{"template", "template"},
 		{"openai", "openai"},
 		{"anthropic", "anthropic"},
+		{"ollama", "ollama"},
 		{"disabled", "nil"},
 		{"offline", "offline"},
 	}
@@ -670,6 +671,10 @@ func TestSettingsProviderSwitching(t *testing.T) {
 		case "anthropic":
 			if _, ok := model.aiProvider.(ai.AnthropicProvider); !ok {
 				t.Fatalf("step %d provider should be AnthropicProvider", i+1)
+			}
+		case "ollama":
+			if _, ok := model.aiProvider.(ai.OllamaProvider); !ok {
+				t.Fatalf("step %d provider should be OllamaProvider", i+1)
 			}
 		}
 	}

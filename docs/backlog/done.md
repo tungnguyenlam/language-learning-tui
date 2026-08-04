@@ -1,5 +1,17 @@
 # Done Backlog
 
+## 2026-08-05 (Bug Hunting & Fixing Pass: Spotlight Dictionary Freeze, Ollama Local LLM Integration, Settings Mouse Hitboxes)
+
+### Bug Fixes & Integration
+- **Spotlight Dictionary Arrow-Down Freeze Fix (`getCompoundBreakdown` Memoization):** Fixed a critical TUI freeze where navigating dictionary search results with arrow keys (`down`/`j`) hung the application. The root cause was `content.DecomposeCompound` executing synchronous SQLite `Exists` queries inside `View()` on every render frame for compound breakdown evaluation. Added `m.getCompoundBreakdown(word)` with a memoized `m.compoundCache` on `Model` so compound breakdowns are cached once per word, eliminating synchronous database queries during `View()` rendering.
+- **Build Compilation Fix (`actions.go`):** Resolved compilation failure in `internal/tui/actions.go` caused by dangling backup cases referencing undefined variables/methods.
+- **Ollama Local LLM Provider Integration:** Completed integration of `OllamaProvider` in `internal/tui` (`render_settings.go`, `actions.go`, `keys.go`, `model.go`, `model_test.go`). Users can now configure and cycle Ollama as a local keyless AI provider for offline flashcard drafting.
+- **Settings Mouse Hitbox Index Bound Fix (`hitboxes.go`):** Fixed mouse click index bound in `internal/tui/hitboxes.go` (`idx <= 16`), resolving a bug where settings rows 6 to 16 (audio, normalization, API credentials, reveal speed) were ignored by the settings mouse click handler fallback.
+
+### Verification
+- Added regression test `TestSpotlightDictionaryArrowDownNoFreeze` in `render_dictionary_test.go`.
+- `./scripts/verify.sh` passed on 2026-08-05: Go unit tests with `-race`, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed in 35.36s).
+
 ## 2026-08-05 (Milestone 4 Complete: Hybrid Dictionary Merged to `main`)
 
 ### Milestone Closure

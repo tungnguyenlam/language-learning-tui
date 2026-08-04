@@ -169,6 +169,26 @@ type Repository interface {
 	SetSetting(ctx context.Context, key string, value string) error
 }
 
+// BackupInfo describes the contents of a backup file, both when one is
+// written and when one is inspected before being restored.
+type BackupInfo struct {
+	Path          string
+	CreatedAt     time.Time
+	SchemaVersion int
+	// Rows counts the rows per table, keyed by table name.
+	Rows      map[string]int
+	TotalRows int
+}
+
+// BackupRepository is an optional capability. It is kept out of Repository
+// so in-memory and test doubles do not have to implement it; callers type
+// assert and degrade gracefully when a store cannot back itself up.
+type BackupRepository interface {
+	Backup(ctx context.Context, destPath string) (BackupInfo, error)
+	Restore(ctx context.Context, srcPath string) (BackupInfo, error)
+	InspectBackup(ctx context.Context, srcPath string) (BackupInfo, error)
+}
+
 type Scheduler interface {
 	Review(state ReviewState, grade ReviewGrade, now time.Time) (ReviewState, error)
 	Predict(state ReviewState, now time.Time) map[ReviewGrade]time.Duration

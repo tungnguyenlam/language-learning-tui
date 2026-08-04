@@ -216,7 +216,7 @@ func (m *Model) activateHitboxByID(id string) tea.Cmd {
 			return m.setDailyGoal(m.stats.DailyGoal + 1)
 		}
 		idx, err := strconv.Atoi(strings.TrimPrefix(id, "settings-"))
-		if err == nil && idx >= 0 && idx <= 5 {
+		if err == nil && idx >= 0 && idx <= 16 {
 			m.settingsCursor = idx
 			return m.handleSettingsEnter()
 		}
