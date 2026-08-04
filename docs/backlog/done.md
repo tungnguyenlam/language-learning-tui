@@ -1,5 +1,24 @@
 # Done Backlog
 
+## 2026-08-05 (Milestone 4 Complete: Hybrid Dictionary Merged to `main`)
+
+### Milestone Closure
+- **Milestone 4 (Hybrid Dictionary) complete.** All roadmap bullets shipped: the FTS5 storage layer
+  and `dict.cc` parser, the `DictionaryEntry` core API and `SearchDictionary` repository interface,
+  the `ViewDictionary` tab plus the `=` Spotlight overlay with type-ahead search, the
+  dictionary-to-flashcard drafting loop, and the Settings/README import onboarding.
+- **Branch integration.** `refactor/generic-trainer` (47 commits ahead of `main`, 118 files,
+  ~15,000 added lines) was fast-forward merged into `main` and pushed. `main` is at `f56400c`.
+- **Roadmap accuracy pass.** `.apkg` import/export, audio pronunciation via TTS, and the grammar
+  drill trainers were already implemented but still listed as future work; the roadmap and parking
+  lot now reflect what actually remains (sync/backup, local LLM provider, B2/C1 content).
+- **Instruction cleanup.** Removed the temporary dictionary focus block from root `AGENTS.md` as
+  that block instructed.
+
+### Verification
+- `./scripts/verify.sh` passed: Go unit tests with `-race`, vet, offline dict.cc import
+  (834,512 entries), smoke test, binary build, and core E2E suite (34 passed in 38.12s).
+
 ## 2026-08-03 (Bug Hunting & Fixing Pass: Empty Grade Panic, UTF-8 Truncation, RecentDecks rows.Err, TSV Export Fields, Dictionary Hitbox Bounds)
 
 ### Bug Fixes

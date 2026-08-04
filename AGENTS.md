@@ -8,12 +8,6 @@ The project is a Go Bubble Tea TUI for German flashcard and MCQ learning. It is 
 
 See `GOAL.md` for the intended final state of the app. All work should move toward that vision.
 
-<!-- TEMPORARY FOCUS — remove this block when dictionary work is complete -->
-## Current Focus: Dictionary Features
-
-All current work is centered on dictionary-related features (lookup, integration, UI overlay, dict.cc data pipeline). Prioritize dictionary tasks from the backlog before picking up unrelated work.
-<!-- END TEMPORARY FOCUS -->
-
 ## Startup Routine
 
 1. Read `docs/backlog/active.md` for the current milestone and next action.

@@ -23,17 +23,25 @@
 - Prompt templates.
 - Draft review and approval workflow.
 
-## Later
+## Milestone 4: Hybrid Dictionary (Complete)
 
-- `.apkg` import/export.
-- Audio/media support.
-- More German content.
-- Sync or backup workflow.
+Completed 2026-08-05 and merged to `main`.
 
-## Milestone 4: Hybrid Dictionary (Next Focus)
 - Transform the app into a unified dictionary-flashcard hybrid.
 - **Storage Layer:** FTS5 SQLite table and parser for offline `dict.cc` text file ingestion.
 - **Core API:** `DictionaryEntry` domain struct and `SearchDictionary` repository interface.
-- **TUI Integration:** A dedicated `ViewDictionary` with real-time, zero-latency type-ahead search.
+- **TUI Integration:** A dedicated `ViewDictionary` plus the `=` Spotlight overlay with real-time type-ahead search.
 - **Flashcard Loop:** Seamlessly convert dictionary search results into new flashcards via the Drafting flow.
 - **Onboarding:** Settings UI and documentation to guide users on importing the `dict.cc` dataset.
+
+## Later
+
+Shipped ahead of schedule and no longer pending: `.apkg` import/export (`internal/content/apkg_*.go`),
+audio pronunciation via TTS (`internal/audio`), and the expanded German trainer content
+(`internal/tui/trainer_content.go`).
+
+Still open:
+
+- Sync or backup workflow (no implementation exists yet).
+- Local LLM provider for offline AI drafting.
+- Continued German content expansion (B2/C1 decks).
