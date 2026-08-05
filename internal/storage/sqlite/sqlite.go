@@ -1094,7 +1094,7 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 	// Cards added per day (last 30 days)
 	stats.CardsAddedPerDay = make(map[string]int)
 	addedQuery := `
-		SELECT n.created_at, COUNT(c.id)
+		SELECT date(n.created_at, 'localtime') AS add_date, COUNT(c.id)
 		FROM notes n
 		JOIN cards c ON c.note_id = n.id
 	`
@@ -1103,7 +1103,7 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 		addedQuery += ` WHERE n.deck_id = ?`
 		addedArgs = append(addedArgs, deckID)
 	}
-	addedQuery += ` GROUP BY n.created_at`
+	addedQuery += ` GROUP BY add_date`
 	addedRows, err := s.db.QueryContext(ctx, addedQuery, addedArgs...)
 	if err != nil {
 		return stats, err
@@ -1111,13 +1111,14 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 	defer addedRows.Close()
 
 	for addedRows.Next() {
-		var t time.Time
+		var dateStr sql.NullString
 		var count int
-		if err := addedRows.Scan(&t, &count); err != nil {
+		if err := addedRows.Scan(&dateStr, &count); err != nil {
 			return stats, err
 		}
-		dateStr := t.In(time.Local).Format("2006-01-02")
-		stats.CardsAddedPerDay[dateStr] += count
+		if dateStr.Valid && dateStr.String != "" {
+			stats.CardsAddedPerDay[dateStr.String] = count
+		}
 	}
 	if err := addedRows.Err(); err != nil {
 		return stats, err
@@ -1255,12 +1256,13 @@ func (s *Store) currentStreak(ctx context.Context, now time.Time) (int, error) {
 func (s *Store) ReviewsPerDay(ctx context.Context, days int) (map[string]int, error) {
 	now := time.Now()
 	startDate := now.AddDate(0, 0, -days)
-	start := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, time.Local)
+	start := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, time.Local).UTC()
 
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT reviewed_at
+		SELECT date(reviewed_at, 'localtime') AS review_date, COUNT(*)
 		FROM reviews
 		WHERE reviewed_at IS NOT NULL AND reviewed_at >= ?
+		GROUP BY review_date
 	`, start)
 	if err != nil {
 		return nil, err
@@ -1269,12 +1271,14 @@ func (s *Store) ReviewsPerDay(ctx context.Context, days int) (map[string]int, er
 
 	result := make(map[string]int)
 	for rows.Next() {
-		var t time.Time
-		if err := rows.Scan(&t); err != nil {
+		var dateStr sql.NullString
+		var count int
+		if err := rows.Scan(&dateStr, &count); err != nil {
 			return nil, err
 		}
-		dateStr := t.In(time.Local).Format("2006-01-02")
-		result[dateStr]++
+		if dateStr.Valid && dateStr.String != "" {
+			result[dateStr.String] = count
+		}
 	}
 	return result, rows.Err()
 }

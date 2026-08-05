@@ -1,3 +1,14 @@
+## 2026-08-05 (Bug Hunting & Performance Hardening Pass: SQL Date Grouping, SRS Predict Overflow, FTS Sanitization)
+
+### Performance & Bug Fixes
+- **SQL Date Aggregations (`sqlite.go`):** Optimized `ReviewsPerDay` and `CardsAddedPerDay` in `statistics()` to aggregate directly in SQLite using `date(timestamp, 'localtime')` grouped by local date. Uses `sql.NullString` scanning to safely handle NULL date values. Replaces fetching/scanning/formatting tens of thousands of individual timestamp rows into Go memory.
+- **SRS Duration Overflow Guard (`scheduler.go`):** Clamped `sc.Card.ScheduledDays` to 36,500 days (100 years) in `Scheduler.Predict()`. Prevents `time.Duration` integer multiplication overflow into negative durations on high day predictions.
+- **Dictionary FTS Sanitization (`dictionary.go`):** Added `hasWordChars()` sanitization in `buildFTSMatchQuery()` to filter out terms lacking letters/digits (e.g. lone quotes `"`, colons `:`, or symbol strings). Prevents FTS5 syntax errors and eliminates unnecessary fallback scans over 834,512 dictionary entries.
+
+### Verification
+- Added unit tests: `TestPredictDurationOverflowClamped` in `scheduler_test.go` and `TestDictionarySearchPunctuationOnlyNoFTSSyntaxError` in `dictionary_test.go`.
+- `./scripts/verify.sh` passed cleanly on 2026-08-05: Go unit tests with `-race`, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed in 37.63s).
+
 ## 2026-08-05 (Performance Optimization: SQLite N+1 Query & Statistics Aggregation Pass)
 
 ### Performance Optimizations

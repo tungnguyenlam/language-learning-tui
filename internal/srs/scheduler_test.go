@@ -81,3 +81,23 @@ func TestIntraDayIntervalNonZero(t *testing.T) {
 		t.Errorf("expected non-zero intra-day interval on GradeAgain, got %v", next.Interval)
 	}
 }
+
+func TestPredictDurationOverflowClamped(t *testing.T) {
+	now := time.Date(2026, 4, 29, 10, 0, 0, 0, time.UTC)
+	s := NewScheduler(nil)
+	state := core.ReviewState{
+		CardID:     "card-huge",
+		Due:        now.AddDate(100, 0, 0),
+		Interval:   time.Duration(100) * 365 * 24 * time.Hour,
+		Stability:  100000.0,
+		Difficulty: 1.0,
+		Reviews:    50,
+	}
+
+	predictions := s.Predict(state, now)
+	for grade, interval := range predictions {
+		if interval < 0 {
+			t.Errorf("prediction for %s resulted in negative interval %v", grade, interval)
+		}
+	}
+}

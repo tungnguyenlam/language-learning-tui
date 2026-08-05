@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"unicode"
 	"unicode/utf8"
 
 	"deutsch-tui/internal/core"
@@ -153,10 +154,23 @@ func filterEntries(entries []core.DictionaryEntry, classFilter, genderFilter, la
 	return filtered
 }
 
+func hasWordChars(s string) bool {
+	for _, r := range s {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			return true
+		}
+	}
+	return false
+}
+
 func buildFTSMatchQuery(terms []string, langFilter string) string {
 	var matchQuery strings.Builder
-	for i, term := range terms {
-		if i > 0 {
+	written := 0
+	for _, term := range terms {
+		if !hasWordChars(term) {
+			continue
+		}
+		if written > 0 {
 			matchQuery.WriteString(" ")
 		}
 		safeTerm := strings.ReplaceAll(term, `"`, `""`)
@@ -170,6 +184,7 @@ func buildFTSMatchQuery(terms []string, langFilter string) string {
 		default:
 			matchQuery.WriteString(quoted)
 		}
+		written++
 	}
 	return matchQuery.String()
 }
@@ -261,45 +276,51 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 	`
 
 	likePattern := "%" + cleanQuery + "%"
-	entries, err := s.queryDictionaryEntries(ctx, q, matchQuery, limit*4)
-	if err == nil {
-		// Forms are indexed in a companion FTS5 table because the main dictionary
-		// table keeps the denormalized forms column UNINDEXED for cheap imports.
-		// This avoids a full table scan on every normal dictionary keystroke.
-		if langFilter != "en" {
-			qForms := `
-				SELECT d.id, d.word, d.translation, d.word_class, d.gender,
-				       d.forms, d.examples, d.tags
-				FROM dictionary_forms_fts f
-				INNER JOIN dictionary_fts d ON d.rowid = f.rowid
-				WHERE dictionary_forms_fts MATCH ?
-				LIMIT ?
-			`
-			formMatchQuery := buildFTSMatchQuery(strings.Fields(cleanQuery), "")
-			formEntries, _ := s.queryDictionaryEntries(ctx, qForms, formMatchQuery, limit*2)
-			if len(formEntries) > 0 {
-				seen := make(map[string]bool, len(entries))
-				for _, e := range entries {
-					seen[e.ID] = true
-				}
-				for _, e := range formEntries {
-					if !seen[e.ID] {
-						entries = append(entries, e)
-						seen[e.ID] = true
+	var entries []core.DictionaryEntry
+	if matchQuery != "" {
+		res, err := s.queryDictionaryEntries(ctx, q, matchQuery, limit*4)
+		if err == nil {
+			entries = res
+			// Forms are indexed in a companion FTS5 table because the main dictionary
+			// table keeps the denormalized forms column UNINDEXED for cheap imports.
+			// This avoids a full table scan on every normal dictionary keystroke.
+			if langFilter != "en" {
+				qForms := `
+					SELECT d.id, d.word, d.translation, d.word_class, d.gender,
+					       d.forms, d.examples, d.tags
+					FROM dictionary_forms_fts f
+					INNER JOIN dictionary_fts d ON d.rowid = f.rowid
+					WHERE dictionary_forms_fts MATCH ?
+					LIMIT ?
+				`
+				formMatchQuery := buildFTSMatchQuery(strings.Fields(cleanQuery), "")
+				if formMatchQuery != "" {
+					formEntries, _ := s.queryDictionaryEntries(ctx, qForms, formMatchQuery, limit*2)
+					if len(formEntries) > 0 {
+						seen := make(map[string]bool, len(entries))
+						for _, e := range entries {
+							seen[e.ID] = true
+						}
+						for _, e := range formEntries {
+							if !seen[e.ID] {
+								entries = append(entries, e)
+								seen[e.ID] = true
+							}
+						}
 					}
 				}
 			}
-		}
 
-		if len(entries) > 0 {
-			filtered := filterEntries(entries, classFilter, genderFilter, langFilter, cleanQuery)
-			if len(filtered) > 0 {
-				filtered = core.ConsolidateDictionaryEntries(filtered)
-				sortDictionaryEntries(filtered, cleanQuery)
-				if len(filtered) > limit {
-					filtered = filtered[:limit]
+			if len(entries) > 0 {
+				filtered := filterEntries(entries, classFilter, genderFilter, langFilter, cleanQuery)
+				if len(filtered) > 0 {
+					filtered = core.ConsolidateDictionaryEntries(filtered)
+					sortDictionaryEntries(filtered, cleanQuery)
+					if len(filtered) > limit {
+						filtered = filtered[:limit]
+					}
+					return filtered, nil
 				}
-				return filtered, nil
 			}
 		}
 	}
@@ -317,7 +338,7 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 		qLike = `SELECT id, word, translation, word_class, gender, forms, examples, tags FROM dictionary_fts WHERE word LIKE ? OR translation LIKE ? OR forms LIKE ? LIMIT ?`
 		args = []any{likePattern, likePattern, likePattern, limit * 4}
 	}
-	entries, err = s.queryDictionaryEntries(ctx, qLike, args...)
+	entries, err := s.queryDictionaryEntries(ctx, qLike, args...)
 	if err != nil {
 		return nil, fmt.Errorf("search dictionary fallback like: %w", err)
 	}

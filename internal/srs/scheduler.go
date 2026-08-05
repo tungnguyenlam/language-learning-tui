@@ -54,7 +54,11 @@ func (s Scheduler) Predict(state core.ReviewState, now time.Time) map[core.Revie
 		if grade == "" {
 			continue
 		}
-		interval := time.Duration(sc.Card.ScheduledDays) * 24 * time.Hour
+		days := sc.Card.ScheduledDays
+		if days > 36500 { // clamp to 100 years to prevent time.Duration overflow
+			days = 36500
+		}
+		interval := time.Duration(days) * 24 * time.Hour
 		if sc.Card.Due.After(now) && (interval == 0 || sc.Card.Due.Sub(now) < interval) {
 			interval = sc.Card.Due.Sub(now)
 		}

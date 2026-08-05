@@ -440,3 +440,28 @@ func TestDictionarySearchNormalizesNonPositiveLimit(t *testing.T) {
 		}
 	}
 }
+
+func TestDictionarySearchPunctuationOnlyNoFTSSyntaxError(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	if err := store.ImportEntries(ctx, []core.DictionaryEntry{
+		{ID: "1", Word: "Haus", Translation: "house"},
+	}); err != nil {
+		t.Fatalf("import entries: %v", err)
+	}
+
+	for _, query := range []string{`"`, `:`, `""`, `:::`, `@#$%`} {
+		res, err := store.Search(ctx, query, 10)
+		if err != nil {
+			t.Fatalf("search for punctuation query %q failed: %v", query, err)
+		}
+		if len(res) != 0 {
+			t.Errorf("expected 0 results for punctuation query %q, got %d", query, len(res))
+		}
+	}
+}
