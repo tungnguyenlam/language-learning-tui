@@ -12,6 +12,8 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
+var clozeBracketRegex = regexp.MustCompile(`\[[^\]]+\]`)
+
 // renderGrammarHint builds a compact 2-4 line "how is this word used?" block
 // shown under the revealed answer. It analyses the card's German side and,
 // based on the detected word kind, surfaces gender + case shape (nouns),
@@ -304,8 +306,7 @@ func (m *Model) renderReview(x, y int) string {
 			Background(lipgloss.Color("81")).
 			Bold(true)
 
-		re := regexp.MustCompile(`\[[^\]]+\]`)
-		promptDisplay = re.ReplaceAllStringFunc(promptDisplay, func(s string) string {
+		promptDisplay = clozeBracketRegex.ReplaceAllStringFunc(promptDisplay, func(s string) string {
 			return bracketStyle.Render(s)
 		})
 	}
@@ -478,8 +479,7 @@ func (m *Model) renderReview(x, y int) string {
 				Background(lipgloss.Color("46")).
 				Bold(true)
 
-			re := regexp.MustCompile(`\[[^\]]+\]`)
-			answerDisplay = re.ReplaceAllStringFunc(card.Prompt, func(s string) string {
+			answerDisplay = clozeBracketRegex.ReplaceAllStringFunc(card.Prompt, func(s string) string {
 				return clozeStyle.Render(card.Choices[0])
 			})
 			answerDisplay = answerStyle.Render(answerDisplay)

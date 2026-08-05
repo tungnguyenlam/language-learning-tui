@@ -598,6 +598,9 @@ func (s *Store) UndoLastReview(ctx context.Context, cardID string) error {
 		if _, err := tx.ExecContext(ctx, `DELETE FROM review_states WHERE card_id = ?`, cardID); err != nil {
 			return err
 		}
+		if _, err := tx.ExecContext(ctx, `DELETE FROM card_flags WHERE card_id = ?`, cardID); err != nil {
+			return err
+		}
 		return tx.Commit()
 	}
 	if err != nil {
@@ -1447,13 +1450,20 @@ func (s *Store) SetCardsTags(ctx context.Context, cardIDs []string, tags []strin
 
 	tagsStr := strings.Join(tags, " ")
 
+	seenNotes := make(map[string]struct{}, len(cardIDs))
 	for _, cardID := range cardIDs {
 		var noteID string
 		err = tx.QueryRowContext(ctx, `SELECT note_id FROM cards WHERE id = ?`, cardID).Scan(&noteID)
-		if err != nil {
-			continue // Skip if card not found
+		if errors.Is(err, sql.ErrNoRows) {
+			continue
 		}
+		if err != nil {
+			return err
+		}
+		seenNotes[noteID] = struct{}{}
+	}
 
+	for noteID := range seenNotes {
 		// Update all cards for this note
 		_, err = tx.ExecContext(ctx, `UPDATE cards SET tags = ? WHERE note_id = ?`, tagsStr, noteID)
 		if err != nil {
@@ -1605,9 +1615,17 @@ func (s *Store) DeleteDecks(ctx context.Context, ids []string) error {
 }
 
 func (s *Store) MergeDecks(ctx context.Context, sourceIDs []string, targetID string) error {
-	if len(sourceIDs) == 0 {
+	filteredSources := make([]string, 0, len(sourceIDs))
+	for _, id := range sourceIDs {
+		if id != targetID {
+			filteredSources = append(filteredSources, id)
+		}
+	}
+	if len(filteredSources) == 0 {
 		return nil
 	}
+	sourceIDs = filteredSources
+
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err

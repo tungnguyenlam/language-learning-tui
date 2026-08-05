@@ -75,10 +75,24 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		return ctx.String()
 	}
 
+	totalLines := len(m.browserCards)
+	availableHeight := m.listVisibleLines(layout.Height) - (ctx.currY - layout.Y)
+	if availableHeight < 5 {
+		availableHeight = 5
+	}
+
+	// Auto-scroll to cursor
+	m.browserScroll = AutoScroll(m.browserCursor, m.browserScroll, availableHeight, totalLines)
+
 	var content strings.Builder
 	lineWidth := layout.Width - 2
 
 	for i, card := range m.browserCards {
+		if i < m.browserScroll || i >= m.browserScroll+availableHeight {
+			content.WriteString("\n")
+			continue
+		}
+
 		prefix := "  "
 		style := lipgloss.NewStyle()
 		if i == m.browserCursor {
@@ -168,15 +182,6 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 	}
 
 	contentStr := content.String()
-	totalLines := len(m.browserCards)
-
-	availableHeight := m.listVisibleLines(layout.Height) - (ctx.currY - layout.Y)
-	if availableHeight < 5 {
-		availableHeight = 5
-	}
-
-	// Auto-scroll to cursor
-	m.browserScroll = AutoScroll(m.browserCursor, m.browserScroll, availableHeight, totalLines)
 
 	listView := m.RenderList(layout.WithHeight(availableHeight).WithY(ctx.currY), contentStr, ListOptions{
 		HitboxPrefix: "browser",

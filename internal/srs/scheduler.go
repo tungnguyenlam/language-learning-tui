@@ -22,6 +22,13 @@ func NewScheduler(logger *app.LeveledLogger) Scheduler {
 	}
 }
 
+func (s Scheduler) getFSRS() *fsrs.FSRS {
+	if s.fsrs == nil {
+		return fsrs.NewFSRS(fsrs.DefaultParam())
+	}
+	return s.fsrs
+}
+
 func (s Scheduler) Review(state core.ReviewState, grade core.ReviewGrade, now time.Time) (core.ReviewState, error) {
 	if state.CardID == "" {
 		return core.ReviewState{}, errors.New("card id is required")
@@ -33,7 +40,7 @@ func (s Scheduler) Review(state core.ReviewState, grade core.ReviewGrade, now ti
 	}
 
 	card := fsrsCardFromState(state, now)
-	info := s.fsrs.Next(card, now, rating)
+	info := s.getFSRS().Next(card, now, rating)
 	next := stateFromFSRS(state.CardID, info.Card, state.Ease, now)
 
 	if s.logger != nil {
@@ -46,7 +53,7 @@ func (s Scheduler) Review(state core.ReviewState, grade core.ReviewGrade, now ti
 
 func (s Scheduler) Predict(state core.ReviewState, now time.Time) map[core.ReviewGrade]time.Duration {
 	card := fsrsCardFromState(state, now)
-	schedulingCards := s.fsrs.Repeat(card, now)
+	schedulingCards := s.getFSRS().Repeat(card, now)
 
 	predictions := make(map[core.ReviewGrade]time.Duration)
 	for rating, sc := range schedulingCards {

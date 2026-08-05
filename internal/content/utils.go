@@ -30,6 +30,11 @@ func findWordInSentence(sentence, word string) (int, int) {
 		return -1, -1
 	}
 
+	// Fast-path when ToLower didn't change the byte length
+	if len(s) == len(sentence) {
+		return idx, idx + len(w)
+	}
+
 	// Because ToLower can change byte length (e.g. ẞ -> ß),
 	// we need to find the corresponding byte range in the original sentence.
 	// We can do this by iterating through the original string and comparing ToLowered versions.

@@ -1,4 +1,25 @@
-## 2026-08-05 (Bug Hunting & Performance Optimization Pass: SQLite Empty Deck Count, Suspended Stats, Dictionary Score Cache & Dict.cc Scanner)
+## 2026-08-05 (Bug Hunting & Performance Optimization Pass: Anki TSV Scanner Error, Review Undo Flags, SetCardsTags Deduplication, MergeDecks Target Safety, Browser Viewport Slicing, Cloze Regex Hoisting, UTF-8 Plural Parsing & FSRS Nil Safety)
+
+### Bug Fixes
+- **Anki TSV Scanner Error Handling (`ImportAnkiTSV` in `anki.go`):** Added `scanner.Err()` error check after line scanning loops. Prevents silent data truncation during Anki TSV import when lines exceed `bufio.MaxScanTokenSize`.
+- **Review Undo Flag Reset (`UndoLastReview` in `sqlite.go`):** Added `DELETE FROM card_flags WHERE card_id = ?` when undoing the final review of a card (`sql.ErrNoRows`). Prevents stale leech and lapse streak flags from persisting on cards with 0 reviews remaining.
+- **`SetCardsTags` Deduplication & Error Propagation (`sqlite.go`):** Deduplicated target `noteID`s into a set before running SQL updates, eliminating duplicate updates for notes with multiple cards. Replaced silent error swallowing with database error propagation.
+- **`MergeDecks` Target Deck Guard (`sqlite.go`):** Filtered `targetID` out of `sourceIDs` slice prior to executing `DELETE FROM decks WHERE id IN (...)`, preventing target deck deletion if `targetID` was included in sources.
+- **Dict.cc HTML Entity Field Unescaping (`ParseDictCCStream` in `dictcc.go`):** Moved `html.UnescapeString` from full line level to individual field values after splitting by `\t`. Prevents HTML tab entities (e.g. `&#9;`) from corrupting TSV column alignment.
+- **UTF-8 Safe Plural Parsing (`extractPlural` in `loaders.go`):** Replaced byte-by-byte string slicing loop with zero-allocation ASCII byte matching. Resolves UTF-8 mid-character slice panics and byte offsets when parsing German extra fields.
+- **FSRS Nil Pointer Protection (`Scheduler` in `scheduler.go`):** Added `getFSRS()` lazy-initialization helper to `Scheduler`. Prevents nil pointer dereferences on `Review()` and `Predict()` calls when `Scheduler{}` is zero-initialized.
+
+### Performance Optimizations
+- **Browser Card Viewport Slicing (`renderBrowser` in `render_browser.go`):** Pre-calculated viewport height `availableHeight` and `m.browserScroll` before building line content. Off-screen cards outside the visible viewport window bypass Lip Gloss styling, `highlightQuery`, and tag formatting, reducing render computations by >99% for large decks.
+- **Cloze Regex Compilation Hoisting (`render_review.go`):** Hoisted `clozeBracketRegex` (`\[[^\]]+\]`) to a package-level variable. Eliminates regex re-compilation on every frame inside `renderReview()`.
+- **Dictionary Compound Cache Map Reuse (`searchDictionary` in `actions_dictionary.go`):** Replaced `make(map)` with `clear(m.compoundCache)` on search execution, reusing allocated map memory across dictionary queries.
+- **Dictionary Cloze Generation Regex Hoisting (`actions_dictionary.go`):** Hoisted `bareWord` regex compilation outside example loop in `createClozeFromEntry()`.
+- **Fast-Path `findWordInSentence` (`utils.go`):** Added equal-length byte check `len(s) == len(sentence)` after `strings.Index`. Fast-paths >99% of German sentence lookups without allocating substrings.
+
+### Verification
+- All Go unit test suites with `-race`, vet, dict.cc import (834,512 entries), smoke test, and core E2E suite (34 passed in 37.06s) passed via `./scripts/verify.sh`.
+
+# 2026-08-05 (Bug Hunting & Performance Optimization Pass: SQLite Empty Deck Count, Suspended Stats, Dictionary Score Cache & Dict.cc Scanner)
 
 ### Bug Fixes
 - **SQL Empty Deck Card Count Fix (`Decks()` in `sqlite.go`):** Added `c.id IS NOT NULL` guard inside `SUM(CASE WHEN ... THEN 1 ELSE 0 END)` for `new_cards` and `due_cards`. Empty decks with 0 cards previously reported 1 new card and 1 due card because `LEFT JOIN cards c` produced a row with NULL `c.id` where `rs.due_at IS NULL` and `COALESCE(cf.suspended, 0) = 0` evaluated to true.

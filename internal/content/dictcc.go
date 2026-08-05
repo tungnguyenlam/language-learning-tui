@@ -76,17 +76,10 @@ func ParseDictCCStream(r io.Reader) ([]core.DictionaryEntry, error) {
 			continue
 		}
 
-		if strings.TrimSpace(line) == "" {
-			continue
-		}
-
-		// Decode HTML entities (e.g. &#346; -> Ś, &amp; -> &)
-		line = html.UnescapeString(line)
-
 		parts := strings.Split(line, "\t")
 		if len(parts) >= 2 {
-			enVal := strings.TrimSpace(parts[enIndex])
-			deVal := strings.TrimSpace(parts[deIndex])
+			enVal := strings.TrimSpace(html.UnescapeString(parts[enIndex]))
+			deVal := strings.TrimSpace(html.UnescapeString(parts[deIndex]))
 
 			gender := ""
 			var formsList []string

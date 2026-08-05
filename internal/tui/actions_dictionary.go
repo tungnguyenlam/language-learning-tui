@@ -37,7 +37,11 @@ func (m *Model) searchDictionary() tea.Cmd {
 	m.dictionarySearchID++
 	id := m.dictionarySearchID
 	query := m.dictionarySearch
-	m.compoundCache = make(map[string][]content.CompoundPart)
+	if m.compoundCache == nil {
+		m.compoundCache = make(map[string][]content.CompoundPart)
+	} else {
+		clear(m.compoundCache)
+	}
 
 	var starredSnapshot map[string]bool
 	if len(m.dictionaryStarred) > 0 {
@@ -965,8 +969,9 @@ func (m *Model) addDictionaryClozeEntryCmd(entry core.DictionaryEntry) tea.Cmd {
 			bareWord := stripWordArticle(wordClean)
 			frontText := ""
 
+			re, _ := regexp.Compile("(?i)" + regexp.QuoteMeta(bareWord))
 			for _, ex := range entry.Examples {
-				if re, err := regexp.Compile("(?i)" + regexp.QuoteMeta(bareWord)); err == nil {
+				if re != nil {
 					if loc := re.FindStringIndex(ex); loc != nil {
 						frontText = ex[:loc[0]] + "{{c1::" + ex[loc[0]:loc[1]] + "}}" + ex[loc[1]:]
 						break

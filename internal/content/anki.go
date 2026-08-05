@@ -50,6 +50,10 @@ func ImportAnkiTSV(r io.Reader, opts ImportOptions) ([]core.Note, error) {
 		}
 	}
 
+	if err := scanner.Err(); err != nil {
+		return nil, fmt.Errorf("reading TSV input: %w", err)
+	}
+
 	if deck == "" {
 		deck = "Imported"
 	}

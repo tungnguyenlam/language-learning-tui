@@ -239,7 +239,13 @@ func (m *Model) loadPracticeItems() tea.Cmd {
 
 func extractPlural(extra string) string {
 	for i := 0; i <= len(extra)-7; i++ {
-		if strings.EqualFold(extra[i:i+7], "plural:") {
+		if (extra[i] == 'p' || extra[i] == 'P') &&
+			(extra[i+1] == 'l' || extra[i+1] == 'L') &&
+			(extra[i+2] == 'u' || extra[i+2] == 'U') &&
+			(extra[i+3] == 'r' || extra[i+3] == 'R') &&
+			(extra[i+4] == 'a' || extra[i+4] == 'A') &&
+			(extra[i+5] == 'l' || extra[i+5] == 'L') &&
+			extra[i+6] == ':' {
 			sub := extra[i+7:]
 			if end := strings.IndexAny(sub, ";\n\r"); end != -1 {
 				sub = sub[:end]
