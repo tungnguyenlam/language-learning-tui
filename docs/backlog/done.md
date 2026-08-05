@@ -1,3 +1,15 @@
+## 2026-08-05 (Bug Hunting & Performance Optimization Pass: Dict.cc Zero-Alloc CleanWhitespace Fast-Path, Dictionary Cloze Regex Guard, Cram Cards List Windowing)
+
+### Bug Fixes
+- **Dictionary Cloze Entry Regex Guard (`addDictionaryClozeEntryCmd` in `actions_dictionary.go`):** Added a `bareWord != ""` check prior to compiling and searching bareWord regexes for example cloze replacement. Prevents empty regex matching and invalid empty cloze target creation (`{{c1::}}`) when creating cloze notes for dictionary entries without a valid bare word.
+
+### Performance Optimizations
+- **Dict.cc Whitespace Normalization Fast-Path (`cleanWhitespace` in `dictcc.go`):** Implemented a zero-allocation rune scanner fast-path in `cleanWhitespace`. Avoids `strings.Fields` and `strings.Join` heap allocations when a string has no leading/trailing or duplicate whitespace, eliminating ~1.6M string slice allocations when importing dict.cc dictionary datasets.
+- **Cram Cards List Windowing (`renderCram` in `render_cram.go`):** Windowed the card iteration loop in `renderCram` to render only the visible cards (`m.cramScroll` to `endIdx`) and passed `TotalLines` to `RenderList`. Bypasses string formatting, Lip Gloss styling, and truncation for off-screen cram cards, reducing per-frame render overhead for large cram decks from O(N_total) to O(N_visible).
+
+### Verification
+- `./scripts/verify.sh` passed cleanly: Go unit tests with `-race`, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E test suite (34 passed in 37.59s).
+
 ## 2026-08-05 (Bug Hunting & Performance Optimization Pass: SQLite Tag Cleanup Error Check, TruncateLine ANSI Trailing Reset, Windowed List Slicing & APKG Cloze Regex Hoisting)
 
 ### Bug Fixes

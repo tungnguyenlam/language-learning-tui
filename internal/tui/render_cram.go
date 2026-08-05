@@ -187,9 +187,20 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		ctx.WriteLine("Press enter to start cramming.")
 	}
 
+	totalLines := len(m.cramCards)
+	availableHeight := m.listVisibleLines(layout.Height) - (ctx.currY - layout.Y)
+	if availableHeight < 5 {
+		availableHeight = 5
+	}
+
+	// Auto-scroll
+	m.cramScroll = AutoScroll(m.cramCursor, m.cramScroll, availableHeight, totalLines)
+
+	endIdx := minInt(totalLines, m.cramScroll+availableHeight)
 	var content strings.Builder
 	lineWidth := layout.Width - 2
-	for i, card := range m.cramCards {
+	for i := m.cramScroll; i < endIdx; i++ {
+		card := m.cramCards[i]
 		prefix := "  "
 		style := lipgloss.NewStyle()
 		if i == m.cramCursor {
@@ -239,20 +250,12 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 	}
 
 	contentStr := content.String()
-	totalLines := len(m.cramCards)
-
-	availableHeight := m.listVisibleLines(layout.Height) - (ctx.currY - layout.Y)
-	if availableHeight < 5 {
-		availableHeight = 5
-	}
-
-	// Auto-scroll
-	m.cramScroll = AutoScroll(m.cramCursor, m.cramScroll, availableHeight, totalLines)
 
 	listView := m.RenderList(layout.WithHeight(availableHeight).WithY(ctx.currY), contentStr, ListOptions{
 		HitboxPrefix: "cram",
 		View:         ViewCram,
 		ScrollOffset: &m.cramScroll,
+		TotalLines:   &totalLines,
 	})
 
 	ctx.Write(listView)

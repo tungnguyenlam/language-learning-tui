@@ -8,6 +8,7 @@ import (
 	"io"
 	"regexp"
 	"strings"
+	"unicode"
 
 	"deutsch-tui/internal/core"
 )
@@ -181,6 +182,35 @@ func ParseDictCCStream(r io.Reader) ([]core.DictionaryEntry, error) {
 }
 
 func cleanWhitespace(s string) string {
+	if s == "" {
+		return ""
+	}
+	needClean := false
+	first := true
+	var prev rune
+	for _, r := range s {
+		if first {
+			if unicode.IsSpace(r) {
+				needClean = true
+				break
+			}
+			first = false
+		} else {
+			if unicode.IsSpace(r) {
+				if r != ' ' || prev == ' ' {
+					needClean = true
+					break
+				}
+			}
+		}
+		prev = r
+	}
+	if !needClean && unicode.IsSpace(prev) {
+		needClean = true
+	}
+	if !needClean {
+		return s
+	}
 	fields := strings.Fields(s)
 	return strings.Join(fields, " ")
 }
