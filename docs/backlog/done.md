@@ -1,3 +1,16 @@
+## 2026-08-05 (Bug Hunting & Performance Optimization Pass: SQLite Tag Cleanup Error Check, TruncateLine ANSI Trailing Reset, Windowed List Slicing & APKG Cloze Regex Hoisting)
+
+### Bug Fixes
+- **SQLite Tag Cleanup Error Check (`CleanupTags` in `sqlite.go`):** Added missing `rows.Err()` check to `CleanupTags` before updating deck tags. Prevents database tag fields from being overwritten with incomplete tag data if row scanning terminates unexpectedly.
+- **ANSI Reset Code Retention in `truncateLine` (`utils.go`):** Fixed trailing escape sequence handling in `truncateLine`. When ANSI color/reset sequences (e.g. `\x1b[0m`) occur at the end of a string without following visible characters, `escBuf` is now flushed to the builder instead of being dropped.
+
+### Performance Optimizations
+- **Windowed List Content Slicing (`RenderList` in `list.go` and `renderBrowser` in `render_browser.go`):** Updated `RenderList` to support windowed line content when `opts.TotalLines` is supplied. Optimized `renderBrowserAt` to render only the `availableHeight` visible cards instead of building 20,000 `\n` lines and running `strings.Split` on every frame, reducing CPU and heap allocations for large decks from O(N) to O(window_size).
+- **APKG Import Cloze Regex Hoisting (`clozeOrdinals` in `apkg_import.go`):** Hoisted `clozeIndexRe` (`\{\{c(\d+)::`) to package scope in `apkg_import.go`. Prevents re-compiling the cloze regex on every card during Anki APKG package imports.
+
+### Verification
+- `./scripts/verify.sh` passed cleanly: Go unit tests with `-race`, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E test suite (34 passed in 37.05s).
+
 ## 2026-08-05 (Bug Hunting & Performance Optimization Pass: Anki TSV Scanner Error, Review Undo Flags, SetCardsTags Deduplication, MergeDecks Target Safety, Browser Viewport Slicing, Cloze Regex Hoisting, UTF-8 Plural Parsing & FSRS Nil Safety)
 
 ### Bug Fixes

@@ -467,6 +467,7 @@ var (
 	htmlTagRe    = regexp.MustCompile(`(?s)<[^>]*>`)
 	soundRe      = regexp.MustCompile(`\[sound:([^\]]+)\]`)
 	whitespaceRe = regexp.MustCompile(`[ \t]+`)
+	clozeIndexRe = regexp.MustCompile(`\{\{c(\d+)::`)
 )
 
 // stripHTMLField converts an Anki field to plain text.
@@ -527,7 +528,7 @@ func soundReference(s string) (string, bool) {
 // present in a text, in ascending order: `{{c1::a}} {{c3::b}}` yields [0 2].
 func clozeOrdinals(text string) []int {
 	seen := make(map[int]bool)
-	for _, m := range regexp.MustCompile(`\{\{c(\d+)::`).FindAllStringSubmatch(text, -1) {
+	for _, m := range clozeIndexRe.FindAllStringSubmatch(text, -1) {
 		n, err := strconv.Atoi(m[1])
 		if err != nil || n < 1 {
 			continue

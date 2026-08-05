@@ -1693,6 +1693,9 @@ func (s *Store) CleanupTags(ctx context.Context, deckID string) error {
 	if err := rows.Close(); err != nil {
 		return err
 	}
+	if err := rows.Err(); err != nil {
+		return err
+	}
 
 	uniqueTags := make([]string, 0, len(tagMap))
 	for tag := range tagMap {

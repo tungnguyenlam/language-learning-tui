@@ -22,7 +22,9 @@ type ListOptions struct {
 func (m *Model) RenderList(layout viewportLayout, content string, opts ListOptions) string {
 	lines := strings.Split(strings.TrimSuffix(content, "\n"), "\n")
 	totalLines := len(lines)
-	if opts.TotalLines != nil {
+	if opts.TotalLines != nil && *opts.TotalLines > 0 {
+		totalLines = *opts.TotalLines
+	} else if opts.TotalLines != nil {
 		*opts.TotalLines = totalLines
 	}
 
@@ -49,8 +51,14 @@ func (m *Model) RenderList(layout viewportLayout, content string, opts ListOptio
 		lineIdx := i + scroll
 
 		var lineContent string
-		if lineIdx < totalLines {
-			lineContent = lines[lineIdx]
+		if len(lines) == totalLines {
+			if lineIdx < totalLines {
+				lineContent = lines[lineIdx]
+			}
+		} else {
+			if i < len(lines) {
+				lineContent = lines[i]
+			}
 		}
 
 		if opts.OnLine != nil && lineIdx < totalLines {

@@ -23,8 +23,8 @@ None. The 2026-08-03 bug-hardening pass closed all tracked issues.
 
 ## Last Verification
 
-- `./scripts/verify.sh` passed on 2026-08-05: Go unit tests with `-race`, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed in 37.06s).
-- Bug hunting & performance optimization pass complete: Anki TSV scanner error check (`anki.go`), Review undo flag cleanup on zero reviews (`sqlite.go`), SetCardsTags deduplication (`sqlite.go`), MergeDecks target safety guard (`sqlite.go`), Dict.cc HTML entity per-field unescaping (`dictcc.go`), zero-allocation ASCII plural parsing (`loaders.go`), FSRS nil safety helper (`scheduler.go`), Browser viewport rendering slicing (`render_browser.go`), cloze regex hoisting (`render_review.go`), compoundCache map reuse (`actions_dictionary.go`), cloze regex hoisting (`actions_dictionary.go`), and fast-path `findWordInSentence` (`utils.go`).
+- `./scripts/verify.sh` passed on 2026-08-05: Go unit tests with `-race`, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed in 37.05s).
+- Bug hunting & performance optimization pass complete: `CleanupTags` SQLite error check (`sqlite.go`), `truncateLine` trailing ANSI reset code retention (`utils.go`), windowed list slicing optimization (`list.go` and `render_browser.go`), APKG cloze regex hoisting (`apkg_import.go`), Anki TSV scanner error check (`anki.go`), Review undo flag cleanup (`sqlite.go`), `SetCardsTags` deduplication (`sqlite.go`), `MergeDecks` safety guard (`sqlite.go`), Dict.cc HTML entity per-field unescaping (`dictcc.go`), zero-allocation ASCII plural parsing (`loaders.go`), and FSRS nil safety helper (`scheduler.go`).
 
 ## Repository State
 

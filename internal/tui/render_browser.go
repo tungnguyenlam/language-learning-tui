@@ -87,11 +87,9 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 	var content strings.Builder
 	lineWidth := layout.Width - 2
 
-	for i, card := range m.browserCards {
-		if i < m.browserScroll || i >= m.browserScroll+availableHeight {
-			content.WriteString("\n")
-			continue
-		}
+	endIdx := minInt(totalLines, m.browserScroll+availableHeight)
+	for i := m.browserScroll; i < endIdx; i++ {
+		card := m.browserCards[i]
 
 		prefix := "  "
 		style := lipgloss.NewStyle()
@@ -187,6 +185,7 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 		HitboxPrefix: "browser",
 		View:         ViewBrowser,
 		ScrollOffset: &m.browserScroll,
+		TotalLines:   &totalLines,
 	})
 	ctx.Write(listView)
 

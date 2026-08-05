@@ -197,6 +197,10 @@ func truncateLine(s string, maxWidth int) string {
 		currW += rw
 	}
 
+	if len(escBuf) > 0 {
+		b.WriteString(string(escBuf))
+	}
+
 	return b.String()
 }
 
