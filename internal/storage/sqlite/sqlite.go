@@ -193,28 +193,22 @@ func (s *Store) Decks(ctx context.Context) ([]core.Deck, error) {
 		       COUNT(c.id) as total_cards,
 		       SUM(CASE WHEN rs.due_at IS NULL AND COALESCE(cf.suspended, 0) = 0 THEN 1 ELSE 0 END) as new_cards,
 		       SUM(CASE WHEN (rs.due_at IS NULL OR rs.due_at <= ?) AND COALESCE(cf.suspended, 0) = 0 THEN 1 ELSE 0 END) as due_cards,
-		       (
-		           SELECT COUNT(*)
-		           FROM reviews r
-		           INNER JOIN cards rc ON rc.id = r.card_id
-		           WHERE rc.deck_id = d.id AND r.reviewed_at >= ? AND r.reviewed_at < ?
-		       ) as reviews_today,
-		       (
-		           SELECT COUNT(*)
-		           FROM reviews r
-		           INNER JOIN cards rc ON rc.id = r.card_id
-		           WHERE rc.deck_id = d.id
-		       ) as review_count,
-		       (
-		           SELECT COUNT(*)
-		           FROM reviews r
-		           INNER JOIN cards rc ON rc.id = r.card_id
-		           WHERE rc.deck_id = d.id AND r.grade != ?
-		       ) as successful_reviews
+		       COALESCE(rev.reviews_today, 0) as reviews_today,
+		       COALESCE(rev.review_count, 0) as review_count,
+		       COALESCE(rev.successful_reviews, 0) as successful_reviews
 		FROM decks d
 		LEFT JOIN cards c ON c.deck_id = d.id
 		LEFT JOIN review_states rs ON rs.card_id = c.id
 		LEFT JOIN card_flags cf ON cf.card_id = c.id
+		LEFT JOIN (
+		    SELECT rc.deck_id,
+		           COUNT(*) as review_count,
+		           SUM(CASE WHEN r.reviewed_at >= ? AND r.reviewed_at < ? THEN 1 ELSE 0 END) as reviews_today,
+		           SUM(CASE WHEN r.grade != ? THEN 1 ELSE 0 END) as successful_reviews
+		    FROM reviews r
+		    INNER JOIN cards rc ON rc.id = r.card_id
+		    GROUP BY rc.deck_id
+		) rev ON rev.deck_id = d.id
 		GROUP BY d.id
 		ORDER BY d.name
 	`, now, todayStart, tomorrowStart, string(core.GradeAgain))
@@ -349,14 +343,70 @@ func (s *Store) notesForDeck(ctx context.Context, deckID string) ([]core.Note, e
 	if err := rows.Close(); err != nil {
 		return nil, err
 	}
+	if len(notes) == 0 {
+		return notes, nil
+	}
+
+	cardsMap, err := s.cardsForDeckMap(ctx, deckID)
+	if err != nil {
+		return nil, err
+	}
 	for i := range notes {
-		cards, err := s.cardsForNote(ctx, notes[i].ID)
-		if err != nil {
-			return nil, err
-		}
-		notes[i].Cards = cards
+		notes[i].Cards = cardsMap[notes[i].ID]
 	}
 	return notes, nil
+}
+
+func (s *Store) cardsForDeckMap(ctx context.Context, deckID string) (map[string][]core.Card, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT c.id, c.note_id, c.deck_id, c.kind, c.prompt, c.answer, c.extra, c.hint, c.choices, c.audio, c.tags, 
+		       COALESCE(cf.bookmarked, 0), COALESCE(cf.leech, 0), COALESCE(cf.suspended, 0), 
+		       COALESCE(rs.interval_seconds, 0), COALESCE(rs.reviews, 0),
+		       COALESCE(rs.lapses, 0), COALESCE(rs.ease, 2.5), rs.due_at, rs.last_review_at
+		FROM cards c
+		LEFT JOIN card_flags cf ON cf.card_id = c.id
+		LEFT JOIN review_states rs ON rs.card_id = c.id
+		WHERE c.deck_id = ?
+		ORDER BY c.id
+	`, deckID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	cardsMap := make(map[string][]core.Card)
+	for rows.Next() {
+		var card core.Card
+		var kind string
+		var choicesStr, tags string
+		var bookmarked, leech, suspended, intervalSec, reviews, lapses int
+		var ease float64
+		var due, lastReviewed sql.NullTime
+		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &card.Extra, &card.Hint, &choicesStr, &card.Audio, &tags, &bookmarked, &leech, &suspended, &intervalSec, &reviews, &lapses, &ease, &due, &lastReviewed); err != nil {
+			return nil, err
+		}
+		card.Kind = core.CardKind(kind)
+		card.Bookmarked = bookmarked != 0
+		card.Leech = leech != 0
+		card.Suspended = suspended != 0
+		card.Interval = time.Duration(intervalSec) * time.Second
+		card.Reviews = reviews
+		card.Lapses = lapses
+		card.Ease = ease
+		if due.Valid {
+			card.Due = due.Time
+		}
+		if lastReviewed.Valid {
+			card.LastReviewed = lastReviewed.Time
+		}
+		card.Mature = intervalSec >= 1814400
+		card.Choices = parseChoices(choicesStr)
+		if tags != "" {
+			card.Tags = strings.Fields(tags)
+		}
+		cardsMap[card.NoteID] = append(cardsMap[card.NoteID], card)
+	}
+	return cardsMap, rows.Err()
 }
 
 func (s *Store) cardsForNote(ctx context.Context, noteID string) ([]core.Card, error) {
@@ -958,74 +1008,29 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 		return stats, err
 	}
 
-	bookmarkQuery := `SELECT COUNT(*) FROM card_flags cf`
-	var bookmarkArgs []interface{}
-	if deckID != "" {
-		bookmarkQuery += ` INNER JOIN cards c ON c.id = cf.card_id WHERE c.deck_id = ? AND cf.bookmarked = 1`
-		bookmarkArgs = append(bookmarkArgs, deckID)
-	} else {
-		bookmarkQuery += ` WHERE cf.bookmarked = 1`
-	}
-	err = s.db.QueryRowContext(ctx, bookmarkQuery, bookmarkArgs...).Scan(&stats.BookmarkedCards)
-	if err != nil {
-		return stats, err
-	}
-
-	bookmarkDueQuery := `
-		SELECT COUNT(*)
+	flagsQuery := `
+		SELECT
+			COALESCE(SUM(CASE WHEN cf.bookmarked = 1 THEN 1 ELSE 0 END), 0) as bookmarked,
+			COALESCE(SUM(CASE WHEN cf.bookmarked = 1 AND (rs.due_at IS NULL OR rs.due_at <= ?) THEN 1 ELSE 0 END), 0) as bookmarked_due,
+			COALESCE(SUM(CASE WHEN rs.due_at > ? AND rs.due_at <= ? THEN 1 ELSE 0 END), 0) as next_24h,
+			COALESCE(SUM(CASE WHEN cf.leech = 1 THEN 1 ELSE 0 END), 0) as leech,
+			COALESCE(SUM(CASE WHEN cf.suspended = 1 THEN 1 ELSE 0 END), 0) as suspended
 		FROM cards c
-		INNER JOIN card_flags cf ON cf.card_id = c.id AND cf.bookmarked = 1
+		LEFT JOIN card_flags cf ON cf.card_id = c.id
 		LEFT JOIN review_states rs ON rs.card_id = c.id
-		WHERE (rs.due_at IS NULL OR rs.due_at <= ?)
 	`
-	bookmarkDueArgs := []interface{}{now}
+	flagsArgs := []interface{}{now, now, now.Add(24 * time.Hour)}
 	if deckID != "" {
-		bookmarkDueQuery += ` AND c.deck_id = ?`
-		bookmarkDueArgs = append(bookmarkDueArgs, deckID)
+		flagsQuery += ` WHERE c.deck_id = ?`
+		flagsArgs = append(flagsArgs, deckID)
 	}
-	err = s.db.QueryRowContext(ctx, bookmarkDueQuery, bookmarkDueArgs...).Scan(&stats.BookmarkedDue)
-	if err != nil {
-		return stats, err
-	}
-
-	next24hQuery := `
-		SELECT COUNT(*)
-		FROM cards c
-		LEFT JOIN review_states rs ON rs.card_id = c.id
-		WHERE rs.due_at > ? AND rs.due_at <= ?
-	`
-	next24hArgs := []interface{}{now, now.Add(24 * time.Hour)}
-	if deckID != "" {
-		next24hQuery += ` AND c.deck_id = ?`
-		next24hArgs = append(next24hArgs, deckID)
-	}
-	err = s.db.QueryRowContext(ctx, next24hQuery, next24hArgs...).Scan(&stats.Next24hDue)
-	if err != nil {
-		return stats, err
-	}
-
-	leechQuery := `SELECT COUNT(*) FROM card_flags cf`
-	var leechArgs []interface{}
-	if deckID != "" {
-		leechQuery += ` INNER JOIN cards c ON c.id = cf.card_id WHERE c.deck_id = ? AND cf.leech = 1`
-		leechArgs = append(leechArgs, deckID)
-	} else {
-		leechQuery += ` WHERE cf.leech = 1`
-	}
-	err = s.db.QueryRowContext(ctx, leechQuery, leechArgs...).Scan(&stats.LeechCards)
-	if err != nil {
-		return stats, err
-	}
-
-	suspendedQuery := `SELECT COUNT(*) FROM card_flags cf`
-	var suspendedArgs []interface{}
-	if deckID != "" {
-		suspendedQuery += ` INNER JOIN cards c ON c.id = cf.card_id WHERE c.deck_id = ? AND cf.suspended = 1`
-		suspendedArgs = append(suspendedArgs, deckID)
-	} else {
-		suspendedQuery += ` WHERE cf.suspended = 1`
-	}
-	err = s.db.QueryRowContext(ctx, suspendedQuery, suspendedArgs...).Scan(&stats.SuspendedCards)
+	err = s.db.QueryRowContext(ctx, flagsQuery, flagsArgs...).Scan(
+		&stats.BookmarkedCards,
+		&stats.BookmarkedDue,
+		&stats.Next24hDue,
+		&stats.LeechCards,
+		&stats.SuspendedCards,
+	)
 	if err != nil {
 		return stats, err
 	}

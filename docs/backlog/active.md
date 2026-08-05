@@ -24,7 +24,9 @@ None. The 2026-08-03 bug-hardening pass closed all tracked issues.
 ## Last Verification
 
 - `./scripts/verify.sh` passed on 2026-08-05: Go unit tests with `-race`, vet, offline dict.cc
-  import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed in 35.36s).
+  import (834,512 entries), smoke test, binary build, and core E2E suite.
+- Performance optimization pass complete: batch card loading for `notesForDeck`, single-pass CTE
+  joins for `Decks()`, and single-scan flag aggregations in `GetStatistics()`.
 
 ## Repository State
 

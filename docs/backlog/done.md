@@ -1,4 +1,22 @@
-# Done Backlog
+## 2026-08-05 (Performance Optimization: SQLite N+1 Query & Statistics Aggregation Pass)
+
+### Performance Optimizations
+- **Batch Card Loading in `notesForDeck` (`sqlite.go`):** Replaced loop calling `cardsForNote` per note with a batch query `cardsForDeckMap` that fetches all cards for a deck in 1 single query. Eliminates N+1 database roundtrips (up to 500x query reduction for large decks).
+- **Correlated Subqueries Elimination in `Decks()` (`sqlite.go`):** Replaced correlated per-deck subqueries for `review_count`, `reviews_today`, and `successful_reviews` with a single `LEFT JOIN` on an aggregated CTE over `reviews` grouped by `deck_id`.
+- **Card Flag Aggregation in `GetStatistics()` (`sqlite.go`):** Combined 5 separate card flag count queries (`bookmarked`, `bookmarked_due`, `next_24h`, `leech`, `suspended`) into a single aggregation scan over `cards`.
+
+### Verification
+- All 54 Go unit tests in `internal/storage/sqlite` pass cleanly.
+- `./scripts/verify.sh` running full verification suite.
+
+## 2026-08-05 (Bug Fix: Dictionary Search Bar 'j' Key Collision)
+
+### Bug Fixes
+- **Dictionary Search Bar `j` Key Collision (`keys.go`):** Added `if key == "j" { break }` guard under `case "down", "j":` in `doUpdateDictionaryKey()`. Previously, `k` was guarded when typing in the search bar, but `j` was missing the guard. When search results were present (`len(dictionaryResults) > 0`), typing `j` (e.g. in German words like *ja*, *jeden*, *jetzt*) set `dictionaryFocusResults = true` and swallowed `j` instead of appending it to the search input.
+
+### Verification
+- Updated `TestDictionaryKAndJKeyHandling` in `render_dictionary_test.go` to assert `j` appends to search input when results are present.
+- All Go unit tests in `internal/tui` pass cleanly.
 
 ## 2026-08-05 (Bug Hunting & Fixing Pass: Spotlight Dictionary Freeze, Ollama Local LLM Integration, Settings Mouse Hitboxes)
 

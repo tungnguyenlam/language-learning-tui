@@ -919,10 +919,14 @@ func TestDictionaryKAndJKeyHandling(t *testing.T) {
 		t.Fatalf("expected search input to be 'k', got %q", m.dictionarySearch)
 	}
 
-	// Typing 'j' while in search input must append 'j' to dictionarySearch
+	// Typing 'j' while in search input MUST append 'j' even when dictionaryResults is non-empty
+	m.dictionaryResults = []core.DictionaryEntry{
+		{ID: "1", Word: "Käse"},
+		{ID: "2", Word: "Kuchen"},
+	}
 	_, handled = m.updateDictionaryKey(tea.KeyPressMsg{Code: 'j'})
 	if !handled {
-		t.Fatal("expected 'j' to be handled as printable text input")
+		t.Fatal("expected 'j' to be handled as printable text input even with non-empty results")
 	}
 	if m.dictionarySearch != "kj" {
 		t.Fatalf("expected search input to be 'kj', got %q", m.dictionarySearch)

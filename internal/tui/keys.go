@@ -1715,6 +1715,9 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, false
 	case "down", "j":
 		if !m.dictionaryFocusResults && !m.dictionaryDetailView {
+			if key == "j" {
+				break
+			}
 			if len(m.dictionaryResults) > 0 {
 				m.dictionaryFocusResults = true
 				return nil, true
