@@ -352,21 +352,25 @@ func (s *Store) Search(ctx context.Context, rawQuery string, limit int) ([]core.
 	return filtered, nil
 }
 
+var articlePrefixes = []string{"der ", "die ", "das ", "den ", "dem ", "des ", "the ", "a ", "an "}
+
 func sortDictionaryEntries(entries []core.DictionaryEntry, query string) {
 	q := strings.ToLower(strings.TrimSpace(query))
-	if q == "" {
+	if q == "" || len(entries) <= 1 {
 		return
 	}
+	scores := make([]int, len(entries))
+	for i := range entries {
+		scores[i] = entryMatchScore(entries[i], q)
+	}
 	sort.SliceStable(entries, func(i, j int) bool {
-		scoreI := entryMatchScore(entries[i], q)
-		scoreJ := entryMatchScore(entries[j], q)
-		return scoreI < scoreJ
+		return scores[i] < scores[j]
 	})
 }
 
 func stripArticle(word string) string {
 	w := strings.TrimSpace(strings.ToLower(word))
-	for _, art := range []string{"der ", "die ", "das ", "den ", "dem ", "des ", "the ", "a ", "an "} {
+	for _, art := range articlePrefixes {
 		if strings.HasPrefix(w, art) {
 			return strings.TrimSpace(w[len(art):])
 		}

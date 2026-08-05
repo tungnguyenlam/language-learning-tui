@@ -191,8 +191,8 @@ func (s *Store) Decks(ctx context.Context) ([]core.Deck, error) {
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT d.id, d.name, d.description, d.tags, d.new_cards_per_day, d.review_limit_per_day,
 		       COUNT(c.id) as total_cards,
-		       SUM(CASE WHEN rs.due_at IS NULL AND COALESCE(cf.suspended, 0) = 0 THEN 1 ELSE 0 END) as new_cards,
-		       SUM(CASE WHEN (rs.due_at IS NULL OR rs.due_at <= ?) AND COALESCE(cf.suspended, 0) = 0 THEN 1 ELSE 0 END) as due_cards,
+		       SUM(CASE WHEN c.id IS NOT NULL AND rs.due_at IS NULL AND COALESCE(cf.suspended, 0) = 0 THEN 1 ELSE 0 END) as new_cards,
+		       SUM(CASE WHEN c.id IS NOT NULL AND (rs.due_at IS NULL OR rs.due_at <= ?) AND COALESCE(cf.suspended, 0) = 0 THEN 1 ELSE 0 END) as due_cards,
 		       COALESCE(rev.reviews_today, 0) as reviews_today,
 		       COALESCE(rev.review_count, 0) as review_count,
 		       COALESCE(rev.successful_reviews, 0) as successful_reviews
@@ -938,7 +938,7 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 		err = s.db.QueryRowContext(ctx, `
 			SELECT
 				(SELECT COUNT(*) FROM decks),
-				(SELECT COUNT(DISTINCT deck_id) FROM cards c LEFT JOIN review_states rs ON rs.card_id = c.id WHERE rs.due_at IS NULL OR rs.due_at <= ?)
+				(SELECT COUNT(DISTINCT deck_id) FROM cards c LEFT JOIN review_states rs ON rs.card_id = c.id LEFT JOIN card_flags cf ON cf.card_id = c.id WHERE (rs.due_at IS NULL OR rs.due_at <= ?) AND COALESCE(cf.suspended, 0) = 0)
 		`, now).Scan(&stats.TotalDecks, &stats.ActiveDecks)
 		if err != nil {
 			return stats, err
@@ -947,8 +947,8 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 		stats.TotalDecks = 1
 		var isActive int
 		err = s.db.QueryRowContext(ctx, `
-			SELECT COUNT(DISTINCT deck_id) FROM cards c LEFT JOIN review_states rs ON rs.card_id = c.id 
-			WHERE c.deck_id = ? AND (rs.due_at IS NULL OR rs.due_at <= ?)
+			SELECT COUNT(DISTINCT deck_id) FROM cards c LEFT JOIN review_states rs ON rs.card_id = c.id LEFT JOIN card_flags cf ON cf.card_id = c.id 
+			WHERE c.deck_id = ? AND (rs.due_at IS NULL OR rs.due_at <= ?) AND COALESCE(cf.suspended, 0) = 0
 		`, deckID, now).Scan(&isActive)
 		if err != nil {
 			return stats, err
@@ -1011,8 +1011,8 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 	flagsQuery := `
 		SELECT
 			COALESCE(SUM(CASE WHEN cf.bookmarked = 1 THEN 1 ELSE 0 END), 0) as bookmarked,
-			COALESCE(SUM(CASE WHEN cf.bookmarked = 1 AND (rs.due_at IS NULL OR rs.due_at <= ?) THEN 1 ELSE 0 END), 0) as bookmarked_due,
-			COALESCE(SUM(CASE WHEN rs.due_at > ? AND rs.due_at <= ? THEN 1 ELSE 0 END), 0) as next_24h,
+			COALESCE(SUM(CASE WHEN cf.bookmarked = 1 AND (rs.due_at IS NULL OR rs.due_at <= ?) AND COALESCE(cf.suspended, 0) = 0 THEN 1 ELSE 0 END), 0) as bookmarked_due,
+			COALESCE(SUM(CASE WHEN rs.due_at > ? AND rs.due_at <= ? AND COALESCE(cf.suspended, 0) = 0 THEN 1 ELSE 0 END), 0) as next_24h,
 			COALESCE(SUM(CASE WHEN cf.leech = 1 THEN 1 ELSE 0 END), 0) as leech,
 			COALESCE(SUM(CASE WHEN cf.suspended = 1 THEN 1 ELSE 0 END), 0) as suspended
 		FROM cards c

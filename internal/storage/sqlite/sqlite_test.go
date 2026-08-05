@@ -1432,3 +1432,58 @@ func TestStreakWithLargeReviewCount(t *testing.T) {
 		t.Fatalf("expected streak of at least 30 days despite 1500 reviews, got %d", stats.CurrentStreak)
 	}
 }
+
+func TestEmptyDeckStatsCorrectness(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	defer store.Close()
+
+	emptyDeck := core.Deck{ID: "empty-deck", Name: "Empty Deck"}
+	if err := store.UpsertDeck(ctx, emptyDeck); err != nil {
+		t.Fatalf("upsert empty deck: %v", err)
+	}
+
+	decks, err := store.Decks(ctx)
+	if err != nil {
+		t.Fatalf("Decks error: %v", err)
+	}
+	if len(decks) != 1 {
+		t.Fatalf("expected 1 deck, got %d", len(decks))
+	}
+	d := decks[0]
+	if d.TotalCards != 0 || d.NewCards != 0 || d.DueCards != 0 {
+		t.Fatalf("expected 0 total/new/due cards for empty deck, got total=%d new=%d due=%d", d.TotalCards, d.NewCards, d.DueCards)
+	}
+}
+
+func TestStatisticsActiveDecksExcludesSuspended(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	defer store.Close()
+
+	deck := core.Deck{ID: "suspended-deck", Name: "Suspended Deck"}
+	_ = store.UpsertDeck(ctx, deck)
+
+	note := core.Note{ID: "n-susp", DeckID: "suspended-deck", Front: "F", Back: "B"}
+	note.Cards = content.CardsForNote(note)
+	_ = store.UpsertNote(ctx, note)
+
+	cardID := note.Cards[0].ID
+	if err := store.SetCardSuspended(ctx, cardID, true); err != nil {
+		t.Fatalf("suspend card: %v", err)
+	}
+
+	stats, err := store.Statistics(ctx)
+	if err != nil {
+		t.Fatalf("Statistics error: %v", err)
+	}
+	if stats.ActiveDecks != 0 {
+		t.Fatalf("expected 0 active decks when all due cards are suspended, got %d", stats.ActiveDecks)
+	}
+}

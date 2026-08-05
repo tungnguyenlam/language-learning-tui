@@ -23,9 +23,8 @@ None. The 2026-08-03 bug-hardening pass closed all tracked issues.
 
 ## Last Verification
 
-- `./scripts/verify.sh` passed on 2026-08-05: Go unit tests with `-race`, vet, offline dict.cc
-  import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed in 37.63s).
-- Bug hunting & performance hardening pass complete: SQL date aggregation (`ReviewsPerDay` and `CardsAddedPerDay`), SRS duration overflow clamping (`Predict`), and FTS match query term sanitization (`buildFTSMatchQuery`).
+- `./scripts/verify.sh` passed on 2026-08-05: Go unit tests with `-race`, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed in 36.80s).
+- Bug hunting & performance optimization pass complete: SQL empty deck card count fix (`Decks()`), SQL suspended card exclusion in statistics (`statistics()`), dictionary search score caching (`sortDictionaryEntries`), allocation-free article stripping (`stripArticle`), and fast dict.cc delimiter scanner (`ParseDictCCStream`).
 
 ## Repository State
 

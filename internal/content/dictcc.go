@@ -93,45 +93,55 @@ func ParseDictCCStream(r io.Reader) ([]core.DictionaryEntry, error) {
 			var tagSet []string
 
 			// Extract gender annotation {...} anywhere in German term
-			if match := genderRegex.FindStringSubmatch(deVal); len(match) > 1 {
-				gender = match[1]
-				deVal = genderRegex.ReplaceAllString(deVal, "")
+			if strings.IndexByte(deVal, '{') != -1 {
+				if match := genderRegex.FindStringSubmatch(deVal); len(match) > 1 {
+					gender = match[1]
+					deVal = genderRegex.ReplaceAllString(deVal, "")
+				}
 			}
 
 			// Extract forms <...> from German term or English term
-			if match := formsRegex.FindAllStringSubmatch(deVal, -1); len(match) > 0 {
-				for _, m := range match {
-					if len(m) > 1 {
-						formsList = append(formsList, strings.TrimSpace(m[1]))
+			if strings.IndexByte(deVal, '<') != -1 {
+				if match := formsRegex.FindAllStringSubmatch(deVal, -1); len(match) > 0 {
+					for _, m := range match {
+						if len(m) > 1 {
+							formsList = append(formsList, strings.TrimSpace(m[1]))
+						}
 					}
+					deVal = formsRegex.ReplaceAllString(deVal, "")
 				}
-				deVal = formsRegex.ReplaceAllString(deVal, "")
 			}
-			if match := formsRegex.FindAllStringSubmatch(enVal, -1); len(match) > 0 {
-				for _, m := range match {
-					if len(m) > 1 {
-						formsList = append(formsList, strings.TrimSpace(m[1]))
+			if strings.IndexByte(enVal, '<') != -1 {
+				if match := formsRegex.FindAllStringSubmatch(enVal, -1); len(match) > 0 {
+					for _, m := range match {
+						if len(m) > 1 {
+							formsList = append(formsList, strings.TrimSpace(m[1]))
+						}
 					}
+					enVal = formsRegex.ReplaceAllString(enVal, "")
 				}
-				enVal = formsRegex.ReplaceAllString(enVal, "")
 			}
 
 			// Extract inline brackets [...] from German or English terms
-			if match := bracketRegex.FindAllStringSubmatch(deVal, -1); len(match) > 0 {
-				for _, m := range match {
-					if len(m) > 1 {
-						tagSet = append(tagSet, "["+strings.TrimSpace(m[1])+"]")
+			if strings.IndexByte(deVal, '[') != -1 {
+				if match := bracketRegex.FindAllStringSubmatch(deVal, -1); len(match) > 0 {
+					for _, m := range match {
+						if len(m) > 1 {
+							tagSet = append(tagSet, "["+strings.TrimSpace(m[1])+"]")
+						}
 					}
+					deVal = bracketRegex.ReplaceAllString(deVal, "")
 				}
-				deVal = bracketRegex.ReplaceAllString(deVal, "")
 			}
-			if match := bracketRegex.FindAllStringSubmatch(enVal, -1); len(match) > 0 {
-				for _, m := range match {
-					if len(m) > 1 {
-						tagSet = append(tagSet, "["+strings.TrimSpace(m[1])+"]")
+			if strings.IndexByte(enVal, '[') != -1 {
+				if match := bracketRegex.FindAllStringSubmatch(enVal, -1); len(match) > 0 {
+					for _, m := range match {
+						if len(m) > 1 {
+							tagSet = append(tagSet, "["+strings.TrimSpace(m[1])+"]")
+						}
 					}
+					enVal = bracketRegex.ReplaceAllString(enVal, "")
 				}
-				enVal = bracketRegex.ReplaceAllString(enVal, "")
 			}
 
 			wordClean := cleanWhitespace(deVal)
