@@ -1,3 +1,18 @@
+# 2026-08-12 (Decks Deselect and Escape Filter Fix)
+
+Fixed Decks multi-selection so deselecting a deck removes its ID from `deckSelected` instead of
+retaining an invisible `false` entry. Escape now clears an active Decks filter with one keypress
+when no decks are selected. Added a screen-contract regression test covering the selection-set
+invariant and the user-visible Escape behavior.
+
+### Verification
+
+- The regression test failed against the old behavior with `map[string]bool{"deck-1":false}`.
+- Focused regression, `go test ./internal/tui`, and `go test ./...` passed.
+- Real-TUI reproduction and post-fix replay passed with a unique data directory.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512 entries), smoke
+  test, binary build, and core E2E suite (34 passed in 36.86s).
+
 # 2026-08-12 (Dashboard, Statistics, and Decks Screen Ownership)
 
 Moved Dashboard, Statistics, and Decks key behavior out of the global key-routing file and into

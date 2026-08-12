@@ -114,7 +114,11 @@ func (decksScreen) HandleKey(m *Model, msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	case " ", "space", "x", "m":
 		if len(filtered) > 0 {
 			id := filtered[m.deckCursor].ID
-			m.deckSelected[id] = !m.deckSelected[id]
+			if m.deckSelected[id] {
+				delete(m.deckSelected, id)
+			} else {
+				m.deckSelected[id] = true
+			}
 		}
 		return nil, true
 	case "backspace", "delete":
