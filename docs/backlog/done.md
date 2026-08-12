@@ -55,6 +55,16 @@ fixing persisted card fields a one-location change.
 
 - `go test ./internal/storage/sqlite` passed.
 
+# 2026-08-12 (Reusable Autonomous Debugging Prompt)
+
+Added `prompt/debug.md`, a reusable debugging workflow that requires reliable
+reproduction, root-cause fixes, deterministic regression tests, TUI
+synchronization, layered verification, and continuity documentation.
+
+### Verification
+
+- `git diff --check` passed.
+
 # 2026-08-12 (Practice Load Guards, Anki Cloze Grouping & Modal Help)
 
 ### Improvements

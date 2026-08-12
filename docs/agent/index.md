@@ -6,6 +6,7 @@ Last updated: 2026-08-12
 
 - `GOAL.md`: north-star vision for the app's final state. All work should align with this.
 - `prompt/improve.md`: standard autonomous improvement prompt for agent sessions.
+- `prompt/debug.md`: autonomous reproduce, diagnose, fix, and regression-test prompt.
 
 ## Active Backlog
 
