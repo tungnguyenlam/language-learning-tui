@@ -433,3 +433,24 @@ func TestResponsiveHelpLayout(t *testing.T) {
 		t.Error("expected 80-width help to contain Dictionary and Review shortcut sections")
 	}
 }
+
+func TestGroupedClozeAnswersRenderInOrder(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewReview
+	m.width = 100
+	m.height = 30
+	m.breakpoint = BreakpointWide
+	m.dueCards = []core.Card{{
+		ID:      "cloze-1",
+		Kind:    core.CardKindCloze,
+		Prompt:  "Ich gebe [...] [...].",
+		Answer:  "Ich gebe dem Mann.",
+		Choices: []string{"dem", "Mann"},
+	}}
+	m.revealState = RevealRevealed
+
+	plain := stripANSI(m.renderReview(0, 0))
+	if !strings.Contains(plain, "Ich gebe dem Mann.") {
+		t.Fatalf("grouped cloze answers were not rendered in order:\n%s", plain)
+	}
+}

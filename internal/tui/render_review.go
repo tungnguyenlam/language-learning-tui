@@ -14,6 +14,33 @@ import (
 
 var clozeBracketRegex = regexp.MustCompile(`\[[^\]]+\]`)
 
+func clozeAnswerText(card core.Card) string {
+	if len(card.Choices) == 0 {
+		return card.Answer
+	}
+	if len(card.Choices) == 1 {
+		return card.Choices[0]
+	}
+	return strings.Join(card.Choices, " / ")
+}
+
+func renderClozeAnswers(prompt string, choices []string, style lipgloss.Style) string {
+	choiceIndex := 0
+	return clozeBracketRegex.ReplaceAllStringFunc(prompt, func(placeholder string) string {
+		if len(choices) == 0 {
+			return placeholder
+		}
+		idx := choiceIndex
+		if idx >= len(choices) {
+			// Keep compatibility with older persisted cards that only stored one
+			// choice even when their prompt contained multiple placeholders.
+			idx = 0
+		}
+		choiceIndex++
+		return style.Render(choices[idx])
+	})
+}
+
 // renderGrammarHint builds a compact 2-4 line "how is this word used?" block
 // shown under the revealed answer. It analyses the card's German side and,
 // based on the detected word kind, surfaces gender + case shape (nouns),
@@ -399,8 +426,8 @@ func (m *Model) renderReview(x, y int) string {
 
 		if m.typingChecked {
 			targetAnswer := card.Answer
-			if card.Kind == core.CardKindCloze && len(card.Choices) > 0 {
-				targetAnswer = card.Choices[0]
+			if card.Kind == core.CardKindCloze {
+				targetAnswer = clozeAnswerText(card)
 			}
 			if m.typingCorrect {
 				correctStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("46")).Bold(true)
@@ -479,9 +506,7 @@ func (m *Model) renderReview(x, y int) string {
 				Background(lipgloss.Color("46")).
 				Bold(true)
 
-			answerDisplay = clozeBracketRegex.ReplaceAllStringFunc(card.Prompt, func(s string) string {
-				return clozeStyle.Render(card.Choices[0])
-			})
+			answerDisplay = renderClozeAnswers(card.Prompt, card.Choices, clozeStyle)
 			answerDisplay = answerStyle.Render(answerDisplay)
 		}
 

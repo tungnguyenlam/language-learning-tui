@@ -230,6 +230,9 @@ type Model struct {
 	lastSessionDuration            time.Duration
 	sessionGrades                  map[core.ReviewGrade]int
 	showHelp                       bool
+	helpScroll                     int
+	helpTotalLines                 int
+	helpViewportLines              int
 	cramCards                      []core.Card
 	cramCursor                     int
 	cramType                       string
@@ -918,6 +921,9 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	case trainerItemsMsg:
 		st := m.trainerStateFor(msg.kind)
+		if m.practiceSubView != msg.kind || msg.id != st.loadID {
+			return m, nil
+		}
 		st.items = msg.items
 		if len(msg.items) == 0 {
 			m.status = "No " + st.config.ItemNoun + " found"
@@ -1386,17 +1392,24 @@ func (m *Model) View() tea.View {
 
 	finalContent := b.String()
 	if m.showHelp {
+		// Lipgloss adds the modal's padding and border outside Width. Keep the
+		// inner width narrow enough that the complete frame always fits inside
+		// the terminal, including on the 80-column test viewport.
+		helpLayoutWidth := maxInt(20, minInt(114, m.width-14))
+		helpLayoutHeight := maxInt(8, m.height-8)
+		helpContent := m.renderHelpViewport(viewportLayout{
+			X:      (m.width - helpLayoutWidth) / 2,
+			Y:      0,
+			Width:  helpLayoutWidth,
+			Height: helpLayoutHeight,
+		})
 		helpBox := lipgloss.NewStyle().
+			Width(helpLayoutWidth).
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(lipgloss.Color("81")).
 			Padding(1, 2).
 			Background(lipgloss.Color("233")).
-			Render(m.renderHelp(viewportLayout{
-				X:      m.width / 4,
-				Y:      m.height / 4,
-				Width:  m.width / 2,
-				Height: m.height / 2,
-			}))
+			Render(helpContent)
 		helpView := lipgloss.Place(m.width, m.height-3, lipgloss.Center, lipgloss.Center, helpBox)
 
 		statusText := singleLine(m.status)
@@ -1405,14 +1418,22 @@ func (m *Model) View() tea.View {
 		}
 		statusLine := fmt.Sprintf("status: %s", statusText)
 		footer := strings.Join([]string{
-			keyInfoStyle.Render("tab/arrows") + " views",
-			keyInfoStyle.Render("0-9") + " views",
-			keyInfoStyle.Render("?") + " help",
-			keyInfoStyle.Render("q") + " quit",
+			keyInfoStyle.Render("j/k") + " scroll",
+			keyInfoStyle.Render("PgUp/PgDn") + " pages",
+			keyInfoStyle.Render("Esc/?") + " close",
+			keyInfoStyle.Render("Ctrl+c") + " quit",
 		}, " │ ")
+		helpScreen := helpView + "\n\n" + statusStyle.Render(truncateLine(statusLine, m.width-2)) + "\n" + statusStyle.Render(truncateLine(footer, m.width-2))
+		// The underlying view can contain longer text on the same rows. Fill
+		// every modal row to the terminal width so the overlay fully erases it
+		// in terminals that redraw by writing changed cells.
+		screenLines := strings.Split(helpScreen, "\n")
+		for i, line := range screenLines {
+			screenLines[i] = padLine(truncateLine(line, m.width), m.width)
+		}
 
 		return tea.View{
-			Content:   helpView + "\n\n" + statusStyle.Render(truncateLine(statusLine, m.width-2)) + "\n" + statusStyle.Render(truncateLine(footer, m.width-2)),
+			Content:   strings.Join(screenLines, "\n"),
 			AltScreen: true,
 			MouseMode: tea.MouseModeAllMotion,
 		}

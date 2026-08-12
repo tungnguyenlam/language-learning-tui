@@ -51,6 +51,7 @@ type trainerConfig struct {
 // the Model replaces the ~50 parallel fields the trainers used to carry.
 type trainerState struct {
 	config   trainerConfig
+	loadID   int // monotonically increasing identity for async item loads
 	items    []trainerItem
 	index    int
 	round    int // completed passes over items; drives the reshuffle
@@ -97,6 +98,7 @@ func (st *trainerState) advance() {
 // trainerItemsMsg delivers freshly loaded items to the named trainer.
 type trainerItemsMsg struct {
 	kind  PracticeSubView
+	id    int
 	items []trainerItem
 }
 

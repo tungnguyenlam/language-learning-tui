@@ -149,6 +149,34 @@ func TestImportMultiCloze(t *testing.T) {
 	}
 }
 
+func TestImportGroupedAndOutOfOrderClozeOrdinals(t *testing.T) {
+	note := core.Note{
+		ID:    "grouped-cloze",
+		Front: "Ich {{c2::gebe}} {{c1::dem}} {{c1::Mann}}.",
+	}
+	cards := CardsForNote(note)
+	if len(cards) != 2 {
+		t.Fatalf("len(cards) = %d, want 2 cards (one per ordinal)", len(cards))
+	}
+
+	first, second := cards[0], cards[1]
+	if first.ID != "grouped-cloze:cloze-1" || second.ID != "grouped-cloze:cloze-2" {
+		t.Fatalf("cloze IDs = %q, %q; want ordinal order", first.ID, second.ID)
+	}
+	if first.Prompt != "Ich gebe [...] [...]." {
+		t.Fatalf("ordinal 1 prompt = %q", first.Prompt)
+	}
+	if got, want := strings.Join(first.Choices, "|"), "dem|Mann"; got != want {
+		t.Fatalf("ordinal 1 choices = %q, want %q", got, want)
+	}
+	if second.Prompt != "Ich [...] dem Mann." {
+		t.Fatalf("ordinal 2 prompt = %q", second.Prompt)
+	}
+	if len(second.Choices) != 1 || second.Choices[0] != "gebe" {
+		t.Fatalf("ordinal 2 choices = %v, want [gebe]", second.Choices)
+	}
+}
+
 func TestImportReverse(t *testing.T) {
 	input := "#separator:tab\n#deck:Reverse\nid-1\tder Apfel\tapple\t\t\t\tReverse\n"
 	notes, err := ImportAnkiTSV(strings.NewReader(input), ImportOptions{})

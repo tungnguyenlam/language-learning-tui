@@ -7,6 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"sort"
+	"strconv"
 	"strings"
 
 	"deutsch-tui/internal/core"
@@ -339,16 +341,20 @@ func CardsForNote(note core.Note) []core.Card {
 	clozes := parseClozes(note.Front)
 	if len(clozes) > 0 {
 		cards := make([]core.Card, 0, len(clozes))
-		for i, cloze := range clozes {
+		for _, cloze := range clozes {
+			choices := append([]string(nil), cloze.Answers...)
+			if len(choices) == 0 && cloze.Answer != "" {
+				choices = []string{cloze.Answer}
+			}
 			cards = append(cards, core.Card{
-				ID:      fmt.Sprintf("%s:cloze-%d", note.ID, i+1),
+				ID:      fmt.Sprintf("%s:cloze-%d", note.ID, cloze.Ordinal),
 				NoteID:  note.ID,
 				DeckID:  note.DeckID,
 				Kind:    core.CardKindCloze,
 				Prompt:  cloze.Prompt,
 				Answer:  cloze.Full, // Full sentence for Cloze
 				Extra:   note.Extra,
-				Choices: []string{cloze.Answer}, // The actual missing part
+				Choices: choices, // The missing part(s) for this Anki ordinal
 				Audio:   note.Audio,
 				Tags:    baseTags,
 			})
@@ -434,91 +440,116 @@ func CardsForNote(note core.Note) []core.Card {
 }
 
 type clozeInfo struct {
-	Prompt string
-	Answer string
-	Full   string
+	Prompt  string
+	Answer  string // first missing part; retained for single-answer callers
+	Full    string
+	Answers []string
+	Ordinal int
 }
 
 func parseClozes(text string) []clozeInfo {
-	var result []clozeInfo
-	// Simple regex-like parsing for {{c1::text::hint}}
-	// We'll support multiple clozes
-	originalText := text
-	offset := 0
-	for {
-		start := strings.Index(text, "{{c")
-		if start == -1 {
-			break
-		}
-		end := strings.Index(text[start:], "}}")
-		if end == -1 {
-			break
-		}
-		end += start
-		content := text[start+2 : end]
-		parts := strings.Split(content, "::")
-		if len(parts) < 2 {
-			// Not a valid cloze, skip
-			text = text[end+2:]
-			offset += end + 2
-			continue
-		}
-		// parts[0] is c1, c2, etc.
-		answer := parts[1]
-		hint := ""
-		if len(parts) > 2 {
-			hint = parts[2]
-		}
+	markers := parseClozeMarkers(text)
+	if len(markers) == 0 {
+		return nil
+	}
 
-		// Replace the cloze with [...] or [hint] for the prompt
-		placeholder := "[...]"
-		if hint != "" {
-			placeholder = "[" + hint + "]"
+	groups := make(map[int][]clozeMarker)
+	ordinals := make([]int, 0, len(markers))
+	for _, marker := range markers {
+		if _, seen := groups[marker.ordinal]; !seen {
+			ordinals = append(ordinals, marker.ordinal)
 		}
+		groups[marker.ordinal] = append(groups[marker.ordinal], marker)
+	}
+	sort.Ints(ordinals)
 
-		// Create the prompt by replacing ONLY this cloze with placeholder
-		// and ALL other clozes with their text
-		prompt := stripClozeMarkers(originalText, offset+start, offset+end, placeholder)
-		full := stripClozeMarkers(originalText, -1, -1, "")
-
+	full := renderClozeText(text, markers, 0)
+	result := make([]clozeInfo, 0, len(ordinals))
+	for _, ordinal := range ordinals {
+		group := groups[ordinal]
+		answers := make([]string, 0, len(group))
+		for _, marker := range group {
+			answers = append(answers, marker.answer)
+		}
+		answer := ""
+		if len(answers) > 0 {
+			answer = answers[0]
+		}
 		result = append(result, clozeInfo{
-			Prompt: prompt,
-			Answer: answer,
-			Full:   full,
+			Prompt:  renderClozeText(text, markers, ordinal),
+			Answer:  answer,
+			Full:    full,
+			Answers: answers,
+			Ordinal: ordinal,
 		})
-
-		// Continue searching in the rest of the text
-		text = text[end+2:]
-		offset += end + 2
 	}
 	return result
 }
 
-func stripClozeMarkers(text string, activeStart, activeEnd int, placeholder string) string {
-	var b strings.Builder
-	i := 0
-	for i < len(text) {
-		if i == activeStart {
-			b.WriteString(placeholder)
-			i = activeEnd + 2
-			continue
+type clozeMarker struct {
+	start   int
+	end     int
+	ordinal int
+	answer  string
+	hint    string
+}
+
+func parseClozeMarkers(text string) []clozeMarker {
+	var markers []clozeMarker
+	for searchFrom := 0; searchFrom < len(text); {
+		relStart := strings.Index(text[searchFrom:], "{{c")
+		if relStart == -1 {
+			break
 		}
-		if strings.HasPrefix(text[i:], "{{c") {
-			end := strings.Index(text[i:], "}}")
-			if end != -1 {
-				end += i
-				content := text[i+2 : end]
-				parts := strings.Split(content, "::")
-				if len(parts) >= 2 {
-					b.WriteString(parts[1]) // Keep the answer text
-					i = end + 2
-					continue
+		start := searchFrom + relStart
+		relEnd := strings.Index(text[start:], "}}")
+		if relEnd == -1 {
+			break
+		}
+		end := start + relEnd
+		parts := strings.Split(text[start+2:end], "::")
+		if len(parts) >= 2 && strings.HasPrefix(parts[0], "c") {
+			ordinal, err := strconv.Atoi(strings.TrimPrefix(parts[0], "c"))
+			if err == nil && ordinal > 0 && parts[1] != "" {
+				hint := ""
+				if len(parts) > 2 {
+					hint = parts[2]
 				}
+				markers = append(markers, clozeMarker{
+					start:   start,
+					end:     end + 2,
+					ordinal: ordinal,
+					answer:  parts[1],
+					hint:    hint,
+				})
 			}
 		}
-		b.WriteByte(text[i])
-		i++
+		searchFrom = end + 2
 	}
+	return markers
+}
+
+// renderClozeText removes all valid cloze markers. When ordinal is non-zero,
+// markers with that ordinal become prompts while other markers reveal their
+// answer. Grouping by ordinal matches Anki: {{c1::a}} {{c1::b}} creates one
+// card with both blanks, while c2 creates the next card.
+func renderClozeText(text string, markers []clozeMarker, ordinal int) string {
+	var b strings.Builder
+	last := 0
+	for _, marker := range markers {
+		b.WriteString(text[last:marker.start])
+		if ordinal != 0 && marker.ordinal == ordinal {
+			placeholder := "[...]"
+			if marker.hint != "" {
+				placeholder = "[" + marker.hint + "]"
+			}
+			b.WriteString(placeholder)
+		} else {
+			b.WriteString(marker.answer)
+		}
+		last = marker.end
+	}
+	b.WriteString(text[last:])
 	return b.String()
 }
 

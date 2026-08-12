@@ -1,3 +1,21 @@
+# 2026-08-12 (Practice Load Guards, Anki Cloze Grouping & Modal Help)
+
+### Improvements
+- **Generic trainer load identity (`internal/tui`):** Added per-trainer request IDs and active
+  view checks so late asynchronous item loads cannot overwrite a newer practice session.
+- **Anki cloze fidelity (`internal/content/anki.go`):** Grouped repeated cloze ordinals into one
+  card, sorted generated cards by ordinal, preserved all grouped answers, and rendered grouped
+  answers in order during review and typing checks.
+- **Keyboard-help modal (`internal/tui`):** Made the shortcut reference modal, scrollable, and
+  terminal-width safe; underlying navigation/editing keys are now trapped until it is closed.
+
+### Verification
+- Focused `go test ./internal/content ./internal/tui` passed.
+- Live `tui-tester` check passed at the constrained 80-column viewport.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512 entries), smoke
+  test, binary build, and core E2E suite (34 passed in 36.17s).
+- `go test -race ./...` passed.
+
 # 2026-08-12 (Async TUI State & Browser Session Hardening)
 
 ### Bug Fixes

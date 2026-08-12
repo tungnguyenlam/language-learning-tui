@@ -12,7 +12,14 @@ func (m *Model) renderHelp(layout viewportLayout) string {
 	ctx := NewRenderContext(m, layout, m.activeView)
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("159")).Underline(true)
 	sectionStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("81"))
-	colStyle := lipgloss.NewStyle().PaddingRight(4).Width(maxInt(32, layout.Width/4))
+	columns := 1
+	if layout.Width >= 110 {
+		columns = 4
+	} else if layout.Width >= 60 {
+		columns = 2
+	}
+	colWidth := maxInt(20, layout.Width/columns-3)
+	colStyle := lipgloss.NewStyle().PaddingRight(2).Width(colWidth)
 
 	ctx.WriteLine(titleStyle.Render("Keyboard Shortcuts"))
 	ctx.NewLine()
@@ -94,6 +101,33 @@ func (m *Model) renderHelp(layout viewportLayout) string {
 	}
 
 	return titleStyle.Render("Keyboard Shortcuts") + "\n\n" + helpContent
+}
+
+// renderHelpViewport keeps the shortcut reference usable on short terminals.
+// The full reference remains available through j/k or PageUp/PageDown while
+// the modal itself prevents accidental input from reaching the underlying view.
+func (m *Model) renderHelpViewport(layout viewportLayout) string {
+	content := m.renderHelp(layout)
+	lines := strings.Split(strings.TrimSuffix(content, "\n"), "\n")
+	viewport := maxInt(4, layout.Height)
+	contentHeight := viewport
+	if len(lines) > viewport {
+		// Reserve the final line for the scroll/close affordance.
+		contentHeight = maxInt(1, viewport-1)
+	}
+
+	m.helpTotalLines = len(lines)
+	m.helpViewportLines = contentHeight
+	maxScroll := maxInt(0, len(lines)-contentHeight)
+	m.helpScroll = clampInt(m.helpScroll, 0, maxScroll)
+	start := m.helpScroll
+	end := minInt(len(lines), start+contentHeight)
+	visible := append([]string(nil), lines[start:end]...)
+	if maxScroll > 0 {
+		hint := fmt.Sprintf("j/k scroll  %d-%d/%d  |  Esc/? close", start+1, end, len(lines))
+		visible = append(visible, mutedStyle.Render(truncateLine(hint, layout.Width)))
+	}
+	return strings.Join(visible, "\n")
 }
 
 func (m *Model) renderDecks(layout viewportLayout) string {

@@ -192,6 +192,7 @@ func (m *Model) enterPracticeMode(mode PracticeSubView) tea.Cmd {
 	}
 	if isGenericTrainer(mode) {
 		st := m.trainerStateFor(mode)
+		st.loadID++
 		st.index = 0
 		st.round = 0
 		st.correct = 0
@@ -200,7 +201,21 @@ func (m *Model) enterPracticeMode(mode PracticeSubView) tea.Cmd {
 		st.input = ""
 		st.showHint = false
 		m.status = "Loading " + st.config.ItemNoun + "..."
-		return st.config.Load(m)
+
+		// Capture the request identity at command creation time. A learner can
+		// leave and re-enter a trainer before its loader finishes; wrapping the
+		// command here prevents that late result from being mistaken for the
+		// newer session's data.
+		loadID := st.loadID
+		load := st.config.Load(m)
+		return func() tea.Msg {
+			msg := load()
+			if itemsMsg, ok := msg.(trainerItemsMsg); ok {
+				itemsMsg.id = loadID
+				return itemsMsg
+			}
+			return msg
+		}
 	}
 	return nil
 }

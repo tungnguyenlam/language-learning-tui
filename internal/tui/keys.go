@@ -28,6 +28,39 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	// Help is a modal overlay. Keep navigation and editing keys from reaching
+	// the view underneath it; only scrolling, closing, and quitting are useful
+	// until the learner dismisses the shortcut reference.
+	if m.showHelp {
+		scrollHelp := func(delta int) {
+			maxScroll := maxInt(0, m.helpTotalLines-m.helpViewportLines)
+			m.helpScroll = clampInt(m.helpScroll+delta, 0, maxScroll)
+		}
+		switch key {
+		case "ctrl+c":
+			return m, tea.Quit
+		case "esc", "?":
+			m.showHelp = false
+			m.helpScroll = 0
+			m.status = "Help overlay closed."
+			return m, nil
+		case "up", "k":
+			scrollHelp(-1)
+			return m, nil
+		case "down", "j":
+			scrollHelp(1)
+			return m, nil
+		case "pgup":
+			scrollHelp(-maxInt(1, m.helpViewportLines))
+			return m, nil
+		case "pgdown", "space":
+			scrollHelp(maxInt(1, m.helpViewportLines))
+			return m, nil
+		default:
+			return m, nil
+		}
+	}
+
 	// Toggle dictionary overlay on '='.
 	// Practice Hub reserves '=' for the Relative Clauses trainer (#12).
 	// Inside a text-input trainer (including Relative), '=' must be typed /
@@ -125,6 +158,7 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		}
 		if !m.textInputActive() {
 			m.showHelp = !m.showHelp
+			m.helpScroll = 0
 			msg := "Help overlay closed."
 			if m.showHelp {
 				msg = "Help overlay shown. Press ? to close."
@@ -422,8 +456,8 @@ func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 				if len(m.dueCards) > 0 {
 					card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
 					targetAnswer := card.Answer
-					if card.Kind == core.CardKindCloze && len(card.Choices) > 0 {
-						targetAnswer = card.Choices[0]
+					if card.Kind == core.CardKindCloze {
+						targetAnswer = clozeAnswerText(card)
 					}
 					m.typingCorrect = m.normalizeAnswer(m.typedAnswer) == m.normalizeAnswer(targetAnswer)
 					m.revealState = RevealRevealed

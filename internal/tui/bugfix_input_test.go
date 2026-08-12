@@ -928,6 +928,102 @@ func TestStalePracticeItemsIgnored(t *testing.T) {
 	}
 }
 
+// Generic trainer loads must not let a previous visit overwrite a newer one.
+func TestStaleTrainerItemsIgnored(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewPractice
+	m.practiceSubView = PracticeSubViewCase
+	st := m.trainerStateFor(PracticeSubViewCase)
+	st.loadID = 2
+	st.items = []trainerItem{{Title: "current", Answer: "dem"}}
+
+	m.Update(trainerItemsMsg{
+		kind:  PracticeSubViewCase,
+		id:    1,
+		items: []trainerItem{{Title: "stale", Answer: "der"}},
+	})
+	if len(st.items) != 1 || st.items[0].Title != "current" {
+		t.Fatalf("stale trainer items applied: %#v", st.items)
+	}
+
+	// Leaving the trainer invalidates even the latest request for that view;
+	// its result must wait for the next explicit entry/load.
+	m.practiceSubView = PracticeSubViewHub
+	m.Update(trainerItemsMsg{
+		kind:  PracticeSubViewCase,
+		id:    2,
+		items: []trainerItem{{Title: "off-screen", Answer: "die"}},
+	})
+	if st.items[0].Title != "current" {
+		t.Fatalf("trainer items applied after leaving trainer: %#v", st.items)
+	}
+
+	m.practiceSubView = PracticeSubViewCase
+	m.Update(trainerItemsMsg{
+		kind:  PracticeSubViewCase,
+		id:    2,
+		items: []trainerItem{{Title: "fresh", Answer: "dem"}},
+	})
+	if len(st.items) != 1 || st.items[0].Title != "fresh" {
+		t.Fatalf("current trainer items were not applied: %#v", st.items)
+	}
+}
+
+func TestTrainerLoadCapturesRequestID(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	first := m.enterPracticeMode(PracticeSubViewCase)
+	second := m.enterPracticeMode(PracticeSubViewCase)
+
+	firstResult := first()
+	firstMsg, ok := firstResult.(trainerItemsMsg)
+	if !ok {
+		t.Fatalf("first load returned %T, want trainerItemsMsg", firstResult)
+	}
+	secondResult := second()
+	secondMsg, ok := secondResult.(trainerItemsMsg)
+	if !ok {
+		t.Fatalf("second load returned %T, want trainerItemsMsg", secondResult)
+	}
+	if firstMsg.id != 1 || secondMsg.id != 2 {
+		t.Fatalf("trainer request IDs = %d, %d; want 1, 2", firstMsg.id, secondMsg.id)
+	}
+}
+
+func TestHelpOverlayIsModalAndScrollable(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.width = 80
+	m.height = 24
+	m.breakpoint = BreakpointMedium
+
+	updated, _ := m.Update(tea.KeyPressMsg{Text: "?", Code: '?'})
+	m = updated.(*Model)
+	if !m.showHelp {
+		t.Fatal("expected help overlay to open")
+	}
+	_ = m.View()
+	if m.helpTotalLines <= m.helpViewportLines {
+		t.Fatalf("expected help content to require scrolling, total=%d viewport=%d", m.helpTotalLines, m.helpViewportLines)
+	}
+
+	updated, cmd := m.Update(tea.KeyPressMsg{Text: "0", Code: '0'})
+	m = updated.(*Model)
+	if cmd != nil || m.activeView != ViewDashboard || !m.showHelp {
+		t.Fatalf("help overlay leaked key to underlying view: view=%s help=%v cmd=%v", m.activeView, m.showHelp, cmd != nil)
+	}
+
+	updated, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyDown})
+	m = updated.(*Model)
+	if m.helpScroll != 1 {
+		t.Fatalf("help down did not scroll one line, scroll=%d", m.helpScroll)
+	}
+
+	updated, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEsc})
+	m = updated.(*Model)
+	if m.showHelp || m.helpScroll != 0 {
+		t.Fatalf("help overlay did not close/reset: help=%v scroll=%d", m.showHelp, m.helpScroll)
+	}
+}
+
 // Grading that finishes after a bookmark-filter flip must not install the old queue.
 func TestGradeRespectsLiveBookmarkFilter(t *testing.T) {
 	repo := &mockRepo{

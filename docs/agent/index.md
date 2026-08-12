@@ -29,10 +29,13 @@ Last updated: 2026-08-12
 - `docs/agent/notices/2026-07-26-trainer-input-vs-global-shortcuts.md`: new single-letter global shortcuts must be guarded with `trainerInputActive()` or they are unreachable as typed characters in the practice trainers.
 - `docs/agent/notices/2026-07-26-ankiweb-undocumented-endpoints.md`: AnkiWeb's shared-deck protobuf endpoints have no published schema; decode defensively, refresh download tokens, and keep the browser out of the tab cycle.
 - `docs/agent/notices/2026-08-01-dictionary-forms-fts.md`: normal inflection searches use a companion FTS5 table whose rowids must stay aligned with the main dictionary table.
+- `docs/agent/notices/2026-08-12-generic-trainer-load-identity.md`: generic trainer item loads must carry a request ID and active-subview guard.
+- `docs/agent/notices/2026-08-12-anki-cloze-ordinal-grouping.md`: repeated Anki cloze ordinals form one card and must retain numeric order and grouped answers.
 
 ## Verification Status
 
-- ✅ `./scripts/verify.sh` passed on 2026-08-12 (Go tests, vet, dict.cc import, smoke test, binary build, core E2E suite: 34 passed)
+- ✅ `./scripts/verify.sh` passed on 2026-08-12 after the improvement pass (Go tests, vet, dict.cc
+  import, smoke test, binary build, core E2E suite: 34 passed in 36.17s)
 - ✅ All Go test suites passing (as of 2026-08-05)
 - ✅ App launches without errors (smoke test passing)
 - ✅ All views render correctly (Dashboard, Review, Import, AI, Settings, Browser, Cram, SessionSummary, Dictionary)

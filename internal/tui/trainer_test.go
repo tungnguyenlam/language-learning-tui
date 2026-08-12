@@ -59,6 +59,8 @@ func TestGlobalShortcutsStillWorkOutsideTrainers(t *testing.T) {
 	if !updated.(*Model).showHelp {
 		t.Fatal("expected ? to toggle the help overlay on the Dashboard")
 	}
+	// Dismiss the modal before checking the Dashboard quit shortcut.
+	m.Update(tea.KeyPressMsg{Code: '?'})
 
 	if _, cmd := m.Update(tea.KeyPressMsg{Code: 'q'}); cmd == nil {
 		t.Fatal("expected q to quit from the Dashboard")
