@@ -98,7 +98,7 @@ func TestBrowserEnterShowsSelectedCardHistory(t *testing.T) {
 	model.activeView = ViewBrowser
 	model.browserCards = repo.dueCards
 
-	cmd, handled := model.updateBrowserKey(tea.KeyPressMsg{Code: tea.KeyEnter})
+	cmd, handled := (browserScreen{}).HandleKey(model, tea.KeyPressMsg{Code: tea.KeyEnter})
 	if !handled || cmd == nil {
 		t.Fatal("browser enter should load selected card history")
 	}
@@ -1698,12 +1698,12 @@ func TestBrowserViewNavigation(t *testing.T) {
 		t.Fatal("browser should have cards")
 	}
 
-	model.updateBrowserKey(tea.KeyPressMsg{Code: 'j'})
+	(browserScreen{}).HandleKey(model, tea.KeyPressMsg{Code: 'j'})
 	if model.browserCursor != 1 {
 		t.Fatalf("browserCursor = %d, want 1", model.browserCursor)
 	}
 
-	model.updateBrowserKey(tea.KeyPressMsg{Code: 'k'})
+	(browserScreen{}).HandleKey(model, tea.KeyPressMsg{Code: 'k'})
 	if model.browserCursor != 0 {
 		t.Fatalf("browserCursor = %d, want 0", model.browserCursor)
 	}
@@ -1721,9 +1721,9 @@ func TestBrowserSearchFilter(t *testing.T) {
 	model.activeView = ViewBrowser
 	model.browserDeckID = "deck-1"
 
-	model.updateBrowserKey(tea.KeyPressMsg{Code: '/'})
-	model.updateBrowserKey(tea.KeyPressMsg{Code: 'A'})
-	model.updateBrowserKey(tea.KeyPressMsg{Code: 'p'})
+	(browserScreen{}).HandleKey(model, tea.KeyPressMsg{Code: '/'})
+	(browserScreen{}).HandleKey(model, tea.KeyPressMsg{Code: 'A'})
+	(browserScreen{}).HandleKey(model, tea.KeyPressMsg{Code: 'p'})
 	// Execute the cmd to load browser cards with search
 	cmd := model.loadBrowserCards()
 	if cmd != nil {
@@ -2420,7 +2420,7 @@ func TestBrowserSelectAllAndPlayAudio(t *testing.T) {
 	model.browserCards = repo.dueCards
 
 	// 1. Test Select All
-	_, handled := model.updateBrowserKey(tea.KeyPressMsg{Code: 'a'})
+	_, handled := (browserScreen{}).HandleKey(model, tea.KeyPressMsg{Code: 'a'})
 	if !handled {
 		t.Fatal("expected 'a' to be handled")
 	}
@@ -2429,7 +2429,7 @@ func TestBrowserSelectAllAndPlayAudio(t *testing.T) {
 	}
 
 	// 2. Test Deselect All (using toggle 'a' again)
-	_, handled = model.updateBrowserKey(tea.KeyPressMsg{Code: 'a'})
+	_, handled = (browserScreen{}).HandleKey(model, tea.KeyPressMsg{Code: 'a'})
 	if !handled {
 		t.Fatal("expected second 'a' to be handled")
 	}
@@ -2438,7 +2438,7 @@ func TestBrowserSelectAllAndPlayAudio(t *testing.T) {
 	}
 
 	// 3. Test Play Audio
-	cmd, handled := model.updateBrowserKey(tea.KeyPressMsg{Code: 'p'})
+	cmd, handled := (browserScreen{}).HandleKey(model, tea.KeyPressMsg{Code: 'p'})
 	if !handled {
 		t.Fatal("expected 'p' to be handled")
 	}

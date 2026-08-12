@@ -132,14 +132,9 @@ func (s *Store) UpsertDeck(ctx context.Context, deck core.Deck) error {
 	if deck.ID == "" {
 		return errors.New("deck id is required")
 	}
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	tags := strings.Join(deck.Tags, " ")
-	_, err = tx.ExecContext(ctx, `
+	return s.withTx(ctx, func(tx *sql.Tx) error {
+		tags := strings.Join(deck.Tags, " ")
+		_, err := tx.ExecContext(ctx, `
 		INSERT INTO decks (id, name, description, tags, new_cards_per_day, review_limit_per_day)
 		VALUES (?, ?, ?, ?, ?, ?)
 		ON CONFLICT(id) DO UPDATE SET 
@@ -148,19 +143,20 @@ func (s *Store) UpsertDeck(ctx context.Context, deck core.Deck) error {
 			tags = excluded.tags,
 			new_cards_per_day = excluded.new_cards_per_day,
 			review_limit_per_day = excluded.review_limit_per_day
-	`, deck.ID, deck.Name, deck.Description, tags, deck.NewCardsPerDay, deck.ReviewLimitPerDay)
-	if err != nil {
-		return err
-	}
-	for _, note := range deck.Notes {
-		if note.DeckID == "" {
-			note.DeckID = deck.ID
-		}
-		if err := s.upsertNoteTx(ctx, tx, note); err != nil {
+		`, deck.ID, deck.Name, deck.Description, tags, deck.NewCardsPerDay, deck.ReviewLimitPerDay)
+		if err != nil {
 			return err
 		}
-	}
-	return tx.Commit()
+		for _, note := range deck.Notes {
+			if note.DeckID == "" {
+				note.DeckID = deck.ID
+			}
+			if err := s.upsertNoteTx(ctx, tx, note); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }
 
 func (s *Store) GetDeck(ctx context.Context, id string) (core.Deck, error) {
@@ -263,15 +259,9 @@ func (s *Store) GetNote(ctx context.Context, noteID string) (core.Note, error) {
 }
 
 func (s *Store) UpsertNote(ctx context.Context, note core.Note) error {
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-	if err := s.upsertNoteTx(ctx, tx, note); err != nil {
-		return err
-	}
-	return tx.Commit()
+	return s.withTx(ctx, func(tx *sql.Tx) error {
+		return s.upsertNoteTx(ctx, tx, note)
+	})
 }
 
 func (s *Store) upsertNoteTx(ctx context.Context, tx *sql.Tx, note core.Note) error {
@@ -376,33 +366,9 @@ func (s *Store) cardsForDeckMap(ctx context.Context, deckID string) (map[string]
 
 	cardsMap := make(map[string][]core.Card)
 	for rows.Next() {
-		var card core.Card
-		var kind string
-		var choicesStr, tags string
-		var bookmarked, leech, suspended, intervalSec, reviews, lapses int
-		var ease float64
-		var due, lastReviewed sql.NullTime
-		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &card.Extra, &card.Hint, &choicesStr, &card.Audio, &tags, &bookmarked, &leech, &suspended, &intervalSec, &reviews, &lapses, &ease, &due, &lastReviewed); err != nil {
+		card, err := scanCard(rows)
+		if err != nil {
 			return nil, err
-		}
-		card.Kind = core.CardKind(kind)
-		card.Bookmarked = bookmarked != 0
-		card.Leech = leech != 0
-		card.Suspended = suspended != 0
-		card.Interval = time.Duration(intervalSec) * time.Second
-		card.Reviews = reviews
-		card.Lapses = lapses
-		card.Ease = ease
-		if due.Valid {
-			card.Due = due.Time
-		}
-		if lastReviewed.Valid {
-			card.LastReviewed = lastReviewed.Time
-		}
-		card.Mature = intervalSec >= 1814400
-		card.Choices = parseChoices(choicesStr)
-		if tags != "" {
-			card.Tags = strings.Fields(tags)
 		}
 		cardsMap[card.NoteID] = append(cardsMap[card.NoteID], card)
 	}
@@ -426,51 +392,13 @@ func (s *Store) cardsForNote(ctx context.Context, noteID string) ([]core.Card, e
 	}
 	defer rows.Close()
 
-	var cards []core.Card
-	for rows.Next() {
-		var card core.Card
-		var kind string
-		var choicesStr, tags string
-		var bookmarked, leech, suspended, intervalSec, reviews, lapses int
-		var ease float64
-		var due, lastReviewed sql.NullTime
-		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &card.Extra, &card.Hint, &choicesStr, &card.Audio, &tags, &bookmarked, &leech, &suspended, &intervalSec, &reviews, &lapses, &ease, &due, &lastReviewed); err != nil {
-			return nil, err
-		}
-		card.Kind = core.CardKind(kind)
-		card.Bookmarked = bookmarked != 0
-		card.Leech = leech != 0
-		card.Suspended = suspended != 0
-		card.Interval = time.Duration(intervalSec) * time.Second
-		card.Reviews = reviews
-		card.Lapses = lapses
-		card.Ease = ease
-		if due.Valid {
-			card.Due = due.Time
-		}
-		if lastReviewed.Valid {
-			card.LastReviewed = lastReviewed.Time
-		}
-		card.Mature = intervalSec >= 1814400
-		card.Choices = parseChoices(choicesStr)
-		if tags != "" {
-			card.Tags = strings.Fields(tags)
-		}
-		cards = append(cards, card)
-	}
-	return cards, rows.Err()
+	return scanCards(rows)
 }
 
 func (s *Store) UpsertCard(ctx context.Context, card core.Card) error {
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-	if err := s.upsertCardTx(ctx, tx, card); err != nil {
-		return err
-	}
-	return tx.Commit()
+	return s.withTx(ctx, func(tx *sql.Tx) error {
+		return s.upsertCardTx(ctx, tx, card)
+	})
 }
 
 func (s *Store) upsertCardTx(ctx context.Context, tx *sql.Tx, card core.Card) error {
@@ -501,20 +429,15 @@ func (s *Store) RecordReview(ctx context.Context, result core.ReviewResult) erro
 	if result.CardID == "" {
 		return errors.New("card id is required")
 	}
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	_, err = tx.ExecContext(ctx, `
+	return s.withTx(ctx, func(tx *sql.Tx) error {
+		_, err := tx.ExecContext(ctx, `
 		INSERT INTO reviews (card_id, grade, reviewed_at, due_at, interval_seconds, stability, difficulty, ease, reviews, lapses)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-	`, result.CardID, string(result.Grade), result.Reviewed.UTC(), result.Next.Due.UTC(), int64(result.Next.Interval.Seconds()), result.Next.Stability, result.Next.Difficulty, result.Next.Ease, result.Next.Reviews, result.Next.Lapses)
-	if err != nil {
-		return err
-	}
-	_, err = tx.ExecContext(ctx, `
+		`, result.CardID, string(result.Grade), result.Reviewed.UTC(), result.Next.Due.UTC(), int64(result.Next.Interval.Seconds()), result.Next.Stability, result.Next.Difficulty, result.Next.Ease, result.Next.Reviews, result.Next.Lapses)
+		if err != nil {
+			return err
+		}
+		_, err = tx.ExecContext(ctx, `
 		INSERT INTO review_states (card_id, due_at, last_review_at, interval_seconds, stability, difficulty, ease, reviews, lapses)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
 		ON CONFLICT(card_id) DO UPDATE SET
@@ -526,35 +449,32 @@ func (s *Store) RecordReview(ctx context.Context, result core.ReviewResult) erro
 			ease = excluded.ease,
 			reviews = excluded.reviews,
 			lapses = excluded.lapses
-	`, result.CardID, result.Next.Due.UTC(), result.Reviewed.UTC(), int64(result.Next.Interval.Seconds()), result.Next.Stability, result.Next.Difficulty, result.Next.Ease, result.Next.Reviews, result.Next.Lapses)
-	if err != nil {
-		return err
-	}
+		`, result.CardID, result.Next.Due.UTC(), result.Reviewed.UTC(), int64(result.Next.Interval.Seconds()), result.Next.Stability, result.Next.Difficulty, result.Next.Ease, result.Next.Reviews, result.Next.Lapses)
+		if err != nil {
+			return err
+		}
 
-	if result.Grade == core.GradeAgain {
-		_, err = tx.ExecContext(ctx, `
+		if result.Grade == core.GradeAgain {
+			_, err = tx.ExecContext(ctx, `
 			INSERT INTO card_flags (card_id, bookmarked, lapse_streak, leech, updated_at)
 			VALUES (?, 0, 1, 0, ?)
 			ON CONFLICT(card_id) DO UPDATE SET
 				lapse_streak = card_flags.lapse_streak + 1,
 				leech = CASE WHEN card_flags.lapse_streak + 1 >= 3 THEN 1 ELSE 0 END,
 				updated_at = ?
-		`, result.CardID, time.Now().UTC(), time.Now().UTC())
-	} else {
-		_, err = tx.ExecContext(ctx, `
+			`, result.CardID, time.Now().UTC(), time.Now().UTC())
+		} else {
+			_, err = tx.ExecContext(ctx, `
 			INSERT INTO card_flags (card_id, bookmarked, lapse_streak, leech, updated_at)
 			VALUES (?, 0, 0, 0, ?)
 			ON CONFLICT(card_id) DO UPDATE SET
 				lapse_streak = 0,
 				leech = 0,
 				updated_at = ?
-		`, result.CardID, time.Now().UTC(), time.Now().UTC())
-	}
-	if err != nil {
+			`, result.CardID, time.Now().UTC(), time.Now().UTC())
+		}
 		return err
-	}
-
-	return tx.Commit()
+	})
 }
 
 func (s *Store) UndoLastReview(ctx context.Context, cardID string) error {
@@ -693,39 +613,7 @@ func (s *Store) DueCards(ctx context.Context, now time.Time, limit int) ([]core.
 	}
 	defer rows.Close()
 
-	var cards []core.Card
-	for rows.Next() {
-		var card core.Card
-		var kind string
-		var choicesStr, tags string
-		var bookmarked, leech, suspended, intervalSec, reviews, lapses int
-		var ease float64
-		var due, lastReviewed sql.NullTime
-		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &card.Extra, &card.Hint, &choicesStr, &card.Audio, &tags, &bookmarked, &leech, &suspended, &intervalSec, &reviews, &lapses, &ease, &due, &lastReviewed); err != nil {
-			return nil, err
-		}
-		card.Kind = core.CardKind(kind)
-		card.Bookmarked = bookmarked != 0
-		card.Leech = leech != 0
-		card.Suspended = suspended != 0
-		card.Interval = time.Duration(intervalSec) * time.Second
-		card.Reviews = reviews
-		card.Lapses = lapses
-		card.Ease = ease
-		if due.Valid {
-			card.Due = due.Time
-		}
-		if lastReviewed.Valid {
-			card.LastReviewed = lastReviewed.Time
-		}
-		card.Mature = intervalSec >= 1814400
-		card.Choices = parseChoices(choicesStr)
-		if tags != "" {
-			card.Tags = strings.Fields(tags)
-		}
-		cards = append(cards, card)
-	}
-	return cards, rows.Err()
+	return scanCards(rows)
 }
 
 func (s *Store) DueCardsBookmarked(ctx context.Context, now time.Time, limit int) ([]core.Card, error) {
@@ -750,39 +638,7 @@ func (s *Store) DueCardsBookmarked(ctx context.Context, now time.Time, limit int
 	}
 	defer rows.Close()
 
-	var cards []core.Card
-	for rows.Next() {
-		var card core.Card
-		var kind string
-		var choicesStr, tags string
-		var bookmarked, leech, suspended, intervalSec, reviews, lapses int
-		var ease float64
-		var due, lastReviewed sql.NullTime
-		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &card.Extra, &card.Hint, &choicesStr, &card.Audio, &tags, &bookmarked, &leech, &suspended, &intervalSec, &reviews, &lapses, &ease, &due, &lastReviewed); err != nil {
-			return nil, err
-		}
-		card.Kind = core.CardKind(kind)
-		card.Bookmarked = bookmarked != 0
-		card.Leech = leech != 0
-		card.Suspended = suspended != 0
-		card.Interval = time.Duration(intervalSec) * time.Second
-		card.Reviews = reviews
-		card.Lapses = lapses
-		card.Ease = ease
-		if due.Valid {
-			card.Due = due.Time
-		}
-		if lastReviewed.Valid {
-			card.LastReviewed = lastReviewed.Time
-		}
-		card.Mature = intervalSec >= 1814400
-		card.Choices = parseChoices(choicesStr)
-		if tags != "" {
-			card.Tags = strings.Fields(tags)
-		}
-		cards = append(cards, card)
-	}
-	return cards, rows.Err()
+	return scanCards(rows)
 }
 
 func (s *Store) SetCardBookmark(ctx context.Context, cardID string, bookmarked bool) error {
@@ -1374,26 +1230,19 @@ func (s *Store) DeleteCard(ctx context.Context, cardID string) error {
 	if cardID == "" {
 		return errors.New("card id is required")
 	}
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
+	return s.withTx(ctx, func(tx *sql.Tx) error {
+		if _, err := tx.ExecContext(ctx, `DELETE FROM reviews WHERE card_id = ?`, cardID); err != nil {
+			return err
+		}
+		if _, err := tx.ExecContext(ctx, `DELETE FROM review_states WHERE card_id = ?`, cardID); err != nil {
+			return err
+		}
+		if _, err := tx.ExecContext(ctx, `DELETE FROM card_flags WHERE card_id = ?`, cardID); err != nil {
+			return err
+		}
+		_, err := tx.ExecContext(ctx, `DELETE FROM cards WHERE id = ?`, cardID)
 		return err
-	}
-	defer tx.Rollback()
-
-	if _, err := tx.ExecContext(ctx, `DELETE FROM reviews WHERE card_id = ?`, cardID); err != nil {
-		return err
-	}
-	if _, err := tx.ExecContext(ctx, `DELETE FROM review_states WHERE card_id = ?`, cardID); err != nil {
-		return err
-	}
-	if _, err := tx.ExecContext(ctx, `DELETE FROM card_flags WHERE card_id = ?`, cardID); err != nil {
-		return err
-	}
-	if _, err := tx.ExecContext(ctx, `DELETE FROM cards WHERE id = ?`, cardID); err != nil {
-		return err
-	}
-
-	return tx.Commit()
+	})
 }
 
 func (s *Store) SetCardKind(ctx context.Context, cardID string, kind core.CardKind) error {
@@ -1401,36 +1250,26 @@ func (s *Store) SetCardKind(ctx context.Context, cardID string, kind core.CardKi
 		return errors.New("card id is required")
 	}
 
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	// If converting to MCQ, ensure we have at least some choices
-	if kind == core.CardKindMCQ {
-		var choicesStr, answer string
-		err := tx.QueryRowContext(ctx, `SELECT choices, answer FROM cards WHERE id = ?`, cardID).Scan(&choicesStr, &answer)
-		if err != nil {
-			return err
-		}
-		choices := parseChoices(choicesStr)
-		if len(choices) < 2 {
-			// Add the answer and a dummy choice if not enough
-			choices = []string{answer, "???"}
-			newChoicesStr := strings.Join(choices, "|||")
-			_, err = tx.ExecContext(ctx, `UPDATE cards SET choices = ? WHERE id = ?`, newChoicesStr, cardID)
+	return s.withTx(ctx, func(tx *sql.Tx) error {
+		// If converting to MCQ, ensure we have at least some choices.
+		if kind == core.CardKindMCQ {
+			var choicesStr, answer string
+			err := tx.QueryRowContext(ctx, `SELECT choices, answer FROM cards WHERE id = ?`, cardID).Scan(&choicesStr, &answer)
 			if err != nil {
 				return err
 			}
+			choices := parseChoices(choicesStr)
+			if len(choices) < 2 {
+				choices = []string{answer, "???"}
+				if _, err := tx.ExecContext(ctx, `UPDATE cards SET choices = ? WHERE id = ?`, strings.Join(choices, "|||"), cardID); err != nil {
+					return err
+				}
+			}
 		}
-	}
 
-	_, err = tx.ExecContext(ctx, `UPDATE cards SET kind = ? WHERE id = ?`, string(kind), cardID)
-	if err != nil {
+		_, err := tx.ExecContext(ctx, `UPDATE cards SET kind = ? WHERE id = ?`, string(kind), cardID)
 		return err
-	}
-	return tx.Commit()
+	})
 }
 
 func (s *Store) SetCardTags(ctx context.Context, cardID string, tags []string) error {
@@ -1442,59 +1281,43 @@ func (s *Store) SetCardsTags(ctx context.Context, cardIDs []string, tags []strin
 		return nil
 	}
 
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
 	tagsStr := strings.Join(tags, " ")
-
-	seenNotes := make(map[string]struct{}, len(cardIDs))
-	for _, cardID := range cardIDs {
-		var noteID string
-		err = tx.QueryRowContext(ctx, `SELECT note_id FROM cards WHERE id = ?`, cardID).Scan(&noteID)
-		if errors.Is(err, sql.ErrNoRows) {
-			continue
-		}
-		if err != nil {
-			return err
-		}
-		seenNotes[noteID] = struct{}{}
-	}
-
-	for noteID := range seenNotes {
-		// Update all cards for this note
-		_, err = tx.ExecContext(ctx, `UPDATE cards SET tags = ? WHERE note_id = ?`, tagsStr, noteID)
-		if err != nil {
-			return err
+	return s.withTx(ctx, func(tx *sql.Tx) error {
+		seenNotes := make(map[string]struct{}, len(cardIDs))
+		for _, cardID := range cardIDs {
+			var noteID string
+			err := tx.QueryRowContext(ctx, `SELECT note_id FROM cards WHERE id = ?`, cardID).Scan(&noteID)
+			if errors.Is(err, sql.ErrNoRows) {
+				continue
+			}
+			if err != nil {
+				return err
+			}
+			seenNotes[noteID] = struct{}{}
 		}
 
-		// Update the note itself
-		_, err = tx.ExecContext(ctx, `UPDATE notes SET tags = ? WHERE id = ?`, tagsStr, noteID)
-		if err != nil {
-			return err
+		for noteID := range seenNotes {
+			if _, err := tx.ExecContext(ctx, `UPDATE cards SET tags = ? WHERE note_id = ?`, tagsStr, noteID); err != nil {
+				return err
+			}
+			if _, err := tx.ExecContext(ctx, `UPDATE notes SET tags = ? WHERE id = ?`, tagsStr, noteID); err != nil {
+				return err
+			}
 		}
-	}
-
-	return tx.Commit()
+		return nil
+	})
 }
 
 func (s *Store) Reset(ctx context.Context) error {
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	tables := []string{"reviews", "review_states", "card_flags", "cards", "notes", "decks"}
-	for _, table := range tables {
-		if _, err := tx.ExecContext(ctx, fmt.Sprintf("DELETE FROM %s", table)); err != nil {
-			return err
+	return s.withTx(ctx, func(tx *sql.Tx) error {
+		tables := []string{"reviews", "review_states", "card_flags", "cards", "notes", "decks"}
+		for _, table := range tables {
+			if _, err := tx.ExecContext(ctx, fmt.Sprintf("DELETE FROM %s", table)); err != nil {
+				return err
+			}
 		}
-	}
-
-	return tx.Commit()
+		return nil
+	})
 }
 
 func parseChoices(raw string) []string {
@@ -1566,39 +1389,7 @@ func (s *Store) queryCards(ctx context.Context, deckID, search, tag, flag string
 	}
 	defer rows.Close()
 
-	var cards []core.Card
-	for rows.Next() {
-		var card core.Card
-		var kind string
-		var choicesStr, tags string
-		var bookmarked, leech, suspended, intervalSec, reviews, lapses int
-		var ease float64
-		var due, lastReviewed sql.NullTime
-		if err := rows.Scan(&card.ID, &card.NoteID, &card.DeckID, &kind, &card.Prompt, &card.Answer, &card.Extra, &card.Hint, &choicesStr, &card.Audio, &tags, &bookmarked, &leech, &suspended, &intervalSec, &reviews, &lapses, &ease, &due, &lastReviewed); err != nil {
-			return nil, err
-		}
-		card.Kind = core.CardKind(kind)
-		card.Bookmarked = bookmarked != 0
-		card.Leech = leech != 0
-		card.Suspended = suspended != 0
-		card.Interval = time.Duration(intervalSec) * time.Second
-		card.Reviews = reviews
-		card.Lapses = lapses
-		card.Ease = ease
-		if due.Valid {
-			card.Due = due.Time
-		}
-		if lastReviewed.Valid {
-			card.LastReviewed = lastReviewed.Time
-		}
-		card.Mature = intervalSec >= 1814400
-		card.Choices = parseChoices(choicesStr)
-		if tags != "" {
-			card.Tags = strings.Fields(tags)
-		}
-		cards = append(cards, card)
-	}
-	return cards, rows.Err()
+	return scanCards(rows)
 }
 
 func (s *Store) DeleteDecks(ctx context.Context, ids []string) error {
@@ -1626,87 +1417,68 @@ func (s *Store) MergeDecks(ctx context.Context, sourceIDs []string, targetID str
 	}
 	sourceIDs = filteredSources
 
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
 	sourceIn := `(` + strings.Repeat("?,", len(sourceIDs)-1) + `?)`
 	args := make([]interface{}, 0, len(sourceIDs)+1)
 	for _, id := range sourceIDs {
 		args = append(args, id)
 	}
 
-	// Update notes
-	noteQuery := `UPDATE notes SET deck_id = ? WHERE deck_id IN ` + sourceIn
-	noteArgs := append([]interface{}{targetID}, args...)
-	if _, err := tx.ExecContext(ctx, noteQuery, noteArgs...); err != nil {
-		return err
-	}
+	return s.withTx(ctx, func(tx *sql.Tx) error {
+		noteQuery := `UPDATE notes SET deck_id = ? WHERE deck_id IN ` + sourceIn
+		noteArgs := append([]interface{}{targetID}, args...)
+		if _, err := tx.ExecContext(ctx, noteQuery, noteArgs...); err != nil {
+			return err
+		}
 
-	// Update cards
-	cardQuery := `UPDATE cards SET deck_id = ? WHERE deck_id IN ` + sourceIn
-	cardArgs := append([]interface{}{targetID}, args...)
-	if _, err := tx.ExecContext(ctx, cardQuery, cardArgs...); err != nil {
-		return err
-	}
+		cardQuery := `UPDATE cards SET deck_id = ? WHERE deck_id IN ` + sourceIn
+		cardArgs := append([]interface{}{targetID}, args...)
+		if _, err := tx.ExecContext(ctx, cardQuery, cardArgs...); err != nil {
+			return err
+		}
 
-	// Delete source decks
-	deckQuery := `DELETE FROM decks WHERE id IN ` + sourceIn
-	if _, err := tx.ExecContext(ctx, deckQuery, args...); err != nil {
+		deckQuery := `DELETE FROM decks WHERE id IN ` + sourceIn
+		_, err := tx.ExecContext(ctx, deckQuery, args...)
 		return err
-	}
-
-	return tx.Commit()
+	})
 }
 
 func (s *Store) CleanupTags(ctx context.Context, deckID string) error {
 	if deckID == "" {
 		return nil
 	}
-
-	tx, err := s.db.BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	rows, err := tx.QueryContext(ctx, `SELECT tags FROM cards WHERE deck_id = ?`, deckID)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-
-	tagMap := make(map[string]bool)
-	for rows.Next() {
-		var tagsStr string
-		if err := rows.Scan(&tagsStr); err != nil {
+	return s.withTx(ctx, func(tx *sql.Tx) error {
+		rows, err := tx.QueryContext(ctx, `SELECT tags FROM cards WHERE deck_id = ?`, deckID)
+		if err != nil {
 			return err
 		}
-		for _, tag := range strings.Fields(tagsStr) {
-			if tag != "" {
-				tagMap[tag] = true
+
+		tagMap := make(map[string]bool)
+		for rows.Next() {
+			var tagsStr string
+			if err := rows.Scan(&tagsStr); err != nil {
+				_ = rows.Close()
+				return err
+			}
+			for _, tag := range strings.Fields(tagsStr) {
+				if tag != "" {
+					tagMap[tag] = true
+				}
 			}
 		}
-	}
-	if err := rows.Close(); err != nil {
-		return err
-	}
-	if err := rows.Err(); err != nil {
-		return err
-	}
+		if err := rows.Err(); err != nil {
+			_ = rows.Close()
+			return err
+		}
+		if err := rows.Close(); err != nil {
+			return err
+		}
 
-	uniqueTags := make([]string, 0, len(tagMap))
-	for tag := range tagMap {
-		uniqueTags = append(uniqueTags, tag)
-	}
+		uniqueTags := make([]string, 0, len(tagMap))
+		for tag := range tagMap {
+			uniqueTags = append(uniqueTags, tag)
+		}
 
-	tagsStr := strings.Join(uniqueTags, " ")
-	_, err = tx.ExecContext(ctx, `UPDATE decks SET tags = ? WHERE id = ?`, tagsStr, deckID)
-	if err != nil {
+		_, err = tx.ExecContext(ctx, `UPDATE decks SET tags = ? WHERE id = ?`, strings.Join(uniqueTags, " "), deckID)
 		return err
-	}
-
-	return tx.Commit()
+	})
 }

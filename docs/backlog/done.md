@@ -1,3 +1,46 @@
+# 2026-08-12 (Reusable SQLite Transaction Boundary)
+
+Added a commit-on-success transaction helper with focused commit/rollback coverage and adopted it
+across routine repository mutations. Early returns now roll back by construction instead of each
+write path independently repeating transaction lifecycle boilerplate.
+
+### Verification
+
+- `go test ./internal/storage/sqlite` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512 entries), smoke
+  test, binary build, and core E2E suite (34 passed in 36.17s).
+- `go test -race ./...` passed.
+
+# 2026-08-12 (Browser and Review Screen Ownership)
+
+Moved Browser and Review key behavior out of the global key-routing file and into their registered
+screen implementations. Tests that bypassed the screen boundary now exercise the same contract as
+production routing, and `keys.go` is 436 lines smaller.
+
+### Verification
+
+- `go test ./internal/tui` passed.
+
+# 2026-08-12 (Shared TUI Search Debouncing)
+
+Centralized Browser and Dictionary debounce generation/scheduling behind one helper. Text entry,
+backspace, tag filters, and paste now share the same timing contract instead of repeating timer
+bookkeeping in eight call sites; focused tests cover independent view generations and stale drops.
+
+### Verification
+
+- `go test ./internal/tui` passed.
+
+# 2026-08-12 (Canonical SQLite Card Decoding)
+
+Replaced five duplicated 20-column SQLite-to-`core.Card` mappings with a single reusable row
+decoder shared by deck, note, due, bookmarked-due, and filtered card queries. This makes adding or
+fixing persisted card fields a one-location change.
+
+### Verification
+
+- `go test ./internal/storage/sqlite` passed.
+
 # 2026-08-12 (Practice Load Guards, Anki Cloze Grouping & Modal Help)
 
 ### Improvements

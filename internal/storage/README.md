@@ -6,7 +6,8 @@ SQLite-based persistence layer for flashcards, progress, and review history.
 
 - **SQLite**: Local-first storage using a single `.db` file in the data directory.
 - **Migrations**: Incremental schema updates using a numbered migration system.
-- **Repository Pattern**: All database access is encapsulated in the `SqliteRepository`, which implements `core.Repository`.
+- **Repository Pattern**: All database access is encapsulated in `sqlite.Store`, which implements
+  `core.Repository`.
 
 ## Migrations
 
@@ -16,9 +17,11 @@ Migrations are stored as Go strings in `migrations.go` and applied automatically
 
 ## Key Symbols
 
-- `SqliteRepository`: Main implementation of the storage interface.
-- `NewSqliteRepository`: Initializes the database and runs migrations.
-- `Schema`: The initial base schema.
+- `Store`: Main implementation of the storage interface.
+- `Open` / `OpenMemory`: Initialize a file-backed or in-memory store and run migrations.
+- `migrations`: Ordered schema history in `migrations.go`.
+- `scanCard` / `scanCards`: Canonical persisted-card row decoding shared by card queries.
+- `Store.withTx`: Commit-on-success transaction boundary for repository mutations.
 
 ## Testing
 

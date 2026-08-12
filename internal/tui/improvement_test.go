@@ -83,7 +83,7 @@ func TestReviewUndoAliases(t *testing.T) {
 	model.lastReviewedCardID = "c1"
 
 	// Test 'z' key undo alias
-	_, handled := model.updateReviewKey(tea.KeyPressMsg{Code: 'z'})
+	_, handled := (reviewScreen{}).HandleKey(model, tea.KeyPressMsg{Code: 'z'})
 	if !handled {
 		t.Fatal("Expected 'z' key to be handled in Review")
 	}
@@ -92,7 +92,7 @@ func TestReviewUndoAliases(t *testing.T) {
 	model.lastReviewedCardID = "c1"
 
 	// Test 'ctrl+z' key undo alias
-	_, handled = model.updateReviewKey(tea.KeyPressMsg{Code: 'z', Mod: tea.ModCtrl})
+	_, handled = (reviewScreen{}).HandleKey(model, tea.KeyPressMsg{Code: 'z', Mod: tea.ModCtrl})
 	if !handled {
 		t.Fatal("Expected 'ctrl+z' key to be handled in Review")
 	}
@@ -139,7 +139,7 @@ func TestReviewExplanationToggle(t *testing.T) {
 	model.explanation = "Some explanation"
 
 	// Pressing H again should toggle explanation off
-	cmd, handled := model.updateReviewKey(tea.KeyPressMsg{Code: 'H'})
+	cmd, handled := (reviewScreen{}).HandleKey(model, tea.KeyPressMsg{Code: 'H'})
 	if !handled {
 		t.Fatal("Expected Shift+H to be handled in Review")
 	}

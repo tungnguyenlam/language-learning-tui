@@ -4,16 +4,14 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
-// A screen is a self-contained view: it renders itself and handles its own key
-// presses. It receives *Model for shared services (repo, navigation, the
-// hitbox list, the status line, session counters) while its own view-local
-// state lives on the concrete screen type rather than on Model.
+// A screen owns a view's rendering and key handling. It receives *Model for
+// shared services and for legacy view state that has not yet moved onto a
+// concrete screen type.
 //
 // Migrating views to this interface is how the oversized Model struct is
-// unwound incrementally: each migrated view moves its render + key logic here
-// and its private fields off Model, one view per change. renderActiveViewPlainAt
-// and updateActiveViewKey consult the registry first and fall back to the
-// legacy per-view *Model methods for views not yet migrated.
+// unwound incrementally: first co-locate render + key logic, then move private
+// state when its cross-view dependencies are understood. renderActiveViewPlainAt
+// and updateActiveViewKey dispatch through this registry.
 type screen interface {
 	Render(m *Model, layout viewportLayout) string
 	HandleKey(m *Model, msg tea.KeyPressMsg) (tea.Cmd, bool)

@@ -4,12 +4,9 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 	"unicode"
-	"unicode/utf8"
 
 	"deutsch-tui/internal/ai"
-	"deutsch-tui/internal/content"
 	"deutsch-tui/internal/core"
 
 	tea "charm.land/bubbletea/v2"
@@ -444,209 +441,6 @@ func (m *Model) updateDashboardKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	return nil, false
 }
 
-func (m *Model) updateReviewKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
-	key := msg.String()
-
-	// Handle typing mode input
-	if m.typingMode {
-		switch key {
-		case "enter", "space", "\r", "\n", " ":
-			if !m.typingChecked {
-				m.typingChecked = true
-				if len(m.dueCards) > 0 {
-					card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
-					targetAnswer := card.Answer
-					if card.Kind == core.CardKindCloze {
-						targetAnswer = clozeAnswerText(card)
-					}
-					m.typingCorrect = m.normalizeAnswer(m.typedAnswer) == m.normalizeAnswer(targetAnswer)
-					m.revealState = RevealRevealed
-					m.revealProgress = 100
-					return m.loadReviewPredictions(card.ID), true
-				}
-				m.revealState = RevealRevealed
-				m.revealProgress = 100
-				return nil, true
-			}
-		case "esc":
-			m.typingMode = false
-			m.typedAnswer = ""
-			m.typingChecked = false
-			m.status = "Typing mode off"
-			return nil, true
-		case "backspace":
-			if !m.typingChecked {
-				if len(m.typedAnswer) > 0 {
-					m.typedAnswer = trimLastRune(m.typedAnswer)
-				}
-				return nil, true
-			}
-		}
-		if !m.typingChecked && utf8.RuneCountInString(key) == 1 {
-			r, _ := utf8.DecodeRuneInString(key)
-			if unicode.IsPrint(r) {
-				m.typedAnswer += key
-				return nil, true
-			}
-		}
-		// If typingChecked, allow other keys (like grades) to fall through
-		if !m.typingChecked {
-			return nil, true
-		}
-	}
-
-	if len(m.dueCards) > 0 {
-		card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
-		if card.Kind == core.CardKindMCQ && !m.mcqAnswered {
-			switch key {
-			case "1", "2", "3", "4":
-				m.selectMCQChoice(key)
-				m.revealState = RevealRevealed
-				m.revealProgress = 100
-				return m.loadReviewPredictions(card.ID), true
-			}
-		}
-
-		// Allow 1-4 for grading when revealed
-		if m.revealState == RevealRevealed {
-			switch key {
-			case "1":
-				return m.gradeCard(core.GradeAgain), true
-			case "2":
-				return m.gradeCard(core.GradeHard), true
-			case "3":
-				return m.gradeCard(core.GradeGood), true
-			case "4":
-				return m.gradeCard(core.GradeEasy), true
-			}
-		}
-	}
-
-	switch key {
-	case "enter", "space", "\r", "\n", " ":
-		if len(m.dueCards) == 0 {
-			m.status = "No cards due"
-			return nil, true
-		}
-		card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
-		switch m.revealState {
-		case RevealIdle:
-			return tea.Batch(m.startRevealAnimation(card), m.loadReviewPredictions(card.ID)), true
-		case RevealFlipping:
-			m.flipProgress = 100
-			m.revealState = RevealRevealing
-			m.revealProgress = 0
-			return m.loadReviewPredictions(card.ID), true
-		case RevealRevealing:
-			m.revealProgress += 15
-			if m.revealProgress >= 100 {
-				m.revealProgress = 100
-				m.revealState = RevealRevealed
-			}
-			return m.loadReviewPredictions(card.ID), true
-		case RevealRevealed:
-			m.status = "Grade with a=again h=hard g=good e=easy"
-			return nil, true
-		}
-	case "c":
-		if len(m.dueCards) == 0 {
-			m.activeView = ViewCram
-			m.status = "Custom Study (Cram Mode)"
-			return m.loadCramCards(), true
-		}
-	case "a":
-		if m.revealState == RevealRevealed {
-			return m.gradeCard(core.GradeAgain), true
-		}
-	case "h":
-		if m.revealState == RevealRevealed {
-			return m.gradeCard(core.GradeHard), true
-		}
-		if len(m.dueCards) > 0 {
-			m.showHint = !m.showHint
-			if m.showHint {
-				m.status = "Hint shown"
-			} else {
-				m.status = "Hint hidden"
-			}
-			return nil, true
-		}
-	case "g":
-		if m.revealState == RevealRevealed {
-			return m.gradeCard(core.GradeGood), true
-		}
-	case "e":
-		if m.revealState == RevealRevealed {
-			return m.gradeCard(core.GradeEasy), true
-		}
-	case "u", "z", "ctrl+z":
-		return m.undoLastReview(), true
-	case "r":
-		return m.toggleReviewHistory(), true
-	case "i":
-		if len(m.dueCards) > 0 {
-			m.showCardInfo = !m.showCardInfo
-			if m.showCardInfo {
-				m.status = "Card info shown"
-			} else {
-				m.status = "Card info hidden"
-			}
-			return nil, true
-		}
-	case "f":
-		m.focusMode = !m.focusMode
-		if m.focusMode {
-			m.status = "Focus mode enabled"
-		} else {
-			m.status = "Focus mode disabled"
-		}
-		return nil, true
-	case "H":
-		return m.explainCard(), true
-	case "G":
-		if len(m.dueCards) > 0 {
-			m.showGrammarHint = !m.showGrammarHint
-			if m.showGrammarHint {
-				card := m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]
-				tip := content.GetRelevantGrammarTip(card.Prompt)
-				m.grammarHint = &tip
-				m.status = "Grammar hint shown"
-			} else {
-				m.grammarHint = nil
-				m.status = "Grammar hint hidden"
-			}
-			return nil, true
-		}
-	case "p":
-		if len(m.dueCards) > 0 {
-			return m.playCardAudio(m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)]), true
-		}
-	case "t":
-		if !m.typingMode && m.revealState == RevealIdle {
-			m.typingMode = true
-			m.typedAnswer = ""
-			m.typingChecked = false
-			m.status = "Type your answer, press Enter to check"
-			return nil, true
-		}
-	case "b":
-		return m.toggleBookmark(), true
-	case "d":
-		return m.lookupReviewCardInDictionary(), true
-	case "B":
-		return m.toggleBookmarkFilter(), true
-	case "x":
-		return m.suspendCard(), true
-	case "!", "F":
-		return m.reportCardWrong(), true
-	case "delete", "backspace":
-		if len(m.dueCards) > 0 {
-			return m.deleteReviewCard(), true
-		}
-	}
-	return nil, false
-}
-
 func (m *Model) updateStatisticsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	switch msg.String() {
 	case "up", "k":
@@ -935,220 +729,6 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	return nil, false
 }
 
-func (m *Model) updateBrowserKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
-	if m.taggingCards {
-		switch msg.String() {
-		case "enter", "\r", "\n":
-			return m.handleTagInput(), true
-		case "esc":
-			m.taggingCards = false
-			m.tagInput = ""
-			return nil, true
-		case "backspace":
-			if len(m.tagInput) > 0 {
-				m.tagInput = trimLastRune(m.tagInput)
-			}
-			return nil, true
-		case "ctrl+u":
-			m.tagInput = ""
-			return nil, true
-		}
-		if ch, ok := singlePrintableInput(msg.String()); ok {
-			m.tagInput += ch
-			return nil, true
-		}
-		return nil, true
-	}
-
-	if m.searchingTags {
-		switch msg.String() {
-		case "enter", "\r", "\n":
-			m.searchingTags = false
-			return m.loadBrowserCards(), true
-		case "esc":
-			m.searchingTags = false
-			m.browserTag = ""
-			return m.loadBrowserCards(), true
-		case "backspace":
-			if len(m.browserTag) > 0 {
-				m.browserTag = trimLastRune(m.browserTag)
-			}
-			m.browserSearchTimerID++
-			id := m.browserSearchTimerID
-			return tea.Tick(time.Millisecond*250, func(t time.Time) tea.Msg {
-				return debounceSearchMsg{id: id, view: ViewBrowser}
-			}), true
-		}
-		if ch, ok := singlePrintableInput(msg.String()); ok {
-			m.browserTag += ch
-			m.browserSearchTimerID++
-			id := m.browserSearchTimerID
-			return tea.Tick(time.Millisecond*250, func(t time.Time) tea.Msg {
-				return debounceSearchMsg{id: id, view: ViewBrowser}
-			}), true
-		}
-
-		return nil, true
-	}
-
-	if m.searchingBrowser {
-		switch msg.String() {
-		case "enter", "\r", "\n":
-			m.searchingBrowser = false
-			if m.browserSearch != "" {
-				// Add to history if not already most recent
-				if len(m.browserSearchHistory) == 0 || m.browserSearchHistory[len(m.browserSearchHistory)-1] != m.browserSearch {
-					m.browserSearchHistory = append(m.browserSearchHistory, m.browserSearch)
-					if len(m.browserSearchHistory) > 5 {
-						m.browserSearchHistory = m.browserSearchHistory[1:]
-					}
-				}
-			}
-			return m.loadBrowserCards(), true
-		case "esc":
-			m.searchingBrowser = false
-			m.browserSearch = ""
-			return m.loadBrowserCards(), true
-		case "backspace":
-			if len(m.browserSearch) > 0 {
-				m.browserSearch = trimLastRune(m.browserSearch)
-			}
-			m.browserSearchTimerID++
-			id := m.browserSearchTimerID
-			return tea.Tick(time.Millisecond*250, func(t time.Time) tea.Msg {
-				return debounceSearchMsg{id: id, view: ViewBrowser}
-			}), true
-		}
-		if ch, ok := singlePrintableInput(msg.String()); ok {
-			m.browserSearch += ch
-			m.browserSearchTimerID++
-			id := m.browserSearchTimerID
-			return tea.Tick(time.Millisecond*250, func(t time.Time) tea.Msg {
-				return debounceSearchMsg{id: id, view: ViewBrowser}
-			}), true
-		}
-		return nil, true
-	}
-
-	switch msg.String() {
-	case "up", "k":
-		m.moveBrowserCursor(-1)
-		return nil, true
-	case "down", "j":
-		m.moveBrowserCursor(1)
-		return nil, true
-	case "g":
-		if len(m.browserCards) > 0 {
-			m.browserCursor = 0
-		}
-		return nil, true
-	case "G":
-		if len(m.browserCards) > 0 {
-			m.browserCursor = len(m.browserCards) - 1
-		}
-		return nil, true
-	case "/":
-		m.searchingBrowser = true
-		m.browserSearch = ""
-		return nil, true
-	case "#":
-		m.searchingTags = true
-		m.browserTag = ""
-		return nil, true
-	case "m", " ", "space":
-		if len(m.browserCards) > 0 {
-			cardID := m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)].ID
-			m.browserSelected[cardID] = !m.browserSelected[cardID]
-		}
-		return nil, true
-	case "d":
-		return m.lookupBrowserCardInDictionary(), true
-	case "b":
-		if len(m.getSelectedCardIDs()) > 0 {
-			return m.bulkBrowserBookmark(true), true
-		}
-		return m.toggleBrowserBookmark(), true
-	case "B":
-		if len(m.getSelectedCardIDs()) > 0 {
-			return m.bulkBrowserBookmark(false), true
-		}
-		return nil, false
-	case "t":
-		if len(m.getSelectedCardIDs()) > 0 {
-			return m.bulkBrowserToggleKind(), true
-		}
-		return m.toggleCardKind(), true
-	case "x":
-		if len(m.getSelectedCardIDs()) > 0 {
-			return m.bulkBrowserSuspend(true), true
-		}
-		return m.toggleBrowserSuspension(), true
-	case "X":
-		if len(m.getSelectedCardIDs()) > 0 {
-			return m.bulkBrowserSuspend(false), true
-		}
-		return nil, false
-	case "T":
-		m.taggingCards = true
-		m.tagInput = ""
-		if len(m.browserCards) > 0 {
-			if len(m.getSelectedCardIDs()) == 0 {
-				// Pre-fill from current card
-				m.tagInput = strings.Join(m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)].Tags, " ")
-			}
-		}
-		return nil, true
-	case "C":
-		return m.cleanupBrowserTags(), true
-	case "p":
-		if len(m.browserCards) > 0 {
-			return m.playCardAudio(m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)]), true
-		}
-		return nil, true
-	case "a":
-		if len(m.browserCards) > 0 {
-			allSelected := true
-			for _, card := range m.browserCards {
-				if !m.browserSelected[card.ID] {
-					allSelected = false
-					break
-				}
-			}
-			for _, card := range m.browserCards {
-				m.browserSelected[card.ID] = !allSelected
-			}
-		}
-		return nil, true
-	case "enter", "\r", "\n":
-		if len(m.browserCards) > 0 {
-			cardID := m.browserCards[clampInt(m.browserCursor, 0, len(m.browserCards)-1)].ID
-			if m.showReviewHistory && m.reviewHistoryCard == cardID {
-				m.showReviewHistory = false
-				return nil, true
-			}
-			m.reviewHistoryCard = cardID
-			return m.loadReviewHistory(cardID), true
-		}
-		return nil, true
-	case "backspace", "delete":
-		if len(m.getSelectedCardIDs()) > 0 {
-			return m.bulkBrowserDelete(), true
-		}
-		return m.deleteSelectedCard(), true
-	case "esc":
-		if len(m.getSelectedCardIDs()) > 0 {
-			m.browserSelected = make(map[string]bool)
-			return nil, true
-		}
-		if m.browserSearch != "" || m.browserTag != "" {
-			m.browserSearch = ""
-			m.browserTag = ""
-			return m.loadBrowserCards(), true
-		}
-	}
-	return nil, false
-}
-
 func (m *Model) updateCramKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	if m.cramActive {
 		switch msg.String() {
@@ -1425,11 +1005,7 @@ func (m *Model) handlePaste(text string) tea.Cmd {
 	// Dictionary search (full tab or Spotlight overlay) — same debounce as typing.
 	if !m.dictionaryDetailView && (m.dictionaryOverlayActive || m.activeView == ViewDictionary) {
 		m.dictionarySearch += text
-		m.dictionarySearchTimerID++
-		id := m.dictionarySearchTimerID
-		return tea.Tick(time.Millisecond*250, func(t time.Time) tea.Msg {
-			return debounceSearchMsg{id: id, view: ViewDictionary}
-		})
+		return m.debounceSearch(ViewDictionary)
 	}
 
 	// Review typing mode: paste into the answer buffer before check.
@@ -2041,11 +1617,7 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		if len(m.dictionarySearch) > 0 {
 			m.dictionarySearch = trimLastRune(m.dictionarySearch)
-			m.dictionarySearchTimerID++
-			id := m.dictionarySearchTimerID
-			return tea.Tick(time.Millisecond*250, func(t time.Time) tea.Msg {
-				return debounceSearchMsg{id: id, view: ViewDictionary}
-			}), true
+			return m.debounceSearch(ViewDictionary), true
 		}
 		return nil, true
 	case "esc":
@@ -2084,11 +1656,7 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 
 		m.dictionarySearch += ch
-		m.dictionarySearchTimerID++
-		id := m.dictionarySearchTimerID
-		return tea.Tick(time.Millisecond*250, func(t time.Time) tea.Msg {
-			return debounceSearchMsg{id: id, view: ViewDictionary}
-		}), true
+		return m.debounceSearch(ViewDictionary), true
 	}
 	if key == "space" {
 		if m.dictionaryDetailView {
@@ -2100,11 +1668,7 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 			return nil, true
 		}
 		m.dictionarySearch += " "
-		m.dictionarySearchTimerID++
-		id := m.dictionarySearchTimerID
-		return tea.Tick(time.Millisecond*250, func(t time.Time) tea.Msg {
-			return debounceSearchMsg{id: id, view: ViewDictionary}
-		}), true
+		return m.debounceSearch(ViewDictionary), true
 	}
 
 	return nil, false

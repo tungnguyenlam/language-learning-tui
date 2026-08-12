@@ -5,7 +5,8 @@ Responsive Bubble Tea UI for German language learning.
 ## Architecture
 
 - **Main Model**: `tui.Model` holds the global state, including the current view, active deck, and shared components like the status line and sidebars.
-- **Views**: Each screen (Dashboard, Review, Browser, etc.) is a distinct component with its own `Update` and `View` logic, called by the main model.
+- **Views**: Each registered screen owns its rendering and key handling. View-local state is moved
+  off the main model incrementally when its cross-view dependencies are understood.
 - **Input Routing**: Keyboard events are routed to the active view. Mouse events are routed via **Hitboxes**.
 - **Responsive Layout**: The UI adapts to "Wide", "Medium", and "Compact" widths using Lip Gloss frame metrics.
 
@@ -15,7 +16,8 @@ Responsive Bubble Tea UI for German language learning.
 - `render_*.go`: View-specific rendering logic.
 - `handlers.go`: Command and Message handlers.
 - `hitboxes.go`: Mouse interaction detection logic.
-- `keys.go`: Keybinding definitions.
+- `keys.go`: Global/modal key routing and legacy handlers not yet co-located with a screen.
+- `screen_*.go`: Screen registration boundaries and co-located view-specific key handling.
 
 ## Mouse Support
 
