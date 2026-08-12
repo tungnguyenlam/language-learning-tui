@@ -877,7 +877,7 @@ func TestDeckLimitEditingClampsFilteredCursor(t *testing.T) {
 	model.deckCursor = 99
 	model.editingDeckLimits = true
 
-	_, handled := model.updateDecksKey(tea.KeyPressMsg{Code: '+'})
+	_, handled := (decksScreen{}).HandleKey(model, tea.KeyPressMsg{Code: '+'})
 	if !handled {
 		t.Fatal("deck limit edit key should be handled")
 	}

@@ -1,3 +1,17 @@
+# 2026-08-12 (Dashboard, Statistics, and Decks Screen Ownership)
+
+Moved Dashboard, Statistics, and Decks key behavior out of the global key-routing file and into
+their registered screen implementations. Added direct contract coverage for Dashboard recent-deck
+shortcuts and Statistics scrolling/export, updated Decks limit/export tests to use production
+routing, and reduced `keys.go` by 214 lines without changing learner-visible behavior.
+
+### Verification
+
+- Focused screen-contract tests and `go test ./internal/tui` passed.
+- `git diff --check` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512 entries), smoke
+  test, binary build, and core E2E suite (34 passed in 36.97s).
+
 # 2026-08-12 (Reusable SQLite Transaction Boundary)
 
 Added a commit-on-success transaction helper with focused commit/rollback coverage and adopted it

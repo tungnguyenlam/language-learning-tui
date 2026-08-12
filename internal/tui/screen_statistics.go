@@ -12,5 +12,21 @@ func (statisticsScreen) Render(m *Model, layout viewportLayout) string {
 }
 
 func (statisticsScreen) HandleKey(m *Model, msg tea.KeyPressMsg) (tea.Cmd, bool) {
-	return m.updateStatisticsKey(msg)
+	switch msg.String() {
+	case "up", "k":
+		m.scrollStats(-1)
+		return nil, true
+	case "down", "j":
+		m.scrollStats(1)
+		return nil, true
+	case "pgup":
+		m.scrollStats(-10)
+		return nil, true
+	case "pgdown":
+		m.scrollStats(10)
+		return nil, true
+	case "x":
+		return m.exportStatsCSV(), true
+	}
+	return nil, false
 }

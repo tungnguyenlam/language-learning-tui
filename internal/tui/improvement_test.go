@@ -508,7 +508,7 @@ func TestDecksViewDirectExportShortcut(t *testing.T) {
 	}
 
 	// Press 'e' key to trigger deck export
-	cmd, handled := model.updateDecksKey(tea.KeyPressMsg{Code: 'e'})
+	cmd, handled := (decksScreen{}).HandleKey(model, tea.KeyPressMsg{Code: 'e'})
 	if !handled || cmd == nil {
 		t.Fatalf("expected 'e' key to trigger deck export command")
 	}
