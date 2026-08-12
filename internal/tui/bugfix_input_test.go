@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"testing"
+	"time"
 
 	"deutsch-tui/internal/ai"
 	"deutsch-tui/internal/ankiweb"
@@ -178,6 +179,89 @@ func TestBrowserDeckSwitchClearsSelection(t *testing.T) {
 
 	if len(m.browserSelected) != 0 {
 		t.Fatalf("expected selection cleared on deck switch, got %v", m.browserSelected)
+	}
+}
+
+func TestBrowserReentryClearsTransientState(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewBrowser
+	m.browserSearch = "Haus"
+	m.browserTag = "noun"
+	m.searchingBrowser = true
+	m.searchingTags = true
+	m.taggingCards = true
+	m.tagInput = "old-tag"
+	m.browserSelected = map[string]bool{"stale-card": true}
+	m.browserCards = []core.Card{{ID: "stale-card"}}
+
+	m.updateView(ViewDashboard)
+	m.updateView(ViewBrowser)
+
+	if m.browserSearch != "" || m.browserTag != "" || m.searchingBrowser || m.searchingTags || m.taggingCards || m.tagInput != "" {
+		t.Fatalf("browser transient state survived re-entry: search=%q tag=%q searching=%v/%v tagging=%v input=%q",
+			m.browserSearch, m.browserTag, m.searchingBrowser, m.searchingTags, m.taggingCards, m.tagInput)
+	}
+	if len(m.browserSelected) != 0 || len(m.browserCards) != 0 {
+		t.Fatalf("browser stale data survived re-entry: selected=%v cards=%v", m.browserSelected, m.browserCards)
+	}
+}
+
+func TestReviewPredictionsIgnoreStaleCardAndRequest(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewReview
+	m.dueCards = []core.Card{{ID: "c1"}, {ID: "c2"}}
+	m.cursor = 0
+
+	m.loadReviewPredictions("c1") // request 1
+	m.cursor = 1
+	m.Update(reviewPredictionsMsg{
+		id: 1, cardID: "c1", predictions: map[core.ReviewGrade]time.Duration{core.GradeGood: time.Hour},
+	})
+	if m.reviewPredictions != nil {
+		t.Fatal("prediction for the previous card was applied after navigation")
+	}
+
+	m.cursor = 0
+	m.loadReviewPredictions("c1") // request 2 for the same card
+	m.Update(reviewPredictionsMsg{
+		id: 1, cardID: "c1", predictions: map[core.ReviewGrade]time.Duration{core.GradeGood: time.Hour},
+	})
+	if m.reviewPredictions != nil {
+		t.Fatal("older prediction request overwrote the current request")
+	}
+
+	fresh := map[core.ReviewGrade]time.Duration{core.GradeGood: 2 * time.Hour}
+	m.Update(reviewPredictionsMsg{id: 2, cardID: "c1", predictions: fresh})
+	if m.reviewPredictions[core.GradeGood] != 2*time.Hour {
+		t.Fatalf("current prediction was not applied: %v", m.reviewPredictions)
+	}
+}
+
+func TestDeckStatisticsIgnoreStaleRequestsAndRefreshOnSwitch(t *testing.T) {
+	m := NewModel(&mockRepo{}, &mockScheduler{})
+	m.activeView = ViewDashboard
+	m.decks = []core.Deck{{ID: "d1", Name: "One"}, {ID: "d2", Name: "Two"}}
+	m.deck = m.decks[0]
+	m.stats = core.Statistics{TotalCards: 99}
+	m.loadStatistics() // request 1 for d1
+	m.deck = m.decks[1]
+	m.loadStatistics() // request 2 for d2
+
+	m.Update(statsMsg{id: 1, deckID: "d1", stats: core.Statistics{TotalCards: 1}})
+	if m.stats.TotalCards != 99 {
+		t.Fatalf("stale deck statistics overwrote current stats: %d", m.stats.TotalCards)
+	}
+	m.Update(statsMsg{id: 2, deckID: "d2", stats: core.Statistics{TotalCards: 2}})
+	if m.stats.TotalCards != 2 {
+		t.Fatalf("current deck statistics were not applied: %d", m.stats.TotalCards)
+	}
+
+	m.deck = m.decks[0]
+	m.deckIndex = 0
+	updated, cmd := m.Update(tea.KeyPressMsg{Code: ']'})
+	m = updated.(*Model)
+	if m.deck.ID != "d2" || cmd == nil {
+		t.Fatalf("dashboard deck switch did not refresh statistics: deck=%q cmd=%v", m.deck.ID, cmd != nil)
 	}
 }
 

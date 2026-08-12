@@ -168,6 +168,7 @@ type Model struct {
 	speechSynthesizer              audio.Synthesizer
 	strictNormalization            bool
 	stats                          core.Statistics
+	statsLoadID                    int
 	settingsCursor                 int
 	editingTemplate                bool
 	aiInput                        string
@@ -243,6 +244,7 @@ type Model struct {
 	reviewHistoryCard              string
 	showReviewHistory              bool
 	reviewPredictions              map[core.ReviewGrade]time.Duration
+	reviewPredictionID             int
 	spinnerFrame                   int
 	deckFilter                     string
 	deckSelected                   map[string]bool
@@ -563,7 +565,11 @@ type reviewHistoryMsg struct {
 	cardID string
 	logs   []core.ReviewLog
 }
-type reviewPredictionsMsg map[core.ReviewGrade]time.Duration
+type reviewPredictionsMsg struct {
+	id          int
+	cardID      string
+	predictions map[core.ReviewGrade]time.Duration
+}
 type statusMsg struct {
 	text string
 }
@@ -766,6 +772,11 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.logger.Debug("Received %d bookmarked due cards", len(msg.cards))
 
 	case statsMsg:
+		// Statistics are deck-scoped and loaded asynchronously. Ignore a
+		// response for an older request or a deck the user has already left.
+		if msg.id != 0 && (msg.id != m.statsLoadID || msg.deckID != m.deck.ID) {
+			return m, nil
+		}
 		m.stats = msg.stats
 		m.dictCount = msg.dictCount
 		m.logger.Debug("Received statistics update")
@@ -787,7 +798,13 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.logger.Debug("Received %d review history entries for card %s", len(msg.logs), msg.cardID)
 		}
 	case reviewPredictionsMsg:
-		m.reviewPredictions = map[core.ReviewGrade]time.Duration(msg)
+		// Prediction requests can finish after navigation or grading. Only
+		// install a response for the still-current request and card.
+		if msg.id != m.reviewPredictionID || m.activeView != ViewReview || len(m.dueCards) == 0 ||
+			m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)].ID != msg.cardID {
+			return m, nil
+		}
+		m.reviewPredictions = msg.predictions
 		m.logger.Debug("Received review predictions")
 	case draftsMsg:
 		m.drafting = false

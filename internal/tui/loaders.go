@@ -102,11 +102,15 @@ func (m *Model) loadDecks() tea.Msg {
 }
 
 type statsMsg struct {
+	id        int
+	deckID    string
 	stats     core.Statistics
 	dictCount int
 }
 
 func (m *Model) loadStatistics() tea.Cmd {
+	m.statsLoadID++
+	id := m.statsLoadID
 	deckID := m.deck.ID
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
@@ -129,7 +133,7 @@ func (m *Model) loadStatistics() tea.Cmd {
 			count, _ = dictRepo.DictionaryCount(ctx)
 		}
 
-		return statsMsg{stats: stats, dictCount: count}
+		return statsMsg{id: id, deckID: deckID, stats: stats, dictCount: count}
 	}
 }
 
@@ -176,6 +180,8 @@ func (m *Model) loadReviewHistory(cardID string) tea.Cmd {
 }
 
 func (m *Model) loadReviewPredictions(cardID string) tea.Cmd {
+	m.reviewPredictionID++
+	id := m.reviewPredictionID
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 		defer cancel()
@@ -184,13 +190,18 @@ func (m *Model) loadReviewPredictions(cardID string) tea.Cmd {
 			return err
 		}
 		predictions := m.scheduler.Predict(state, time.Now())
-		return reviewPredictionsMsg(predictions)
+		return reviewPredictionsMsg{id: id, cardID: cardID, predictions: predictions}
 	}
 }
 
 func (m *Model) reloadBrowserForSelectedDeck() tea.Cmd {
 	m.browserDeckID = m.deck.ID
 	m.browserSearch = ""
+	m.browserTag = ""
+	m.searchingBrowser = false
+	m.searchingTags = false
+	m.taggingCards = false
+	m.tagInput = ""
 	m.browserCards = nil
 	m.browserCursor = 0
 	m.browserSelected = make(map[string]bool)

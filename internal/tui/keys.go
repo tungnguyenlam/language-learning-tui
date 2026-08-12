@@ -190,7 +190,7 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 				m.resetReviewState()
 				m.status = fmt.Sprintf("Deck: %s", m.deckLabel())
 			}
-			return m, nil
+			return m, m.loadStatistics()
 		}
 	case "]":
 		if cmd, handled := m.updateActiveViewKey(msg); handled {
@@ -207,7 +207,7 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 				m.resetReviewState()
 				m.status = fmt.Sprintf("Deck: %s", m.deckLabel())
 			}
-			return m, nil
+			return m, m.loadStatistics()
 		}
 	}
 

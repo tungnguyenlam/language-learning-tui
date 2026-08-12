@@ -1,21 +1,20 @@
 # Active Backlog
 
-Last updated: 2026-08-05
+Last updated: 2026-08-12
 
 ## Current Milestone
 
-Milestone 4 (Hybrid Dictionary) is complete and merged to `main`. No new feature milestone is
-committed yet — the next milestone must be chosen with the user.
+Milestone 4 (Hybrid Dictionary) remains complete. The 2026-08-12 autonomous improvement pass is
+complete; no new feature milestone is committed yet.
 
 ## Exact Next Action
 
-Choose the next milestone with the user from the remaining roadmap items: a sync/backup workflow
-for the SQLite progress database, a local LLM provider for offline AI drafting, or continued
-B2/C1 German content expansion. Until one is chosen, continue bug and performance hardening.
+Choose the next milestone with the user from sync/backup, local LLM drafting, or B2/C1 content;
+until then continue bug and performance hardening.
 
 ## Top Issues
 
-None. The 2026-08-03 bug-hardening pass closed all tracked issues.
+None. The three identified interaction races/state leaks are implemented with tests.
 
 ## Acceptance Criteria
 
@@ -24,6 +23,8 @@ None. The 2026-08-03 bug-hardening pass closed all tracked issues.
 ## Last Verification
 
 - `./scripts/verify.sh` passed on 2026-08-05: Go unit tests with `-race`, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed in 37.59s).
+- Baseline `./scripts/verify.sh` passed on 2026-08-12 before this improvement pass (34 core E2E tests passed).
+- Final `./scripts/verify.sh` passed on 2026-08-12: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed in 36.56s).
 - Bug hunting & performance optimization pass complete: `cleanWhitespace` fast-path rune scanner (`dictcc.go`), `addDictionaryClozeEntryCmd` bareWord regex safety guard (`actions_dictionary.go`), and `renderCram` windowed visible cards list rendering (`render_cram.go`).
 
 ## Repository State

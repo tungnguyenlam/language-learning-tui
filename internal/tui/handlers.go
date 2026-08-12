@@ -89,6 +89,13 @@ func (m *Model) updateView(view View) tea.Cmd {
 	}
 	if view == ViewBrowser {
 		m.browserSearch = ""
+		m.browserTag = ""
+		m.searchingBrowser = false
+		m.searchingTags = false
+		m.taggingCards = false
+		m.tagInput = ""
+		m.browserSelected = make(map[string]bool)
+		m.browserCards = nil
 		m.browserDeckID = m.deck.ID
 		m.browserCursor = 0
 		return m.loadBrowserCards()
@@ -748,6 +755,9 @@ func (m *Model) clearReviewHistory() {
 	m.showReviewHistory = false
 	m.reviewHistoryCard = ""
 	m.reviewPredictions = nil
+	// Invalidate any prediction command already running for the previous
+	// card. This also covers navigation before the next card is revealed.
+	m.reviewPredictionID++
 	m.explanation = ""
 	m.explainingCard = false
 	m.explainCardID = ""

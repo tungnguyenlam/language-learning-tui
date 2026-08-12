@@ -1,3 +1,14 @@
+# 2026-08-12 (Async TUI State & Browser Session Hardening)
+
+### Bug Fixes
+- **Review prediction request guards:** Tagged prediction responses with a request ID and card ID, and invalidated pending requests when navigating or resetting review state. Late predictions can no longer appear on another card.
+- **Deck-scoped statistics freshness:** Tagged statistics responses with a request ID and deck ID, ignored stale responses, and reloaded statistics after keyboard deck switching.
+- **Browser session reset:** Re-entry and deck reload now clear search/tag input, editing flags, stale card rows, and bulk selections so hidden prior selections cannot affect later actions.
+
+### Verification
+- Focused `go test ./internal/tui` passed.
+- `./scripts/verify.sh` passed on 2026-08-12: Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build, and core E2E suite (34 passed in 36.56s).
+
 ## 2026-08-05 (Bug Hunting & Performance Optimization Pass: Dict.cc Zero-Alloc CleanWhitespace Fast-Path, Dictionary Cloze Regex Guard, Cram Cards List Windowing)
 
 ### Bug Fixes
