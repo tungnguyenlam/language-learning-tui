@@ -22,6 +22,8 @@ Migrations are stored as Go strings in `migrations.go` and applied automatically
 - `migrations`: Ordered schema history in `migrations.go`.
 - `scanCard` / `scanCards`: Canonical persisted-card row decoding shared by card queries.
 - `Store.withTx`: Commit-on-success transaction boundary for repository mutations.
+- `Store.Backup` / `Store.Restore` / `Store.InspectBackup`: progress-only SQLite backups
+  (`core.BackupRepository`). Dictionary tables are excluded on purpose.
 
 ## Testing
 

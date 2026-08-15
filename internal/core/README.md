@@ -6,7 +6,7 @@ Domain model for decks, notes, cards, review grades, and scheduling ports.
 
 - **Model Definitions**: `Deck`, `Note`, `Card`, `ReviewLog`, `CardKind` (MCQ, Basic, Cloze).
 - **Domain Logic**: Scheduling port definitions (`Scheduler` interface), grade constants (`GradeAgain`, `GradeHard`, `GradeGood`, `GradeEasy`).
-- **Interfaces**: Defines the contracts for storage (`Repository`) and AI generation (`AIProvider`) to maintain loose coupling.
+- **Interfaces**: Defines the contracts for storage (`Repository`, optional `BackupRepository`) and AI generation (`AIProvider`) to maintain loose coupling.
 
 ## Architectural Boundaries
 

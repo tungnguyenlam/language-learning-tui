@@ -213,6 +213,28 @@ func (reviewScreen) HandleKey(m *Model, msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		if len(m.dueCards) > 0 {
 			return m.deleteReviewCard(), true
 		}
+	case "up", "k":
+		return m.moveReviewCursor(-1), true
+	case "down", "j":
+		return m.moveReviewCursor(1), true
 	}
 	return nil, false
+}
+
+func (m *Model) moveReviewCursor(delta int) tea.Cmd {
+	next := m.cursor + delta
+	if next < 0 || next >= len(m.dueCards) {
+		return nil
+	}
+	m.cardTransitioning = true
+	m.cardTransitionProgress = 0
+	m.cardTransitionFrame = 0
+	if delta < 0 {
+		m.cardTransitionDir = -1
+	} else {
+		m.cardTransitionDir = 1
+	}
+	m.cursor = next
+	m.resetReviewState()
+	return m.tickCardTransition()
 }

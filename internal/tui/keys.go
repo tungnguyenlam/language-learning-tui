@@ -251,43 +251,6 @@ func (m *Model) updateKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	}
 
-	// 5. Shared navigation keys (if not handled by view)
-	switch key {
-	case "up", "k":
-		if m.activeView == ViewReview {
-			if m.cursor > 0 {
-				m.cardTransitioning = true
-				m.cardTransitionProgress = 0
-				m.cardTransitionFrame = 0
-				m.cardTransitionDir = -1
-				m.cursor--
-				m.resetReviewState()
-				return m, m.tickCardTransition()
-			}
-			return m, nil
-		}
-	case "down", "j":
-		if m.activeView == ViewReview {
-			if m.cursor < len(m.dueCards)-1 {
-				m.cardTransitioning = true
-				m.cardTransitionProgress = 0
-				m.cardTransitionFrame = 0
-				m.cardTransitionDir = 1
-				m.cursor++
-				m.resetReviewState()
-				return m, m.tickCardTransition()
-			}
-			return m, nil
-		}
-	case "p":
-		if m.activeView == ViewReview && len(m.dueCards) > 0 {
-			return m, m.playCardAudio(m.dueCards[clampInt(m.cursor, 0, len(m.dueCards)-1)])
-		}
-		if m.activeView == ViewCram && m.cramActive && len(m.cramCards) > 0 {
-			return m, m.playCardAudio(m.cramCards[clampInt(m.cramCursor, 0, len(m.cramCards)-1)])
-		}
-	}
-
 	return m, nil
 }
 
@@ -481,7 +444,7 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		}
 		return nil, true
 	case "down", "j":
-		if m.settingsCursor < 16 {
+		if m.settingsCursor < settingsLastItem {
 			m.settingsCursor++
 		}
 		return nil, true
@@ -489,22 +452,28 @@ func (m *Model) updateSettingsKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		m.settingsCursor = 0
 		return nil, true
 	case "G":
-		m.settingsCursor = 16
+		m.settingsCursor = settingsLastItem
 		return nil, true
 	case "c":
 		return m.cycleTheme(), true
 	case "enter":
 		return m.handleSettingsEnter(), true
 	case "+":
-		if m.settingsCursor == 16 {
+		switch m.settingsCursor {
+		case settingsRevealSpeedItem:
 			return m.setRevealSpeed(m.revealSpeed + 1), true
+		case settingsDailyGoalItem:
+			return m.setDailyGoal(m.stats.DailyGoal + 1), true
 		}
-		return m.setDailyGoal(m.stats.DailyGoal + 1), true
+		return nil, true
 	case "-":
-		if m.settingsCursor == 16 {
+		switch m.settingsCursor {
+		case settingsRevealSpeedItem:
 			return m.setRevealSpeed(m.revealSpeed - 1), true
+		case settingsDailyGoalItem:
+			return m.setDailyGoal(m.stats.DailyGoal - 1), true
 		}
-		return m.setDailyGoal(m.stats.DailyGoal - 1), true
+		return nil, true
 	case "[":
 		m.previousAITemplate()
 		return nil, true

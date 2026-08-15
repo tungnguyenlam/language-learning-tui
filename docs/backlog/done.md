@@ -1,3 +1,17 @@
+# 2026-08-15 (Progress Backup, Settings +/-, Review Navigation)
+
+Wired local progress backup/restore into Import/Export (`B` / `U`) using the existing
+SQLite backup layer, now implementing `core.BackupRepository`. Settings `+/-` only
+adjust the focused Daily Goal or Reveal Speed row, and the provider-cycle hint includes
+ollama. Review `j`/`k` card navigation is owned by the Review screen.
+
+### Verification
+
+- Focused tests for backup/restore, Settings row-aware `+/-`, and Review j/k passed.
+- `go test ./...` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512 entries),
+  smoke test, binary build, and core E2E suite (35 passed in 37.73s).
+
 # 2026-08-12 (Decks Deselect and Escape Filter Fix)
 
 Fixed Decks multi-selection so deselecting a deck removes its ID from `deckSelected` instead of

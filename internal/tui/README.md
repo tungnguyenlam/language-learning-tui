@@ -18,6 +18,7 @@ Responsive Bubble Tea UI for German language learning.
 - `hitboxes.go`: Mouse interaction detection logic.
 - `keys.go`: Global/modal key routing and legacy handlers not yet co-located with a screen.
 - `screen_*.go`: Screen registration boundaries and co-located view-specific key handling.
+- `actions_backup.go`: Import/Export progress backup and restore commands (`B` / `U`).
 
 ## Mouse Support
 

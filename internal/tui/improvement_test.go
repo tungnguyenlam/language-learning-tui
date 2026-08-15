@@ -68,6 +68,51 @@ func TestPracticeHubKeyboardNavigation(t *testing.T) {
 	}
 }
 
+func TestReviewScreenNavigatesCardsWithJK(t *testing.T) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	model.activeView = ViewReview
+	model.dueCards = []core.Card{
+		{ID: "c1", Prompt: "eins", Answer: "one"},
+		{ID: "c2", Prompt: "zwei", Answer: "two"},
+		{ID: "c3", Prompt: "drei", Answer: "three"},
+	}
+	model.cursor = 1
+
+	cmd, handled := (reviewScreen{}).HandleKey(model, tea.KeyPressMsg{Code: 'j'})
+	if !handled {
+		t.Fatal("j was not handled in Review")
+	}
+	if cmd == nil {
+		t.Fatal("j should start the card transition")
+	}
+	if model.cursor != 2 {
+		t.Fatalf("cursor after j = %d, want 2", model.cursor)
+	}
+	if model.cardTransitionDir != 1 {
+		t.Fatalf("transition dir after j = %d, want 1", model.cardTransitionDir)
+	}
+
+	_, handled = (reviewScreen{}).HandleKey(model, tea.KeyPressMsg{Code: 'k'})
+	if !handled {
+		t.Fatal("k was not handled in Review")
+	}
+	if model.cursor != 1 {
+		t.Fatalf("cursor after k = %d, want 1", model.cursor)
+	}
+
+	model.cursor = 0
+	cmd, handled = (reviewScreen{}).HandleKey(model, tea.KeyPressMsg{Code: 'k'})
+	if !handled {
+		t.Fatal("k at the first card should still be consumed")
+	}
+	if cmd != nil {
+		t.Fatal("k at the first card should not start a transition")
+	}
+	if model.cursor != 0 {
+		t.Fatalf("cursor moved past the first card: %d", model.cursor)
+	}
+}
+
 func TestReviewUndoAliases(t *testing.T) {
 	repo := &mockRepo{
 		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},

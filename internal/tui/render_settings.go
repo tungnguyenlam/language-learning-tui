@@ -66,7 +66,7 @@ func (m *Model) renderSettings(x, y int) string {
 
 	addContent(sectionStyle.Render("AI CONFIGURATION"), nil)
 	addContent(lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Render(fmt.Sprintf("  Template Set: %s", activeSet)), nil)
-	addContent(mutedStyle.Render("  Provider cycle: disabled -> offline -> template -> openai -> anthropic."), nil)
+	addContent(mutedStyle.Render("  Provider cycle: disabled -> offline -> template -> openai -> anthropic -> ollama."), nil)
 
 	setMap := m.aiTemplates[activeSet]
 	aiOptions := []string{
@@ -225,7 +225,7 @@ func (m *Model) renderSettings(x, y int) string {
 	if !m.editingTemplate && m.editingSecretKey == "" {
 		keyStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 		addContent("", nil)
-		addContent(fmt.Sprintf("Use %s/%s to move, %s goal, %s theme, Enter edit/toggle, %s/%s templates.",
+		addContent(fmt.Sprintf("Use %s/%s to move, %s on goal or speed, %s theme, Enter edit/toggle, %s/%s templates.",
 			keyStyle.Render("j"), keyStyle.Render("k"), keyStyle.Render("+/-"), keyStyle.Render("c"), keyStyle.Render("["), keyStyle.Render("]")), nil)
 	}
 

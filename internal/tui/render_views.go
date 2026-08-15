@@ -81,8 +81,9 @@ func (m *Model) renderHelp(layout viewportLayout) string {
 		"  Cram     Ent start, 1-5 filter\n" +
 		"  Practice 1-9/0/-/= pick, r reset\n" +
 		"  Import   i/I import, x/X exp\n" +
+		"           B/U backup, R reset\n" +
 		"  AnkiWeb  A browse shared\n" +
-		"  Settings j/k nav, +/- goal"
+		"  Settings j/k nav, +/- row"
 
 	col1 := colStyle.Render(global + "\n\n" + dash)
 	col2 := colStyle.Render(review)

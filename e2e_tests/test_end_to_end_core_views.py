@@ -113,6 +113,24 @@ def test_deck_navigation_lists_starter_deck():
             agent.close()
 
 
+def test_import_backup_writes_progress_file():
+    with tempfile.TemporaryDirectory() as tmpdir:
+        agent = start_agent(tmpdir)
+        try:
+            agent.act("5")
+            agent.wait_for_text("Import / Export")
+            agent.assert_text("[B] Backup")
+            agent.assert_text("[U] Restore")
+            agent.act("B")
+            agent.wait_for_text("Backed up", timeout=10.0)
+        finally:
+            agent.close()
+
+        backups_dir = os.path.join(tmpdir, "backups")
+        names = os.listdir(backups_dir)
+        assert any(name.startswith("backup-") and name.endswith(".db") for name in names), names
+
+
 def test_view_tabs_cover_core_screens():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)

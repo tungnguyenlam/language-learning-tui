@@ -248,6 +248,10 @@ func (m *Model) activateHitboxByID(id string) tea.Cmd {
 		return m.exportTSV()
 	case id == "export-apkg":
 		return m.exportAPKG()
+	case id == "backup-progress":
+		return m.handleBackupProgress()
+	case id == "restore-progress":
+		return m.handleRestoreProgress()
 	case id == "reset-db":
 		return m.handleResetDatabase()
 	case strings.HasPrefix(id, "stats-scroll-"):

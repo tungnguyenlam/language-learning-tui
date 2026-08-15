@@ -42,6 +42,6 @@ audio pronunciation via TTS (`internal/audio`), and the expanded German trainer 
 
 Still open:
 
-- Sync or backup workflow (no implementation exists yet).
+- Cloud or multi-device sync (local progress backup/restore is on Import/Export).
 - Local LLM provider for offline AI drafting.
 - Continued German content expansion (B2/C1 decks).

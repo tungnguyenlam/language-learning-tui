@@ -175,6 +175,8 @@ type Model struct {
 	draftSource                    string
 	drafts                         []ai.Draft
 	draftCursor                    int
+	dataDir                        string
+	lastBackupPath                 string
 	importPath                     string
 	exportPath                     string
 	exportDeckID                   string
@@ -381,6 +383,7 @@ type ModelOptions struct {
 	RevealSpeed         int
 	StrictNormalization bool
 	TestMode            bool
+	DataDir             string
 	ImportPath          string
 	ExportPath          string
 	OnConfigChange      func(string, string, string, map[string]map[string]string, bool, bool, int)
@@ -484,6 +487,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		breakpoint:          BreakpointMedium,
 		status:              "Ready",
 		aiInput:             "der Kaffee",
+		dataDir:             strings.TrimSpace(opts.DataDir),
 		importPath:          filepath.Clean(importPath),
 		exportPath:          filepath.Clean(exportPath),
 		exportFilter:        "All",
@@ -838,7 +842,28 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.allDue = msg.cards
 		m.applyDeckFilter()
 		m.logger.Info("Import completed: %d notes from %s", msg.count, filepath.Base(msg.path))
-		return m, m.setStatus(fmt.Sprintf("Imported %d notes from %s", msg.count, filepath.Base(msg.path)), 3*time.Second)
+		return m, tea.Batch(
+			m.setStatus(fmt.Sprintf("Imported %d notes from %s", msg.count, filepath.Base(msg.path)), 3*time.Second),
+			m.loadStatistics(),
+			m.loadReviewsPerDay(),
+			m.loadRecentDecks(),
+		)
+	case backupDoneMsg:
+		if msg.restore {
+			m.syncDecks(msg.decks)
+			m.allDue = msg.cards
+			m.applyDeckFilter()
+			m.logger.Info("Restored %d rows from %s", msg.info.TotalRows, filepath.Base(msg.info.Path))
+			return m, tea.Batch(
+				m.setStatus(fmt.Sprintf("Restored %d rows from %s", msg.info.TotalRows, filepath.Base(msg.info.Path)), 3*time.Second),
+				m.loadStatistics(),
+				m.loadReviewsPerDay(),
+				m.loadRecentDecks(),
+			)
+		}
+		m.lastBackupPath = msg.info.Path
+		m.logger.Info("Backed up %d rows to %s", msg.info.TotalRows, filepath.Base(msg.info.Path))
+		return m, m.setStatus(fmt.Sprintf("Backed up %d rows to %s", msg.info.TotalRows, filepath.Base(msg.info.Path)), 3*time.Second)
 	case statusMsg:
 		m.logger.Debug("Setting status: %s", msg.text)
 		m.isErrorStatus = false

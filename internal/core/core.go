@@ -3,6 +3,7 @@ package core
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 )
@@ -187,6 +188,12 @@ type BackupRepository interface {
 	Backup(ctx context.Context, destPath string) (BackupInfo, error)
 	Restore(ctx context.Context, srcPath string) (BackupInfo, error)
 	InspectBackup(ctx context.Context, srcPath string) (BackupInfo, error)
+}
+
+// BackupFileName is the conventional timestamped name for a progress backup.
+// The timestamp is UTC and fixed-width so lexical order matches chronology.
+func BackupFileName(at time.Time) string {
+	return fmt.Sprintf("backup-%s.db", at.UTC().Format("20060102-150405"))
 }
 
 type Scheduler interface {

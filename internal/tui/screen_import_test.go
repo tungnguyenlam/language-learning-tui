@@ -9,11 +9,12 @@ import (
 
 var importActionLabels = []string{
 	"[i] Import TSV", "[I] Import APKG", "[A] Browse AnkiWeb",
-	"[S] Seed Standard", "[x] Export TSV", "[X] Export APKG", "[R] Reset DB",
+	"[S] Seed Standard", "[x] Export TSV", "[X] Export APKG",
+	"[B] Backup", "[U] Restore", "[R] Reset DB",
 }
 
 var importActionIDs = []string{"import-tsv", "import-apkg", "browse-ankiweb",
-	"seed-std", "export-tsv", "export-apkg", "reset-db"}
+	"seed-std", "export-tsv", "export-apkg", "backup-progress", "restore-progress", "reset-db"}
 
 // renderImport renders the Import screen at a terminal width and returns its
 // content lines alongside the layout Render actually derived, since Render

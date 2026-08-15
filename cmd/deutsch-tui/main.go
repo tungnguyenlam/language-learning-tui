@@ -112,10 +112,10 @@ func main() {
 		RevealSpeed:         cfg.RevealSpeed,
 		StrictNormalization: cfg.StrictNormalization,
 		TestMode:            *testMode,
+		DataDir:             dir,
 		ImportPath:          filepath.Join(dir, "import.tsv"),
-
-		ExportPath: filepath.Join(dir, "export.tsv"),
-		Logger:     leveledLogger, // Pass the logger
+		ExportPath:          filepath.Join(dir, "export.tsv"),
+		Logger:              leveledLogger, // Pass the logger
 		OnConfigChange: func(theme string, aiProvider string, dictProvider string, tmpls map[string]map[string]string, autoPlayAudio bool, strictNormalization bool, revealSpeed int) {
 			pCfg.Theme = theme
 			pCfg.AIProvider = aiProvider

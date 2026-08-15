@@ -10,7 +10,11 @@ import (
 	"sort"
 	"strings"
 	"time"
+
+	"deutsch-tui/internal/core"
 )
+
+var _ core.BackupRepository = (*Store)(nil)
 
 // backupFormatVersion identifies the layout of the backup file itself, not
 // the schema of the data inside it. Bump it only if the meta table or the
@@ -37,16 +41,6 @@ var backupTables = []string{
 	"app_settings",
 }
 
-// BackupInfo describes a backup file, both when writing one and when
-// inspecting one before a restore.
-type BackupInfo struct {
-	Path          string
-	CreatedAt     time.Time
-	SchemaVersion int
-	Rows          map[string]int
-	TotalRows     int
-}
-
 // ErrNotBackup is returned when a file is readable as SQLite but is not one
 // of our backups. The most likely cause is a user pointing the restore at
 // their live learning.db, which we must not silently accept.
@@ -55,8 +49,8 @@ var ErrNotBackup = errors.New("file is not a deutsch-tui backup")
 // Backup writes a portable copy of the user's decks, cards, and review
 // history to destPath. It excludes the dictionary, so the result is small
 // enough to keep in version control or a cloud folder.
-func (s *Store) Backup(ctx context.Context, destPath string) (BackupInfo, error) {
-	info := BackupInfo{Path: destPath, Rows: map[string]int{}}
+func (s *Store) Backup(ctx context.Context, destPath string) (core.BackupInfo, error) {
+	info := core.BackupInfo{Path: destPath, Rows: map[string]int{}}
 	if strings.TrimSpace(destPath) == "" {
 		return info, errors.New("backup: destination path is required")
 	}
@@ -139,8 +133,8 @@ func (s *Store) Backup(ctx context.Context, destPath string) (BackupInfo, error)
 
 // InspectBackup reads a backup's metadata without modifying anything, so the
 // UI can show the user what they are about to overwrite their data with.
-func (s *Store) InspectBackup(ctx context.Context, srcPath string) (BackupInfo, error) {
-	info := BackupInfo{Path: srcPath, Rows: map[string]int{}}
+func (s *Store) InspectBackup(ctx context.Context, srcPath string) (core.BackupInfo, error) {
+	info := core.BackupInfo{Path: srcPath, Rows: map[string]int{}}
 	if _, err := os.Stat(srcPath); err != nil {
 		return info, fmt.Errorf("restore: %w", err)
 	}
@@ -163,8 +157,8 @@ func (s *Store) InspectBackup(ctx context.Context, srcPath string) (BackupInfo, 
 // transaction, so a failure part-way leaves the existing data untouched.
 //
 // The dictionary is not touched, because backups do not carry it.
-func (s *Store) Restore(ctx context.Context, srcPath string) (BackupInfo, error) {
-	info := BackupInfo{Path: srcPath, Rows: map[string]int{}}
+func (s *Store) Restore(ctx context.Context, srcPath string) (core.BackupInfo, error) {
+	info := core.BackupInfo{Path: srcPath, Rows: map[string]int{}}
 	if _, err := os.Stat(srcPath); err != nil {
 		return info, fmt.Errorf("restore: %w", err)
 	}
@@ -269,8 +263,8 @@ func (s *Store) Restore(ctx context.Context, srcPath string) (BackupInfo, error)
 
 // readBackupInfo validates that the attached `bkp` database really is one of
 // our backups and reads its metadata.
-func readBackupInfo(ctx context.Context, conn *sql.Conn, path string) (BackupInfo, error) {
-	info := BackupInfo{Path: path, Rows: map[string]int{}}
+func readBackupInfo(ctx context.Context, conn *sql.Conn, path string) (core.BackupInfo, error) {
+	info := core.BackupInfo{Path: path, Rows: map[string]int{}}
 
 	hasMeta, err := connTableExists(ctx, conn, "bkp", "backup_meta")
 	if err != nil {
@@ -404,7 +398,7 @@ func (s *Store) currentSchemaVersion(ctx context.Context) (int, error) {
 // BackupFileName builds the conventional timestamped name used by the UI so
 // repeated backups sort chronologically in a directory listing.
 func BackupFileName(at time.Time) string {
-	return fmt.Sprintf("backup-%s.db", at.UTC().Format("20060102-150405"))
+	return core.BackupFileName(at)
 }
 
 // LatestBackup returns the most recent backup file in dir, or an error when

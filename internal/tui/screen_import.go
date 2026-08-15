@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"path/filepath"
 	"strings"
 
 	tea "charm.land/bubbletea/v2"
@@ -131,6 +132,10 @@ func (s *importScreen) HandleKey(m *Model, msg tea.KeyPressMsg) (tea.Cmd, bool) 
 		return m.seedStandardContent(), true
 	case "R":
 		return m.handleResetDatabase(), true
+	case "B":
+		return m.handleBackupProgress(), true
+	case "U":
+		return m.handleRestoreProgress(), true
 	case "x":
 		return m.exportTSV(), true
 	case "X":
@@ -281,6 +286,13 @@ func (s *importScreen) Render(m *Model, layout viewportLayout) string {
 		b.WriteString(warnStyle.Render("Export file is empty; set a path before exporting.") + "\n")
 	}
 
+	backupLabel := "Progress backup: none yet"
+	if m.lastBackupPath != "" {
+		backupLabel = "Progress backup: " + filepath.Base(m.lastBackupPath)
+	}
+	b.WriteString(mutedStyle.Render(backupLabel) + "\n")
+	b.WriteString(mutedStyle.Render("Backups exclude the dictionary. Restore replaces decks and review history.") + "\n")
+
 	b.WriteString("Actions:\n")
 	actions := []struct {
 		id    string
@@ -293,6 +305,8 @@ func (s *importScreen) Render(m *Model, layout viewportLayout) string {
 		{"seed-std", "Seed Standard", "S"},
 		{"export-tsv", "Export TSV", "x"},
 		{"export-apkg", "Export APKG", "X"},
+		{"backup-progress", "Backup", "B"},
+		{"restore-progress", "Restore", "U"},
 		{"reset-db", "Reset DB", "R"},
 	}
 

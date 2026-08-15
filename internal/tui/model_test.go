@@ -1125,12 +1125,49 @@ func TestSettingsDailyGoalAdjustsAndRenders(t *testing.T) {
 	}
 }
 
+func TestSettingsPlusMinusOnlyAdjustFocusedRow(t *testing.T) {
+	repo := &mockRepo{dailyGoal: 10}
+	model := NewModel(repo, &mockScheduler{})
+	model.Update(statsMsg{stats: core.Statistics{DailyGoal: 10, Grades: map[core.ReviewGrade]int{}}})
+	model.activeView = ViewSettings
+	model.settingsCursor = 0
+	model.revealSpeed = 5
+
+	updated, cmd := model.Update(tea.KeyPressMsg{Code: '+'})
+	model = updated.(*Model)
+	if cmd != nil {
+		t.Fatal("plus on AI provider row should not start a command")
+	}
+	if model.stats.DailyGoal != 10 {
+		t.Fatalf("daily goal changed from unfocused row: %d", model.stats.DailyGoal)
+	}
+	if model.revealSpeed != 5 {
+		t.Fatalf("reveal speed changed from unfocused row: %d", model.revealSpeed)
+	}
+
+	model.settingsCursor = settingsRevealSpeedItem
+	updated, _ = model.Update(tea.KeyPressMsg{Code: '+'})
+	model = updated.(*Model)
+	if model.revealSpeed != 6 {
+		t.Fatalf("reveal speed = %d, want 6", model.revealSpeed)
+	}
+}
+
+func TestSettingsProviderCycleMentionsOllama(t *testing.T) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	model.width, model.height = 100, 50
+	view := ansi.Strip(model.renderSettings(0, 0))
+	if !strings.Contains(view, "anthropic -> ollama") {
+		t.Fatalf("settings provider cycle missing ollama:\n%s", view)
+	}
+}
+
 func TestImportViewShowsResetAndStatusFilterGuidance(t *testing.T) {
 	model := NewModel(&mockRepo{}, &mockScheduler{})
 	model.activeView = ViewImport
 
 	view := ansi.Strip(model.importScreen.Render(model, viewportLayout{}))
-	for _, want := range []string{"[R] Reset DB", "Status filters apply to TSV and APKG exports"} {
+	for _, want := range []string{"[R] Reset DB", "[B] Backup", "[U] Restore", "Status filters apply to TSV and APKG exports"} {
 		if !strings.Contains(view, want) {
 			t.Fatalf("import view missing %q:\n%s", want, view)
 		}

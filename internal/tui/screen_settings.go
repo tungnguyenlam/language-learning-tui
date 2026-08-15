@@ -4,6 +4,12 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
+const (
+	settingsDailyGoalItem   = 5
+	settingsLastItem        = 16
+	settingsRevealSpeedItem = 16
+)
+
 // settingsScreen wraps the Settings view to satisfy the screen interface.
 type settingsScreen struct{}
 
