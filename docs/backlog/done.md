@@ -1,3 +1,18 @@
+# 2026-08-22 (Cram Trap, Practice Hub Filter, Screen Handlers)
+
+Stopped active Cram sessions from leaking into global navigation, made the Practice Hub
+filter operate on the visible trainer list (including Bubble Tea `"space"`), and moved
+Settings, Cram, AI, Practice, and Dictionary key handling out of `keys.go` onto their
+screens. Dictionary detail Space now scrolls instead of being swallowed.
+
+### Verification
+
+- Focused tests for the Cram trap, Practice Hub filter/wrap/Enter, Settings `+/-`,
+  AI topic search, and Dictionary detail Space passed.
+- `go test ./internal/tui` and `go test ./...` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512 entries),
+  smoke test, binary build, and core E2E suite (35 passed in 38.15s).
+
 # 2026-08-15 (Progress Backup, Settings +/-, Review Navigation)
 
 Wired local progress backup/restore into Import/Export (`B` / `U`) using the existing

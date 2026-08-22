@@ -1,6 +1,11 @@
 package tui
 
 import (
+	"fmt"
+	"strings"
+
+	"deutsch-tui/internal/ai"
+
 	tea "charm.land/bubbletea/v2"
 )
 
@@ -18,5 +23,174 @@ func (settingsScreen) Render(m *Model, layout viewportLayout) string {
 }
 
 func (settingsScreen) HandleKey(m *Model, msg tea.KeyPressMsg) (tea.Cmd, bool) {
-	return m.updateSettingsKey(msg)
+	if m.editingSecretKey != "" {
+		return m.handleSecretEditKey(msg)
+	}
+	if m.editingTemplate {
+		activeSet := m.currentAITemplateSet()
+		if activeSet == "" {
+			m.editingTemplate = false
+			m.originalTemplateValue = ""
+			return nil, true
+		}
+		switch msg.String() {
+		case "enter", "\r", "\n":
+			m.editingTemplate = false
+			m.originalTemplateValue = ""
+			if m.aiProviderName == "template" {
+				m.aiProvider = ai.TemplateProvider{
+					Templates: m.aiTemplates,
+					ActiveSet: activeSet,
+				}
+			}
+			if m.onConfigChange != nil {
+				m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
+			}
+			return nil, true
+		case "esc":
+			// Restore original value on cancel
+			templateKey := m.templateKeyAtCursor()
+			m.aiTemplates[activeSet][templateKey] = m.originalTemplateValue
+			m.editingTemplate = false
+			m.originalTemplateValue = ""
+			if m.aiProviderName == "template" {
+				m.aiProvider = ai.TemplateProvider{
+					Templates: m.aiTemplates,
+					ActiveSet: activeSet,
+				}
+			}
+			if m.onConfigChange != nil {
+				m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
+			}
+			return nil, true
+		case "backspace":
+			templateKey := m.templateKeyAtCursor()
+			val := m.aiTemplates[activeSet][templateKey]
+			if len(val) > 0 {
+				m.aiTemplates[activeSet][templateKey] = trimLastRune(val)
+			}
+			return nil, true
+		case "ctrl+u":
+			templateKey := m.templateKeyAtCursor()
+			m.aiTemplates[activeSet][templateKey] = ""
+			return nil, true
+		}
+		if ch, ok := singlePrintableInput(msg.String()); ok {
+			templateKey := m.templateKeyAtCursor()
+			m.aiTemplates[activeSet][templateKey] += ch
+			return nil, true
+		}
+		return nil, true
+	}
+
+	switch msg.String() {
+	case "up", "k":
+		if m.settingsCursor > 0 {
+			m.settingsCursor--
+		}
+		return nil, true
+	case "down", "j":
+		if m.settingsCursor < settingsLastItem {
+			m.settingsCursor++
+		}
+		return nil, true
+	case "g":
+		m.settingsCursor = 0
+		return nil, true
+	case "G":
+		m.settingsCursor = settingsLastItem
+		return nil, true
+	case "c":
+		return m.cycleTheme(), true
+	case "enter":
+		return m.handleSettingsEnter(), true
+	case "+":
+		switch m.settingsCursor {
+		case settingsRevealSpeedItem:
+			return m.setRevealSpeed(m.revealSpeed + 1), true
+		case settingsDailyGoalItem:
+			return m.setDailyGoal(m.stats.DailyGoal + 1), true
+		}
+		return nil, true
+	case "-":
+		switch m.settingsCursor {
+		case settingsRevealSpeedItem:
+			return m.setRevealSpeed(m.revealSpeed - 1), true
+		case settingsDailyGoalItem:
+			return m.setDailyGoal(m.stats.DailyGoal - 1), true
+		}
+		return nil, true
+	case "[":
+		m.previousAITemplate()
+		return nil, true
+	case "]":
+		m.nextAITemplate()
+		return nil, true
+	}
+	return nil, false
+}
+
+// handleSecretEditKey processes keys while the user is typing an API key,
+// model name, or base URL into Settings. Like template editing, Enter
+// commits the value and triggers a save; Esc reverts to the value we
+// stashed in originalSecretValue. Backspace and ctrl+u edit the buffer.
+func (m *Model) handleSecretEditKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
+	provider := m.editingSecretProvider
+	key := m.editingSecretKey
+	if provider == "" || key == "" {
+		m.editingSecretKey = ""
+		m.editingSecretProvider = ""
+		return nil, true
+	}
+
+	commit := func() {
+		if m.aiProviderName == "disabled" || m.aiProviderName == "offline" || m.aiProviderName == "template" {
+			if provider == "openai" && strings.TrimSpace(m.aiSecrets.OpenAI.APIKey) != "" {
+				m.aiProviderName = "openai"
+			} else if provider == "anthropic" && strings.TrimSpace(m.aiSecrets.Anthropic.APIKey) != "" {
+				m.aiProviderName = "anthropic"
+			}
+		}
+
+		// Rebuild the provider so the new credentials take effect immediately.
+		m.aiProvider = buildProvider(m.aiProviderName, m.aiSecrets, m.aiTemplates, m.currentAITemplateSet())
+		if m.onSecretsChange != nil {
+			m.onSecretsChange(m.aiSecrets)
+		}
+		if m.onConfigChange != nil {
+			m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
+		}
+	}
+
+	switch msg.String() {
+	case "enter", "\r", "\n":
+		m.editingSecretKey = ""
+		m.editingSecretProvider = ""
+		m.originalSecretValue = ""
+		commit()
+		m.status = fmt.Sprintf("Saved %s %s", provider, key)
+		return nil, true
+	case "esc":
+		m.setCredValue(provider, key, m.originalSecretValue)
+		m.editingSecretKey = ""
+		m.editingSecretProvider = ""
+		m.originalSecretValue = ""
+		commit()
+		m.status = "Edit cancelled"
+		return nil, true
+	case "backspace":
+		val := m.getCredValue(provider, key)
+		if len(val) > 0 {
+			m.setCredValue(provider, key, trimLastRune(val))
+		}
+		return nil, true
+	case "ctrl+u":
+		m.setCredValue(provider, key, "")
+		return nil, true
+	}
+	if ch, ok := singlePrintableInput(msg.String()); ok {
+		m.setCredValue(provider, key, m.getCredValue(provider, key)+ch)
+		return nil, true
+	}
+	return nil, true
 }

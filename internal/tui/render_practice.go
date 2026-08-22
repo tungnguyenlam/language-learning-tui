@@ -21,53 +21,51 @@ func (m *Model) renderPractice(layout viewportLayout) string {
 	return "Unknown Practice View"
 }
 
+type practiceHubMode struct {
+	id    string
+	key   string
+	label string
+	desc  string
+	sub   PracticeSubView
+	color color.Color
+	icon  string
+}
+
+var allPracticeHubModes = []practiceHubMode{
+	{"practice-gender", "1", "Gender Trainer", "Practice der/die/das noun genders", PracticeSubViewGender, colorBlue, "🚻"},
+	{"practice-conjugation", "2", "Conjugation Trainer", "Practice German verb forms", PracticeSubViewConjugation, colorPink, "🔄"},
+	{"practice-case", "3", "Case Ending Trainer", "Practice Nom/Acc/Dat/Gen endings", PracticeSubViewCase, colorGold, "📐"},
+	{"practice-adjective", "4", "Adjective Ending Trainer", "Practice weak/strong/mixed endings", PracticeSubViewAdjective, colorYellow, "🎨"},
+	{"practice-preposition", "5", "Preposition Trainer", "Practice two-way prepositions & cases", PracticeSubViewPreposition, colorPurple, "📍"},
+	{"practice-plural", "6", "Plural Trainer", "Practice German noun plural forms", PracticeSubViewPlural, colorSecondary, "👥"},
+	{"practice-separable", "7", "Separable Verb Trainer", "Practice verb prefixes and word order", PracticeSubViewSeparable, colorOrange, "S/"},
+	{"practice-numbers", "8", "Numbers & Time", "Practice German numbers and time", PracticeSubViewNumbers, colorCyan, "🔢"},
+	{"practice-conjunctions", "9", "Conjunctions & Word Order", "Practice conjunctions & sentence structure", PracticeSubViewConjunctions, colorGreen, "🔗"},
+	{"practice-konjunktiv", "0", "Konjunktiv II Trainer", "Practice subjunctive II (würde, wäre, hätte)", PracticeSubViewKonjunktiv, colorAITitle, "Kj"},
+	{"practice-passive", "-", "Passive Voice Trainer", "Practice Vorgangspassiv & Zustandspassiv", PracticeSubViewPassive, colorPurple, "Pv"},
+	{"practice-relative", "=", "Relative Clauses Trainer", "Practice Relativpronomen & Relativsätze", PracticeSubViewRelative, colorGreen, "Rl"},
+}
+
+func (m *Model) visiblePracticeHubModes() []practiceHubMode {
+	if m.practiceFilter == "" {
+		return allPracticeHubModes
+	}
+	q := strings.ToLower(m.practiceFilter)
+	var visible []practiceHubMode
+	for _, mode := range allPracticeHubModes {
+		if strings.Contains(strings.ToLower(mode.label), q) || strings.Contains(strings.ToLower(mode.desc), q) || strings.EqualFold(mode.key, q) {
+			visible = append(visible, mode)
+		}
+	}
+	return visible
+}
+
 func (m *Model) renderPracticeHub(layout viewportLayout) string {
 	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("212")).Underline(true)
 	header := lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, titleStyle.Render(" PRACTICE HUB ")) + "\n\n"
 	headerHeight := 2
 
-	modes := []struct {
-		id    string
-		key   string
-		label string
-		desc  string
-		sub   PracticeSubView
-		color color.Color
-		icon  string
-	}{
-		{"practice-gender", "1", "Gender Trainer", "Practice der/die/das noun genders", PracticeSubViewGender, colorBlue, "🚻"},
-		{"practice-conjugation", "2", "Conjugation Trainer", "Practice German verb forms", PracticeSubViewConjugation, colorPink, "🔄"},
-		{"practice-case", "3", "Case Ending Trainer", "Practice Nom/Acc/Dat/Gen endings", PracticeSubViewCase, colorGold, "📐"},
-		{"practice-adjective", "4", "Adjective Ending Trainer", "Practice weak/strong/mixed endings", PracticeSubViewAdjective, colorYellow, "🎨"},
-		{"practice-preposition", "5", "Preposition Trainer", "Practice two-way prepositions & cases", PracticeSubViewPreposition, colorPurple, "📍"},
-		{"practice-plural", "6", "Plural Trainer", "Practice German noun plural forms", PracticeSubViewPlural, colorSecondary, "👥"},
-		{"practice-separable", "7", "Separable Verb Trainer", "Practice verb prefixes and word order", PracticeSubViewSeparable, colorOrange, "S/"},
-		{"practice-numbers", "8", "Numbers & Time", "Practice German numbers and time", PracticeSubViewNumbers, colorCyan, "🔢"},
-		{"practice-conjunctions", "9", "Conjunctions & Word Order", "Practice conjunctions & sentence structure", PracticeSubViewConjunctions, colorGreen, "🔗"},
-		{"practice-konjunktiv", "0", "Konjunktiv II Trainer", "Practice subjunctive II (würde, wäre, hätte)", PracticeSubViewKonjunktiv, colorAITitle, "Kj"},
-		{"practice-passive", "-", "Passive Voice Trainer", "Practice Vorgangspassiv & Zustandspassiv", PracticeSubViewPassive, colorPurple, "Pv"},
-		{"practice-relative", "=", "Relative Clauses Trainer", "Practice Relativpronomen & Relativsätze", PracticeSubViewRelative, colorGreen, "Rl"},
-	}
-
-	var displayModes []struct {
-		id    string
-		key   string
-		label string
-		desc  string
-		sub   PracticeSubView
-		color color.Color
-		icon  string
-	}
-	if m.practiceFilter != "" {
-		q := strings.ToLower(m.practiceFilter)
-		for _, mde := range modes {
-			if strings.Contains(strings.ToLower(mde.label), q) || strings.Contains(strings.ToLower(mde.desc), q) || strings.EqualFold(mde.key, q) {
-				displayModes = append(displayModes, mde)
-			}
-		}
-	} else {
-		displayModes = modes
-	}
+	displayModes := m.visiblePracticeHubModes()
 
 	if len(displayModes) > 0 {
 		m.practiceHubCursor = clampInt(m.practiceHubCursor, 0, len(displayModes)-1)
@@ -81,7 +79,7 @@ func (m *Model) renderPracticeHub(layout viewportLayout) string {
 		if m.practiceFilterFocus {
 			cursorStr = "█"
 		}
-		filterText := fmt.Sprintf("🔍 Filter: %s%s (%d/%d trainers)", m.practiceFilter, cursorStr, len(displayModes), len(modes))
+		filterText := fmt.Sprintf("🔍 Filter: %s%s (%d/%d trainers)", m.practiceFilter, cursorStr, len(displayModes), len(allPracticeHubModes))
 		filterBar = lipgloss.PlaceHorizontal(layout.Width, lipgloss.Center, lipgloss.NewStyle().Foreground(colorCyan).Bold(true).Render(filterText)) + "\n\n"
 		headerHeight += 2
 	}

@@ -510,7 +510,7 @@ func TestDictionaryFindInBrowserKeepsLookupQuery(t *testing.T) {
 	m.dictionaryCursor = 0
 	m.dictionaryFocusResults = true
 
-	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Text: "ctrl+f"})
+	cmd, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Text: "ctrl+f"})
 	if !handled {
 		t.Fatal("expected ctrl+f to be handled")
 	}

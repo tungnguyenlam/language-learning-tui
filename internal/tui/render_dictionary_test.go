@@ -143,7 +143,7 @@ func TestDictionaryDetailScrollClampsToVisibleRows(t *testing.T) {
 
 	maxScroll := maxInt(0, m.dictionaryDetailTotalLines-m.dictionaryDetailViewportRows(m.activeViewContentLayout()))
 	for i := 0; i < 100; i++ {
-		cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: tea.KeyDown, Mod: tea.ModShift})
+		cmd, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: tea.KeyDown, Mod: tea.ModShift})
 		if cmd != nil {
 			t.Fatal("shift+down should not return a command")
 		}
@@ -348,7 +348,7 @@ func TestDictionaryPreviousView(t *testing.T) {
 	}
 
 	// Press Esc to go back
-	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: tea.KeyEsc})
+	cmd, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: tea.KeyEsc})
 	if !handled {
 		t.Fatal("expected Esc to be handled")
 	}
@@ -419,7 +419,7 @@ func TestDictionarySingleColumnDetailView(t *testing.T) {
 	}
 
 	// Toggle details view using key or directly
-	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'd', Mod: tea.ModCtrl})
+	cmd, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'd', Mod: tea.ModCtrl})
 	if !handled {
 		t.Fatal("expected ctrl+d to be handled")
 	}
@@ -436,7 +436,7 @@ func TestDictionarySingleColumnDetailView(t *testing.T) {
 	}
 
 	// Exit detail view with esc
-	cmd, handled = m.updateDictionaryKey(tea.KeyPressMsg{Code: tea.KeyEsc})
+	cmd, handled = (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: tea.KeyEsc})
 	if !handled || cmd != nil {
 		t.Fatal("expected esc to be handled without cmd")
 	}
@@ -482,9 +482,9 @@ func TestDictionaryClearSearchHistory(t *testing.T) {
 
 	// Re-populate and test via ctrl+x keypress
 	m.dictionarySearchHistory = []string{"Banane"}
-	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'x', Mod: tea.ModCtrl})
+	cmd, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'x', Mod: tea.ModCtrl})
 	if !handled || cmd != nil {
-		t.Fatal("expected ctrl+x to be handled in updateDictionaryKey")
+		t.Fatal("expected ctrl+x to be handled by the Dictionary screen")
 	}
 
 	if len(m.dictionarySearchHistory) != 0 {
@@ -620,7 +620,7 @@ func TestSpotlightDictionaryOverlaySearchInput(t *testing.T) {
 	m.activeView = ViewStatistics
 	m.dictionaryOverlayActive = true
 
-	// Type a character — the overlay delegates to updateDictionaryKey which handles text input
+	// Type a character — the overlay delegates to dictionaryScreen.HandleKey for text input
 	// Since dictionaryOverlayActive is true, textInputActive() returns true, blocking number-key navigation
 	if !m.textInputActive() {
 		t.Fatal("expected textInputActive() to return true when overlay is active")
@@ -826,7 +826,7 @@ func TestDictionaryHistoryKeyboardCycling(t *testing.T) {
 	m.dictionarySearch = ""
 
 	// Down arrow cycles to recent history
-	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: tea.KeyDown})
+	cmd, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: tea.KeyDown})
 	if !handled || cmd == nil {
 		t.Fatal("expected Down arrow to be handled with search command")
 	}
@@ -835,7 +835,7 @@ func TestDictionaryHistoryKeyboardCycling(t *testing.T) {
 	}
 
 	// Up arrow cycles to previous history item
-	cmd, handled = m.updateDictionaryKey(tea.KeyPressMsg{Code: tea.KeyUp})
+	cmd, handled = (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: tea.KeyUp})
 	if !handled || cmd == nil {
 		t.Fatal("expected Up arrow to be handled with search command")
 	}
@@ -872,7 +872,7 @@ func TestDictionaryCtrlEExplainAndFilterTagHelpers(t *testing.T) {
 	}
 	m.dictionaryCursor = 0
 
-	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'e', Mod: tea.ModCtrl})
+	cmd, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'e', Mod: tea.ModCtrl})
 	if !handled {
 		t.Fatal("expected ctrl+e to be handled")
 	}
@@ -911,7 +911,7 @@ func TestDictionaryKAndJKeyHandling(t *testing.T) {
 	m.dictionaryDetailView = false
 
 	// Typing 'k' while in search input must append 'k' to dictionarySearch, NOT cycle history or navigate
-	_, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'k'})
+	_, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'k'})
 	if !handled {
 		t.Fatal("expected 'k' to be handled as printable text input")
 	}
@@ -924,7 +924,7 @@ func TestDictionaryKAndJKeyHandling(t *testing.T) {
 		{ID: "1", Word: "Käse"},
 		{ID: "2", Word: "Kuchen"},
 	}
-	_, handled = m.updateDictionaryKey(tea.KeyPressMsg{Code: 'j'})
+	_, handled = (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'j'})
 	if !handled {
 		t.Fatal("expected 'j' to be handled as printable text input even with non-empty results")
 	}
@@ -940,7 +940,7 @@ func TestDictionaryKAndJKeyHandling(t *testing.T) {
 	}
 	m.dictionaryCursor = 0
 
-	_, handled = m.updateDictionaryKey(tea.KeyPressMsg{Code: 'j'})
+	_, handled = (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'j'})
 	if !handled {
 		t.Fatal("expected 'j' to navigate down when results are focused")
 	}
@@ -948,7 +948,7 @@ func TestDictionaryKAndJKeyHandling(t *testing.T) {
 		t.Fatalf("expected cursor to be 1 after 'j', got %d", m.dictionaryCursor)
 	}
 
-	_, handled = m.updateDictionaryKey(tea.KeyPressMsg{Code: 'k'})
+	_, handled = (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'k'})
 	if !handled {
 		t.Fatal("expected 'k' to navigate up when results are focused")
 	}
@@ -1021,7 +1021,7 @@ func TestDictionaryStarringAndFiltering(t *testing.T) {
 	m.dictionaryFocusResults = true
 
 	// Toggle star on "Hund" using 'b' key
-	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'b'})
+	cmd, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'b'})
 	if !handled {
 		t.Fatal("expected 'b' to be handled when results focused")
 	}
@@ -1055,7 +1055,7 @@ func TestDictionaryStarringAndFiltering(t *testing.T) {
 	}
 
 	// Unstar "Hund" using ctrl+b
-	cmd, handled = m.updateDictionaryKey(tea.KeyPressMsg{Code: 'b', Mod: tea.ModCtrl})
+	cmd, handled = (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'b', Mod: tea.ModCtrl})
 	if !handled {
 		t.Fatal("expected ctrl+b to be handled")
 	}
@@ -1123,7 +1123,7 @@ func TestDictionaryTargetDeckCyclingAndBatchAdd(t *testing.T) {
 	m.decks = repo.decks
 
 	// Cycle deck with ctrl+g
-	_, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'g', Mod: tea.ModCtrl})
+	_, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'g', Mod: tea.ModCtrl})
 	if !handled {
 		t.Fatal("expected ctrl+g to be handled")
 	}
@@ -1135,7 +1135,7 @@ func TestDictionaryTargetDeckCyclingAndBatchAdd(t *testing.T) {
 	entry := core.DictionaryEntry{ID: "101", Word: "Buch", Translation: "book", Gender: "n"}
 	m.dictionaryResults = []core.DictionaryEntry{entry}
 	m.dictionaryCursor = 0
-	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'a', Mod: tea.ModCtrl})
+	cmd, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'a', Mod: tea.ModCtrl})
 	if !handled || cmd == nil {
 		t.Fatal("expected ctrl+a to return batch command")
 	}
@@ -1154,7 +1154,7 @@ func TestDictionaryTargetDeckCyclingAndBatchAdd(t *testing.T) {
 	}
 
 	// Batch add results with ctrl+s
-	cmdBatch, handledBatch := m.updateDictionaryKey(tea.KeyPressMsg{Code: 's', Mod: tea.ModCtrl})
+	cmdBatch, handledBatch := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 's', Mod: tea.ModCtrl})
 	if !handledBatch || cmdBatch == nil {
 		t.Fatal("expected ctrl+s to return batch command")
 	}
@@ -1267,7 +1267,7 @@ func TestDictionaryRecentlyViewedAndDomainTags(t *testing.T) {
 	m.dictionaryFocusResults = true
 	m.dictionaryDetailView = false
 	m.width = 120
-	_, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'j'})
+	_, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'j'})
 	if !handled {
 		t.Fatal("expected j navigation to be handled")
 	}
@@ -1317,7 +1317,7 @@ func TestDictionaryRecentlyViewedAndDomainTags(t *testing.T) {
 
 	m.dictionaryRecentlyViewed = []core.DictionaryEntry{entry1}
 	m.dictionarySearchHistory = nil
-	_, handled = m.updateDictionaryKey(tea.KeyPressMsg{Code: 'x', Mod: tea.ModCtrl})
+	_, handled = (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'x', Mod: tea.ModCtrl})
 	if !handled {
 		t.Fatal("expected ctrl+x to clear recently viewed when history empty")
 	}
@@ -1337,7 +1337,7 @@ func TestDictionaryExportTSVAndFilterPills(t *testing.T) {
 	}
 
 	// Test ctrl+o triggers export command
-	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'o', Mod: tea.ModCtrl})
+	cmd, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'o', Mod: tea.ModCtrl})
 	if !handled || cmd == nil {
 		t.Fatal("expected ctrl+o to be handled with export command")
 	}
@@ -1440,7 +1440,7 @@ func TestDictionaryNumberKeyNavigation(t *testing.T) {
 	m.dictionaryFocusResults = true
 
 	// Pressing '1' should jump search to 1st compound part "Hand"
-	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Text: "1", Code: '1'})
+	cmd, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Text: "1", Code: '1'})
 	if !handled || cmd == nil {
 		t.Fatalf("expected key '1' to be handled with search command")
 	}
@@ -1451,7 +1451,7 @@ func TestDictionaryNumberKeyNavigation(t *testing.T) {
 	// Pressing '2' on Handschuh should jump search to 2nd compound part "Schuh"
 	m.dictionarySearch = "Handschuh"
 	m.dictionaryFocusResults = true
-	cmd, handled = m.updateDictionaryKey(tea.KeyPressMsg{Text: "2", Code: '2'})
+	cmd, handled = (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Text: "2", Code: '2'})
 	if !handled || cmd == nil {
 		t.Fatalf("expected key '2' to be handled with search command")
 	}
@@ -1483,7 +1483,7 @@ func TestMultiPartCompoundDecompositionAndHitboxes(t *testing.T) {
 
 	// Pressing '3' should jump search to 3rd compound part "Arzt"
 	m.dictionaryFocusResults = true
-	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Text: "3", Code: '3'})
+	cmd, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Text: "3", Code: '3'})
 	if !handled || cmd == nil {
 		t.Fatalf("expected key '3' to be handled with search command")
 	}
@@ -1561,7 +1561,7 @@ func TestDictionaryInflectionCardGeneration(t *testing.T) {
 	m.dictionaryCursor = 0
 	m.dictionaryFocusResults = true
 
-	cmd, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'i'})
+	cmd, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'i'})
 	if !handled || cmd == nil {
 		t.Fatalf("expected 'i' key to trigger inflection card generation")
 	}
@@ -1615,7 +1615,7 @@ func TestDictionaryAudioPronunciationAndHitboxes(t *testing.T) {
 	}
 
 	// Test 'a' key shortcut in dictionary mode
-	_, handled := m.updateDictionaryKey(tea.KeyPressMsg{Code: 'a'})
+	_, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'a'})
 	if !handled {
 		t.Fatalf("expected 'a' key to be handled in dictionary results focus")
 	}

@@ -16,7 +16,7 @@ Responsive Bubble Tea UI for German language learning.
 - `render_*.go`: View-specific rendering logic.
 - `handlers.go`: Command and Message handlers.
 - `hitboxes.go`: Mouse interaction detection logic.
-- `keys.go`: Global/modal key routing and legacy handlers not yet co-located with a screen.
+- `keys.go`: Global/modal key routing, paste, and Spotlight dictionary overlay intercepts.
 - `screen_*.go`: Screen registration boundaries and co-located view-specific key handling.
 - `actions_backup.go`: Import/Export progress backup and restore commands (`B` / `U`).
 

@@ -828,7 +828,7 @@ func TestAIEscapeClearsStarterTopic(t *testing.T) {
 	model.activeView = ViewAI
 	model.aiInput = "der Kaffee"
 
-	cmd, handled := model.updateAIKey(tea.KeyPressMsg{Code: tea.KeyEsc})
+	cmd, handled := (aiScreen{}).HandleKey(model, tea.KeyPressMsg{Code: tea.KeyEsc})
 	if !handled {
 		t.Fatal("expected escape to be handled in AI view")
 	}
@@ -2100,7 +2100,7 @@ func TestAIApproveAllAndDiscardAllShortcuts(t *testing.T) {
 	}
 
 	// Test 'D' shortcut to discard all drafts
-	cmd, handled := model.updateAIKey(tea.KeyPressMsg{Code: 'D', Text: "D"})
+	cmd, handled := (aiScreen{}).HandleKey(model, tea.KeyPressMsg{Code: 'D', Text: "D"})
 	if !handled || len(model.drafts) != 0 {
 		t.Fatalf("expected 'D' shortcut to discard all drafts, got handled=%v, len(drafts)=%d", handled, len(model.drafts))
 	}
@@ -2111,7 +2111,7 @@ func TestAIApproveAllAndDiscardAllShortcuts(t *testing.T) {
 		{Note: core.Note{ID: "n1", DeckID: "deck-1", Front: "Eins", Back: "One"}},
 		{Note: core.Note{ID: "n2", DeckID: "deck-1", Front: "Zwei", Back: "Two"}},
 	}
-	cmd, handled = model.updateAIKey(tea.KeyPressMsg{Code: 'A', Text: "A"})
+	cmd, handled = (aiScreen{}).HandleKey(model, tea.KeyPressMsg{Code: 'A', Text: "A"})
 	if !handled || cmd == nil {
 		t.Fatalf("expected 'A' shortcut to return approveAllDrafts command")
 	}
@@ -2159,7 +2159,7 @@ func TestAIDraftRowHitboxesAndDictionaryContextBanner(t *testing.T) {
 	if !strings.Contains(view, "AI Tutor Explanation") || !strings.Contains(view, "geheim is an adjective") {
 		t.Fatalf("expected AI explanation panel, got:\n%s", view)
 	}
-	_, handled := model.updateAIKey(tea.KeyPressMsg{Code: 'H', Text: "H"})
+	_, handled := (aiScreen{}).HandleKey(model, tea.KeyPressMsg{Code: 'H', Text: "H"})
 	if !handled || model.explanation != "" {
 		t.Fatalf("expected H to dismiss explanation, handled=%v explanation=%q", handled, model.explanation)
 	}
@@ -2712,13 +2712,13 @@ func TestConjunctionsTrainer(t *testing.T) {
 	}
 
 	for _, char := range "weil" {
-		m.updatePracticeKey(tea.KeyPressMsg{Code: char})
+		(practiceScreen{}).HandleKey(m, tea.KeyPressMsg{Code: char})
 	}
 	if st.input != "weil" {
 		t.Fatalf("expected input to be 'weil', got '%s'", st.input)
 	}
 
-	m.updatePracticeKey(tea.KeyPressMsg{Code: '\r'})
+	(practiceScreen{}).HandleKey(m, tea.KeyPressMsg{Code: '\r'})
 	if !st.revealed {
 		t.Fatal("expected trainer to be in revealed state")
 	}
@@ -2734,7 +2734,7 @@ func TestConjunctionsTrainer(t *testing.T) {
 		t.Fatalf("expected explanation to be rendered, got: %s", view)
 	}
 
-	m.updatePracticeKey(tea.KeyPressMsg{Code: ' '})
+	(practiceScreen{}).HandleKey(m, tea.KeyPressMsg{Code: ' '})
 	if st.revealed {
 		t.Fatal("expected trainer to reset revealed state on advance")
 	}
@@ -2770,7 +2770,7 @@ func TestConjunctionsHint(t *testing.T) {
 		t.Fatal("hint should not be visible initially")
 	}
 
-	m.updatePracticeKey(tea.KeyPressMsg{Code: 'h'})
+	(practiceScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'h'})
 	if !st.showHint {
 		t.Fatal("expected showHint to be true")
 	}
@@ -2779,24 +2779,24 @@ func TestConjunctionsHint(t *testing.T) {
 		t.Fatal("hint should be visible after pressing 'h'")
 	}
 
-	m.updatePracticeKey(tea.KeyPressMsg{Code: 'h'})
+	(practiceScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'h'})
 	if st.showHint {
 		t.Fatal("expected showHint to be false after toggle")
 	}
 
 	// Reveal answer should hide hint input prompt but hint itself?
 	// The current implementation hides the hint prompt when revealed.
-	m.updatePracticeKey(tea.KeyPressMsg{Code: 'h'})
+	(practiceScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'h'})
 	for _, char := range "weil" {
-		m.updatePracticeKey(tea.KeyPressMsg{Code: char})
+		(practiceScreen{}).HandleKey(m, tea.KeyPressMsg{Code: char})
 	}
-	m.updatePracticeKey(tea.KeyPressMsg{Code: '\r'})
+	(practiceScreen{}).HandleKey(m, tea.KeyPressMsg{Code: '\r'})
 	if !st.revealed {
 		t.Fatal("expected trainer to be revealed")
 	}
 
 	// Advance should reset hint
-	m.updatePracticeKey(tea.KeyPressMsg{Code: ' '})
+	(practiceScreen{}).HandleKey(m, tea.KeyPressMsg{Code: ' '})
 	if st.showHint {
 		t.Fatal("expected hint to reset on advance")
 	}
@@ -2827,7 +2827,7 @@ func TestPracticeHubScoresAndReset(t *testing.T) {
 	}
 
 	// Press 'r' to reset scores
-	cmd, handled := m.updatePracticeKey(tea.KeyPressMsg{Code: 'r'})
+	cmd, handled := (practiceScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'r'})
 	if !handled || cmd != nil {
 		t.Fatal("expected 'r' keypress to be handled in Practice Hub")
 	}

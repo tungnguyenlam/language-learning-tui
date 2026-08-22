@@ -2,7 +2,7 @@
 
 Status: active
 Scope: `internal/tui` key routing, practice trainers, Review typing, Cram, Practice Hub filter
-Related: `internal/tui/keys.go` (`practiceBlocksGlobalShortcut`, `trainerInputActive`, `textInputActive`, `updatePracticeKey`), `internal/tui/trainer.go`
+Related: `internal/tui/keys.go` (`practiceBlocksGlobalShortcut`, `trainerInputActive`, `textInputActive`), `internal/tui/screen_practice.go`, `internal/tui/trainer.go`
 
 ## Why It Matters
 
@@ -19,8 +19,10 @@ and `=`: true while a generic trainer has items (typing **or** post-reveal
 "press any key"), and while the Gender trainer is in its revealed advance
 step. `trainerInputActive()` remains the narrower "typing only" check.
 
-Review typing mode is a separate trap: `q` must reach `updateReviewKey`, while
-Cram still uses `q` to exit an active session.
+Review typing mode is a separate trap: `q` must reach the Review screen,
+while Cram still uses `q` to exit an active session. An active Cram session
+also consumes unhandled keys (`s`/`w`/`[`/`]`) so global navigation cannot
+abandon it; `q` remains the exit.
 
 The Practice Hub `/` filter **is** part of `textInputActive()` (when
 `practiceFilterFocus` is set). Without that, typing `q` quit the app, digits
@@ -44,5 +46,6 @@ jumped to other views, and clipboard paste was ignored.
 
 ## Revisit When
 
-The trainers move onto the `screen` interface (`internal/tui/screen.go`) or key
-routing stops resolving global shortcuts before view-specific handlers.
+The trainers live on the Practice screen (`internal/tui/screen_practice.go`).
+Revisit if key routing stops resolving global shortcuts before view-specific
+handlers.

@@ -234,14 +234,14 @@ func TestPracticeHubSearchFilter(t *testing.T) {
 	m.height = 30
 
 	// 1. Press '/' to open filter
-	m.updatePracticeKey(tea.KeyPressMsg{Text: "/"})
+	(practiceScreen{}).HandleKey(m, tea.KeyPressMsg{Text: "/"})
 	if !m.practiceFilterFocus {
 		t.Fatalf("expected practiceFilterFocus to be true after '/' key")
 	}
 
 	// 2. Type "passive"
 	for _, char := range "passive" {
-		m.updatePracticeKey(tea.KeyPressMsg{Text: string(char)})
+		(practiceScreen{}).HandleKey(m, tea.KeyPressMsg{Text: string(char)})
 	}
 	if m.practiceFilter != "passive" {
 		t.Fatalf("expected practiceFilter to be 'passive', got %q", m.practiceFilter)
@@ -260,7 +260,7 @@ func TestPracticeHubSearchFilter(t *testing.T) {
 	}
 
 	// 4. Press Esc to clear filter
-	m.updatePracticeKey(tea.KeyPressMsg{Code: tea.KeyEscape})
+	(practiceScreen{}).HandleKey(m, tea.KeyPressMsg{Code: tea.KeyEscape})
 	if m.practiceFilter != "" {
 		t.Fatalf("expected practiceFilter to be cleared on Esc, got %q", m.practiceFilter)
 	}

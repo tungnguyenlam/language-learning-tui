@@ -1,53 +1,52 @@
 # Active Backlog
 
-Last updated: 2026-08-15
+Last updated: 2026-08-22
 
 ## Current Milestone
 
-Local progress backup/restore is available on Import/Export. Settings +/- only
-change the focused row. Review j/k card navigation is owned by the Review screen.
+The 2026-08-22 improvement pass is complete: Cram sessions stay trapped,
+Practice Hub filter keys match the visible list, and remaining view handlers
+live on their screens.
 
 ## Exact Next Action
 
-No unfinished executable work remains. A future pass can migrate Settings, Cram, AI,
-Practice, or Dictionary individually from `keys.go` into its registered screen
-implementation.
+No unfinished executable work remains. A future pass can start extracting
+view-local state off `Model` now that Settings, Cram, AI, Practice, and
+Dictionary keys are co-located with their screens, or split the large
+async-message switch in `internal/tui/model.go`.
 
 ## Completed This Pass
 
-- Aligned `sqlite.Store` with `core.BackupRepository` and added Import/Export `B`
-  backup / `U` restore to `{dataDir}/backups/`.
-- Settings `+/-` now adjust Daily Goal or Reveal Speed only when that row is
-  focused; the provider-cycle hint includes ollama.
-- Review j/k card movement lives on `reviewScreen`; the leftover global `p`
-  audio fallback was removed.
+- Active Cram consumes unhandled keys so `s`/`w`/`[`/`]` cannot abandon a
+  session; `q` still exits.
+- Practice Hub `/` filter accepts Bubble Tea `"space"`, Enter starts the
+  visible trainer, and j/k wrap on the filtered list.
+- Settings, Cram, AI, Practice, and Dictionary key handlers moved from
+  `keys.go` into their screen files. Dictionary detail Space now scrolls.
+- Spotlight overlay delegates to `dictionaryScreen.HandleKey`.
 
 ## Top Issues
 
 - `internal/tui/model.go` still contains the large central async-message switch.
-- `internal/tui/keys.go` still contains legacy handlers for Settings, Cram, AI,
-  Practice, and Dictionary; migrate them individually behind the existing screen
-  contract rather than attempting a broad rewrite.
+- View-local state still lives on `Model`; screen files own render + keys only.
 
 ## Acceptance Criteria
 
-- `B` on Import writes a timestamped progress backup and reports row count.
-- `U` on Import confirms, then restores decks and due cards from the latest backup.
-- Settings `+/-` on the AI Provider row does not change the daily goal.
-- Review `j`/`k` move the due-card cursor through the screen contract.
+- During active Cram, `s`/`w`/`[`/`]` stay on Cram and do not change the deck.
+- Practice Hub filter accepts a space character; Enter starts the filtered
+  trainer; j/k wrap within the visible list.
+- Settings, Cram, AI, Practice, and Dictionary `HandleKey` implementations
+  live in `screen_*.go`.
 - Focused tests, `go test ./internal/tui`, and `./scripts/verify.sh` pass.
 
 ## Last Verification
 
-- `go test ./internal/core ./internal/storage/sqlite ./internal/tui` passed on
-  2026-08-15.
-- `go test ./...` passed on 2026-08-15.
-- `./scripts/verify.sh` passed on 2026-08-15: Go tests, vet, offline dict.cc
+- `go test ./internal/tui` passed on 2026-08-22.
+- `go test ./...` passed on 2026-08-22.
+- `./scripts/verify.sh` passed on 2026-08-22: Go tests, vet, offline dict.cc
   import (834,512 entries), smoke test, binary build, and core E2E suite (35
-  passed in 37.73s).
+  passed in 38.15s).
 
 ## Repository State
 
 - Improvement pass is complete and fully verified on `main`.
-- The five `subagent-*` branches remain checked out in external worktrees under
-  `~/.gemini/antigravity-cli/`. Delete those worktrees before deleting the branches.

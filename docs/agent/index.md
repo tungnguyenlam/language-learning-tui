@@ -1,6 +1,6 @@
 # Agent Context Index
 
-Last updated: 2026-08-15
+Last updated: 2026-08-22
 
 ## Vision & Prompts
 
@@ -33,11 +33,12 @@ Last updated: 2026-08-15
 - `docs/agent/notices/2026-08-12-generic-trainer-load-identity.md`: generic trainer item loads must carry a request ID and active-subview guard.
 - `docs/agent/notices/2026-08-12-anki-cloze-ordinal-grouping.md`: repeated Anki cloze ordinals form one card and must retain numeric order and grouped answers.
 - `docs/agent/notices/2026-08-15-progress-backup-excludes-dictionary.md`: progress backups omit dict.cc tables; TUI must type-assert `BackupRepository`.
+- `docs/agent/notices/2026-08-22-cram-session-key-trap.md`: active Cram must consume unhandled keys so global nav cannot abandon the session.
 
 ## Verification Status
 
-- ✅ `./scripts/verify.sh` passed on 2026-08-15 after the improvement pass (Go tests, vet, dict.cc
-  import, smoke test, binary build, core E2E suite: 35 passed in 37.73s)
+- ✅ `./scripts/verify.sh` passed on 2026-08-22 after the improvement pass (Go tests, vet, dict.cc
+  import, smoke test, binary build, core E2E suite: 35 passed in 38.15s)
 - ✅ All Go test suites passing (as of 2026-08-05)
 - ✅ App launches without errors (smoke test passing)
 - ✅ All views render correctly (Dashboard, Review, Import, AI, Settings, Browser, Cram, SessionSummary, Dictionary)

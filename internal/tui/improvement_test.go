@@ -17,7 +17,7 @@ func TestPracticeHubKeyboardNavigation(t *testing.T) {
 	model.practiceHubCursor = 0
 
 	// Move down using 'j'
-	cmd, handled := model.updatePracticeKey(tea.KeyPressMsg{Code: 'j'})
+	cmd, handled := (practiceScreen{}).HandleKey(model, tea.KeyPressMsg{Code: 'j'})
 	if !handled {
 		t.Fatal("Expected 'j' key to be handled in Practice Hub")
 	}
@@ -29,37 +29,37 @@ func TestPracticeHubKeyboardNavigation(t *testing.T) {
 	}
 
 	// Move down using Down arrow
-	model.updatePracticeKey(tea.KeyPressMsg{Code: tea.KeyDown})
+	(practiceScreen{}).HandleKey(model, tea.KeyPressMsg{Code: tea.KeyDown})
 	if model.practiceHubCursor != 2 {
 		t.Fatalf("Expected cursor to be 2, got %d", model.practiceHubCursor)
 	}
 
 	// Move up using 'k'
-	model.updatePracticeKey(tea.KeyPressMsg{Code: 'k'})
+	(practiceScreen{}).HandleKey(model, tea.KeyPressMsg{Code: 'k'})
 	if model.practiceHubCursor != 1 {
 		t.Fatalf("Expected cursor to be 1, got %d", model.practiceHubCursor)
 	}
 
 	// Move up using Up arrow
-	model.updatePracticeKey(tea.KeyPressMsg{Code: tea.KeyUp})
+	(practiceScreen{}).HandleKey(model, tea.KeyPressMsg{Code: tea.KeyUp})
 	if model.practiceHubCursor != 0 {
 		t.Fatalf("Expected cursor to be 0, got %d", model.practiceHubCursor)
 	}
 
 	// Wrap around moving up from 0 — now 12 trainers (indices 0-11)
-	model.updatePracticeKey(tea.KeyPressMsg{Code: tea.KeyUp})
+	(practiceScreen{}).HandleKey(model, tea.KeyPressMsg{Code: tea.KeyUp})
 	if model.practiceHubCursor != 11 {
 		t.Fatalf("Expected cursor to be 11 after wrap-around, got %d", model.practiceHubCursor)
 	}
 
 	// Wrap around moving down from 11
-	model.updatePracticeKey(tea.KeyPressMsg{Code: tea.KeyDown})
+	(practiceScreen{}).HandleKey(model, tea.KeyPressMsg{Code: tea.KeyDown})
 	if model.practiceHubCursor != 0 {
 		t.Fatalf("Expected cursor to be 0 after wrap-around, got %d", model.practiceHubCursor)
 	}
 
 	// Press Enter to select the gender trainer (index 0)
-	cmd, handled = model.updatePracticeKey(tea.KeyPressMsg{Code: tea.KeyEnter})
+	cmd, handled = (practiceScreen{}).HandleKey(model, tea.KeyPressMsg{Code: tea.KeyEnter})
 	if !handled {
 		t.Fatal("Expected Enter to be handled")
 	}
@@ -389,7 +389,7 @@ func TestKonjunktivTrainerIsRegistered(t *testing.T) {
 	model.practiceSubView = PracticeSubViewHub
 
 	// '0' key should enter Konjunktiv II trainer
-	_, handled := model.updatePracticeKey(tea.KeyPressMsg{Code: '0'})
+	_, handled := (practiceScreen{}).HandleKey(model, tea.KeyPressMsg{Code: '0'})
 	if !handled {
 		t.Fatal("Expected '0' key to be handled in practice hub")
 	}
@@ -406,7 +406,7 @@ func TestPassiveTrainerIsRegistered(t *testing.T) {
 
 	// Cursor at index 10 + enter should enter Passive Voice trainer
 	model.practiceHubCursor = 10
-	_, handled := model.updatePracticeKey(tea.KeyPressMsg{Code: tea.KeyEnter})
+	_, handled := (practiceScreen{}).HandleKey(model, tea.KeyPressMsg{Code: tea.KeyEnter})
 	if !handled {
 		t.Fatal("Expected Enter key to be handled in practice hub")
 	}
@@ -458,7 +458,7 @@ func TestRelativeTrainerIsRegistered(t *testing.T) {
 	model.practiceSubView = PracticeSubViewHub
 
 	// Test '=' shortcut for Relative Clauses trainer
-	_, handled := model.updatePracticeKey(tea.KeyPressMsg{Text: "="})
+	_, handled := (practiceScreen{}).HandleKey(model, tea.KeyPressMsg{Text: "="})
 	if !handled {
 		t.Fatal("Expected '=' key to be handled in practice hub")
 	}
@@ -586,7 +586,7 @@ func TestGenderTrainerEmptyItemsSafety(t *testing.T) {
 
 	// Pressing keys should not panic
 	for _, k := range []string{"1", "2", "3", "d", "i", "f", "a", "m", "n"} {
-		_, _ = model.updatePracticeKey(tea.KeyPressMsg{Text: k})
+		_, _ = (practiceScreen{}).HandleKey(model, tea.KeyPressMsg{Text: k})
 	}
 }
 
@@ -606,7 +606,7 @@ func TestGenericTrainerInvalidIndexSafety(t *testing.T) {
 	}
 
 	// Key update should not panic
-	_, _ = model.updatePracticeKey(tea.KeyPressMsg{Code: tea.KeyEnter})
+	_, _ = (practiceScreen{}).HandleKey(model, tea.KeyPressMsg{Code: tea.KeyEnter})
 }
 
 func TestDecksViewMergeUnclampedCursorSafety(t *testing.T) {
