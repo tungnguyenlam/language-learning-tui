@@ -59,6 +59,60 @@ func TestAnalyzeVerbsAndAdjectives(t *testing.T) {
 	}
 }
 
+// TestAnalyzeIrregularInfinitives guards against the regression where the only
+// German infinitives not ending in -en/-n ("sein", "tun") were misclassified as
+// adjectives and produced nonsense grammar hints (e.g. "comparative: sein+er").
+func TestAnalyzeIrregularInfinitives(t *testing.T) {
+	cases := []struct {
+		front string
+		want  WordKind
+	}{
+		{"sein", KindVerb},
+		{"tun", KindVerb},
+	}
+	for _, c := range cases {
+		got := Analyze(c.front)
+		if got.Kind != c.want {
+			t.Errorf("%q kind = %v, want %v", c.front, got.Kind, c.want)
+		}
+	}
+}
+
+// TestEnrichIrregularVerbs verifies the two irregular infinitives get a useful
+// conjugation from the curated table rather than a guessed/empty stem.
+func TestEnrichIrregularVerbs(t *testing.T) {
+	for _, verb := range []string{"sein", "tun"} {
+		info := Enrich(Analyze(verb))
+		if info.Kind != KindVerb {
+			t.Fatalf("%q kind = %v, want VERB", verb, info.Kind)
+		}
+		if len(info.Forms) == 0 {
+			t.Errorf("%q: expected conjugation forms, got none", verb)
+		}
+		if info.Example == "" {
+			t.Errorf("%q: expected a curated example", verb)
+		}
+	}
+}
+
+// TestAnalyzeUmlautNounKeepsGender ensures umlaut nouns are still detected as
+// nouns (not adjectives) when they appear without an article.
+func TestAnalyzeUmlautNounKeepsGender(t *testing.T) {
+	got := Analyze("Äpfel")
+	if got.Kind != KindNoun {
+		t.Errorf("Äpfel kind = %v, want NOUN", got.Kind)
+	}
+}
+
+// TestAnalyzeCardDetectsEnglishPromptWithToPrefix checks that an English prompt
+// beginning with "to " (infinitive marker) is not mistaken for the German side.
+func TestAnalyzeCardDetectsEnglishPromptWithToPrefix(t *testing.T) {
+	info := AnalyzeCard("to drive", "fahren")
+	if info.Kind != KindVerb || info.Base != "fahren" {
+		t.Errorf("AnalyzeCard(to drive/fahren) = %+v, want VERB fahren", info)
+	}
+}
+
 func TestAnalyzePhrases(t *testing.T) {
 	got := Analyze("guten Morgen")
 	if got.Kind != KindPhrase {

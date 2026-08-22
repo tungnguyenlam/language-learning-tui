@@ -1,3 +1,31 @@
+# 2026-08-22 (Irregular-Verb Grammar Fix + Grading Test Coverage)
+
+Fixed a real classification bug in the grammar-hint engine: `isInfinitive` only matched
+`-en/-ern/-eln`, so the fundamental irregular verbs **sein** ("to be") and **tun** ("to do")
+were misclassified as adjectives and produced nonsense hints (e.g. "comparative: sein+er").
+Both are now recognized as verbs and added to the curated `dailyVerbs` table with correct
+present-tense conjugations, so the Review grammar hint and Verb-of-the-Day show accurate
+forms. Added `irregularInfinitives` so `Enrich` degrades gracefully for other non-standard
+infinitives.
+
+Strengthened regression safety for core learning paths with new tests:
+- `internal/content/wordinfo_test.go`: irregular infinitives, umlaut nouns, reverse-card
+  English-prefix detection, and curated-conjugation enrichment.
+- `internal/tui/grade_logic_test.go` (new): `normalizeAnswer` (umlaut folding, strict mode,
+  punctuation/space trimming), `clozeAnswerText`, `renderClozeAnswers`, and `renderTypingDiff`.
+
+Considered expanding the thin B2/C1 `b2-c1-news` and `b2-environment` decks, but reverted it:
+`DueCards(ctx, now, limit)` loads ALL seeded decks with no filter, and the E2E suite hard-codes
+`Due cards: 52` / `51 cards due`, so adding seeded cards would break the verified suite.
+Content expansion should be paired with updating those assertions if pursued later.
+
+### Verification
+
+- New grammar-engine and grading-logic tests passed.
+- `go test ./...` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512 entries),
+  smoke test, binary build, and core E2E suite (35 passed in 37.22s).
+
 # 2026-08-22 (Cram Trap, Practice Hub Filter, Screen Handlers)
 
 Stopped active Cram sessions from leaking into global navigation, made the Practice Hub

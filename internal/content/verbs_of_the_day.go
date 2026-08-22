@@ -702,6 +702,18 @@ var dailyVerbs = []DailyVerb{
 		Example: "Sie wird Ärztin.",
 	},
 	{
+		German: "sein", English: "to be",
+		Ich: "bin", Du: "bist", ErSieEs: "ist",
+		Wir: "sind", Ihr: "seid", SieSie: "sind",
+		Example: "Ich bin sehr müde.",
+	},
+	{
+		German: "tun", English: "to do",
+		Ich: "tue", Du: "tust", ErSieEs: "tut",
+		Wir: "tun", Ihr: "tut", SieSie: "tun",
+		Example: "Was kann ich für dich tun?",
+	},
+	{
 		German: "finden", English: "to find",
 		Ich: "finde", Du: "findest", ErSieEs: "findet",
 		Wir: "finden", Ihr: "findet", SieSie: "finden",

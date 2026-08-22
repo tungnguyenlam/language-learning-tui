@@ -232,7 +232,20 @@ func splitAlternates(s string) (string, bool) {
 }
 
 func isInfinitive(s string) bool {
-	return strings.HasSuffix(s, "en") || strings.HasSuffix(s, "ern") || strings.HasSuffix(s, "eln")
+	if strings.HasSuffix(s, "en") || strings.HasSuffix(s, "ern") || strings.HasSuffix(s, "eln") {
+		return true
+	}
+	// "sein" (to be) and "tun" (to do) are the only German infinitives that do
+	// not end in -en/-n. Without this they fall through to the adjective branch
+	// and get wrong grammar hints (e.g. "comparative: sein+er").
+	return s == "sein" || s == "tun"
+}
+
+// irregularInfinitives maps infinitives that don't follow the regular -en stem
+// rule to their present-tense stem, so Enrich can still show useful forms.
+var irregularInfinitives = map[string]string{
+	"sein": "bin",
+	"tun":  "tu",
 }
 
 func guessStem(verb string) string {
