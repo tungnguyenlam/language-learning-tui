@@ -144,10 +144,14 @@ func (m *Model) setRevealSpeed(speed int) tea.Cmd {
 	if speed == 0 {
 		m.status = "Reveal animation disabled (instant)"
 	}
-	if m.onConfigChange != nil {
-		m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
-	}
+	m.persistConfig()
 	return nil
+}
+
+func (m *Model) persistConfig() {
+	if m.onConfigChange != nil {
+		m.onConfigChange(m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
+	}
 }
 
 func (m *Model) setDeckLimits(deckID string, newLimit, reviewLimit int) tea.Cmd {
@@ -793,9 +797,7 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		m.aiProviderName = next
 		m.aiProvider = buildProvider(next, m.aiSecrets, m.aiTemplates, m.currentAITemplateSet())
 		m.status = fmt.Sprintf("Switched to %s AI provider", m.aiProviderName)
-		if m.onConfigChange != nil {
-			m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
-		}
+		m.persistConfig()
 
 	case 1:
 		// Dictionary cycle
@@ -809,9 +811,7 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		}
 		m.dictionaryProvider = next
 		m.status = fmt.Sprintf("Switched to %s dictionary", m.dictionaryProvider)
-		if m.onConfigChange != nil {
-			m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
-		}
+		m.persistConfig()
 
 	case 2, 3, 4:
 		activeSet := m.currentAITemplateSet()
@@ -843,9 +843,7 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 			status = "enabled"
 		}
 		m.status = fmt.Sprintf("Auto-play audio %s", status)
-		if m.onConfigChange != nil {
-			m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
-		}
+		m.persistConfig()
 	case 7:
 		m.strictNormalization = !m.strictNormalization
 		status := "disabled"
@@ -853,9 +851,7 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 			status = "enabled"
 		}
 		m.status = fmt.Sprintf("Strict normalization %s", status)
-		if m.onConfigChange != nil {
-			m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
-		}
+		m.persistConfig()
 	case 8, 9, 10, 11, 12, 13, 14, 15:
 		var provider string
 		var key string
@@ -899,9 +895,7 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		if m.revealSpeed == 0 {
 			m.status = "Reveal animation disabled (instant)"
 		}
-		if m.onConfigChange != nil {
-			m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
-		}
+		m.persistConfig()
 	}
 	return nil
 }
@@ -962,27 +956,6 @@ func (m *Model) setCredValue(provider, key, value string) {
 	case "ollama":
 		m.aiSecrets.Ollama = c
 	}
-}
-
-func (m *Model) cycleTheme() tea.Cmd {
-	themes := []string{"system", "nordic", "sunset"}
-	currentIndex := 0
-	for i, t := range themes {
-		if m.theme == t {
-			currentIndex = i
-			break
-		}
-	}
-	m.theme = themes[(currentIndex+1)%len(themes)]
-	m.status = fmt.Sprintf("Switched to %s theme", m.theme)
-	if m.onConfigChange != nil {
-		m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
-	}
-	return nil
-}
-
-func (m *Model) currentTemplateKey() string {
-	return m.templateKeyAtCursor()
 }
 
 func (m *Model) templateKeyAtCursor() string {

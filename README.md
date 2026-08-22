@@ -294,7 +294,7 @@ All paths are under the resolved data directory (`config.json`, `learning.db`, `
 
 | File / knob | Purpose |
 |-------------|---------|
-| `config.json` | `theme`, `keymap`, `ai_provider`, `log_level`, `autoplay_audio`, `strict_normalization`, `ai_templates` |
+| `config.json` | `ai_provider`, `log_level`, `autoplay_audio`, `strict_normalization`, `ai_templates` |
 | `-data-dir` | Override data directory (default: OS user config dir + `/deutsch-tui`) |
 | `deutsch-tui.log` | Rotating local log; adjust verbosity with `log_level` |
 

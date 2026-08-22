@@ -44,25 +44,13 @@ func (p OfflineProvider) GenerateDrafts(ctx context.Context, request DraftReques
 	}
 
 	rawText := strings.TrimSpace(request.SourceText)
-	if rawText == "" {
-		return nil, errors.New("draft source text is required")
+	if err := validateDraftRequest(request); err != nil {
+		return nil, err
 	}
 	deckID := strings.TrimSpace(request.DeckID)
-	if deckID == "" {
-		return nil, errors.New("draft deck id is required")
-	}
-
-	// Split by comma or newline
-	topics := strings.FieldsFunc(rawText, func(r rune) bool {
-		return r == ',' || r == '\n' || r == '\r'
-	})
 
 	var drafts []Draft
-	for _, topic := range topics {
-		topic = strings.TrimSpace(topic)
-		if topic == "" {
-			continue
-		}
+	for _, topic := range splitDraftTopics(rawText) {
 		idBase := draftIDBase(topic)
 		tags := append([]string{"ai-draft"}, request.Tags...)
 		note := core.Note{
@@ -95,35 +83,21 @@ func (p TemplateProvider) GenerateDrafts(ctx context.Context, request DraftReque
 		return nil, err
 	}
 
-	rawText := strings.TrimSpace(request.SourceText)
-	if rawText == "" {
-		return nil, errors.New("draft source text is required")
+	if err := validateDraftRequest(request); err != nil {
+		return nil, err
 	}
 	deckID := strings.TrimSpace(request.DeckID)
-	if deckID == "" {
-		return nil, errors.New("draft deck id is required")
-	}
 
 	activeSet := p.ActiveSet
 	if activeSet == "" {
-		// Default to first available set
 		for k := range p.Templates {
 			activeSet = k
 			break
 		}
 	}
 
-	// Split by comma or newline
-	topics := strings.FieldsFunc(rawText, func(r rune) bool {
-		return r == ',' || r == '\n' || r == '\r'
-	})
-
 	var drafts []Draft
-	for _, topic := range topics {
-		topic = strings.TrimSpace(topic)
-		if topic == "" {
-			continue
-		}
+	for _, topic := range splitDraftTopics(strings.TrimSpace(request.SourceText)) {
 
 		front := p.applyTemplate(activeSet, "front", topic, topic)
 		back := p.applyTemplate(activeSet, "back", topic, fmt.Sprintf("German prompt for %s", topic))
@@ -238,4 +212,27 @@ func ValidateDrafts(drafts []Draft) error {
 		seen[draft.Note.ID] = struct{}{}
 	}
 	return nil
+}
+
+func validateDraftRequest(request DraftRequest) error {
+	if strings.TrimSpace(request.SourceText) == "" {
+		return errors.New("draft source text is required")
+	}
+	if strings.TrimSpace(request.DeckID) == "" {
+		return errors.New("draft deck id is required")
+	}
+	return nil
+}
+
+func splitDraftTopics(raw string) []string {
+	parts := strings.FieldsFunc(raw, func(r rune) bool {
+		return r == ',' || r == '\n' || r == '\r'
+	})
+	topics := make([]string, 0, len(parts))
+	for _, topic := range parts {
+		if topic = strings.TrimSpace(topic); topic != "" {
+			topics = append(topics, topic)
+		}
+	}
+	return topics
 }

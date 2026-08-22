@@ -33,88 +33,25 @@ func (p OpenAIProvider) GenerateDrafts(ctx context.Context, request DraftRequest
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	if strings.TrimSpace(p.APIKey) == "" {
-		return nil, errors.New("openai: API key is required (set it in Settings)")
+	if err := validateDraftRequest(request); err != nil {
+		return nil, err
 	}
-	if strings.TrimSpace(request.SourceText) == "" {
-		return nil, errors.New("draft source text is required")
-	}
-	if strings.TrimSpace(request.DeckID) == "" {
-		return nil, errors.New("draft deck id is required")
-	}
-
-	model := strings.TrimSpace(p.Model)
-	if model == "" {
-		model = defaultOpenAIModel
-	}
-	baseURL := strings.TrimRight(strings.TrimSpace(p.BaseURL), "/")
-	if baseURL == "" {
-		baseURL = defaultOpenAIBaseURL
-	}
-
-	body := openAIRequestBody{
-		Model: model,
-		Messages: []openAIMessage{
-			{Role: "system", Content: systemPrompt},
-			{Role: "user", Content: userPromptFor(request)},
-		},
-		Temperature: 0.4,
-		ResponseFormat: &openAIResponseFormat{
-			Type: "json_object",
-		},
-	}
-	buf, err := json.Marshal(body)
+	text, err := p.chat(ctx, systemPrompt, userPromptFor(request), 0.4)
 	if err != nil {
-		return nil, fmt.Errorf("openai: encode request: %w", err)
+		return nil, err
 	}
-
-	url := baseURL + "/chat/completions"
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(buf))
-	if err != nil {
-		return nil, fmt.Errorf("openai: build request: %w", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+p.APIKey)
-
-	client := p.Client
-	if client == nil {
-		timeout := p.Timeout
-		if timeout == 0 {
-			timeout = 60 * time.Second
-		}
-		client = &http.Client{Timeout: timeout}
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		return nil, fmt.Errorf("openai: request: %w", err)
-	}
-	defer resp.Body.Close()
-	respBytes, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
-	if err != nil {
-		return nil, fmt.Errorf("openai: read response: %w", err)
-	}
-	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
-		return nil, fmt.Errorf("openai: %s — %s", resp.Status, truncate(string(respBytes), 400))
-	}
-
-	var parsed openAIResponse
-	if err := json.Unmarshal(respBytes, &parsed); err != nil {
-		return nil, fmt.Errorf("openai: decode response: %w", err)
-	}
-	if len(parsed.Choices) == 0 || parsed.Choices[0].Message.Content == "" {
-		return nil, errors.New("openai: empty completion")
-	}
-	rawCards, err := parseCardsJSON(parsed.Choices[0].Message.Content)
+	rawCards, err := parseCardsJSON(text)
 	if err != nil {
 		return nil, fmt.Errorf("openai: %w", err)
 	}
 	return draftsFromRaw(rawCards, request)
 }
 
-// SendChat performs a single chat completion with the given system and user
-// messages, returning the model's raw text content. Used by FixCard.
 func (p OpenAIProvider) SendChat(ctx context.Context, system, user string) (string, error) {
+	return p.chat(ctx, system, user, 0.2)
+}
+
+func (p OpenAIProvider) chat(ctx context.Context, system, user string, temperature float64) (string, error) {
 	if strings.TrimSpace(p.APIKey) == "" {
 		return "", errors.New("openai: API key is required (set it in Settings)")
 	}
@@ -126,25 +63,27 @@ func (p OpenAIProvider) SendChat(ctx context.Context, system, user string) (stri
 	if baseURL == "" {
 		baseURL = defaultOpenAIBaseURL
 	}
+
 	body := openAIRequestBody{
 		Model: model,
 		Messages: []openAIMessage{
 			{Role: "system", Content: system},
 			{Role: "user", Content: user},
 		},
-		Temperature:    0.2,
+		Temperature:    temperature,
 		ResponseFormat: &openAIResponseFormat{Type: "json_object"},
 	}
 	buf, err := json.Marshal(body)
 	if err != nil {
-		return "", fmt.Errorf("openai: encode chat request: %w", err)
+		return "", fmt.Errorf("openai: encode request: %w", err)
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, baseURL+"/chat/completions", bytes.NewReader(buf))
 	if err != nil {
-		return "", fmt.Errorf("openai: build chat request: %w", err)
+		return "", fmt.Errorf("openai: build request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+p.APIKey)
+
 	client := p.Client
 	if client == nil {
 		timeout := p.Timeout
@@ -153,24 +92,26 @@ func (p OpenAIProvider) SendChat(ctx context.Context, system, user string) (stri
 		}
 		client = &http.Client{Timeout: timeout}
 	}
+
 	resp, err := client.Do(req)
 	if err != nil {
-		return "", fmt.Errorf("openai: chat request: %w", err)
+		return "", fmt.Errorf("openai: request: %w", err)
 	}
 	defer resp.Body.Close()
 	respBytes, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
 	if err != nil {
-		return "", fmt.Errorf("openai: read chat response: %w", err)
+		return "", fmt.Errorf("openai: read response: %w", err)
 	}
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return "", fmt.Errorf("openai: %s — %s", resp.Status, truncate(string(respBytes), 400))
 	}
+
 	var parsed openAIResponse
 	if err := json.Unmarshal(respBytes, &parsed); err != nil {
-		return "", fmt.Errorf("openai: decode chat response: %w", err)
+		return "", fmt.Errorf("openai: decode response: %w", err)
 	}
-	if len(parsed.Choices) == 0 {
-		return "", errors.New("openai: empty chat response")
+	if len(parsed.Choices) == 0 || parsed.Choices[0].Message.Content == "" {
+		return "", errors.New("openai: empty completion")
 	}
 	return parsed.Choices[0].Message.Content, nil
 }

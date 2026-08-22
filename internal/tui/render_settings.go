@@ -218,15 +218,11 @@ func (m *Model) renderSettings(x, y int) string {
 	}
 	addContent(revealLine.String(), &lineInfo{itemIdx: revealIdx, kind: "reveal"})
 
-	keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
-	addContent("", nil)
-	addContent(fmt.Sprintf("Color Theme: %s (Press %s to cycle)", m.theme, keyStyle.Render("c")), nil)
-
 	if !m.editingTemplate && m.editingSecretKey == "" {
-		keyStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
+		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 		addContent("", nil)
-		addContent(fmt.Sprintf("Use %s/%s to move, %s on goal or speed, %s theme, Enter edit/toggle, %s/%s templates.",
-			keyStyle.Render("j"), keyStyle.Render("k"), keyStyle.Render("+/-"), keyStyle.Render("c"), keyStyle.Render("["), keyStyle.Render("]")), nil)
+		addContent(fmt.Sprintf("Use %s/%s to move, %s on goal or speed, Enter edit/toggle, %s/%s templates.",
+			keyStyle.Render("j"), keyStyle.Render("k"), keyStyle.Render("+/-"), keyStyle.Render("["), keyStyle.Render("]")), nil)
 	}
 
 	contentStr := content.String()

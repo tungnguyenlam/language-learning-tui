@@ -8,49 +8,42 @@ import (
 	"deutsch-tui/internal/core"
 )
 
-var DefaultRegistry *Registry
-
-func init() {
-	DefaultRegistry = NewRegistry()
-	DefaultRegistry.Register(NewEmbeddedSource(EmbeddedDecks, "testdata/german-decks", 10))
-	DefaultRegistry.Register(&GoSource{priority: 20})
-}
-
 func AllDecks() ([]core.Deck, error) {
-	if DefaultRegistry == nil {
-		return nil, nil
+	embedded, err := loadEmbeddedTSVDecks()
+	if err != nil {
+		return nil, err
 	}
-	return DefaultRegistry.AllDecks()
+	seen := make(map[string]bool, len(embedded))
+	decks := make([]core.Deck, 0, len(embedded))
+	for _, deck := range embedded {
+		if seen[deck.ID] {
+			continue
+		}
+		seen[deck.ID] = true
+		decks = append(decks, deck)
+	}
+	for _, deck := range StandardDecks() {
+		if seen[deck.ID] {
+			continue
+		}
+		seen[deck.ID] = true
+		decks = append(decks, deck)
+	}
+	return decks, nil
 }
 
 func DeckByID(id string) (*core.Deck, error) {
-	if DefaultRegistry == nil {
-		return nil, nil
+	decks, err := AllDecks()
+	if err != nil {
+		return nil, err
 	}
-	return DefaultRegistry.DeckByID(id)
-}
-
-func DeckIDs() ([]string, error) {
-	if DefaultRegistry == nil {
-		return nil, nil
+	for _, deck := range decks {
+		if deck.ID == id {
+			d := deck
+			return &d, nil
+		}
 	}
-	return DefaultRegistry.DeckIDs()
-}
-
-type GoSource struct {
-	priority int
-}
-
-func (s *GoSource) Name() string {
-	return "go"
-}
-
-func (s *GoSource) Priority() int {
-	return s.priority
-}
-
-func (s *GoSource) LoadDecks() ([]core.Deck, error) {
-	return StandardDecks(), nil
+	return nil, nil
 }
 
 //go:embed testdata/german-decks/*.tsv
@@ -70,13 +63,56 @@ func EmbeddedDeckPaths() []string {
 	return paths
 }
 
-func AvailableDeckNames() []string {
-	paths := EmbeddedDeckPaths()
-	names := make([]string, 0, len(paths))
-	for _, path := range paths {
-		name := filepath.Base(path)
-		name = name[:len(name)-4]
-		names = append(names, name)
+func loadEmbeddedTSVDecks() ([]core.Deck, error) {
+	entries, err := EmbeddedDecks.ReadDir("testdata/german-decks")
+	if err != nil {
+		return nil, err
 	}
-	return names
+
+	deckMap := make(map[string]*core.Deck)
+	for _, entry := range entries {
+		if !strings.HasSuffix(entry.Name(), ".tsv") {
+			continue
+		}
+		path := filepath.Join("testdata/german-decks", entry.Name())
+		data, err := EmbeddedDecks.ReadFile(path)
+		if err != nil {
+			continue
+		}
+		notes, err := ImportAnkiTSV(strings.NewReader(string(data)), ImportOptions{})
+		if err != nil {
+			continue
+		}
+
+		deckName := strings.TrimSuffix(entry.Name(), ".tsv")
+		deckID := ToDeckID(deckName)
+		for i := range notes {
+			notes[i].DeckID = deckID
+			notes[i].Cards = CardsForNote(notes[i])
+			for j := range notes[i].Cards {
+				notes[i].Cards[j].DeckID = deckID
+			}
+		}
+		if deck, ok := deckMap[deckID]; ok {
+			deck.Notes = append(deck.Notes, notes...)
+		} else {
+			deckMap[deckID] = &core.Deck{
+				ID:    deckID,
+				Name:  deckName,
+				Notes: notes,
+			}
+		}
+	}
+
+	decks := make([]core.Deck, 0, len(deckMap))
+	for _, deck := range deckMap {
+		decks = append(decks, *deck)
+	}
+	return decks, nil
+}
+
+func ToDeckID(name string) string {
+	id := strings.ReplaceAll(name, "-", "_")
+	id = strings.ReplaceAll(id, " ", "_")
+	return strings.ToLower(id)
 }

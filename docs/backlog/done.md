@@ -1,3 +1,21 @@
+# 2026-08-22 (Deletion-First Cleanup)
+
+Removed unused config and plugin scaffolding without changing review, import,
+AI, or TTS behavior.
+
+- Dropped fake Color Theme cycling and the unused `keymap` config field.
+- Replaced the ContentSource/Registry types with `AllDecks`/`DeckByID` functions;
+  deleted unused `DeckIDs`, `AvailableDeckNames`, TTS `ProviderName`,
+  `scrollbarLineWidth`, and logger `Warn`/`Fatal`/`String`.
+- Collapsed duplicated OpenAI/Anthropic HTTP into one `chat` path per provider;
+  shared draft-request validation and topic splitting; one default AI template map.
+
+### Verification
+
+- `go test ./...` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, dict.cc import (834,512 entries),
+  smoke test, binary build, and core E2E suite (35 passed in 36.78s).
+
 # 2026-08-22 (Irregular-Verb Grammar Fix + Grading Test Coverage)
 
 Fixed a real classification bug in the grammar-hint engine: `isInfinitive` only matched

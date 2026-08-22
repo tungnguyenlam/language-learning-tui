@@ -36,8 +36,6 @@ func TestLoadOrCreateConfigMigratesLegacyAITemplates(t *testing.T) {
 		t.Fatalf("ensure data dir: %v", err)
 	}
 	raw := []byte(`{
-  "theme": "system",
-  "keymap": "default",
   "ai_provider": "template",
   "log_level": "info",
   "ai_templates": {

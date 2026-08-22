@@ -80,7 +80,7 @@ tui-tester stop
 - Dashboard layouts are height-sensitive. Avoid adding vertical space in top sections (header/boxes) as it can push bottom elements (Grammar Tip, help overlays) off-screen, causing E2E test timeouts on standard terminal sizes.
 - Bubble Tea unit tests that manually call commands often fail if a command is changed to a `tea.Batch`. Use a `executeCmd` helper in tests to flatten batches and prevent `undefined: msg` errors.
 - TSV embedded decks with `#deck:` lines containing `&` characters have different deck IDs than their filename (e.g., `a2-shopping-services.tsv` with `#deck: A2 Shopping & Services` gets ID `a2_shopping_&_services`). Do NOT create Go decks with IDs that would conflict with these. Use `_` underscores in deck IDs (e.g., `a2_purchasing_wear`).
-- When adding scrollbar columns to custom render views, use `layout.Width - 2` for padding width rather than `scrollbarLineWidth(layout.Width)` to avoid the scrollbar exceeding panel bounds on first render.
+- When adding scrollbar columns to custom render views, pad content with `layout.Width - 2` so the scrollbar stays inside panel bounds on first render.
 - **E2E Settings Tests:** The Settings view requires scrolling to reach Daily Goal on smaller terminals. Use `columns=110, lines=40+` and navigate with 'j' keys to reach the Daily Goal row before testing +/- adjustments.
 - **E2E Decks View Search:** After searching in Decks view, press `<Esc>` to clear the filter before starting a new search. Search state persists across navigation.
 - **E2E Review Empty State:** The starter deck has 52 cards due by default. Tests expecting "No cards due" must grade through all cards first or use a fresh database without seeded content.

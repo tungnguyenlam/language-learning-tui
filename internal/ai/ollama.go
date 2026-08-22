@@ -37,11 +37,8 @@ func (p OllamaProvider) GenerateDrafts(ctx context.Context, request DraftRequest
 	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
-	if strings.TrimSpace(request.SourceText) == "" {
-		return nil, errors.New("draft source text is required")
-	}
-	if strings.TrimSpace(request.DeckID) == "" {
-		return nil, errors.New("draft deck id is required")
+	if err := validateDraftRequest(request); err != nil {
+		return nil, err
 	}
 
 	// Ollama's `format: "json"` constrains decoding to valid JSON, which

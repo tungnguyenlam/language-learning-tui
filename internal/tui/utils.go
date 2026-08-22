@@ -401,10 +401,6 @@ func selectedIndexForTrackRow(totalItems, visibleLines, row int) int {
 	return clampInt((clampInt(row, 0, visibleLines-1)*(totalItems-1))/(visibleLines-1), 0, totalItems-1)
 }
 
-func scrollbarLineWidth(viewportWidth int) int {
-	return maxInt(1, viewportWidth-2)
-}
-
 func (m *Model) renderActiveViewPlain(x, y int) string {
 	layout := m.activeViewContentLayout()
 	layout.X = x

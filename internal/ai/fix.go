@@ -130,8 +130,8 @@ func parseFixedNoteJSON(raw string) (FixedNote, error) {
 	if body == "" {
 		return FixedNote{}, fmt.Errorf("no JSON object found in fix response: %q", truncate(raw, 200))
 	}
-	parsed, err := decodeFixedNote(body)
-	if err != nil {
+	var parsed rawFixedNote
+	if err := json.Unmarshal([]byte(body), &parsed); err != nil {
 		return FixedNote{}, fmt.Errorf("decode fix: %w", err)
 	}
 	if strings.TrimSpace(parsed.Front) == "" || strings.TrimSpace(parsed.Back) == "" {
@@ -144,10 +144,4 @@ func parseFixedNoteJSON(raw string) (FixedNote, error) {
 		Example: strings.TrimSpace(parsed.Example),
 		Reason:  strings.TrimSpace(parsed.Reason),
 	}, nil
-}
-
-func decodeFixedNote(body string) (rawFixedNote, error) {
-	var r rawFixedNote
-	err := json.Unmarshal([]byte(body), &r)
-	return r, err
 }

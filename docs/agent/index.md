@@ -38,15 +38,15 @@ Last updated: 2026-08-22
 
 ## Verification Status
 
+- ✅ `./scripts/verify.sh` passed on 2026-08-22 after the deletion-first cleanup
+  (Go tests, vet, dict.cc import, smoke test, binary build, core E2E suite: 35
+  passed in 36.78s)
 - ✅ `./scripts/verify.sh` passed on 2026-08-22 after the improvement pass (Go tests, vet, dict.cc
   import, smoke test, binary build, core E2E suite: 35 passed in 38.15s)
 - ✅ `./scripts/verify.sh` passed again on 2026-08-22 for the irregular-verb grammar fix + grading/grammar
   test additions (core E2E suite: 35 passed in 37.22s)
-- ✅ All Go test suites passing (as of 2026-08-05)
+- ✅ All Go test suites passing
 - ✅ App launches without errors (smoke test passing)
-- ✅ All views render correctly (Dashboard, Review, Import, AI, Settings, Browser, Cram, SessionSummary, Dictionary)
-- ✅ Core user interactions respond as expected
-- ✅ State successfully persisted to SQLite
 - ✅ Full verification passes with `./scripts/verify.sh`
 
 ## Decisions

@@ -17,10 +17,6 @@ func NewMultiTTS(primary, secondary Synthesizer) *MultiTTS {
 	}
 }
 
-func (m *MultiTTS) ProviderName() string {
-	return "multi"
-}
-
 func (m *MultiTTS) VoiceName() string {
 	if m.primary != nil {
 		return m.primary.VoiceName()

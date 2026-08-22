@@ -7,7 +7,6 @@ import (
 
 type Synthesizer interface {
 	Synthesize(ctx context.Context, text string) (string, error)
-	ProviderName() string
 	VoiceName() string
 }
 

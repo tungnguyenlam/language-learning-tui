@@ -182,8 +182,7 @@ type Model struct {
 	exportDeckID                   string
 	exportTag                      string
 	exportFilter                   string // e.g. "All", "Mature", "Learning"
-	theme                          string
-	onConfigChange                 func(string, string, string, map[string]map[string]string, bool, bool, int)
+	onConfigChange                 func(string, string, map[string]map[string]string, bool, bool, int)
 	bookmarkFilter                 bool
 	dueLoadID                      int
 	originalTemplateValue          string
@@ -370,7 +369,6 @@ func NewModelWithAI(repo core.Repository, scheduler core.Scheduler, provider ai.
 }
 
 type ModelOptions struct {
-	Theme               string
 	AIProvider          ai.Provider
 	AIProviderName      string
 	DictionaryProvider  string
@@ -386,7 +384,7 @@ type ModelOptions struct {
 	DataDir             string
 	ImportPath          string
 	ExportPath          string
-	OnConfigChange      func(string, string, string, map[string]map[string]string, bool, bool, int)
+	OnConfigChange      func(string, string, map[string]map[string]string, bool, bool, int)
 	OnSecretsChange     func(app.Secrets)
 	Logger              *app.LeveledLogger
 }
@@ -397,24 +395,8 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		providerName = "offline"
 	}
 	templates := opts.AITemplates
-	if templates == nil || len(templates) == 0 {
-		templates = map[string]map[string]string{
-			"vocabulary": {
-				"front":   "{{.Topic}}",
-				"back":    "Translation: German prompt for {{.Topic}}.\nPlural: die {{.Topic}}e (example)\nGender: der/die/das",
-				"example": "Ich lerne {{.Topic}}.",
-			},
-			"phrases": {
-				"front":   "Common German phrase for {{.Topic}}",
-				"back":    "English translation",
-				"example": "Context sentence using the phrase.",
-			},
-			"grammar": {
-				"front":   "Ich {{c1::...}} {{.Topic}}.",
-				"back":    "Grammar: {{.Topic}}\nRule: Explanation of the rule for {{.Topic}}.",
-				"example": "Ich {{c1::bin}} {{.Topic}}.",
-			},
-		}
+	if len(templates) == 0 {
+		templates = app.DefaultConfig().AITemplates
 	}
 
 	var sets []string
@@ -459,10 +441,8 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		exportPath = "export.tsv"
 	}
 
-	// Create a default logger if none provided
 	logger := opts.Logger
 	if logger == nil {
-		// Create a minimal logger that discards output
 		nullLogger := log.New(io.Discard, "", 0)
 		logger = app.NewLeveledLogger(nullLogger, app.LogLevelInfo)
 	}
@@ -470,7 +450,6 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 	m := &Model{
 		repo:                repo,
 		scheduler:           scheduler,
-		theme:               opts.Theme,
 		aiProvider:          provider,
 		aiProviderName:      providerName,
 		dictionaryProvider:  opts.DictionaryProvider,

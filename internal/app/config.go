@@ -13,8 +13,6 @@ const (
 )
 
 type Config struct {
-	Theme               string                       `json:"theme"`
-	Keymap              string                       `json:"keymap"`
 	AIProvider          string                       `json:"ai_provider"`
 	DictionaryProvider  string                       `json:"dictionary_provider"`
 	TTSProvider         string                       `json:"tts_provider"`
@@ -28,8 +26,6 @@ type Config struct {
 
 func DefaultConfig() Config {
 	return Config{
-		Theme:              "system",
-		Keymap:             "default",
 		AIProvider:         "disabled",
 		DictionaryProvider: "Local TUI",
 		TTSProvider:        "edge",
@@ -123,12 +119,6 @@ func SaveConfig(dataDir string, cfg Config) error {
 
 func (c Config) withDefaults() Config {
 	defaults := DefaultConfig()
-	if c.Theme == "" {
-		c.Theme = defaults.Theme
-	}
-	if c.Keymap == "" {
-		c.Keymap = defaults.Keymap
-	}
 	if c.AIProvider == "" {
 		c.AIProvider = defaults.AIProvider
 	}
@@ -144,14 +134,6 @@ func (c Config) withDefaults() Config {
 	if c.LogLevel == "" {
 		c.LogLevel = defaults.LogLevel
 	}
-	if c.RevealSpeed == 0 {
-		// We allow 0 for instant, but if it's not set in JSON it might be 0.
-		// However, DefaultConfig sets it to 5.
-		// If the user wants 0, they set it to 0.
-		// For safety, let's assume if it's not present it should be 5.
-		// But unmarshal won't distinguish between 0 and missing easily without pointers.
-		// Let's check if it's explicitly 0.
-	}
 	if c.AITemplates == nil {
 		c.AITemplates = defaults.AITemplates
 	} else {
@@ -166,8 +148,6 @@ func (c Config) withDefaults() Config {
 
 func unmarshalConfig(raw []byte, cfg *Config) error {
 	type configFile struct {
-		Theme               string          `json:"theme"`
-		Keymap              string          `json:"keymap"`
 		AIProvider          string          `json:"ai_provider"`
 		DictionaryProvider  string          `json:"dictionary_provider"`
 		TTSProvider         string          `json:"tts_provider"`
@@ -183,8 +163,6 @@ func unmarshalConfig(raw []byte, cfg *Config) error {
 	if err := json.Unmarshal(raw, &file); err != nil {
 		return err
 	}
-	cfg.Theme = file.Theme
-	cfg.Keymap = file.Keymap
 	cfg.AIProvider = file.AIProvider
 	cfg.DictionaryProvider = file.DictionaryProvider
 	cfg.TTSProvider = file.TTSProvider

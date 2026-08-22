@@ -15,8 +15,7 @@ import (
 )
 
 const (
-	ProviderDisabled = "disabled"
-	ProviderEdgeTTS  = "edge"
+	ProviderEdgeTTS = "edge"
 
 	DefaultEdgeVoice = "de-DE-KatjaNeural"
 )
@@ -42,10 +41,6 @@ func NewEdgeTTS(cacheDir, voice string) *EdgeTTS {
 		cache:   cacheDir,
 		timeout: 30 * time.Second,
 	}
-}
-
-func (e *EdgeTTS) ProviderName() string {
-	return ProviderEdgeTTS
 }
 
 func (e *EdgeTTS) VoiceName() string {
@@ -95,8 +90,4 @@ func (e *EdgeTTS) Synthesize(ctx context.Context, text string) (string, error) {
 func (e *EdgeTTS) cacheFilename(text string) string {
 	sum := sha256.Sum256([]byte(e.voice + "\x00" + text))
 	return hex.EncodeToString(sum[:]) + ".mp3"
-}
-
-func singleLine(text string) string {
-	return strings.Join(strings.Fields(text), " ")
 }

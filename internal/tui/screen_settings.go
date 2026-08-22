@@ -43,9 +43,7 @@ func (settingsScreen) HandleKey(m *Model, msg tea.KeyPressMsg) (tea.Cmd, bool) {
 					ActiveSet: activeSet,
 				}
 			}
-			if m.onConfigChange != nil {
-				m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
-			}
+			m.persistConfig()
 			return nil, true
 		case "esc":
 			// Restore original value on cancel
@@ -59,9 +57,7 @@ func (settingsScreen) HandleKey(m *Model, msg tea.KeyPressMsg) (tea.Cmd, bool) {
 					ActiveSet: activeSet,
 				}
 			}
-			if m.onConfigChange != nil {
-				m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
-			}
+			m.persistConfig()
 			return nil, true
 		case "backspace":
 			templateKey := m.templateKeyAtCursor()
@@ -100,8 +96,6 @@ func (settingsScreen) HandleKey(m *Model, msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	case "G":
 		m.settingsCursor = settingsLastItem
 		return nil, true
-	case "c":
-		return m.cycleTheme(), true
 	case "enter":
 		return m.handleSettingsEnter(), true
 	case "+":
@@ -157,9 +151,7 @@ func (m *Model) handleSecretEditKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		if m.onSecretsChange != nil {
 			m.onSecretsChange(m.aiSecrets)
 		}
-		if m.onConfigChange != nil {
-			m.onConfigChange(m.theme, m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
-		}
+		m.persistConfig()
 	}
 
 	switch msg.String() {

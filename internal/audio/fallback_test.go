@@ -56,5 +56,4 @@ type mockSynth struct {
 func (m *mockSynth) Synthesize(ctx context.Context, text string) (string, error) {
 	return "", m.err
 }
-func (m *mockSynth) ProviderName() string { return "mock" }
-func (m *mockSynth) VoiceName() string    { return "mock" }
+func (m *mockSynth) VoiceName() string { return "mock" }

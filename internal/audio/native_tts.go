@@ -24,10 +24,6 @@ func NewNativeTTS(cacheDir string) *NativeTTS {
 	}
 }
 
-func (n *NativeTTS) ProviderName() string {
-	return "native"
-}
-
 func (n *NativeTTS) VoiceName() string {
 	return "default"
 }

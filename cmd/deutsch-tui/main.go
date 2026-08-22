@@ -55,7 +55,7 @@ func main() {
 	// Create leveled logger based on config
 	level := app.ParseLogLevel(cfg.LogLevel)
 	leveledLogger := app.NewLeveledLogger(logger, level)
-	leveledLogger.Info("starting data_dir=%s theme=%s keymap=%s ai_provider=%s log_level=%s", dir, cfg.Theme, cfg.Keymap, cfg.AIProvider, cfg.LogLevel)
+	leveledLogger.Info("starting data_dir=%s ai_provider=%s log_level=%s", dir, cfg.AIProvider, cfg.LogLevel)
 
 	store, err := sqlite.Open(filepath.Join(dir, "learning.db"))
 	if err != nil {
@@ -99,7 +99,6 @@ func main() {
 
 	scheduler := srs.NewScheduler(leveledLogger)
 	program := tea.NewProgram(tui.NewModelWithOptions(store, scheduler, tui.ModelOptions{
-		Theme:               cfg.Theme,
 		AIProvider:          nil,
 		AIProviderName:      cfg.AIProvider,
 		DictionaryProvider:  cfg.DictionaryProvider,
@@ -115,9 +114,8 @@ func main() {
 		DataDir:             dir,
 		ImportPath:          filepath.Join(dir, "import.tsv"),
 		ExportPath:          filepath.Join(dir, "export.tsv"),
-		Logger:              leveledLogger, // Pass the logger
-		OnConfigChange: func(theme string, aiProvider string, dictProvider string, tmpls map[string]map[string]string, autoPlayAudio bool, strictNormalization bool, revealSpeed int) {
-			pCfg.Theme = theme
+		Logger:              leveledLogger,
+		OnConfigChange: func(aiProvider string, dictProvider string, tmpls map[string]map[string]string, autoPlayAudio bool, strictNormalization bool, revealSpeed int) {
 			pCfg.AIProvider = aiProvider
 			pCfg.DictionaryProvider = dictProvider
 			pCfg.AITemplates = tmpls
