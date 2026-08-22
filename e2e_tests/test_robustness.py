@@ -25,8 +25,7 @@ def test_settings_template_editing_cancel():
             agent.act('7')
             agent.wait_for_text("Settings")
             
-            # Move to Front Template (index 2)
-            agent.act('j')
+            # Move to Front Template (index 1)
             agent.act('j')
             agent.wait_until_stable()
             

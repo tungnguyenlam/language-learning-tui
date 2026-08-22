@@ -23,8 +23,8 @@ def test_audio_autoplay_toggle_and_persistence():
             agent.wait_for_text("Settings")
             agent.wait_for_text("Auto-play audio: off")
             
-            # Navigate to Auto-play toggle (index 6)
-            for _ in range(6):
+            # Navigate to Auto-play toggle (index 5)
+            for _ in range(5):
                 agent.act("j")
             
             # Toggle it on
@@ -55,7 +55,7 @@ def test_audio_autoplay_in_review():
             # Enable auto-play first
             agent.act("7")
             agent.wait_for_text("Settings")
-            for _ in range(6):
+            for _ in range(5):
                 agent.act("j")
             agent.act("<Enter>")
             agent.wait_for_text("Auto-play audio: on")

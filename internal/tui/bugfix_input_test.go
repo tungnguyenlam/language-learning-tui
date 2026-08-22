@@ -590,7 +590,7 @@ func TestSettingsTemplateEditNilMapSafety(t *testing.T) {
 	// Case 1: no active template set
 	m1 := NewModel(&mockRepo{}, &mockScheduler{})
 	m1.activeView = ViewSettings
-	m1.settingsCursor = 2 // Front Template
+	m1.settingsCursor = settingsFrontTemplateItem
 	m1.aiTemplateSets = nil
 	m1.aiTemplates = nil
 
@@ -607,7 +607,7 @@ func TestSettingsTemplateEditNilMapSafety(t *testing.T) {
 	// Case 2: active template set present, but aiTemplates map is nil
 	m2 := NewModel(&mockRepo{}, &mockScheduler{})
 	m2.activeView = ViewSettings
-	m2.settingsCursor = 2
+	m2.settingsCursor = settingsFrontTemplateItem
 	m2.aiTemplateSets = []string{"default"}
 	m2.aiTemplates = nil
 

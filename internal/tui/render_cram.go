@@ -10,10 +10,6 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-func (m *Model) renderCram() string {
-	return m.renderCramAt(m.activeViewContentLayout())
-}
-
 func (m *Model) renderCramAt(layout viewportLayout) string {
 	ctx := NewRenderContext(m, layout, ViewCram)
 

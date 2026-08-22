@@ -75,8 +75,8 @@ def test_ai_auto_enable_on_key_entry():
             time.sleep(0.2)
             agent.wait_for_text("AI Provider:    openai")
             
-            # Move to API Key row (8)
-            for _ in range(8):
+            # Move to API Key row (7)
+            for _ in range(7):
                 agent.act("j")
             agent.act("<Enter>")
             agent.wait_for_text("Editing openai api_key", timeout=3.0)
@@ -93,7 +93,6 @@ def test_ai_auto_enable_on_key_entry():
             agent.act("k") # up to example
             agent.act("k") # up to back
             agent.act("k") # up to front
-            agent.act("k") # up to dictionary
             agent.act("k") # up to AI Provider
             
             # Cycle to 'offline'

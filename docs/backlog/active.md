@@ -4,9 +4,8 @@ Last updated: 2026-08-22
 
 ## Current Milestone
 
-The 2026-08-22 deletion-first cleanup removed unused theme/keymap config, flattened
-the content registry into plain functions, and deleted unused wrappers.
-Verification is fully green.
+The 2026-08-22 second deletion-first cleanup removed the no-op Dictionary
+provider cycle, dead wrappers, and unused config. Verification is fully green.
 
 ## Exact Next Action
 
@@ -19,11 +18,12 @@ No unfinished executable work remains. Candidate future work:
 
 ## Completed This Pass
 
-- Removed fake Color Theme cycling and the unused `keymap` config field.
-- Flattened ContentSource/Registry into `AllDecks`/`DeckByID` functions.
-- Deleted unused TTS `ProviderName`, `scrollbarLineWidth`, logger
-  `Warn`/`Fatal`/`String`, and one-line wrappers.
-- Deduplicated OpenAI/Anthropic HTTP and shared draft-request helpers.
+- Removed the Settings Dictionary provider cycle, `openDictionary` browser
+  launch, and `dictionary_provider` config (lookup is `=` overlay / `/` tab).
+- Deleted unused wrappers, message types, styles, and sqlite backup aliases.
+- Merged identical medium/compact layouts; shared AI `GenerateDrafts` via
+  `generateDraftsViaChat`; dropped the direct `github.com/charmbracelet/x/ansi`
+  dependency.
 
 ## Top Issues
 
@@ -34,8 +34,7 @@ No unfinished executable work remains. Candidate future work:
 
 ## Acceptance Criteria
 
-- Settings no longer advertises a theme that does not apply.
-- `content.AllDecks` / `DeckByID` still resolve filename-keyed embedded TSV decks.
+- Settings no longer advertises a dictionary provider that does not apply.
 - `go test ./...` and `./scripts/verify.sh` stay green.
 
 ## Last Verification
@@ -43,7 +42,7 @@ No unfinished executable work remains. Candidate future work:
 - `go test ./...` passed on 2026-08-22.
 - `./scripts/verify.sh` passed on 2026-08-22: Go tests, vet, offline dict.cc
   import (834,512 entries), smoke test, binary build, and core E2E suite (35
-  passed in 36.78s).
+  passed in 37.34s).
 
 ## Repository State
 

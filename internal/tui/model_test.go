@@ -15,7 +15,6 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
-	"github.com/charmbracelet/x/ansi"
 )
 
 func executeCmd(cmd tea.Cmd) []tea.Msg {
@@ -104,7 +103,7 @@ func TestBrowserEnterShowsSelectedCardHistory(t *testing.T) {
 	}
 	model.Update(cmd())
 
-	view := model.renderBrowser()
+	view := model.renderBrowserAt(model.activeViewContentLayout())
 	if !strings.Contains(view, "Review History: der Apfel") || !strings.Contains(view, "hard") {
 		t.Fatalf("browser history missing: %s", view)
 	}
@@ -375,7 +374,7 @@ func TestAIDraftApprovalPersistsAndReloadsDueCards(t *testing.T) {
 	model.activeView = ViewAI
 	model.aiInput = "der Tee"
 
-	generate := model.generateDrafts()
+	generate := model.startDrafting()
 	msgs := executeCmd(generate)
 	for _, msg := range msgs {
 		model.Update(msg)
@@ -569,7 +568,7 @@ func TestAIGenerateErrorFromProvider(t *testing.T) {
 	model.Update(decksMsg([]core.Deck{{ID: "deck-1", Name: "Deck One"}}))
 	model.activeView = ViewAI
 
-	cmd := model.generateDrafts()
+	cmd := model.startDrafting()
 	msgs := executeCmd(cmd)
 	for _, msg := range msgs {
 		model.Update(msg)
@@ -600,7 +599,7 @@ func TestDecksViewNavigationAndSelection(t *testing.T) {
 		t.Fatalf("deckCursor = %d, want 0", model.deckCursor)
 	}
 	layout := viewportLayout{Width: 82, Height: 24, X: 0, Y: 0}
-	view := ansi.Strip(model.renderDecks(layout))
+	view := stripANSI(model.renderDecks(layout))
 	if !strings.Contains(view, "5D") || !strings.Contains(view, "10T") {
 		t.Fatalf("deck view missing progress metrics: %s", view)
 	}
@@ -621,7 +620,7 @@ func TestDecksViewNavigationAndSelection(t *testing.T) {
 	}
 
 	// Check rendering contains stats
-	view = ansi.Strip(model.renderDecks(layout))
+	view = stripANSI(model.renderDecks(layout))
 	if !strings.Contains(view, "Deck Two") || !strings.Contains(view, "D") || !strings.Contains(view, "T") {
 		t.Fatalf("decks view rendering missing stats: %s", view)
 	}
@@ -683,7 +682,7 @@ func TestSettingsProviderSwitching(t *testing.T) {
 func TestSettingsTemplateEditing(t *testing.T) {
 	model := NewModel(&mockRepo{}, &mockScheduler{})
 	model.activeView = ViewSettings
-	model.settingsCursor = 2 // Front Template (was 1)
+	model.settingsCursor = settingsFrontTemplateItem
 
 	// Start editing
 	model.Update(tea.KeyPressMsg{Code: '\r'}) // Enter to edit
@@ -714,8 +713,8 @@ func TestSettingsBaseURLEditing(t *testing.T) {
 	model := NewModel(&mockRepo{}, &mockScheduler{})
 	model.activeView = ViewSettings
 
-	// 1. Edit OpenAI Base URL (index 10)
-	model.settingsCursor = 10
+	// 1. Edit OpenAI Base URL
+	model.settingsCursor = settingsOpenAIURLItem
 	model.Update(tea.KeyPressMsg{Code: '\r'}) // Enter to edit
 	if model.editingSecretKey != "base_url" || model.editingSecretProvider != "openai" {
 		t.Fatalf("expected editing openai base_url, got key=%q provider=%q", model.editingSecretKey, model.editingSecretProvider)
@@ -736,8 +735,8 @@ func TestSettingsBaseURLEditing(t *testing.T) {
 		t.Fatalf("expected openai BaseURL to be http://localhost:11434, got %q", model.aiSecrets.OpenAI.BaseURL)
 	}
 
-	// 2. Edit Anthropic Base URL (index 13)
-	model.settingsCursor = 13
+	// 2. Edit Anthropic Base URL
+	model.settingsCursor = settingsAnthropicURLItem
 	model.Update(tea.KeyPressMsg{Code: '\r'}) // Enter to edit
 	if model.editingSecretKey != "base_url" || model.editingSecretProvider != "anthropic" {
 		t.Fatalf("expected editing anthropic base_url, got key=%q provider=%q", model.editingSecretKey, model.editingSecretProvider)
@@ -931,7 +930,7 @@ func TestAIDraftWithTemplateProvider(t *testing.T) {
 	model.activeView = ViewAI
 	model.aiInput = "test"
 
-	generate := model.generateDrafts()
+	generate := model.startDrafting()
 	msgs := executeCmd(generate)
 	for _, msg := range msgs {
 		model.Update(msg)
@@ -1089,7 +1088,7 @@ func TestSettingsDailyGoalAdjustsAndRenders(t *testing.T) {
 	model.height = 50
 	model.Update(statsMsg{stats: core.Statistics{DailyGoal: 10, Grades: map[core.ReviewGrade]int{}}})
 	model.activeView = ViewSettings
-	model.settingsCursor = 5
+	model.settingsCursor = settingsDailyGoalItem
 
 	if !strings.Contains(model.renderSettings(0, 0), "Daily Goal: 10") {
 		t.Fatalf("settings should show daily goal: %s", model.renderSettings(0, 0))
@@ -1156,7 +1155,7 @@ func TestSettingsPlusMinusOnlyAdjustFocusedRow(t *testing.T) {
 func TestSettingsProviderCycleMentionsOllama(t *testing.T) {
 	model := NewModel(&mockRepo{}, &mockScheduler{})
 	model.width, model.height = 100, 50
-	view := ansi.Strip(model.renderSettings(0, 0))
+	view := stripANSI(model.renderSettings(0, 0))
 	if !strings.Contains(view, "anthropic -> ollama") {
 		t.Fatalf("settings provider cycle missing ollama:\n%s", view)
 	}
@@ -1166,7 +1165,7 @@ func TestImportViewShowsResetAndStatusFilterGuidance(t *testing.T) {
 	model := NewModel(&mockRepo{}, &mockScheduler{})
 	model.activeView = ViewImport
 
-	view := ansi.Strip(model.importScreen.Render(model, viewportLayout{}))
+	view := stripANSI(model.importScreen.Render(model, viewportLayout{}))
 	for _, want := range []string{"[R] Reset DB", "[B] Backup", "[U] Restore", "Status filters apply to TSV and APKG exports"} {
 		if !strings.Contains(view, want) {
 			t.Fatalf("import view missing %q:\n%s", want, view)
@@ -1179,7 +1178,7 @@ func TestBrowserEmptyStateExplainsActiveFilters(t *testing.T) {
 	model.activeView = ViewBrowser
 	model.browserSearch = "zzzz"
 
-	view := ansi.Strip(model.renderBrowserAt(viewportLayout{Width: 90, Height: 30}))
+	view := stripANSI(model.renderBrowserAt(viewportLayout{Width: 90, Height: 30}))
 	for _, want := range []string{"No cards found in No deck.", "Press Esc to clear search/tag filters"} {
 		if !strings.Contains(view, want) {
 			t.Fatalf("browser empty state missing %q:\n%s", want, view)
@@ -1200,7 +1199,7 @@ func TestCramReviewShowsDeckTagsAndPosition(t *testing.T) {
 	}}
 	model.cramActive = true
 
-	view := ansi.Strip(model.renderCramAt(viewportLayout{Width: 90, Height: 30}))
+	view := stripANSI(model.renderCramAt(viewportLayout{Width: 90, Height: 30}))
 	for _, want := range []string{"Deck: Deck One", "1/1", "Tags: #b2 #mobility"} {
 		if !strings.Contains(view, want) {
 			t.Fatalf("cram review missing %q:\n%s", want, view)
@@ -1227,7 +1226,7 @@ func TestDashboardShowsBookmarkedDueAndLeech(t *testing.T) {
 		CurrentStreak:   3,
 	}
 
-	dash := model.renderActiveViewPlain(0, 0)
+	dash := model.renderActiveViewPlainAt(model.activeViewContentLayout())
 	if !strings.Contains(dash, "1 due)") {
 		t.Fatalf("dashboard should show bookmarked due count: %s", dash)
 	}
@@ -1262,7 +1261,7 @@ func TestStatisticsShowsLeechAndBookmarkedDue(t *testing.T) {
 		Grades:          map[core.ReviewGrade]int{core.GradeGood: 40, core.GradeAgain: 10},
 	}
 
-	view := ansi.Strip(model.renderStatistics(viewportLayout{Width: 100, Height: 40}))
+	view := stripANSI(model.renderStatistics(viewportLayout{Width: 100, Height: 40}))
 	if !strings.Contains(view, "Bookmarked:") || !strings.Contains(view, "3 (2 due)") {
 		t.Fatalf("statistics should show bookmarked due: %s", view)
 	}
@@ -1310,7 +1309,7 @@ func TestStatisticsScrollbarHitboxesAlignWithRenderedTrack(t *testing.T) {
 	for _, hitbox := range statsHitboxes {
 		got := renderedRuneAt(view, hitbox.X, hitbox.Y)
 		if got != '│' && got != '█' {
-			t.Fatalf("hitbox %s at %d,%d maps to %q, want scrollbar track in:\n%s", hitbox.ID, hitbox.X, hitbox.Y, got, ansi.Strip(view))
+			t.Fatalf("hitbox %s at %d,%d maps to %q, want scrollbar track in:\n%s", hitbox.ID, hitbox.X, hitbox.Y, got, stripANSI(view))
 		}
 	}
 }
@@ -1699,7 +1698,7 @@ func TestHelpOverlayToggle(t *testing.T) {
 	}
 
 	view := model.View().Content
-	stripped := ansi.Strip(view)
+	stripped := stripANSI(view)
 	if !strings.Contains(stripped, "Keyboard Shortcuts") {
 		t.Fatal("help overlay should be visible in view")
 	}
@@ -2226,7 +2225,7 @@ func TestReviewHeaderShowsDeckTagsAndCardType(t *testing.T) {
 	model.Update(dueCardsMsg{cards: repo.dueCards})
 	model.activeView = ViewReview
 
-	view := ansi.Strip(model.renderReview(0, 0))
+	view := stripANSI(model.renderReview(0, 0))
 	if !strings.Contains(view, "Deck: B2 Urban Mobility") {
 		t.Fatalf("review header missing deck name:\n%s", view)
 	}
@@ -2257,7 +2256,7 @@ func TestBrowserPreviewShowsDeckKindExtraAndTags(t *testing.T) {
 		Tags:   []string{"b2", "mobility"},
 	}}
 
-	view := ansi.Strip(model.renderBrowserAt(viewportLayout{Width: 100, Height: 35}))
+	view := stripANSI(model.renderBrowserAt(viewportLayout{Width: 100, Height: 35}))
 	for _, want := range []string{"Card Preview:", "Deck:", "Kind:", "State:", "Front:", "Back:", "Reviews:", "Tags:"} {
 		if !strings.Contains(view, want) {
 			t.Fatalf("browser preview missing %q:\n%s", want, view)
@@ -2271,7 +2270,7 @@ func TestDashboardShowsCardMixForTallLayouts(t *testing.T) {
 	model.height = 42
 	model.stats = core.Statistics{NewCards: 4, YoungCards: 8, MatureCards: 12, DailyGoal: 10}
 
-	view := ansi.Strip(model.renderDashboard(viewportLayout{Width: 100, Height: 34}))
+	view := stripANSI(model.renderDashboard(viewportLayout{Width: 100, Height: 34}))
 	for _, want := range []string{"Card Mix", "New", "Young", "Mature"} {
 		if !strings.Contains(view, want) {
 			t.Fatalf("dashboard missing %q:\n%s", want, view)
@@ -2426,13 +2425,13 @@ func assertScrollbarHitboxesAlign(t *testing.T, view string, hitboxes []Hitbox, 
 	for _, hitbox := range matches {
 		got := renderedRuneAt(view, hitbox.X, hitbox.Y)
 		if got != '│' && got != '█' {
-			t.Fatalf("hitbox %s at %d,%d maps to %q, want scrollbar track in:\n%s", hitbox.ID, hitbox.X, hitbox.Y, got, ansi.Strip(view))
+			t.Fatalf("hitbox %s at %d,%d maps to %q, want scrollbar track in:\n%s", hitbox.ID, hitbox.X, hitbox.Y, got, stripANSI(view))
 		}
 	}
 }
 
 func renderedRuneAt(view string, x, y int) rune {
-	lines := strings.Split(ansi.Strip(view), "\n")
+	lines := strings.Split(stripANSI(view), "\n")
 	if y < 0 || y >= len(lines) {
 		return 0
 	}
@@ -2928,7 +2927,7 @@ func TestApplyOverlay(t *testing.T) {
 	simpleBase := "Line 1\nLine 2\nLine 3"
 	overlay := "\x1b[31mOVERLAY\x1b[0m"
 	result := m.applyOverlay(simpleBase, overlay)
-	stripped := ansi.Strip(result)
+	stripped := stripANSI(result)
 	if !strings.Contains(stripped, "OVERLAY") {
 		t.Errorf("applyOverlay should contain OVERLAY, got:\n%s", stripped)
 	}
@@ -2938,7 +2937,7 @@ func TestApplyOverlay(t *testing.T) {
 
 	ansiBase := "\x1b[38;5;81mDashboard\x1b[0m content\n\x1b[32mMore\x1b[0m text"
 	result = m.applyOverlay(ansiBase, overlay)
-	stripped = ansi.Strip(result)
+	stripped = stripANSI(result)
 	if !strings.Contains(stripped, "Dashboard") {
 		t.Errorf("applyOverlay should preserve Dashboard, got:\n%s", stripped)
 	}
@@ -2949,7 +2948,7 @@ func TestApplyOverlay(t *testing.T) {
 	wideBase := strings.Repeat("X", 40) + "GHOST" + strings.Repeat("Y", 20)
 	overlayBox := strings.Repeat(" ", 10) + "BOX" + strings.Repeat(" ", 7)
 	result = m.applyOverlay(wideBase, overlayBox)
-	stripped = ansi.Strip(result)
+	stripped = stripANSI(result)
 	if strings.Contains(stripped, "GHOST") {
 		t.Errorf("applyOverlay should clear underlying content in overlay region, got:\n%s", stripped)
 	}

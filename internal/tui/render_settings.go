@@ -71,7 +71,6 @@ func (m *Model) renderSettings(x, y int) string {
 	setMap := m.aiTemplates[activeSet]
 	aiOptions := []string{
 		fmt.Sprintf("AI Provider:    %s", aiProviderName),
-		fmt.Sprintf("Dictionary:     %s", m.dictionaryProvider),
 		fmt.Sprintf("Front Template: %s", strings.ReplaceAll(setMap["front"], "\n", "\\n")),
 		fmt.Sprintf("Back Template:  %s", strings.ReplaceAll(setMap["back"], "\n", "\\n")),
 		fmt.Sprintf("Example Tmpl:   %s", strings.ReplaceAll(setMap["example"], "\n", "\\n")),
@@ -93,7 +92,7 @@ func (m *Model) renderSettings(x, y int) string {
 
 	addContent(sectionStyle.Render("STUDY PREFERENCES"), nil)
 
-	goalIdx := 5
+	goalIdx := settingsDailyGoalItem
 	prefix := "  "
 	itemStyle := lipgloss.NewStyle()
 	if goalIdx == m.settingsCursor {
@@ -117,7 +116,7 @@ func (m *Model) renderSettings(x, y int) string {
 	goalLine.WriteString(btnStyle.Render(plusBtn))
 	addContent(goalLine.String(), &lineInfo{itemIdx: goalIdx, kind: "goal"})
 
-	audioIdx := 6
+	audioIdx := settingsAutoPlayItem
 	prefix = "  "
 	itemStyle = lipgloss.NewStyle()
 	if audioIdx == m.settingsCursor {
@@ -126,7 +125,7 @@ func (m *Model) renderSettings(x, y int) string {
 	}
 	addContent(itemStyle.Render(fmt.Sprintf("%sAuto-play audio: %s", prefix, autoPlayStatus)), &lineInfo{itemIdx: audioIdx, kind: "item"})
 
-	strictIdx := 7
+	strictIdx := settingsStrictNormItem
 	prefix = "  "
 	itemStyle = lipgloss.NewStyle()
 	if strictIdx == m.settingsCursor {
@@ -160,14 +159,14 @@ func (m *Model) renderSettings(x, y int) string {
 		label    string
 		value    string
 	}{
-		{8, "openai", "OpenAI Key:  ", app.MaskAPIKey(m.aiSecrets.OpenAI.APIKey)},
-		{9, "openai", "OpenAI Model:", credValueOrDefault(m.aiSecrets.OpenAI.Model, "openai")},
-		{10, "openai", "OpenAI URL:  ", credValueOrDefault(m.aiSecrets.OpenAI.BaseURL, "openai-url")},
-		{11, "anthropic", "Anthropic Key:", app.MaskAPIKey(m.aiSecrets.Anthropic.APIKey)},
-		{12, "anthropic", "Anthropic Mod:", credValueOrDefault(m.aiSecrets.Anthropic.Model, "anthropic")},
-		{13, "anthropic", "Anthropic URL:", credValueOrDefault(m.aiSecrets.Anthropic.BaseURL, "anthropic-url")},
-		{14, "ollama", "Ollama Model: ", credValueOrDefault(m.aiSecrets.Ollama.Model, "ollama")},
-		{15, "ollama", "Ollama URL:   ", credValueOrDefault(m.aiSecrets.Ollama.BaseURL, "ollama-url")},
+		{settingsOpenAIKeyItem, "openai", "OpenAI Key:  ", app.MaskAPIKey(m.aiSecrets.OpenAI.APIKey)},
+		{settingsOpenAIModelItem, "openai", "OpenAI Model:", credValueOrDefault(m.aiSecrets.OpenAI.Model, "openai")},
+		{settingsOpenAIURLItem, "openai", "OpenAI URL:  ", credValueOrDefault(m.aiSecrets.OpenAI.BaseURL, "openai-url")},
+		{settingsAnthropicKeyItem, "anthropic", "Anthropic Key:", app.MaskAPIKey(m.aiSecrets.Anthropic.APIKey)},
+		{settingsAnthropicModelItem, "anthropic", "Anthropic Mod:", credValueOrDefault(m.aiSecrets.Anthropic.Model, "anthropic")},
+		{settingsAnthropicURLItem, "anthropic", "Anthropic URL:", credValueOrDefault(m.aiSecrets.Anthropic.BaseURL, "anthropic-url")},
+		{settingsOllamaModelItem, "ollama", "Ollama Model: ", credValueOrDefault(m.aiSecrets.Ollama.Model, "ollama")},
+		{settingsOllamaURLItem, "ollama", "Ollama URL:   ", credValueOrDefault(m.aiSecrets.Ollama.BaseURL, "ollama-url")},
 	}
 	for _, row := range credRows {
 		prefix = "  "
@@ -192,7 +191,7 @@ func (m *Model) renderSettings(x, y int) string {
 		addContent(itemStyle.Render(fmt.Sprintf("%s%s%s", prefix, row.label, displayValue)), &lineInfo{itemIdx: row.idx, kind: "item"})
 	}
 
-	revealIdx := 16
+	revealIdx := settingsRevealSpeedItem
 	prefix = "  "
 	itemStyle = lipgloss.NewStyle()
 	if revealIdx == m.settingsCursor {

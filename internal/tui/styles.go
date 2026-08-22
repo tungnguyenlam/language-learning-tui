@@ -23,14 +23,12 @@ var (
 	colorCyan      = lipgloss.Color("159") // Active deck highlight
 	colorAITitle   = lipgloss.Color("39")  // AI view titles
 	colorSuccess   = lipgloss.Color("76")  // New success indicator
-	colorNew       = lipgloss.Color("81")  // New item indicator
 
 	// Global styles
 	headerStyle = lipgloss.NewStyle().Bold(true).Foreground(colorHeader)
 	mutedStyle  = lipgloss.NewStyle().Foreground(colorMuted)
 	panelStyle  = lipgloss.NewStyle().Padding(1, 2).Border(lipgloss.RoundedBorder()).BorderForeground(colorPanel)
 
-	compactStyle   = lipgloss.NewStyle().Padding(1, 0)
 	navStyle       = lipgloss.NewStyle().PaddingRight(2)
 	navActiveStyle = lipgloss.NewStyle().Bold(true).Foreground(colorPink).PaddingRight(2)
 	tabStyle       = lipgloss.NewStyle().Padding(0, 1).Foreground(lipgloss.Color("250"))
@@ -57,7 +55,6 @@ var (
 
 	// Generic UI
 	titleStyle   = lipgloss.NewStyle().Bold(true).Foreground(colorAccent)
-	errorStyle   = lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Bold(true)
 	infoStyle    = lipgloss.NewStyle().Foreground(colorBlue)
 	warnStyle    = lipgloss.NewStyle().Foreground(colorOrange)
 	editStyle    = lipgloss.NewStyle().Bold(true).Background(lipgloss.Color("62"))

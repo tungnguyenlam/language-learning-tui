@@ -394,34 +394,3 @@ func (s *Store) currentSchemaVersion(ctx context.Context) (int, error) {
 	sort.Ints(applied)
 	return applied[len(applied)-1], nil
 }
-
-// BackupFileName builds the conventional timestamped name used by the UI so
-// repeated backups sort chronologically in a directory listing.
-func BackupFileName(at time.Time) string {
-	return core.BackupFileName(at)
-}
-
-// LatestBackup returns the most recent backup file in dir, or an error when
-// the directory holds none.
-func LatestBackup(dir string) (string, error) {
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		return "", err
-	}
-	var names []string
-	for _, e := range entries {
-		if e.IsDir() {
-			continue
-		}
-		name := e.Name()
-		if strings.HasPrefix(name, "backup-") && strings.HasSuffix(name, ".db") {
-			names = append(names, name)
-		}
-	}
-	if len(names) == 0 {
-		return "", fmt.Errorf("no backups found in %s", dir)
-	}
-	// The timestamp format is fixed-width, so lexical order is chronological.
-	sort.Strings(names)
-	return filepath.Join(dir, names[len(names)-1]), nil
-}

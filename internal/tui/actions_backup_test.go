@@ -11,7 +11,6 @@ import (
 	"deutsch-tui/internal/core"
 
 	tea "charm.land/bubbletea/v2"
-	"github.com/charmbracelet/x/ansi"
 )
 
 type mockBackupRepo struct {
@@ -185,7 +184,7 @@ func TestImportViewRendersBackupActions(t *testing.T) {
 	model := NewModel(&mockRepo{}, &mockScheduler{})
 	model.activeView = ViewImport
 	model.width, model.height = 120, 40
-	view := ansi.Strip(model.importScreen.Render(model, viewportLayout{}))
+	view := stripANSI(model.importScreen.Render(model, viewportLayout{}))
 	for _, want := range []string{"[B] Backup", "[U] Restore", "Progress backup: none yet"} {
 		if !strings.Contains(view, want) {
 			t.Fatalf("import view missing %q:\n%s", want, view)

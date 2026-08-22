@@ -58,8 +58,8 @@ def test_typing_api_key_persists_to_secrets_json():
             _go_to_settings(agent)
             
             # Now we can edit keys directly without cycling!
-            # OpenAI Key is at row 8
-            for _ in range(8):
+            # OpenAI Key is at row 7
+            for _ in range(7):
                 agent.act("j")
             agent.wait_until_stable()
             agent.act("<Enter>")

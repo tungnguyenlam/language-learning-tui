@@ -335,11 +335,8 @@ func TestDictionarySearchClearHitbox(t *testing.T) {
 
 func TestDictionaryPreviousView(t *testing.T) {
 	m := NewModel(&mockRepo{}, &mockScheduler{})
-	m.dictionaryProvider = "Local TUI"
 	m.activeView = ViewBrowser
-
-	// Open dictionary via command
-	m.openDictionary("Apfel")
+	_ = m.updateView(ViewDictionary)
 	if m.activeView != ViewDictionary {
 		t.Fatalf("expected active view to be ViewDictionary, got %v", m.activeView)
 	}
@@ -347,7 +344,6 @@ func TestDictionaryPreviousView(t *testing.T) {
 		t.Fatalf("expected dictionaryPreviousView to be ViewBrowser, got %v", m.dictionaryPreviousView)
 	}
 
-	// Press Esc to go back
 	cmd, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: tea.KeyEsc})
 	if !handled {
 		t.Fatal("expected Esc to be handled")

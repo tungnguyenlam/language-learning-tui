@@ -1,6 +1,7 @@
 package ai
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -125,6 +126,24 @@ func truncate(s string, n int) string {
 		return s
 	}
 	return string(runes[:n]) + "…"
+}
+
+func generateDraftsViaChat(ctx context.Context, request DraftRequest, prefix string, chat func(context.Context, string, string) (string, error)) ([]Draft, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	if err := validateDraftRequest(request); err != nil {
+		return nil, err
+	}
+	text, err := chat(ctx, systemPrompt, userPromptFor(request))
+	if err != nil {
+		return nil, err
+	}
+	rawCards, err := parseCardsJSON(text)
+	if err != nil {
+		return nil, fmt.Errorf("%s: %w", prefix, err)
+	}
+	return draftsFromRaw(rawCards, request)
 }
 
 // draftsFromRaw maps the parsed JSON into validated ai.Draft values.

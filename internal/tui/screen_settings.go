@@ -10,10 +10,46 @@ import (
 )
 
 const (
-	settingsDailyGoalItem   = 5
-	settingsLastItem        = 16
-	settingsRevealSpeedItem = 16
+	settingsAIProviderItem      = 0
+	settingsFrontTemplateItem   = 1
+	settingsBackTemplateItem    = 2
+	settingsExampleTemplateItem = 3
+	settingsDailyGoalItem       = 4
+	settingsAutoPlayItem        = 5
+	settingsStrictNormItem      = 6
+	settingsOpenAIKeyItem       = 7
+	settingsOpenAIModelItem     = 8
+	settingsOpenAIURLItem       = 9
+	settingsAnthropicKeyItem    = 10
+	settingsAnthropicModelItem  = 11
+	settingsAnthropicURLItem    = 12
+	settingsOllamaModelItem     = 13
+	settingsOllamaURLItem       = 14
+	settingsRevealSpeedItem     = 15
+	settingsLastItem            = 15
 )
+
+func settingsCredAt(cursor int) (provider, key string, ok bool) {
+	switch cursor {
+	case settingsOpenAIKeyItem:
+		return "openai", "api_key", true
+	case settingsOpenAIModelItem:
+		return "openai", "model", true
+	case settingsOpenAIURLItem:
+		return "openai", "base_url", true
+	case settingsAnthropicKeyItem:
+		return "anthropic", "api_key", true
+	case settingsAnthropicModelItem:
+		return "anthropic", "model", true
+	case settingsAnthropicURLItem:
+		return "anthropic", "base_url", true
+	case settingsOllamaModelItem:
+		return "ollama", "model", true
+	case settingsOllamaURLItem:
+		return "ollama", "base_url", true
+	}
+	return "", "", false
+}
 
 // settingsScreen wraps the Settings view to satisfy the screen interface.
 type settingsScreen struct{}

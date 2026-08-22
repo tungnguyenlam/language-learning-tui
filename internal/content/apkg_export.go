@@ -78,25 +78,6 @@ func ExportAnkiAPKGWithDeckNames(w io.Writer, notes []core.Note, deckNames map[s
 	return zw.Close()
 }
 
-// ExportAnkiAPKGToFile exports notes to an APKG file at the given path.
-func ExportAnkiAPKGToFile(path string, notes []core.Note) error {
-	return ExportAnkiAPKGToFileWithDeckNames(path, notes, nil)
-}
-
-// ExportAnkiAPKGToFileWithDeckNames exports notes to an APKG file at the given
-// path, using deckNames for deck titles.
-func ExportAnkiAPKGToFileWithDeckNames(path string, notes []core.Note, deckNames map[string]string) error {
-	f, err := os.Create(path)
-	if err != nil {
-		return err
-	}
-	if err := ExportAnkiAPKGWithDeckNames(f, notes, deckNames); err != nil {
-		f.Close()
-		return err
-	}
-	return f.Close()
-}
-
 type mediaRef struct {
 	name string // filename recorded in the media index
 	path string // source file on disk

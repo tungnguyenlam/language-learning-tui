@@ -1,3 +1,23 @@
+# 2026-08-22 (Deletion-First Cleanup, Pass 2)
+
+Removed the no-op Dictionary provider cycle and leftover wrappers without
+changing review, import, AI, or TTS behavior.
+
+- Dropped Settings Dictionary cycling, `openDictionary` URL launching, and
+  `dictionary_provider` config. Lookup remains the `=` overlay and `/` tab.
+- Deleted unused wrappers (`generateDrafts`, `renderCram`/`renderBrowser`,
+  `renderActiveViewPlain`, `ExportAnkiAPKGToFile*`, sqlite `BackupFileName`/
+  `LatestBackup`, unused RenderContext methods, unused styles).
+- Merged identical `renderMedium`/`renderCompact`; shared provider
+  `GenerateDrafts` through `generateDraftsViaChat`; tests use local `stripANSI`
+  instead of `github.com/charmbracelet/x/ansi`.
+
+### Verification
+
+- `go test ./...` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, dict.cc import (834,512 entries),
+  smoke test, binary build, and core E2E suite (35 passed in 37.34s).
+
 # 2026-08-22 (Deletion-First Cleanup)
 
 Removed unused config and plugin scaffolding without changing review, import,

@@ -150,7 +150,7 @@ func (m *Model) setRevealSpeed(speed int) tea.Cmd {
 
 func (m *Model) persistConfig() {
 	if m.onConfigChange != nil {
-		m.onConfigChange(m.aiProviderName, m.dictionaryProvider, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
+		m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
 	}
 }
 
@@ -509,10 +509,6 @@ func (m *Model) discardAllDrafts() tea.Cmd {
 	return nil
 }
 
-func (m *Model) generateDrafts() tea.Cmd {
-	return m.startDrafting()
-}
-
 func (m *Model) startDrafting() tea.Cmd {
 	if m.drafting {
 		return nil
@@ -784,8 +780,7 @@ func (m *Model) gradeCramCard(grade core.ReviewGrade) tea.Cmd {
 
 func (m *Model) handleSettingsEnter() tea.Cmd {
 	switch m.settingsCursor {
-	case 0:
-		// Provider cycle: disabled → offline → template → openai → anthropic → ollama → disabled
+	case settingsAIProviderItem:
 		cycle := []string{"disabled", "offline", "template", "openai", "anthropic", "ollama"}
 		next := "disabled"
 		for i, name := range cycle {
@@ -799,21 +794,7 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		m.status = fmt.Sprintf("Switched to %s AI provider", m.aiProviderName)
 		m.persistConfig()
 
-	case 1:
-		// Dictionary cycle
-		cycle := []string{"Local TUI", "dict.cc", "Linguee", "Leo", "Duden", "Pons", "Cambridge", "Google Translate"}
-		next := "Local TUI"
-		for i, name := range cycle {
-			if strings.EqualFold(name, m.dictionaryProvider) {
-				next = cycle[(i+1)%len(cycle)]
-				break
-			}
-		}
-		m.dictionaryProvider = next
-		m.status = fmt.Sprintf("Switched to %s dictionary", m.dictionaryProvider)
-		m.persistConfig()
-
-	case 2, 3, 4:
+	case settingsFrontTemplateItem, settingsBackTemplateItem, settingsExampleTemplateItem:
 		activeSet := m.currentAITemplateSet()
 		if activeSet == "" {
 			m.status = "No template set available to edit"
@@ -826,17 +807,8 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 			m.aiTemplates[activeSet] = make(map[string]string)
 		}
 		m.editingTemplate = true
-		key := ""
-		switch m.settingsCursor {
-		case 2:
-			key = "front"
-		case 3:
-			key = "back"
-		case 4:
-			key = "example"
-		}
-		m.originalTemplateValue = m.aiTemplates[activeSet][key]
-	case 6:
+		m.originalTemplateValue = m.aiTemplates[activeSet][m.templateKeyAtCursor()]
+	case settingsAutoPlayItem:
 		m.autoPlayAudio = !m.autoPlayAudio
 		status := "disabled"
 		if m.autoPlayAudio {
@@ -844,7 +816,7 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		}
 		m.status = fmt.Sprintf("Auto-play audio %s", status)
 		m.persistConfig()
-	case 7:
+	case settingsStrictNormItem:
 		m.strictNormalization = !m.strictNormalization
 		status := "disabled"
 		if m.strictNormalization {
@@ -852,40 +824,7 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		}
 		m.status = fmt.Sprintf("Strict normalization %s", status)
 		m.persistConfig()
-	case 8, 9, 10, 11, 12, 13, 14, 15:
-		var provider string
-		var key string
-		switch m.settingsCursor {
-		case 8:
-			provider = "openai"
-			key = "api_key"
-		case 9:
-			provider = "openai"
-			key = "model"
-		case 10:
-			provider = "openai"
-			key = "base_url"
-		case 11:
-			provider = "anthropic"
-			key = "api_key"
-		case 12:
-			provider = "anthropic"
-			key = "model"
-		case 13:
-			provider = "anthropic"
-			key = "base_url"
-		case 14:
-			provider = "ollama"
-			key = "model"
-		case 15:
-			provider = "ollama"
-			key = "base_url"
-		}
-		m.editingSecretProvider = provider
-		m.editingSecretKey = key
-		m.originalSecretValue = m.getCredValue(provider, key)
-		m.status = fmt.Sprintf("Editing %s %s — Enter to save, Esc to cancel", provider, key)
-	case 16:
+	case settingsRevealSpeedItem:
 		if m.revealSpeed < 10 {
 			m.revealSpeed++
 		} else {
@@ -896,20 +835,15 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 			m.status = "Reveal animation disabled (instant)"
 		}
 		m.persistConfig()
+	default:
+		if provider, key, ok := settingsCredAt(m.settingsCursor); ok {
+			m.editingSecretProvider = provider
+			m.editingSecretKey = key
+			m.originalSecretValue = m.getCredValue(provider, key)
+			m.status = fmt.Sprintf("Editing %s %s — Enter to save, Esc to cancel", provider, key)
+		}
 	}
 	return nil
-}
-
-func credKeyForCursor(cursor int) string {
-	switch cursor {
-	case 8, 11:
-		return "api_key"
-	case 9, 12, 14:
-		return "model"
-	case 10, 13, 15:
-		return "base_url"
-	}
-	return ""
 }
 
 // getCredValue returns the current credential value for the named provider and key.
@@ -960,11 +894,11 @@ func (m *Model) setCredValue(provider, key, value string) {
 
 func (m *Model) templateKeyAtCursor() string {
 	switch m.settingsCursor {
-	case 2:
+	case settingsFrontTemplateItem:
 		return "front"
-	case 3:
+	case settingsBackTemplateItem:
 		return "back"
-	case 4:
+	case settingsExampleTemplateItem:
 		return "example"
 	}
 	return "front"

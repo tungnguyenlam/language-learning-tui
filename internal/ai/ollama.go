@@ -34,24 +34,9 @@ type OllamaProvider struct {
 }
 
 func (p OllamaProvider) GenerateDrafts(ctx context.Context, request DraftRequest) ([]Draft, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	if err := validateDraftRequest(request); err != nil {
-		return nil, err
-	}
-
-	// Ollama's `format: "json"` constrains decoding to valid JSON, which
-	// keeps small local models from wrapping the object in prose.
-	content, err := p.chat(ctx, systemPrompt, userPromptFor(request), true)
-	if err != nil {
-		return nil, err
-	}
-	rawCards, err := parseCardsJSON(content)
-	if err != nil {
-		return nil, fmt.Errorf("ollama: %w", err)
-	}
-	return draftsFromRaw(rawCards, request)
+	return generateDraftsViaChat(ctx, request, "ollama", func(ctx context.Context, system, user string) (string, error) {
+		return p.chat(ctx, system, user, true)
+	})
 }
 
 // SendChat completes a single turn and returns the raw text. Used by

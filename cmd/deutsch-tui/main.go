@@ -101,7 +101,6 @@ func main() {
 	program := tea.NewProgram(tui.NewModelWithOptions(store, scheduler, tui.ModelOptions{
 		AIProvider:          nil,
 		AIProviderName:      cfg.AIProvider,
-		DictionaryProvider:  cfg.DictionaryProvider,
 		AITemplates:         cfg.AITemplates,
 		AISecrets:           secrets,
 		TTSProvider:         cfg.TTSProvider,
@@ -115,9 +114,8 @@ func main() {
 		ImportPath:          filepath.Join(dir, "import.tsv"),
 		ExportPath:          filepath.Join(dir, "export.tsv"),
 		Logger:              leveledLogger,
-		OnConfigChange: func(aiProvider string, dictProvider string, tmpls map[string]map[string]string, autoPlayAudio bool, strictNormalization bool, revealSpeed int) {
+		OnConfigChange: func(aiProvider string, tmpls map[string]map[string]string, autoPlayAudio bool, strictNormalization bool, revealSpeed int) {
 			pCfg.AIProvider = aiProvider
-			pCfg.DictionaryProvider = dictProvider
 			pCfg.AITemplates = tmpls
 			pCfg.AutoPlayAudio = autoPlayAudio
 			pCfg.StrictNormalization = strictNormalization

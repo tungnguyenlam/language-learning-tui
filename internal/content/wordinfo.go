@@ -241,13 +241,6 @@ func isInfinitive(s string) bool {
 	return s == "sein" || s == "tun"
 }
 
-// irregularInfinitives maps infinitives that don't follow the regular -en stem
-// rule to their present-tense stem, so Enrich can still show useful forms.
-var irregularInfinitives = map[string]string{
-	"sein": "bin",
-	"tun":  "tu",
-}
-
 func guessStem(verb string) string {
 	switch {
 	case strings.HasSuffix(verb, "ern"):

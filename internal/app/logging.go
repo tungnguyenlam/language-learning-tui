@@ -12,7 +12,6 @@ type LogLevel int
 const (
 	LogLevelDebug LogLevel = iota
 	LogLevelInfo
-	LogLevelWarn
 	LogLevelError
 )
 
@@ -20,9 +19,7 @@ func ParseLogLevel(level string) LogLevel {
 	switch strings.ToLower(strings.TrimSpace(level)) {
 	case "debug":
 		return LogLevelDebug
-	case "warn", "warning":
-		return LogLevelWarn
-	case "error":
+	case "error", "warn", "warning":
 		return LogLevelError
 	default:
 		return LogLevelInfo

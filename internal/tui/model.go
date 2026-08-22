@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/url"
 	"os/exec"
 	"path/filepath"
 	"runtime"
@@ -153,7 +152,6 @@ type Model struct {
 	cardTransitionDir              int // -1 for up, 1 for down
 	aiProvider                     ai.Provider
 	aiProviderName                 string
-	dictionaryProvider             string
 	dictCount                      int
 	aiTemplates                    map[string]map[string]string
 	aiTemplateSets                 []string
@@ -182,7 +180,7 @@ type Model struct {
 	exportDeckID                   string
 	exportTag                      string
 	exportFilter                   string // e.g. "All", "Mature", "Learning"
-	onConfigChange                 func(string, string, map[string]map[string]string, bool, bool, int)
+	onConfigChange                 func(string, map[string]map[string]string, bool, bool, int)
 	bookmarkFilter                 bool
 	dueLoadID                      int
 	originalTemplateValue          string
@@ -371,7 +369,6 @@ func NewModelWithAI(repo core.Repository, scheduler core.Scheduler, provider ai.
 type ModelOptions struct {
 	AIProvider          ai.Provider
 	AIProviderName      string
-	DictionaryProvider  string
 	AITemplates         map[string]map[string]string
 	AISecrets           app.Secrets
 	TTSProvider         string
@@ -384,7 +381,7 @@ type ModelOptions struct {
 	DataDir             string
 	ImportPath          string
 	ExportPath          string
-	OnConfigChange      func(string, string, map[string]map[string]string, bool, bool, int)
+	OnConfigChange      func(string, map[string]map[string]string, bool, bool, int)
 	OnSecretsChange     func(app.Secrets)
 	Logger              *app.LeveledLogger
 }
@@ -452,7 +449,6 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		scheduler:           scheduler,
 		aiProvider:          provider,
 		aiProviderName:      providerName,
-		dictionaryProvider:  opts.DictionaryProvider,
 		aiTemplates:         templates,
 		aiTemplateSets:      sets,
 		aiTemplateIndex:     aiTemplateIndex,
@@ -476,7 +472,7 @@ func NewModelWithOptions(repo core.Repository, scheduler core.Scheduler, opts Mo
 		browserSelected:     make(map[string]bool),
 		deckSelected:        make(map[string]bool),
 		dictionaryStarred:   make(map[string]bool),
-		logger:              logger, // Set the logger
+		logger:              logger,
 		testMode:            opts.TestMode,
 	}
 	m.registerScreens()
@@ -500,10 +496,6 @@ type draftApprovedMsg struct {
 type importDoneMsg struct {
 	decks []core.Deck
 	cards []core.Card
-	count int
-	path  string
-}
-type exportDoneMsg struct {
 	count int
 	path  string
 }
@@ -541,7 +533,6 @@ type cramCardsMsg struct {
 	cramType string
 	deckID   string
 }
-type browserCardsMsg []core.Card
 type browserCardsResultMsg struct {
 	id    int
 	cards []core.Card
@@ -1067,17 +1058,6 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Batch(dueReload, m.loadReviewsPerDay())
 		}
 		return m, m.loadReviewsPerDay()
-	case browserCardsMsg:
-		m.browserCards = []core.Card(msg)
-		if m.browserCursor >= len(m.browserCards) {
-			m.browserCursor = maxInt(0, len(m.browserCards)-1)
-		}
-		if len(m.browserCards) == 0 {
-			m.status = "No cards found"
-		} else {
-			m.status = fmt.Sprintf("%d cards found", len(m.browserCards))
-		}
-		m.logger.Debug("Loaded %d browser cards", len(msg))
 	case browserCardsResultMsg:
 		if msg.id != m.browserLoadID {
 			return m, nil
@@ -1281,10 +1261,8 @@ func (m *Model) View() tea.View {
 	switch m.breakpoint {
 	case BreakpointWide:
 		b.WriteString(m.renderWide())
-	case BreakpointMedium:
-		b.WriteString(m.renderMedium())
 	default:
-		b.WriteString(m.renderCompact())
+		b.WriteString(m.renderStacked())
 	}
 
 	helpHint := ""
@@ -1589,14 +1567,7 @@ func (m *Model) renderWide() string {
 	return b.String()
 }
 
-func (m *Model) renderMedium() string {
-	if m.focusMode && m.activeView == ViewReview {
-		return "\n" + m.renderActiveView(0, 2)
-	}
-	return m.renderTabs(0, 1) + "\n" + m.renderActiveView(0, 2)
-}
-
-func (m *Model) renderCompact() string {
+func (m *Model) renderStacked() string {
 	if m.focusMode && m.activeView == ViewReview {
 		return "\n" + m.renderActiveView(0, 2)
 	}
@@ -1663,24 +1634,6 @@ func (m *Model) activePanelSize() (int, int) {
 		}
 	}
 	return width, height
-}
-
-func (m *Model) renderStatus(x, y int) string {
-	w := m.width
-	status := m.status
-	if m.drafting {
-		frames := []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
-		status = frames[m.spinnerFrame%len(frames)] + " " + status
-	}
-
-	sessionStats := ""
-	if m.sessionReviewed > 0 {
-		accuracy := float64(m.sessionCorrect) / float64(m.sessionReviewed) * 100
-		sessionStats = fmt.Sprintf(" | Session: %d rev, %.0f%% acc", m.sessionReviewed, accuracy)
-	}
-
-	res := statusStyle.Width(w).Render(fmt.Sprintf(" %s%s", status, sessionStats))
-	return res
 }
 
 func (m *Model) applyOverlay(base, overlay string) string {
@@ -2096,54 +2049,6 @@ func speechTextForCard(card core.Card) string {
 
 func (m *Model) ttsAvailable() bool {
 	return m.speechSynthesizer != nil
-}
-
-func (m *Model) openDictionary(word string) tea.Cmd {
-	if word == "" {
-		return nil
-	}
-
-	if strings.EqualFold(m.dictionaryProvider, "Local TUI") {
-		m.dictionaryPreviousView = m.activeView
-		m.activeView = ViewDictionary
-		m.dictionarySearch = word
-		m.dictionaryCursor = 0
-		return m.searchDictionary()
-	}
-
-	return func() tea.Msg {
-		var urlStr string
-		switch strings.ToLower(m.dictionaryProvider) {
-		case "linguee":
-			urlStr = "https://www.linguee.com/german-english/search?source=auto&query=" + url.QueryEscape(word)
-		case "leo":
-			urlStr = "https://dict.leo.org/german-english/" + url.QueryEscape(word)
-		case "duden":
-			urlStr = "https://www.duden.de/suchen/dudenonline/" + url.QueryEscape(word)
-		case "pons":
-			urlStr = "https://en.pons.com/translate/german-english/" + url.QueryEscape(word)
-		case "cambridge":
-			urlStr = "https://dictionary.cambridge.org/dictionary/german-english/" + url.QueryEscape(word)
-		case "google translate":
-			urlStr = "https://translate.google.com/?sl=de&tl=en&text=" + url.QueryEscape(word) + "&op=translate"
-		default: // dict.cc
-			urlStr = "https://www.dict.cc/?s=" + url.QueryEscape(word)
-		}
-
-		var cmd *exec.Cmd
-		switch runtime.GOOS {
-		case "darwin":
-			cmd = exec.Command("open", urlStr)
-		case "windows":
-			cmd = exec.Command("cmd", "/c", "start", urlStr)
-		default:
-			cmd = exec.Command("xdg-open", urlStr)
-		}
-		if err := cmd.Run(); err != nil {
-			return err
-		}
-		return nil
-	}
 }
 
 func breakpointForWidth(width int) Breakpoint {

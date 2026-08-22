@@ -24,8 +24,8 @@ def test_settings_goal_keyboard_interaction():
             agent.act('7')
             agent.wait_for_text("Settings")
             
-            # Navigate to Goal (index 5)
-            for _ in range(5):
+            # Navigate to Goal (4 j from AI Provider)
+            for _ in range(4):
                 agent.act('j')
             agent.wait_for_text("> Daily Goal: 10")
             

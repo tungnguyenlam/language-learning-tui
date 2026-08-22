@@ -85,18 +85,6 @@ func (c *RenderContext) RegisterHitboxWithAction(id string, w, h int, action fun
 	})
 }
 
-// RegisterHitboxAt adds a hitbox at a specific offset from the current position.
-func (c *RenderContext) RegisterHitboxAt(id string, offsetX, offsetY, w, h int) {
-	c.model.hitboxes = append(c.model.hitboxes, Hitbox{
-		ID:     id,
-		View:   c.view,
-		X:      c.currX + offsetX,
-		Y:      c.currY + offsetY,
-		Width:  w,
-		Height: h,
-	})
-}
-
 // RegisterHitboxAtWithAction adds a hitbox with a callback at a specific offset from the current position.
 func (c *RenderContext) RegisterHitboxAtWithAction(id string, offsetX, offsetY, w, h int, action func() tea.Cmd) {
 	c.model.hitboxes = append(c.model.hitboxes, Hitbox{
@@ -110,15 +98,10 @@ func (c *RenderContext) RegisterHitboxAtWithAction(id string, offsetX, offsetY, 
 	})
 }
 
-// RegisterAction registers a hitbox for the text about to be written.
-func (c *RenderContext) RegisterAction(id string, w, h int, action func() tea.Cmd) {
-	c.RegisterHitboxWithAction(id, w, h, action)
-}
-
 // WriteAction writes a styled action label and registers its hitbox.
 func (c *RenderContext) WriteAction(id string, label string, style lipgloss.Style, action func() tea.Cmd) {
 	width := lipgloss.Width(label)
-	c.RegisterAction(id, width, 1, action)
+	c.RegisterHitboxWithAction(id, width, 1, action)
 	c.Write(style.Render(label))
 }
 
@@ -160,7 +143,7 @@ func (c *RenderContext) WriteWrapped(items []WrappedItem, spacing int) {
 		}
 
 		if item.Action != nil {
-			c.RegisterAction(item.ID, lipgloss.Width(displayLabel), 1, item.Action)
+			c.RegisterHitboxWithAction(item.ID, lipgloss.Width(displayLabel), 1, item.Action)
 			c.Write(renderText)
 		} else {
 			c.Write(renderText)
@@ -171,14 +154,4 @@ func (c *RenderContext) WriteWrapped(items []WrappedItem, spacing int) {
 // String returns the accumulated rendered content.
 func (c *RenderContext) String() string {
 	return c.buffer.String()
-}
-
-// Layout returns the current viewport layout.
-func (c *RenderContext) Layout() viewportLayout {
-	return c.layout
-}
-
-// CurrentY returns the current Y coordinate (absolute).
-func (c *RenderContext) CurrentY() int {
-	return c.currY
 }

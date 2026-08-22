@@ -22,10 +22,6 @@ func (m *Model) renderDebug(x, y int) string {
 	b.WriteString(fmt.Sprintf("Recent Decks: %v\n", m.recentDecks))
 	b.WriteString("\n" + lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Render("--- LOG CONTENT ---") + "\n")
 
-	// Since we don't have a direct way to read the log file easily without blocking or complexity,
-	// let's just show some internal state for now.
-	// In a real scenario, we'd have a buffered logger in memory.
-
 	b.WriteString("State Summary:\n")
 	b.WriteString(fmt.Sprintf("- textInputActive: %v\n", m.textInputActive()))
 	b.WriteString(fmt.Sprintf("- confirmingDelete: %v\n", m.confirmingDelete))

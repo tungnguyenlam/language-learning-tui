@@ -58,7 +58,7 @@ func TestBackupAndRestoreRoundTrip(t *testing.T) {
 	store := openTempStore(t, "learning.db")
 	seedBackupStore(t, ctx, store)
 
-	dest := filepath.Join(t.TempDir(), "backups", BackupFileName(time.Now()))
+	dest := filepath.Join(t.TempDir(), "backups", core.BackupFileName(time.Now()))
 	info, err := store.Backup(ctx, dest)
 	if err != nil {
 		t.Fatalf("backup: %v", err)
@@ -109,7 +109,7 @@ func TestRestoreIntoDifferentDatabase(t *testing.T) {
 	source := openTempStore(t, "source.db")
 	seedBackupStore(t, ctx, source)
 
-	dest := filepath.Join(t.TempDir(), BackupFileName(time.Now()))
+	dest := filepath.Join(t.TempDir(), core.BackupFileName(time.Now()))
 	if _, err := source.Backup(ctx, dest); err != nil {
 		t.Fatalf("backup: %v", err)
 	}
@@ -153,7 +153,7 @@ func TestRestorePreservesReviewHistory(t *testing.T) {
 		t.Fatalf("record review: %v", err)
 	}
 
-	dest := filepath.Join(t.TempDir(), BackupFileName(time.Now()))
+	dest := filepath.Join(t.TempDir(), core.BackupFileName(time.Now()))
 	info, err := store.Backup(ctx, dest)
 	if err != nil {
 		t.Fatalf("backup: %v", err)
@@ -204,7 +204,7 @@ func TestRestoreRejectsNewerSchema(t *testing.T) {
 	store := openTempStore(t, "learning.db")
 	seedBackupStore(t, ctx, store)
 
-	dest := filepath.Join(t.TempDir(), BackupFileName(time.Now()))
+	dest := filepath.Join(t.TempDir(), core.BackupFileName(time.Now()))
 	if _, err := store.Backup(ctx, dest); err != nil {
 		t.Fatalf("backup: %v", err)
 	}
@@ -252,7 +252,7 @@ func TestInspectBackupReportsCounts(t *testing.T) {
 	store := openTempStore(t, "learning.db")
 	seedBackupStore(t, ctx, store)
 
-	dest := filepath.Join(t.TempDir(), BackupFileName(time.Now()))
+	dest := filepath.Join(t.TempDir(), core.BackupFileName(time.Now()))
 	if _, err := store.Backup(ctx, dest); err != nil {
 		t.Fatalf("backup: %v", err)
 	}
@@ -283,35 +283,9 @@ func TestBackupOverwritesExistingFile(t *testing.T) {
 	}
 }
 
-func TestLatestBackupPicksNewest(t *testing.T) {
-	dir := t.TempDir()
-	names := []string{
-		"backup-20260101-000000.db",
-		"backup-20260805-120000.db",
-		"backup-20260304-093000.db",
-		"notes.txt",
-	}
-	for _, n := range names {
-		if err := os.WriteFile(filepath.Join(dir, n), []byte("x"), 0o600); err != nil {
-			t.Fatalf("write %s: %v", n, err)
-		}
-	}
-	got, err := LatestBackup(dir)
-	if err != nil {
-		t.Fatalf("latest backup: %v", err)
-	}
-	if filepath.Base(got) != "backup-20260805-120000.db" {
-		t.Fatalf("LatestBackup = %s, want the 2026-08-05 file", filepath.Base(got))
-	}
-
-	if _, err := LatestBackup(t.TempDir()); err == nil {
-		t.Fatal("LatestBackup(empty dir) succeeded, want error")
-	}
-}
-
 func TestBackupFileNameIsChronologicallySortable(t *testing.T) {
-	early := BackupFileName(time.Date(2026, 3, 4, 9, 30, 0, 0, time.UTC))
-	late := BackupFileName(time.Date(2026, 8, 5, 12, 0, 0, 0, time.UTC))
+	early := core.BackupFileName(time.Date(2026, 3, 4, 9, 30, 0, 0, time.UTC))
+	late := core.BackupFileName(time.Date(2026, 8, 5, 12, 0, 0, 0, time.UTC))
 	if !(early < late) {
 		t.Fatalf("names do not sort chronologically: %s vs %s", early, late)
 	}

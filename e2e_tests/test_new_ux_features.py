@@ -96,7 +96,7 @@ def test_settings_daily_goal_adjustment():
             agent.act("7")
             agent.wait_for_text("Settings")
             # Scroll down to see Daily Goal (it's below AI templates)
-            for _ in range(6):
+            for _ in range(4):
                 agent.act("j")
             agent.wait_for_text("Daily Goal:", timeout=5.0)
             

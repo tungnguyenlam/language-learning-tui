@@ -10,10 +10,6 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-func (m *Model) renderBrowser() string {
-	return m.renderBrowserAt(m.activeViewContentLayout())
-}
-
 func (m *Model) renderBrowserAt(layout viewportLayout) string {
 	ctx := NewRenderContext(m, layout, ViewBrowser)
 

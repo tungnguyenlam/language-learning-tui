@@ -14,7 +14,6 @@ const (
 
 type Config struct {
 	AIProvider          string                       `json:"ai_provider"`
-	DictionaryProvider  string                       `json:"dictionary_provider"`
 	TTSProvider         string                       `json:"tts_provider"`
 	TTSVoice            string                       `json:"tts_voice"`
 	LogLevel            string                       `json:"log_level"`
@@ -26,13 +25,12 @@ type Config struct {
 
 func DefaultConfig() Config {
 	return Config{
-		AIProvider:         "disabled",
-		DictionaryProvider: "Local TUI",
-		TTSProvider:        "edge",
-		TTSVoice:           "de-DE-KatjaNeural",
-		LogLevel:           "info",
-		AutoPlayAudio:      false,
-		RevealSpeed:        5,
+		AIProvider:    "disabled",
+		TTSProvider:   "edge",
+		TTSVoice:      "de-DE-KatjaNeural",
+		LogLevel:      "info",
+		AutoPlayAudio: false,
+		RevealSpeed:   5,
 		AITemplates: map[string]map[string]string{
 			"vocabulary": {
 				"front":   "{{.Topic}}",
@@ -122,9 +120,6 @@ func (c Config) withDefaults() Config {
 	if c.AIProvider == "" {
 		c.AIProvider = defaults.AIProvider
 	}
-	if c.DictionaryProvider == "" {
-		c.DictionaryProvider = defaults.DictionaryProvider
-	}
 	if c.TTSProvider == "" {
 		c.TTSProvider = defaults.TTSProvider
 	}
@@ -149,7 +144,6 @@ func (c Config) withDefaults() Config {
 func unmarshalConfig(raw []byte, cfg *Config) error {
 	type configFile struct {
 		AIProvider          string          `json:"ai_provider"`
-		DictionaryProvider  string          `json:"dictionary_provider"`
 		TTSProvider         string          `json:"tts_provider"`
 		TTSVoice            string          `json:"tts_voice"`
 		LogLevel            string          `json:"log_level"`
@@ -164,7 +158,6 @@ func unmarshalConfig(raw []byte, cfg *Config) error {
 		return err
 	}
 	cfg.AIProvider = file.AIProvider
-	cfg.DictionaryProvider = file.DictionaryProvider
 	cfg.TTSProvider = file.TTSProvider
 	cfg.TTSVoice = file.TTSVoice
 	cfg.LogLevel = file.LogLevel

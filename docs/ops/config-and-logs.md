@@ -21,7 +21,6 @@ The app writes `config.json` in the data directory when missing.
 Current fields:
 
 - `ai_provider`: default `disabled`
-- `dictionary_provider`: default `Local TUI`
 - `tts_provider`: default `edge`
 - `log_level`: default `info`
 - `autoplay_audio`, `strict_normalization`, `reveal_speed`, `ai_templates`

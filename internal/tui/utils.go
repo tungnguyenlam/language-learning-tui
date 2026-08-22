@@ -401,13 +401,6 @@ func selectedIndexForTrackRow(totalItems, visibleLines, row int) int {
 	return clampInt((clampInt(row, 0, visibleLines-1)*(totalItems-1))/(visibleLines-1), 0, totalItems-1)
 }
 
-func (m *Model) renderActiveViewPlain(x, y int) string {
-	layout := m.activeViewContentLayout()
-	layout.X = x
-	layout.Y = y
-	return m.renderActiveViewPlainAt(layout)
-}
-
 func stripANSI(s string) string {
 	var b strings.Builder
 	inEsc := false

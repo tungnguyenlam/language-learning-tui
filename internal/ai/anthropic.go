@@ -31,21 +31,9 @@ type AnthropicProvider struct {
 }
 
 func (p AnthropicProvider) GenerateDrafts(ctx context.Context, request DraftRequest) ([]Draft, error) {
-	if err := ctx.Err(); err != nil {
-		return nil, err
-	}
-	if err := validateDraftRequest(request); err != nil {
-		return nil, err
-	}
-	text, err := p.chat(ctx, systemPrompt, userPromptFor(request), 0.4)
-	if err != nil {
-		return nil, err
-	}
-	rawCards, err := parseCardsJSON(text)
-	if err != nil {
-		return nil, fmt.Errorf("anthropic: %w", err)
-	}
-	return draftsFromRaw(rawCards, request)
+	return generateDraftsViaChat(ctx, request, "anthropic", func(ctx context.Context, system, user string) (string, error) {
+		return p.chat(ctx, system, user, 0.4)
+	})
 }
 
 func (p AnthropicProvider) SendChat(ctx context.Context, system, user string) (string, error) {
