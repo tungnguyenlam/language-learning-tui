@@ -116,3 +116,104 @@ func TestEmbeddedIdiomsRomeReverseCardUsesGermanAnswer(t *testing.T) {
 	}
 	t.Fatal("Rome reverse card was not generated")
 }
+
+func TestThinEmbeddedDecksHaveUsefulCoverage(t *testing.T) {
+	cases := []struct {
+		id        string
+		min       int
+		wantFront string
+	}{
+		{"b2_c1_news", 35, "die Eilmeldung"},
+		{"a1_emergency", 35, "der Notruf"},
+		{"b1_proverbs", 35, "Glück im Unglück."},
+		{"a2_grammar_prepositions", 30, ""},
+		{"b2_environment", 25, "erneuerbare Energien"},
+	}
+	for _, c := range cases {
+		deck, err := DeckByID(c.id)
+		if err != nil {
+			t.Fatalf("DeckByID(%q) failed: %v", c.id, err)
+		}
+		if deck == nil {
+			t.Fatalf("deck %q was not loaded", c.id)
+		}
+		if len(deck.Notes) < c.min {
+			t.Errorf("deck %q notes = %d, want at least %d", c.id, len(deck.Notes), c.min)
+		}
+		if c.wantFront == "" {
+			continue
+		}
+		found := false
+		for _, note := range deck.Notes {
+			if note.Front == c.wantFront {
+				found = true
+				if len(note.Cards) == 0 {
+					t.Errorf("deck %q note %q has no cards", c.id, c.wantFront)
+				}
+				break
+			}
+		}
+		if !found {
+			t.Errorf("deck %q missing note with front %q", c.id, c.wantFront)
+		}
+	}
+}
+
+func TestEmbeddedContentFixes(t *testing.T) {
+	idioms, err := DeckByID("b1_idioms")
+	if err != nil || idioms == nil {
+		t.Fatalf("b1_idioms: %v %v", idioms, err)
+	}
+	var sawOderNie, sawGold bool
+	for _, note := range idioms.Notes {
+		if note.Front == "Jetzt oder nie" {
+			sawOderNie = true
+		}
+		if note.Front == "Jetzt or nie" {
+			t.Error("b1_idioms still has English 'or' in Jetzt or nie")
+		}
+		if note.Front == "Reden ist Silber, Schweigen ist Gold" {
+			sawGold = true
+		}
+		if note.Front == "Reden ist Silber, Schweigen ist gold" {
+			t.Error("b1_idioms still lowercases Gold in Schweigen ist Gold")
+		}
+	}
+	if !sawOderNie {
+		t.Error("expected Jetzt oder nie in b1_idioms")
+	}
+	if !sawGold {
+		t.Error("expected capitalized Gold in Schweigen ist Gold")
+	}
+
+	env, err := DeckByID("b2_environment")
+	if err != nil || env == nil {
+		t.Fatalf("b2_environment: %v %v", env, err)
+	}
+	for _, note := range env.Notes {
+		if note.Front == "die Erneuerbare Energien" {
+			t.Error("b2_environment still uses ungrammatical die Erneuerbare Energien")
+		}
+	}
+
+	prep, err := DeckByID("a2_grammar_prepositions")
+	if err != nil || prep == nil {
+		t.Fatalf("a2_grammar_prepositions: %v %v", prep, err)
+	}
+	wanted := map[string]bool{"gegen": false, "nach": false, "zu": false, "von": false, "hinter": false, "wegen": false}
+	for _, note := range prep.Notes {
+		if note.Type != "Cloze" {
+			t.Errorf("preposition note %q type = %q, want Cloze", note.ID, note.Type)
+		}
+		for prepWord := range wanted {
+			if strings.Contains(strings.ToLower(note.Front), "{{c1::"+prepWord+"::") {
+				wanted[prepWord] = true
+			}
+		}
+	}
+	for prepWord, found := range wanted {
+		if !found {
+			t.Errorf("a2_grammar_prepositions missing cloze for %q", prepWord)
+		}
+	}
+}

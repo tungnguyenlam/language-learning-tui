@@ -1,3 +1,28 @@
+# 2026-08-22 (Grammar Hints + Thin Deck Expansion)
+
+Stopped `-en`/`-ern` adjectives from being treated as infinitives in the
+review grammar hint, then expanded thin unique Standard Content decks without
+touching `StarterDeck()` (so the `Due cards: 52` E2E assertions stay valid).
+
+- `isInfinitive` now excludes common adjectives such as `selten`, `trocken`,
+  `offen`, `zufrieden`, and `nüchtern`, so hints show comparison forms instead
+  of fake conjugations like `ich selt`.
+- Expanded `b2-c1-news`, `a1-emergency`, `b1-proverbs`, `a2-grammar-prepositions`,
+  and `b2-environment` to ~30–40 notes; added missing two-way/genitive
+  preposition clozes and practical emergency phrases with articles.
+- Corrected content errors: `Jetzt oder nie`, `Schweigen ist Gold`,
+  `erneuerbare Energien`, and `Glück im Unglück`.
+- Clarified the due-count notice: only auto-seeded `StarterDeck()` is coupled
+  to hard-coded E2E counts; Standard Content TSV expansion is safe.
+
+### Verification
+
+- New wordinfo and embedded-deck tests passed.
+- `go test ./...` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import
+  (834,512 entries), smoke test, binary build, and core E2E suite (35 passed
+  in 38.55s).
+
 # 2026-08-22 (Deletion-First Cleanup, Pass 2)
 
 Removed the no-op Dictionary provider cycle and leftover wrappers without

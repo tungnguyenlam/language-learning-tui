@@ -231,14 +231,33 @@ func splitAlternates(s string) (string, bool) {
 	return "", false
 }
 
+// enAdjectives are common adjectives/adverbs that end in -en/-ern and would
+// otherwise be classified as infinitives ("ich selt", "comparative" skipped).
+var enAdjectives = map[string]struct{}{
+	"albern":    {},
+	"eben":      {},
+	"eigen":     {},
+	"golden":    {},
+	"modern":    {},
+	"nüchtern":  {},
+	"offen":     {},
+	"selten":    {},
+	"trocken":   {},
+	"zufrieden": {},
+}
+
 func isInfinitive(s string) bool {
-	if strings.HasSuffix(s, "en") || strings.HasSuffix(s, "ern") || strings.HasSuffix(s, "eln") {
+	lower := strings.ToLower(s)
+	if _, ok := enAdjectives[lower]; ok {
+		return false
+	}
+	if strings.HasSuffix(lower, "en") || strings.HasSuffix(lower, "ern") || strings.HasSuffix(lower, "eln") {
 		return true
 	}
 	// "sein" (to be) and "tun" (to do) are the only German infinitives that do
 	// not end in -en/-n. Without this they fall through to the adjective branch
 	// and get wrong grammar hints (e.g. "comparative: sein+er").
-	return s == "sein" || s == "tun"
+	return lower == "sein" || lower == "tun"
 }
 
 func guessStem(verb string) string {

@@ -1,31 +1,27 @@
 # Seeded Content Expansion Coupled to Hard-coded E2E Due-count
 
 Status: active
-Scope: internal/content (embedded TSV/Go decks), e2e_tests, internal/tui dashboard/review
-Related: internal/storage/sqlite/sqlite.go `DueCards(ctx, now, limit)`, `internal/tui/loaders.go` `loadDueCards`, e2e_tests assertions `Due cards:   52` / `51 cards due`
+Scope: StarterDeck auto-seed, e2e_tests, dashboard/review due counts
+Related: `internal/content/starter.go`, `cmd/deutsch-tui/main.go`, `e2e_tests` assertions `Due cards:   52` / `Review 1/52` / `51 cards due`
 
 ## Why It Matters
 
-`Store.DueCards(ctx, time.Time, limit)` ignores deck identity (only `now` and
-`limit` are parameters). On a fresh database every seeded card is "due", so the
-dashboard `Due cards:   %d` line and the Review status `%d cards due in <deck>`
-reflect the TOTAL seeded card count. The core E2E suite hard-codes this number
-(`Due cards:   52`, `51 cards due`) and will fail if the seeded total changes.
+On an empty database the app auto-seeds only `StarterDeck()`. `DueCards` then
+returns every due card in that collection, so the dashboard `Due cards:   %d`
+line and Review `Review 1/%d` / `%d cards due` reflect the **starter** total
+(currently 52). The core E2E suite hard-codes that number.
+
+`StandardDecks()` TSV/Go decks are **not** auto-seeded. Expanding those files
+does not change `Due cards: 52` on a fresh DB. Tests that press `S` to seed
+standard content already wait for deck names, not the starter count.
 
 ## Required Behavior
 
-When adding or removing seeded decks/notes, either:
-- update every hard-coded due-count assertion in `e2e_tests/` to the new total
-  (dashboard shows the new total; the review status shows total−1 after one
-  card is revealed), confirm with `./scripts/verify.sh`, and keep the numbers
-  in sync; or
-- make the assertions count-agnostic (wait for "cards due" substring rather than
-  an exact number) so content churn stops breaking the suite.
-
-Do NOT silently add seeded content expecting the suite to stay green — it will
-not, and the failure surfaces as a count mismatch deep in the E2E run.
+- Changing `StarterDeck()` size: update every hard-coded `52` / `51` / `Review 1/52` assertion, or make those assertions count-agnostic (parse the number and assert it decreases after a grade).
+- Expanding Standard Content (embedded TSV, extra Go decks): do **not** bump the starter due-count assertions.
+- Do not silently grow `StarterDeck()` expecting the suite to stay green.
 
 ## Revisit When
 
-`DueCards` gains a deck filter parameter, or the E2E assertions are made
-count-agnostic, removing the coupling.
+`DueCards` gains a deck filter, the E2E assertions become count-agnostic, or
+`StarterDeck()` is expanded.

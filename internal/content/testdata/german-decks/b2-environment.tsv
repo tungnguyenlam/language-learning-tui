@@ -1,7 +1,7 @@
 #deck:Environment & Climate
 env-1	der Umweltschutz	environmental protection	Umweltschutz ist eine globale Aufgabe.	environment B2
 env-2	der Klimawandel	climate change	Der Klimawandel betrifft uns alle.	climate B2
-env-3	die Erneuerbare Energien	renewable energies	Wir müssen mehr in erneuerbare Energien investieren.	energy environment B2
+env-3	erneuerbare Energien	renewable energies	Wir müssen mehr in erneuerbare Energien investieren.	energy environment B2
 env-4	die Nachhaltigkeit	sustainability	Nachhaltigkeit spielt in der modernen Wirtschaft eine große Rolle.	sustainability B2
 env-5	der Treibhauseffekt	greenhouse effect	CO2 trägt maßgeblich zum Treibhauseffekt bei.	climate science B2
 env-6	die Artenvielfalt	biodiversity	Der Schutz der Artenvielfalt ist extrem wichtig.	nature B2
@@ -14,3 +14,18 @@ env-12	der Atommüll	nuclear waste	Die Entsorgung von Atommüll ist ein ungelös
 env-13	die Wiederverwertung	recycling	Papier eignet sich hervorragend zur Wiederverwertung.	environment B2
 env-14	der Naturschutz	nature conservation	Dieses Gebiet steht unter Naturschutz.	nature B2
 env-15	die globale Erwärmung	global warming	Die globale Erwärmung führt zum Schmelzen der Pole.	climate B2
+env-16	das Greenwashing	greenwashing	Viele Konzerne betreiben Greenwashing statt echter Reformen.	environment media B2
+env-17	die Klimaneutralität	climate neutrality	Das Ziel ist Klimaneutralität bis 2045.	climate policy B2
+env-18	die Wärmepumpe	heat pump	Immer mehr Häuser werden mit einer Wärmepumpe geheizt.	energy housing B2
+env-19	das Lastenrad	cargo bike	Mit dem Lastenrad holen sie den Wocheneinkauf.	mobility environment B2
+env-20	der Klimastreik	climate strike	Jugendliche rufen zum Klimastreik auf.	climate society B2
+env-21	die Klimaklage	climate lawsuit	Die Klimaklage gegen den Staat hatte Erfolg.	climate law C1
+env-22	das Pariser Abkommen	Paris Agreement	Das Pariser Abkommen setzt das 1,5-Grad-Ziel.	climate politics C1
+env-23	die Verkehrswende	transport transition	Ohne Verkehrswende bleiben die Städte im Stau.	mobility climate B2
+env-24	die Dämmung	insulation	Gute Dämmung senkt die Heizkosten.	housing energy B2
+env-25	der Strommix	electricity mix	Der deutsche Strommix enthält noch Kohle.	energy B2
+env-26	die Klimaanpassung	climate adaptation	Städte brauchen mehr Klimaanpassung gegen Hitze.	climate policy C1
+env-27	der Kipppunkt	tipping point	Forscher warnen vor einem Kipppunkt im Klimasystem.	climate science C1
+env-28	die Wärmewende	heating transition	Die Wärmewende betrifft jedes Wohnhaus.	energy housing B2
+env-29	das 1,5-Grad-Ziel	1.5 degree target	Das 1,5-Grad-Ziel gilt als Leitplanke der Klimapolitik.	climate politics C1
+env-30	umweltbewusst	environmentally aware	Sie leben sehr umweltbewusst.	environment B2

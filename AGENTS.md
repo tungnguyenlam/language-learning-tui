@@ -83,7 +83,7 @@ tui-tester stop
 - When adding scrollbar columns to custom render views, pad content with `layout.Width - 2` so the scrollbar stays inside panel bounds on first render.
 - **E2E Settings Tests:** The Settings view requires scrolling to reach Daily Goal on smaller terminals. Use `columns=110, lines=40+` and navigate with 'j' keys to reach the Daily Goal row before testing +/- adjustments.
 - **E2E Decks View Search:** After searching in Decks view, press `<Esc>` to clear the filter before starting a new search. Search state persists across navigation.
-- **E2E Review Empty State:** The starter deck has 52 cards due by default. Tests expecting "No cards due" must grade through all cards first or use a fresh database without seeded content.
+- **E2E Review Empty State:** The starter deck has 52 cards due by default. Tests expecting "No cards due" must grade through all cards first or use a fresh database without seeded content. Expanding Standard Content (Import `S`) does not change this starter count.
 - **TSV Import Format:** When creating TSV files for E2E tests, use 6-column format: `id\tfront\tback\textra\ttags\tdeck`. The 6th column sets the deck name.
 - **Local Dictionary Data Constraint:** The directory `/local_dict_files/` contains raw zip files of the dict.cc German-English dictionary dataset. This dataset is restricted by license terms and MUST NOT be committed, published, or pushed to any repository. It is gitignored.
 

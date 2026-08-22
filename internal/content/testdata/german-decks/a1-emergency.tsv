@@ -5,19 +5,44 @@ a1-emg-help	Hilfe!	Help!	Emergency call	emergency
 a1-emg-police	Die Polizei rufen	Call the police	Emergency number 110	emergency
 a1-emg-fire	Die Feuerwehr rufen	Call the fire department	Emergency number 112	emergency
 a1-emg-ambulance	Den Krankenwagen rufen	Call an ambulance	Emergency number 112	emergency
-a1-emg-emergency	Notfall	Emergency	Critical situation	emergency
-a1-emg-danger	Gefahr	Danger	Warning word	emergency
+a1-emg-emergency	der Notfall	emergency	Critical situation	emergency
+a1-emg-danger	die Gefahr	danger	Warning word	emergency
 a1-emg-quick	Schnell!	Quick! / Hurry!	Urgent call	emergency
 a1-emg-here	Hier	Here	Location reference	emergency
 a1-emg-there	Dort	There	Location reference	emergency
-a1-emg-accident	Unfall	Accident	Road incident	emergency
-a1-emg-injured	Verletzt	Injured	Health emergency	emergency
-a1-emg-sick	Krank	Sick	Health issue	emergency
-a1-emg-doctor	Arzt	Doctor	Medical help	emergency
-a1-emg-hospital	Krankenhaus	Hospital	Medical facility	emergency
-a1-emg-pharmacy	Apotheke	Pharmacy	Medicine store	emergency
-a1-emg-lost	Verloren	Lost	Navigation issue	emergency
+a1-emg-accident	der Unfall	accident	Road incident	emergency
+a1-emg-injured	verletzt	injured	Health emergency	emergency
+a1-emg-sick	krank	sick	Health issue	emergency
+a1-emg-doctor	der Arzt	doctor	Medical help	emergency
+a1-emg-hospital	das Krankenhaus	hospital	Medical facility	emergency
+a1-emg-pharmacy	die Apotheke	pharmacy	Medicine store	emergency
+a1-emg-lost	verloren	lost	Navigation issue	emergency
 a1-emg-here-english	Ich spreche Englisch	I speak English	Language help	emergency
 a1-emg-need-help	Ich brauche Hilfe	I need help	Request assistance	emergency
 a1-emg-call-doctor	Bitte rufen Sie einen Arzt	Please call a doctor	Medical request	emergency
 a1-emg-where-hospital	Wo ist das Krankenhaus?	Where is the hospital?	Navigation	emergency
+a1-emg-notruf	der Notruf	emergency call	Dial 112 in the EU	emergency
+a1-emg-first-aid	die Erste Hilfe	first aid	Basic emergency care	emergency
+a1-emg-unconscious	bewusstlos	unconscious	Serious medical state	emergency
+a1-emg-fire-exclaim	Es brennt!	It's on fire!	Fire alarm	emergency
+a1-emg-pain	Ich habe Schmerzen	I am in pain	Medical complaint	emergency
+a1-emg-emergency-doc	der Notarzt	emergency doctor	Doctor who comes to the scene	emergency
+a1-emg-bleeding	die Blutung	bleeding	Injury	emergency
+a1-emg-plaster	das Pflaster	adhesive bandage / plaster	Small wound	emergency
+a1-emg-bandage	der Verband	bandage / dressing	First aid	emergency
+a1-emg-allergic	Ich bin allergisch gegen	I am allergic to	Say the substance after gegen	emergency
+a1-emg-where-pharmacy	Wo ist die Apotheke?	Where is the pharmacy?	Navigation	emergency
+a1-emg-call-ambulance	Rufen Sie einen Krankenwagen!	Call an ambulance!	Direct request	emergency
+a1-emg-lost-way	Ich habe mich verlaufen	I got lost	Navigation	emergency
+a1-emg-extinguisher	der Feuerlöscher	fire extinguisher	Fire safety	emergency
+a1-emg-warning	die Warnung	warning	Alert	emergency
+a1-emg-poison	das Gift	poison	Dangerous substance	emergency
+a1-emg-kit	der Erste-Hilfe-Kasten	first-aid kit	In cars and workplaces	emergency
+a1-emg-breathe	Ich kann nicht atmen	I cannot breathe	Urgent medical phrase	emergency
+a1-emg-stop	Halt!	Stop!	Urgent command	emergency
+a1-emg-caution	Achtung!	Watch out! / Attention!	Warning	emergency
+a1-emg-police-num	die Polizei	the police	Emergency number 110 in Germany	emergency
+a1-emg-fire-dept	die Feuerwehr	the fire department	Emergency number 112	emergency
+a1-emg-ambulance-noun	der Krankenwagen	ambulance	Medical transport	emergency
+a1-emg-hurt	Es tut weh	It hurts	Pain phrase	emergency
+a1-emg-where-toilet	Wo ist die Toilette?	Where is the toilet?	Urgent everyday need	emergency

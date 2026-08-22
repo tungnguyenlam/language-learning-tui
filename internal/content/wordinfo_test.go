@@ -50,6 +50,13 @@ func TestAnalyzeVerbsAndAdjectives(t *testing.T) {
 		{"groß", KindAdjective},
 		{"schnell", KindAdjective},
 		{"alt", KindAdjective},
+		{"selten", KindAdjective},
+		{"trocken", KindAdjective},
+		{"offen", KindAdjective},
+		{"zufrieden", KindAdjective},
+		{"golden", KindAdjective},
+		{"modern", KindAdjective},
+		{"nüchtern", KindAdjective},
 	}
 	for _, c := range cases {
 		got := Analyze(c.front)
@@ -181,6 +188,26 @@ func TestEnrichAdjectiveAddsComparison(t *testing.T) {
 	}
 	if !strings.Contains(joined, "am schnellsten") {
 		t.Errorf("expected superlative in forms, got %v", info.Forms)
+	}
+}
+
+// TestEnrichEnAdjectivesNotFakeConjugations guards the regression where
+// adjectives ending in -en/-ern were treated as infinitives and received
+// nonsense present-tense forms (e.g. selten → "ich selt").
+func TestEnrichEnAdjectivesNotFakeConjugations(t *testing.T) {
+	for _, adj := range []string{"selten", "trocken", "offen", "zufrieden", "nüchtern"} {
+		info := Enrich(Analyze(adj))
+		if info.Kind != KindAdjective {
+			t.Errorf("%q kind = %v, want ADJ", adj, info.Kind)
+			continue
+		}
+		joined := strings.Join(info.Forms, " ")
+		if strings.Contains(joined, "ich ") {
+			t.Errorf("%q: got verb conjugation %v, want adjective comparison", adj, info.Forms)
+		}
+		if !strings.Contains(joined, "comparative:") {
+			t.Errorf("%q: expected comparative in forms, got %v", adj, info.Forms)
+		}
 	}
 }
 
