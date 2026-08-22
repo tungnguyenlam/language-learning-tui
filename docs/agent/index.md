@@ -34,11 +34,14 @@ Last updated: 2026-08-22
 - `docs/agent/notices/2026-08-12-anki-cloze-ordinal-grouping.md`: repeated Anki cloze ordinals form one card and must retain numeric order and grouped answers.
 - `docs/agent/notices/2026-08-15-progress-backup-excludes-dictionary.md`: progress backups omit dict.cc tables; TUI must type-assert `BackupRepository`.
 - `docs/agent/notices/2026-08-22-cram-session-key-trap.md`: active Cram must consume unhandled keys so global nav cannot abandon the session.
+- `docs/agent/notices/2026-08-22-seeded-content-e2e-due-count.md`: seeded-content expansion is coupled to hard-coded `Due cards: 52` / `51 cards due` E2E assertions because `DueCards` loads all decks.
 
 ## Verification Status
 
 - ✅ `./scripts/verify.sh` passed on 2026-08-22 after the improvement pass (Go tests, vet, dict.cc
   import, smoke test, binary build, core E2E suite: 35 passed in 38.15s)
+- ✅ `./scripts/verify.sh` passed again on 2026-08-22 for the irregular-verb grammar fix + grading/grammar
+  test additions (core E2E suite: 35 passed in 37.22s)
 - ✅ All Go test suites passing (as of 2026-08-05)
 - ✅ App launches without errors (smoke test passing)
 - ✅ All views render correctly (Dashboard, Review, Import, AI, Settings, Browser, Cram, SessionSummary, Dictionary)
