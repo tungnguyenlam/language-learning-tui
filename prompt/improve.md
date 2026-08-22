@@ -11,6 +11,7 @@ Some directions worth exploring (pick any, combine them, or find your own):
 
 - Refine the UI — layouts, spacing, colors, visual hierarchy
 - Fix bugs — broken state, wrong keybindings, edge cases
+- Optimize performance — render hot paths (`View()` runs per message), database queries and indexes, startup latency, avoidable allocations; keep behavior byte-identical unless the change is the fix
 - Add learning content — vocabulary decks, grammar exercises
 - Improve animations and feedback — transitions, progress indicators
 - Enhance the AI view — prompts, responses, UX flow

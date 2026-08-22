@@ -180,10 +180,18 @@ func (s *Store) GetDeck(ctx context.Context, id string) (core.Deck, error) {
 	return deck, nil
 }
 
+// localDayStartUTC returns the start of the local calendar day containing now,
+// expressed in UTC for comparison against UTC-stored reviewed_at values.
+// Streaks and ReviewsPerDay group by local date, so "today" must too.
+func localDayStartUTC(now time.Time) time.Time {
+	localNow := now.In(time.Local)
+	return time.Date(localNow.Year(), localNow.Month(), localNow.Day(), 0, 0, 0, 0, time.Local).UTC()
+}
+
 func (s *Store) Decks(ctx context.Context) ([]core.Deck, error) {
 	now := time.Now().UTC()
-	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
-	tomorrowStart := todayStart.AddDate(0, 0, 1)
+	todayStart := localDayStartUTC(now)
+	tomorrowStart := localDayStartUTC(now.AddDate(0, 0, 1))
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT d.id, d.name, d.description, d.tags, d.new_cards_per_day, d.review_limit_per_day,
 		       COUNT(c.id) as total_cards,
@@ -850,14 +858,14 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 		return stats, err
 	}
 
-	todayStart := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.UTC)
+	todayStart := localDayStartUTC(now)
 	todayQuery := `
 		SELECT COUNT(*)
 		FROM reviews r
 	`
 	var todayArgs []interface{}
 	todayQuery += ` WHERE r.reviewed_at >= ? AND r.reviewed_at < ?`
-	todayArgs = append(todayArgs, todayStart, todayStart.AddDate(0, 0, 1))
+	todayArgs = append(todayArgs, todayStart, localDayStartUTC(now.AddDate(0, 0, 1)))
 	if deckID != "" {
 		todayQuery += ` AND EXISTS (SELECT 1 FROM cards c WHERE c.id = r.card_id AND c.deck_id = ?)`
 		todayArgs = append(todayArgs, deckID)
@@ -986,15 +994,18 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 }
 
 func (s *Store) deckCurrentStreak(ctx context.Context, deckID string, now time.Time) (int, error) {
+	// Group by local date (not UTC substr) so the LIMIT covers 365 local days;
+	// a single local day can span two UTC dates and would otherwise consume two
+	// group slots, undercounting long streaks. Matches ReviewsPerDay semantics.
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT MAX(reviewed_at) AS max_reviewed_at
-		FROM reviews r
-		INNER JOIN cards c ON c.id = r.card_id
-		WHERE c.deck_id = ? AND reviewed_at IS NOT NULL
-		GROUP BY substr(reviewed_at, 1, 10)
-		ORDER BY max_reviewed_at DESC
-		LIMIT 365
-	`, deckID)
+	SELECT MAX(reviewed_at) AS max_reviewed_at
+	FROM reviews r
+	INNER JOIN cards c ON c.id = r.card_id
+	WHERE c.deck_id = ? AND reviewed_at IS NOT NULL
+	GROUP BY date(substr(reviewed_at, 1, 19), 'localtime')
+	ORDER BY max_reviewed_at DESC
+	LIMIT 365
+`, deckID)
 	if err != nil {
 		return 0, err
 	}
@@ -1097,13 +1108,13 @@ func parseSQLiteTime(s string) time.Time {
 
 func (s *Store) currentStreak(ctx context.Context, now time.Time) (int, error) {
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT MAX(reviewed_at) AS max_reviewed_at
-		FROM reviews
-		WHERE reviewed_at IS NOT NULL
-		GROUP BY substr(reviewed_at, 1, 10)
-		ORDER BY max_reviewed_at DESC
-		LIMIT 365
-	`)
+	SELECT MAX(reviewed_at) AS max_reviewed_at
+	FROM reviews
+	WHERE reviewed_at IS NOT NULL
+	GROUP BY date(substr(reviewed_at, 1, 19), 'localtime')
+	ORDER BY max_reviewed_at DESC
+	LIMIT 365
+`)
 	if err != nil {
 		return 0, err
 	}

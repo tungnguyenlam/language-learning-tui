@@ -532,11 +532,15 @@ func renderTypingDiff(typed, expected string) string {
 	wrongStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("196")).Bold(true).Strikethrough(true)
 	missingStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("240")).Bold(true)
 
-	var diff []string
+	// The backtrace walks the matrix backwards; fill from the end so each
+	// styled character is written once instead of re-copying the slice on
+	// every prepend (this runs per keystroke in the typing trainers).
+	diff := make([]string, 0, tLen+eLen)
 	i, j := tLen, eLen
 	for i > 0 || j > 0 {
+		var styled string
 		if i > 0 && j > 0 && tRunes[i-1] == eRunes[j-1] {
-			diff = append([]string{correctStyle.Render(string(tRunes[i-1]))}, diff...)
+			styled = correctStyle.Render(string(tRunes[i-1]))
 			i--
 			j--
 		} else if j > 0 && (i == 0 || m[i][j-1] >= m[i-1][j]) {
@@ -544,13 +548,18 @@ func renderTypingDiff(typed, expected string) string {
 			if char == " " {
 				char = "_"
 			}
-			diff = append([]string{missingStyle.Render(char)}, diff...)
+			styled = missingStyle.Render(char)
 			j--
-		} else if i > 0 && (j == 0 || m[i][j-1] < m[i-1][j]) {
-			diff = append([]string{wrongStyle.Render(string(tRunes[i-1]))}, diff...)
+		} else {
+			styled = wrongStyle.Render(string(tRunes[i-1]))
 			i--
 		}
+		diff = append(diff, styled)
 	}
 
-	return strings.Join(diff, "")
+	var out strings.Builder
+	for k := len(diff) - 1; k >= 0; k-- {
+		out.WriteString(diff[k])
+	}
+	return out.String()
 }

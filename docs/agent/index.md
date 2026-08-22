@@ -37,9 +37,14 @@ Last updated: 2026-08-22
 - `docs/agent/notices/2026-08-22-seeded-content-e2e-due-count.md`: E2E due-count assertions are count-agnostic via `e2e_tests/e2e_helpers.py`; only `StarterDeck()` auto-seed changes fresh-DB counts.
 - `docs/agent/notices/2026-08-22-settings-row-indices.md`: Settings Daily Goal is cursor index 4; E2E `j`-counts must match `screen_settings.go` constants.
 - `docs/agent/notices/2026-08-22-sqlite-timestamp-format.md`: SQLite `date()` cannot parse Go-formatted timestamps; use `substr(x, 1, 19)` before date functions.
+- `docs/agent/notices/2026-08-22-local-day-statistics.md`: all "today"/streak statistics must use local calendar days (`localDayStartUTC`, SQL `date(..., 'localtime')`), never UTC-midnight anchors.
 
 ## Verification Status
 
+- ✅ `./scripts/verify.sh` passed on 2026-08-22 after the local-day statistics
+  fix (`ReviewsToday`/streaks) and dashboard/typing-diff render optimizations
+  (Go tests, vet, dict.cc import, smoke test, binary build, core E2E suite: 35
+  passed in 37.29s)
 - ✅ `./scripts/verify.sh` passed on 2026-08-22 after the E2E decoupling, `model.go`
   split, `ReviewsPerDay` date-parsing fix, and dashboard empty-state placeholder
   (Go tests, vet, dict.cc import, smoke test, binary build, core E2E suite: 35

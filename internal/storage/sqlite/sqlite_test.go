@@ -524,6 +524,111 @@ func TestStatisticsDailyProgressAndStreak(t *testing.T) {
 	}
 }
 
+// ReviewsToday must follow the local calendar day, not the UTC day: streaks
+// and ReviewsPerDay group by local date, so a UTC anchor resets the daily-goal
+// counter hours early (east of UTC) or late (west of UTC).
+func TestReviewsTodayAnchorsToLocalMidnight(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	deck := core.Deck{ID: "deck-local-today", Name: "Local Today"}
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+	note := core.Note{ID: "n-local-today", DeckID: deck.ID, Type: "flashcard", Front: "F", Back: "B"}
+	note.Cards = content.CardsForNote(note)
+	if err := store.UpsertNote(ctx, note); err != nil {
+		t.Fatalf("upsert note: %v", err)
+	}
+	cardID := note.Cards[0].ID
+
+	nowLocal := time.Now()
+	earlyToday := time.Date(nowLocal.Year(), nowLocal.Month(), nowLocal.Day(), 0, 30, 0, 0, time.Local)
+	yesterday := nowLocal.AddDate(0, 0, -1)
+	lateYesterday := time.Date(yesterday.Year(), yesterday.Month(), yesterday.Day(), 23, 30, 0, 0, time.Local)
+
+	record := func(when time.Time) {
+		t.Helper()
+		if err := store.RecordReview(ctx, core.ReviewResult{
+			CardID:   cardID,
+			Grade:    core.GradeGood,
+			Reviewed: when,
+			Next:     core.ReviewState{CardID: cardID, Due: when.Add(24 * time.Hour), Interval: 24 * time.Hour, Reviews: 1, Ease: 2.5},
+		}); err != nil {
+			t.Fatalf("record review: %v", err)
+		}
+	}
+	record(earlyToday)
+	record(lateYesterday)
+
+	stats, err := store.Statistics(ctx)
+	if err != nil {
+		t.Fatalf("statistics: %v", err)
+	}
+	if stats.ReviewsToday != 1 {
+		t.Fatalf("reviews today = %d, want 1 (only the local-today review)", stats.ReviewsToday)
+	}
+
+	decks, err := store.Decks(ctx)
+	if err != nil {
+		t.Fatalf("decks: %v", err)
+	}
+	if len(decks) != 1 {
+		t.Fatalf("decks = %d, want 1", len(decks))
+	}
+	if decks[0].ReviewsToday != 1 {
+		t.Fatalf("deck reviews today = %d, want 1", decks[0].ReviewsToday)
+	}
+}
+
+// Streaks count consecutive local calendar days. Reviews just after local
+// midnight fall on the previous UTC date in positive-offset zones, so grouping
+// by the UTC date substring must not split or drop days.
+func TestCurrentStreakCountsLocalDays(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	deck := core.Deck{ID: "deck-local-streak", Name: "Local Streak"}
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+	note := core.Note{ID: "n-local-streak", DeckID: deck.ID, Type: "flashcard", Front: "F", Back: "B"}
+	note.Cards = content.CardsForNote(note)
+	if err := store.UpsertNote(ctx, note); err != nil {
+		t.Fatalf("upsert note: %v", err)
+	}
+	cardID := note.Cards[0].ID
+
+	nowLocal := time.Now()
+	for d := 4; d >= 0; d-- {
+		when := time.Date(nowLocal.Year(), nowLocal.Month(), nowLocal.Day(), 0, 30, 0, 0, time.Local).AddDate(0, 0, -d)
+		if err := store.RecordReview(ctx, core.ReviewResult{
+			CardID:   cardID,
+			Grade:    core.GradeGood,
+			Reviewed: when,
+			Next:     core.ReviewState{CardID: cardID, Due: when.Add(24 * time.Hour), Interval: 24 * time.Hour, Reviews: 1, Ease: 2.5},
+		}); err != nil {
+			t.Fatalf("record review: %v", err)
+		}
+	}
+
+	stats, err := store.Statistics(ctx)
+	if err != nil {
+		t.Fatalf("statistics: %v", err)
+	}
+	if stats.CurrentStreak != 5 {
+		t.Fatalf("current streak = %d, want 5 consecutive local days", stats.CurrentStreak)
+	}
+}
+
 func TestDailyGoalPersistsInStatistics(t *testing.T) {
 	ctx := context.Background()
 	store, err := OpenMemory()

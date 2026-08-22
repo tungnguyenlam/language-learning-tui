@@ -1,3 +1,35 @@
+# 2026-08-22 (Local-Day Stats Fix + Render Hot-Path Performance)
+
+Bug fixes and performance pass per the new bug-fix/performance focus in
+`AGENTS.md`.
+
+- `ReviewsToday` (Statistics) and per-deck `reviews_today` (Decks) anchored
+  "today" to UTC midnight, so the Dashboard daily-goal counter reset hours
+  early/late outside UTC and disagreed with streaks and the activity
+  sparkline. Both now use `localDayStartUTC` (local calendar midnight,
+  DST-correct tomorrow boundary).
+- Streak queries (`currentStreak`, `deckCurrentStreak`) now group by
+  `date(substr(reviewed_at, 1, 19), 'localtime')` instead of the UTC date
+  substring, matching `ReviewsPerDay` semantics; the `LIMIT 365` now covers
+  365 local days.
+- Dashboard render replaced 14 full-buffer `strings.Count(db.String(), "\n")`
+  scans per frame with an incremental line counter (O(n²) → O(n); output
+  byte-identical).
+- `renderTypingDiff` backtrace now appends and writes in reverse instead of
+  prepending into the slice on every step (O(n²) → O(n) per keystroke).
+- Regression tests: `TestReviewsTodayAnchorsToLocalMidnight`,
+  `TestCurrentStreakCountsLocalDays` (both pass under TZ=Asia/Bangkok and
+  TZ=America/New_York).
+- `prompt/improve.md` gained a performance-optimization direction;
+  `AGENTS.md` Current State now declares the bug-fix/performance focus.
+
+### Verification
+
+- `go test ./internal/storage/...` and `./internal/tui/` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import
+  (834,512 entries), smoke test, binary build, core E2E suite (35 passed in
+  37.29s).
+
 # 2026-08-22 (Grammar Hints: Numbers, Adverbs, Irregular Comparatives)
 
 Stopped numbers and time-adverbs from getting fake verb/adjective grammar
