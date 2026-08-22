@@ -9,6 +9,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../t
 
 from tui_tester import TUIAgent
 
+from e2e_helpers import read_due_count
+
 def start_agent(tmpdir, columns=100, lines=30):
     app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
     agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir} -test-mode', columns=columns, lines=lines)
@@ -80,21 +82,21 @@ def test_review_grade_updates_dashboard_count():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
-            agent.assert_text("Due cards:   52")
-            
+            due = read_due_count(agent)
+
             agent.act('3')
-            agent.wait_for_text("Review 1/52")
-            
+            agent.wait_for_text(f"Review 1/{due}")
+
             # Reveal and grade Good
             agent.act('<Space>')
             agent.wait_for_text("Grade: a Again")
             agent.act('g')
-            agent.wait_for_text("51 cards due")
-            
+            agent.wait_for_text(f"{due - 1} cards due")
+
             # Go back to Dashboard
             agent.act('1')
             agent.wait_for_text("DASHBOARD")
-            agent.assert_text("Due cards:   51")
+            agent.assert_text(f"Due cards:   {due - 1}")
             
         finally:
             agent.close()

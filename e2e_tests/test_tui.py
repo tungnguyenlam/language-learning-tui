@@ -10,6 +10,8 @@ sys.path.insert(
 
 from tui_tester import TUIAgent
 
+from e2e_helpers import read_due_count
+
 
 def start_agent(tmpdir, columns=100, lines=50):
     app_cmd = os.getenv("DEUTSCH_TUI_BIN", "go run ./cmd/deutsch-tui")
@@ -30,14 +32,14 @@ def test_dashboard_and_review_flow():
             # Verify dashboard content
             agent.assert_text("DASHBOARD")
             agent.assert_text("Deck: All Decks")
-            agent.assert_text("Due cards:   52")
+            due = read_due_count(agent)
 
             # Switch to Review view
             agent.act("3")
             agent.wait_until_stable()
 
             # Verify review screen for the first card
-            agent.assert_text("Review 1/52")
+            agent.assert_text(f"Review 1/{due}")
             agent.assert_text("blau")
             agent.assert_text("Press space or enter to reveal.")
 
@@ -53,10 +55,10 @@ def test_dashboard_and_review_flow():
             agent.wait_until_stable()
 
             # Verify it advanced to the next card (the MCQ for the same note)
-            # Note: 1/5 because one card is now scheduled in the future
-            agent.assert_text("Review 1/51")
+            # Note: one card is now scheduled in the future
+            agent.assert_text(f"Review 1/{due - 1}")
             agent.assert_text("gelb")
-            agent.assert_text("51 cards due")
+            agent.assert_text(f"{due - 1} cards due")
 
             # Try returning to Dashboard
             agent.act("1")
@@ -73,6 +75,7 @@ def test_ai_draft_approval_persists_across_restart():
         agent = start_agent(tmpdir)
 
         try:
+            due = read_due_count(agent)
             agent.act("7")
             agent.wait_for_text("Settings")
             agent.act("<Enter>")
@@ -93,14 +96,15 @@ def test_ai_draft_approval_persists_across_restart():
 
             agent.act("1")
             agent.wait_until_stable()
-            agent.assert_text("Due cards:   54")
+            # Two approved drafts join the due queue.
+            agent.assert_text(f"Due cards:   {due + 2}")
         finally:
             agent.close()
 
         restarted = start_agent(tmpdir)
         try:
             restarted.assert_text("DASHBOARD")
-            restarted.assert_text("Due cards:   54")
+            restarted.assert_text(f"Due cards:   {due + 2}")
         finally:
             restarted.close()
 
@@ -245,10 +249,11 @@ def test_all_core_views_render_with_keyboard_navigation():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
+            due = read_due_count(agent)
             expected_views = [
                 ("1", "DASHBOARD"),
                 ("2", "DECK LIST"),
-                ("3", "Review 1/52"),
+                ("3", f"Review 1/{due}"),
                 ("4", "Statistics:"),
                 ("5", "Import / Export"),
                 ("6", "Topic:"),
@@ -269,11 +274,12 @@ def test_compact_layout_renders_all_core_views():
         try:
             agent.assert_text("DEUTSCH-TUI")
             agent.assert_text("compact")
+            due = read_due_count(agent)
 
             for key, text in [
                 ("1", "DASHBOARD"),
                 ("2", "DECK LIST"),
-                ("3", "Review 1/52"),
+                ("3", f"Review 1/{due}"),
                 ("4", "Statistics:"),
                 ("5", "Import / Export"),
                 ("6", "Topic:"),
@@ -291,16 +297,17 @@ def test_space_reveal_and_again_grade_keyboard_flow():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
+            due = read_due_count(agent)
             agent.act("3")
-            agent.wait_for_text("Review 1/52")
+            agent.wait_for_text(f"Review 1/{due}")
 
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.assert_text("blue")
 
             agent.act("a")
-            agent.wait_for_text("Review 1/51")
-            agent.assert_text("51 cards due")
+            agent.wait_for_text(f"Review 1/{due - 1}")
+            agent.assert_text(f"{due - 1} cards due")
             agent.assert_text("reveal")
         finally:
             agent.close()
@@ -334,22 +341,23 @@ def test_review_grade_persists_to_sqlite_across_restart():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
+            due = read_due_count(agent)
             agent.act("3")
-            agent.wait_for_text("Review 1/52")
+            agent.wait_for_text(f"Review 1/{due}")
             agent.act("<Enter>")
             agent.wait_for_text("Grade: a Again")
             agent.act("e")
-            agent.wait_for_text("51 cards due")
+            agent.wait_for_text(f"{due - 1} cards due")
             agent.act("1")
-            agent.wait_for_text("Due cards:   51")
+            agent.wait_for_text(f"Due cards:   {due - 1}")
         finally:
             agent.close()
 
         restarted = start_agent(tmpdir)
         try:
-            restarted.assert_text("Due cards:   51")
+            restarted.assert_text(f"Due cards:   {due - 1}")
             restarted.act("3")
-            restarted.wait_for_text("Review 1/51")
+            restarted.wait_for_text(f"Review 1/{due - 1}")
         finally:
             restarted.close()
 
@@ -358,9 +366,10 @@ def test_mouse_tab_navigation_and_grade_button():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
+            due = read_due_count(agent)
             # Medium layout tab row is at terminal row 2 (1-based)
             agent.click(22, 2)
-            agent.wait_for_text("Review 1/52")
+            agent.wait_for_text(f"Review 1/{due}")
             agent.act("<Enter>")
             agent.wait_for_text("Grade: a Again")
 

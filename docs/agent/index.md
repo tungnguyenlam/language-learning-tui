@@ -34,11 +34,16 @@ Last updated: 2026-08-22
 - `docs/agent/notices/2026-08-12-anki-cloze-ordinal-grouping.md`: repeated Anki cloze ordinals form one card and must retain numeric order and grouped answers.
 - `docs/agent/notices/2026-08-15-progress-backup-excludes-dictionary.md`: progress backups omit dict.cc tables; TUI must type-assert `BackupRepository`.
 - `docs/agent/notices/2026-08-22-cram-session-key-trap.md`: active Cram must consume unhandled keys so global nav cannot abandon the session.
-- `docs/agent/notices/2026-08-22-seeded-content-e2e-due-count.md`: only `StarterDeck()` auto-seed changes the hard-coded `Due cards: 52` / `51 cards due` E2E assertions. Expanding Standard Content TSV/Go decks does not.
+- `docs/agent/notices/2026-08-22-seeded-content-e2e-due-count.md`: E2E due-count assertions are count-agnostic via `e2e_tests/e2e_helpers.py`; only `StarterDeck()` auto-seed changes fresh-DB counts.
 - `docs/agent/notices/2026-08-22-settings-row-indices.md`: Settings Daily Goal is cursor index 4; E2E `j`-counts must match `screen_settings.go` constants.
+- `docs/agent/notices/2026-08-22-sqlite-timestamp-format.md`: SQLite `date()` cannot parse Go-formatted timestamps; use `substr(x, 1, 19)` before date functions.
 
 ## Verification Status
 
+- ✅ `./scripts/verify.sh` passed on 2026-08-22 after the E2E decoupling, `model.go`
+  split, `ReviewsPerDay` date-parsing fix, and dashboard empty-state placeholder
+  (Go tests, vet, dict.cc import, smoke test, binary build, core E2E suite: 35
+  passed in 37.56s)
 - ✅ `./scripts/verify.sh` passed on 2026-08-22 after numbers/adverbs grammar
   hints + weather/thin-deck content (Go tests, vet, dict.cc import, smoke
   test, binary build, core E2E suite: 35 passed in 36.66s)

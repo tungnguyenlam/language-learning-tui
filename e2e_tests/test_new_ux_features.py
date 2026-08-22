@@ -7,6 +7,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../t
 
 from tui_tester import TUIAgent
 
+from e2e_helpers import read_due_count
+
 
 def start_agent(tmpdir, columns=110, lines=30):
     app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
@@ -21,9 +23,10 @@ def test_cram_mode_filter_types():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
+            due = read_due_count(agent)
             # First, create a suspended card
             agent.act("3")  # Go to Review
-            agent.wait_for_text("Review 1/52")
+            agent.wait_for_text(f"Review 1/{due}")
             
             # Suspend a card
             agent.act("x")

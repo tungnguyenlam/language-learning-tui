@@ -4,52 +4,60 @@ Last updated: 2026-08-22
 
 ## Current Milestone
 
-The 2026-08-22 grammar-hint pass classifies numbers and adverbs instead of
-faking adjective/verb forms, teaches irregular comparatives, and corrects
-weather plus thin unique Standard Content decks. StarterDeck size is unchanged.
-Verification is fully green.
+The 2026-08-22 E2E decoupling pass makes every starter-count assertion
+count-agnostic, so `StarterDeck()` can grow without touching tests. A
+pre-existing broken Settings daily-goal E2E test was fixed along the way.
 
 ## Exact Next Action
 
 No unfinished executable work remains. Candidate future work:
-- Make E2E due-count assertions count-agnostic so `StarterDeck()` can grow.
-- Extract remaining view-local state off `Model`, or split the large
-  async-message switch in `internal/tui/model.go`.
+
+- Extract remaining view-local state off `Model` (screen files own render +
+  keys only today).
+- Streak queries group by UTC date (`substr(reviewed_at, 1, 10)`); switching
+  to local-date grouping would align them with `ReviewsPerDay`.
 
 ## Completed This Pass
 
-- Grammar hints: cardinal numbers (`sieben`, `dreizehn`, …) and common adverbs
-  (`gestern`, `heute`, `oben`) are no longer treated as infinitives or given
-  fake comparatives (`ich sieb`, `heuteer`).
-- Irregular adjective comparison: `gut → besser`, `hoch → höher`, `alt → älter`,
-  `dunkel → dunkler`, and similar high-frequency forms.
-- Weather TSV: `schneien` is "to snow"; phrase cards are German-front;
-  time-of-day nouns have articles; adjectives/adverbs/verbs are lowercase.
-- Split ambiguous `morgen` = Tomorrow/Morning; added teens 13–19; expanded
-  `a1-essential`, `b1-workplace-office`, and `b2-urban-mobility` to ~40 notes.
-- Weather E2E search now uses `Seasons` so it does not select Time & Weather.
+- E2E due-count decoupling: new `e2e_tests/e2e_helpers.py` with
+  `read_due_count` / `read_cards_found`; 16 test files now compute `due`
+  from the live dashboard instead of hard-coding 52/51/54.
+- Fixed pre-existing broken `test_daily_goal_setting_persists_after_restart`
+  (never navigated to the Daily Goal row before pressing `+`; fails on the
+  pristine tree, not run by the core suite).
+- Resolved notice `2026-08-22-seeded-content-e2e-due-count.md`.
+- Split `internal/tui/model.go` (2062 → 1437 lines): the ~45-case async-message
+  switch moved to `messages.go` (`handleAsyncMsg`), mouse handling to
+  `mouse.go` (`handleMouseMsg`). `Update` is now a small dispatcher.
+- User-facing fix: `ReviewsPerDay` used `date(reviewed_at, 'localtime')`,
+  which SQLite cannot parse for Go-formatted timestamps, so the Dashboard
+  "Recent Activity" sparkline and Statistics per-day chart never showed data.
+  Fixed with `date(substr(reviewed_at, 1, 19), 'localtime')`; regression test
+  `TestReviewsPerDayCountsRecordedReviews` writes through the real
+  `RecordReview` path. See notice `2026-08-22-sqlite-timestamp-format.md`.
+- Dashboard empty state: "Recent Activity" shows "No reviews yet — press 3!"
+  when the last-14-days total is zero (covered by
+  `TestDashboardShowsActivityPlaceholderWithoutReviews`).
 
 ## Top Issues
 
-- `internal/tui/model.go` still contains the large central async-message switch.
 - View-local state still lives on `Model`; screen files own render + keys only.
-- StarterDeck expansion is still coupled to hard-coded E2E due-count assertions.
 
 ## Acceptance Criteria
 
-- Grammar hints for numbers/adverbs do not show conjugations or naive comparatives.
-- Irregular adjectives show the real comparative, not `guter` / `hocher`.
-- `schneien` is the weather verb for snow; `StarterDeck()` due count stays 52.
+- No E2E test hard-codes the starter due count; helpers fail loudly when the
+  dashboard count line is missing.
 - `go test ./...` and `./scripts/verify.sh` stay green.
 
 ## Last Verification
 
-- `go test ./...` passed on 2026-08-22.
-- `./scripts/verify.sh` passed on 2026-08-22: Go tests, vet, offline dict.cc
-  import (834,512 entries), smoke test, binary build, and core E2E suite (35
-  passed in 36.66s). Extra: `test_grammar_hint.py` (2 passed) and
-  `test_weather_deck.py` (1 passed after unique search).
+- `./scripts/verify.sh` passed on 2026-08-22 after the `ReviewsPerDay` fix:
+  Go tests, vet, offline dict.cc import, smoke test, binary build, core E2E
+  suite (35 passed in 37.56s).
+- Live tui-tester check: fresh DB shows the empty-state placeholder; after
+  grading one card the sparkline renders a real bar.
 
 ## Repository State
 
-- Improvement pass is complete and fully verified on this working tree.
+- All session work verified on this working tree; ready to commit.
+

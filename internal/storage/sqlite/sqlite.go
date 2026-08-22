@@ -1117,8 +1117,12 @@ func (s *Store) ReviewsPerDay(ctx context.Context, days int) (map[string]int, er
 	startDate := now.AddDate(0, 0, -days)
 	start := time.Date(startDate.Year(), startDate.Month(), startDate.Day(), 0, 0, 0, 0, time.Local).UTC()
 
+	// reviewed_at is stored in Go's time.Time string format (e.g.
+	// "2026-08-22 14:52:14.558668 +0000 UTC"), which SQLite date() cannot parse
+	// directly. substr(..., 1, 19) yields "YYYY-MM-DD HH:MM:SS", which SQLite
+	// treats as UTC and converts with 'localtime'.
 	rows, err := s.db.QueryContext(ctx, `
-		SELECT date(reviewed_at, 'localtime') AS review_date, COUNT(*)
+		SELECT date(substr(reviewed_at, 1, 19), 'localtime') AS review_date, COUNT(*)
 		FROM reviews
 		WHERE reviewed_at IS NOT NULL AND reviewed_at >= ?
 		GROUP BY review_date

@@ -2278,6 +2278,25 @@ func TestDashboardShowsCardMixForTallLayouts(t *testing.T) {
 	}
 }
 
+func TestDashboardShowsActivityPlaceholderWithoutReviews(t *testing.T) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	model.width = 110
+	model.height = 42
+	model.stats = core.Statistics{DailyGoal: 10}
+
+	view := stripANSI(model.renderDashboard(viewportLayout{Width: 100, Height: 34}))
+	if !strings.Contains(view, "No reviews yet") {
+		t.Fatalf("dashboard missing empty-activity placeholder:\n%s", view)
+	}
+
+	// With reviews in the 14-day window, the sparkline renders instead.
+	model.reviewsPerDay = map[string]int{time.Now().Format("2006-01-02"): 3}
+	view = stripANSI(model.renderDashboard(viewportLayout{Width: 100, Height: 34}))
+	if strings.Contains(view, "No reviews yet") {
+		t.Fatalf("dashboard should render the sparkline once reviews exist:\n%s", view)
+	}
+}
+
 func TestSpeechTextForCardPrefersGermanSide(t *testing.T) {
 	cases := []struct {
 		name string

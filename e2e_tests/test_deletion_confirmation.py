@@ -10,6 +10,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../t
 
 from tui_tester import TUIAgent
 
+from e2e_helpers import read_cards_found
+
 def start_agent(tmpdir, columns=100, lines=50):
     app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
     agent = TUIAgent(f'{app_cmd} -data-dir {tmpdir} -test-mode', columns=columns, lines=lines)
@@ -69,10 +71,8 @@ def test_card_deletion_confirmation():
             agent.wait_for_text("Card Browser")
             agent.assert_text("FC")
             
-            # Count cards
-            screen = agent.observe()
-            match = re.search(r'status: (\d+) cards found', screen)
-            initial_count = int(match.group(1)) if match else 52
+            # Count cards (fails loudly if the status line is missing)
+            initial_count = read_cards_found(agent)
 
             # Press Backspace to trigger deletion confirmation
             agent.act('<Backspace>')

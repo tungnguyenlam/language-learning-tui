@@ -8,6 +8,8 @@ sys.path.insert(
 
 from tui_tester import TUIAgent
 
+from e2e_helpers import read_due_count
+
 
 def start_agent(tmpdir, columns=100, lines=30):
     app_cmd = os.getenv("DEUTSCH_TUI_BIN", "go run ./cmd/deutsch-tui")
@@ -28,10 +30,11 @@ def test_tab_to_browser_loads_cards():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
+            due = read_due_count(agent)
             tab_to(agent, "Card Browser", 7)
             agent.wait_for_text("blau")
             agent.assert_text("[FC] blau")
-            agent.assert_text("52 cards found")
+            agent.assert_text(f"{due} cards found")
         finally:
             agent.close()
 
@@ -40,8 +43,9 @@ def test_tab_to_cram_loads_bookmarked_cards():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
+            due = read_due_count(agent)
             agent.act("3")
-            agent.wait_for_text("Review 1/52")
+            agent.wait_for_text(f"Review 1/{due}")
             agent.act("b")
             agent.wait_for_text("Card bookmarked")
 
@@ -58,12 +62,13 @@ def test_tab_to_statistics_renders_persisted_progress():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
+            due = read_due_count(agent)
             agent.act("3")
-            agent.wait_for_text("Review 1/52")
+            agent.wait_for_text(f"Review 1/{due}")
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.act("g")
-            agent.wait_for_text("51 cards due")
+            agent.wait_for_text(f"{due - 1} cards due")
 
             tab_to(agent, "Statistics", 1)
             agent.assert_text("Total Reviews: 1")

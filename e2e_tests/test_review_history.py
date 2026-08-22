@@ -7,6 +7,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../t
 
 from tui_tester import TUIAgent
 
+from e2e_helpers import read_due_count
+
 
 def start_agent(tmpdir, columns=110, lines=30):
     app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
@@ -21,8 +23,9 @@ def test_review_history_empty_state_toggles_in_review():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
+            due = read_due_count(agent)
             agent.act("3")
-            agent.wait_for_text("Review 1/52")
+            agent.wait_for_text(f"Review 1/{due}")
 
             agent.act("r")
             agent.wait_for_text("Review History: blau")
@@ -47,8 +50,9 @@ def test_browser_history_shows_reviewed_card_attempt():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
+            due = read_due_count(agent)
             agent.act("3")
-            agent.wait_for_text("Review 1/52")
+            agent.wait_for_text(f"Review 1/{due}")
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.act("g")
@@ -70,8 +74,9 @@ def test_review_history_persists_after_restart():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
+            due = read_due_count(agent)
             agent.act("3")
-            agent.wait_for_text("Review 1/52")
+            agent.wait_for_text(f"Review 1/{due}")
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.act("h")

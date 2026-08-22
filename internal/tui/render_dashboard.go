@@ -98,6 +98,14 @@ func (m *Model) renderDashboard(layout viewportLayout) string {
 		sparkWidth = maxInt(10, layout.Width-10)
 	}
 	spark := sparkline(recentData, sparkWidth)
+	totalRecent := 0
+	for _, v := range recentData {
+		totalRecent += v
+	}
+	if totalRecent == 0 {
+		// First-run empty state: a blank sparkline reads as a rendering bug.
+		spark = mutedStyle.Render(truncateLine("No reviews yet — press 3!", sparkWidth))
+	}
 	activityBox := dashActivityStyle.
 		Width(boxWidth).
 		Render(lipgloss.NewStyle().Foreground(colorAITitle).Bold(true).Render("Recent Activity") + "\n" +

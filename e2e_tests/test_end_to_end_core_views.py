@@ -5,6 +5,8 @@ import tempfile
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../tui_tester")))
 from tui_tester import TUIAgent
 
+from e2e_helpers import read_due_count
+
 
 def start_agent(tmpdir, columns=110, lines=42):
     app_cmd = os.getenv("DEUTSCH_TUI_BIN", "go run ./cmd/deutsch-tui")
@@ -30,19 +32,20 @@ def test_review_reveal_grade_and_persist_due_count():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
+            due = read_due_count(agent)
             agent.act("3")
-            agent.wait_for_text("Review 1/52")
+            agent.wait_for_text(f"Review 1/{due}")
             agent.assert_text("Press space or enter to reveal.")
             agent.act("<Enter>")
             agent.wait_for_text("Grade: a Again")
             agent.act("g")
-            agent.wait_for_text("Review 1/51")
+            agent.wait_for_text(f"Review 1/{due - 1}")
         finally:
             agent.close()
 
         restarted = start_agent(tmpdir)
         try:
-            restarted.assert_text("Due cards:   51")
+            restarted.assert_text(f"Due cards:   {due - 1}")
         finally:
             restarted.close()
 

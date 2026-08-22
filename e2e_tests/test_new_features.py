@@ -6,6 +6,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../t
 
 from tui_tester import TUIAgent
 
+from e2e_helpers import read_due_count
+
 
 def start_agent(tmpdir, columns=110, lines=40):
     app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
@@ -20,8 +22,9 @@ def test_bookmark_filter_toggle():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
+            due = read_due_count(agent)
             agent.act("3")
-            agent.wait_for_text("Review 1/52")
+            agent.wait_for_text(f"Review 1/{due}")
             agent.assert_text("Bookmark: off")
 
             agent.act("b")
@@ -40,8 +43,9 @@ def test_leech_detection_in_statistics():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
+            due = read_due_count(agent)
             agent.act("3")
-            agent.wait_for_text("Review 1/52")
+            agent.wait_for_text(f"Review 1/{due}")
 
             for _ in range(3):
                 agent.act("<Space>")
@@ -67,6 +71,7 @@ def test_mcq_review_shows_choices():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
+            due = read_due_count(agent)
             # First find an MCQ in the browser to make sure we know what to look for
             agent.act("8")
             agent.wait_for_text("Card Browser")
@@ -80,7 +85,7 @@ def test_mcq_review_shows_choices():
             agent.wait_for_text("DASHBOARD")
             
             agent.act("3")
-            agent.wait_for_text("Review 1/52")
+            agent.wait_for_text(f"Review 1/{due}")
 
             # Do reviews until we hit an MCQ or just use the first one if we can ensure order.
             # Since order is alphabetical by ID, let's see which one is first.
@@ -109,9 +114,9 @@ def test_suspend_card_persists_and_updates_statistics():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
-            agent.assert_text("Due cards:   52")
+            due = read_due_count(agent)
             agent.act("3")
-            agent.wait_for_text("Review 1/52")
+            agent.wait_for_text(f"Review 1/{due}")
             agent.act("x")
             agent.wait_for_text("Card suspended")
             agent.act("q")
@@ -120,7 +125,7 @@ def test_suspend_card_persists_and_updates_statistics():
 
         agent = start_agent(tmpdir)
         try:
-            agent.assert_text("Due cards:   51")
+            agent.assert_text(f"Due cards:   {due - 1}")
             agent.act("4")
             agent.wait_for_text("Statistics")
             agent.assert_text("Suspended:")
@@ -137,6 +142,10 @@ def test_daily_goal_setting_persists_after_restart():
             agent.act("7")
             agent.wait_for_text("Settings")
             agent.assert_text("Daily Goal: 10")
+            # +/- only apply on the Daily Goal row (cursor index 4).
+            for _ in range(4):
+                agent.act("j")
+            agent.wait_for_text("> Daily Goal: 10")
             agent.act("+")
             agent.wait_for_text("Daily goal set to 11")
             agent.act("q")
@@ -158,8 +167,9 @@ def test_decks_view_shows_progress_metrics_after_review():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
+            due = read_due_count(agent)
             agent.act("3")
-            agent.wait_for_text("Review 1/52")
+            agent.wait_for_text(f"Review 1/{due}")
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.act("g")
@@ -178,9 +188,10 @@ def test_card_browser_search_filter():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
+            due = read_due_count(agent)
             agent.act("8")
             agent.wait_for_text("Card Browser")
-            agent.wait_for_text("52 cards found")
+            agent.wait_for_text(f"{due} cards found")
 
             # Enter search mode and type query
             agent.act("/Ap")
@@ -196,8 +207,9 @@ def test_session_stats_show_in_statistics():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
+            due = read_due_count(agent)
             agent.act("3")
-            agent.wait_for_text("Review 1/52")
+            agent.wait_for_text(f"Review 1/{due}")
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.act("a")

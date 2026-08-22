@@ -8,6 +8,8 @@ sys.path.insert(
 
 from tui_tester import TUIAgent
 
+from e2e_helpers import read_due_count
+
 
 def start_agent(tmpdir, columns=90, lines=28):
     app_cmd = os.getenv("DEUTSCH_TUI_BIN", "go run ./cmd/deutsch-tui")
@@ -21,9 +23,10 @@ def test_tab_cycles_through_all_primary_views_and_wraps():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
+            due = read_due_count(agent)
             for text in [
                 "Press enter to select deck.",
-                "Review 1/52",
+                f"Review 1/{due}",
                 "Statistics",
                 "Import / Export",
                 "AI Drafts",
@@ -44,22 +47,23 @@ def test_hard_grade_persists_review_progress_to_sqlite_after_restart():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir)
         try:
+            due = read_due_count(agent)
             agent.act("3")
-            agent.wait_for_text("Review 1/52")
+            agent.wait_for_text(f"Review 1/{due}")
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.act("h")
-            agent.wait_for_text("51 cards due")
+            agent.wait_for_text(f"{due - 1} cards due")
             agent.act("1")
-            agent.wait_for_text("Due cards:   51")
+            agent.wait_for_text(f"Due cards:   {due - 1}")
         finally:
             agent.close()
 
         restarted = start_agent(tmpdir)
         try:
-            restarted.assert_text("Due cards:   51")
+            restarted.assert_text(f"Due cards:   {due - 1}")
             restarted.act("3")
-            restarted.wait_for_text("Review 1/51")
+            restarted.wait_for_text(f"Review 1/{due - 1}")
         finally:
             restarted.close()
 

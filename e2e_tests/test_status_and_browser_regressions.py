@@ -6,6 +6,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "../t
 
 from tui_tester import TUIAgent
 
+from e2e_helpers import read_due_count
+
 
 def start_agent(tmpdir, columns=90, lines=28):
     app_cmd = os.getenv('DEUTSCH_TUI_BIN', 'go run ./cmd/deutsch-tui')
@@ -19,13 +21,14 @@ def test_review_grade_status_is_single_line():
     with tempfile.TemporaryDirectory() as tmpdir:
         agent = start_agent(tmpdir, columns=90, lines=28)
         try:
+            due = read_due_count(agent)
             agent.act("3")
-            agent.wait_for_text("Review 1/52")
+            agent.wait_for_text(f"Review 1/{due}")
             agent.act("<Space>")
             agent.wait_for_text("Grade: a Again")
             agent.act("g")
             agent.wait_for_text("cards due")
-            agent.assert_text("Review 1/51")
+            agent.assert_text(f"Review 1/{due - 1}")
         finally:
             agent.close()
 

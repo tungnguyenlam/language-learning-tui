@@ -9,6 +9,8 @@ sys.path.insert(
 
 from tui_tester import TUIAgent
 
+from e2e_helpers import read_due_count
+
 
 def start_agent(tmpdir, columns=90, lines=30):
     app_cmd = os.getenv("DEUTSCH_TUI_BIN", "go run ./cmd/deutsch-tui")
@@ -25,6 +27,7 @@ def test_mouse_navigation_tabs():
         try:
             # Dashboard is default
             agent.assert_text("DASHBOARD")
+            due = read_due_count(agent)
 
             # Click Decks (tab bar is at y=2 in medium breakpoint)
             agent.click(14, 2)
@@ -39,7 +42,8 @@ def test_mouse_navigation_tabs():
             # Click Browser
             agent.click(69, 2)
             agent.wait_for_text("Browser")
-            agent.assert_text("52 cards found")
+            # Fresh database: every starter card is due and listed.
+            agent.assert_text(f"{due} cards found")
 
             # Click Dashboard again
             agent.click(6, 2)

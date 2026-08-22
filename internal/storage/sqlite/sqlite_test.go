@@ -161,6 +161,49 @@ func TestRecordReviewHidesFutureCard(t *testing.T) {
 	}
 }
 
+func TestReviewsPerDayCountsRecordedReviews(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	deck := content.StarterDeck()
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+
+	now := time.Now()
+	for i, note := range deck.Notes[:2] {
+		card := note.Cards[0]
+		result := core.ReviewResult{
+			CardID:   card.ID,
+			Grade:    core.GradeGood,
+			Reviewed: now.Add(time.Duration(i) * time.Minute),
+			Next: core.ReviewState{
+				CardID:   card.ID,
+				Due:      now.Add(24 * time.Hour),
+				Interval: 24 * time.Hour,
+				Ease:     2.5,
+				Reviews:  1,
+			},
+		}
+		if err := store.RecordReview(ctx, result); err != nil {
+			t.Fatalf("record review %d: %v", i, err)
+		}
+	}
+
+	perDay, err := store.ReviewsPerDay(ctx, 30)
+	if err != nil {
+		t.Fatalf("reviews per day: %v", err)
+	}
+	today := now.Format("2006-01-02")
+	if got := perDay[today]; got != 2 {
+		t.Fatalf("reviews per day[%q] = %d, want 2 (full map: %v)", today, got, perDay)
+	}
+}
+
 func TestDecksWithStats(t *testing.T) {
 	ctx := context.Background()
 	store, err := OpenMemory()
