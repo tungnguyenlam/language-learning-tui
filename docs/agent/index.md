@@ -39,6 +39,9 @@ Last updated: 2026-08-22
 
 ## Verification Status
 
+- ✅ `./scripts/verify.sh` passed on 2026-08-22 after numbers/adverbs grammar
+  hints + weather/thin-deck content (Go tests, vet, dict.cc import, smoke
+  test, binary build, core E2E suite: 35 passed in 36.66s)
 - ✅ `./scripts/verify.sh` passed on 2026-08-22 after the grammar-hint + thin
   deck expansion (Go tests, vet, dict.cc import, smoke test, binary build,
   core E2E suite: 35 passed in 38.55s)

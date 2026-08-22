@@ -8,21 +8,21 @@ a1-weather-wolke	Die Wolke	cloud	Plural: die Wolken	a1 noun
 a1-weather-regen	Der Regen	rain		a1 noun
 a1-weather-schnee	Der Schnee	snow		a1 noun
 a1-weather-wind	Der Wind	wind	Plural: die Winde	a1 noun
-a1-weather-schneiden	Schneiden	to snow		a1 verb
-a1-weather-regnen	Regnen	to rain		a1 verb
-a1-weather-stark	Stark	strong		a1 adjective
-a1-weather-schwache	Schwach	weak		a1 adjective
-a1-weather-heiss	Heiß	hot		a1 adjective
-a1-weather-kalt	Kalt	cold		a1 adjective
-a1-weather-warm	Warm	warm		a1 adjective
-a1-weather-kuhl	Kühl	cool		a1 adjective
-a1-weather-schön	Schön	beautiful		a1 adjective
-a1-weather-hässlich	Hässlich	ugly		a1 adjective
-a1-weather-neblig	Neblig	foggy		a1 adjective
-a1-weather-stormisch	Stürmisch	stormy		a1 adjective
-a1-weather-bewölkt	Bewölkt	cloudy		a1 adjective
-a1-weather-klar	Klar	clear		a1 adjective
-a1-weather-trüb	Trüb	overcast		a1 adjective
+a1-weather-schneiden	schneien	to snow		a1 verb
+a1-weather-regnen	regnen	to rain		a1 verb
+a1-weather-stark	stark	strong		a1 adjective
+a1-weather-schwache	schwach	weak		a1 adjective
+a1-weather-heiss	heiß	hot		a1 adjective
+a1-weather-kalt	kalt	cold		a1 adjective
+a1-weather-warm	warm	warm		a1 adjective
+a1-weather-kuhl	kühl	cool		a1 adjective
+a1-weather-schön	schön	beautiful		a1 adjective
+a1-weather-hässlich	hässlich	ugly		a1 adjective
+a1-weather-neblig	neblig	foggy		a1 adjective
+a1-weather-stormisch	stürmisch	stormy		a1 adjective
+a1-weather-bewölkt	bewölkt	cloudy		a1 adjective
+a1-weather-klar	klar	clear		a1 adjective
+a1-weather-trüb	trüb	overcast		a1 adjective
 a1-weather-sommer	Der Sommer	summer	Plural: die Sommer	a1 noun
 a1-weather-winter	Der Winter	winter	Plural: die Winter	a1 noun
 a1-weather-frühling	Der Frühling	spring	Plural: die Frühlinge	a1 noun
@@ -33,27 +33,27 @@ a1-weather-woche	Die Woche	week	Plural: die Wochen	a1 noun
 a1-weather-tag	Der Tag	day	Plural: die Tage	a1 noun
 a1-weather-stunde	Die Stunde	hour	Plural: die Stunden	a1 noun
 a1-weather-minute	Die Minute	minute	Plural: die Minuten	a1 noun
-a1-weather-morgen	Morgen	morning	Plural: die Morgen	a1 noun
-a1-weather-mittag	Mittag	noon	Plural: die Mittage	a1 noun
-a1-weather-abend	Abend	evening	Plural: die Abende	a1 noun
-a1-weather-nacht	Nacht	night	Plural: die Nächte	a1 noun
-a1-weather-heute	Heute	today		a1 adverb
-a1-weather-morgen-tomorrow	Morgen	tomorrow		a1 adverb
-a1-weather-gestern	Gestern	yesterday		a1 adverb
-a1-weather-jetzt	Jetzt	now		a1 adverb
-a1-weather-später	Später	later		a1 adverb
-a1-weather-fruh	Früh	early		a1 adverb
-a1-weather-spat	Spät	late		a1 adverb
-a1-weather-immer	Immer	always		a1 adverb
-a1-weather-nie	Nie	never		a1 adverb
-a1-weather-oft	Oft	often		a1 adverb
-a1-weather-selten	Selten	rarely		a1 adverb
+a1-weather-morgen	der Morgen	morning	Plural: die Morgen	a1 noun
+a1-weather-mittag	der Mittag	noon	Plural: die Mittage	a1 noun
+a1-weather-abend	der Abend	evening	Plural: die Abende	a1 noun
+a1-weather-nacht	die Nacht	night	Plural: die Nächte	a1 noun
+a1-weather-heute	heute	today		a1 adverb
+a1-weather-morgen-tomorrow	morgen	tomorrow		a1 adverb
+a1-weather-gestern	gestern	yesterday		a1 adverb
+a1-weather-jetzt	jetzt	now		a1 adverb
+a1-weather-später	später	later		a1 adverb
+a1-weather-fruh	früh	early		a1 adverb
+a1-weather-spat	spät	late		a1 adverb
+a1-weather-immer	immer	always		a1 adverb
+a1-weather-nie	nie	never		a1 adverb
+a1-weather-oft	oft	often		a1 adverb
+a1-weather-selten	selten	rarely		a1 adverb
 a1-weather-wie-warm-wie-cold	Wie warm?	How warm?	Wie kalt?	phrase
-a1-weather-es-regnet	It rains	Es regnet.		a1 phrase
-a1-weather-es-schneit	It snows	Es schneit.		a1 phrase
-a1-weather-es-ist-schön	The weather is nice	Das Wetter ist schön.		a1 phrase
-a1-weather-es-ist-kalt	The weather is cold	Es ist kalt.		a1 phrase
+a1-weather-es-regnet	Es regnet.	It is raining.		a1 phrase
+a1-weather-es-schneit	Es schneit.	It is snowing.		a1 phrase
+a1-weather-es-ist-schön	Das Wetter ist schön.	The weather is nice.		a1 phrase
+a1-weather-es-ist-kalt	Es ist kalt.	It is cold.		a1 phrase
 a1-weather-wetterbericht	Der Wetterbericht	weather forecast	Plural: die Wetterberichte	a1 noun
 a1-weather-temperatur	Die Temperatur	temperature	Plural: die Temperaturen	a1 noun
-a1-weather-grad	Grad	degrees		a1 noun
+a1-weather-grad	der Grad	degree	20 Grad Celsius. Plural: die Grade (academic titles)	a1 noun
 a1-weather-prognose	Die Prognose	forecast	Plural: die Prognosen	a1 noun

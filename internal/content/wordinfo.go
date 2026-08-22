@@ -14,6 +14,8 @@ const (
 	KindVerb
 	KindAdjective
 	KindPhrase
+	KindAdverb
+	KindNumber
 	KindOther
 )
 
@@ -27,6 +29,10 @@ func (k WordKind) String() string {
 		return "ADJ"
 	case KindPhrase:
 		return "PHRASE"
+	case KindAdverb:
+		return "ADV"
+	case KindNumber:
+		return "NUM"
 	case KindOther:
 		return "WORD"
 	default:
@@ -90,6 +96,10 @@ func Analyze(front string) WordInfo {
 		return WordInfo{Kind: KindPhrase, Base: s, Display: s}
 	}
 
+	if info, ok := classifyFunctionWord(s); ok {
+		return info
+	}
+
 	first := runes[0]
 	if unicode.IsLower(first) {
 		if isInfinitive(s) {
@@ -126,6 +136,10 @@ func Enrich(info WordInfo) WordInfo {
 		enrichVerb(&info)
 	case KindAdjective:
 		enrichAdjective(&info)
+	case KindAdverb:
+		enrichAdverb(&info)
+	case KindNumber:
+		enrichNumber(&info)
 	}
 	return info
 }
@@ -202,16 +216,62 @@ func enrichAdjective(info *WordInfo) {
 	}
 	base := info.Base
 	if info.Forms == nil {
-		info.Forms = []string{
-			"comparative: " + base + "er",
-			"superlative: am " + base + "sten",
+		if irr, ok := irregularAdjectives[strings.ToLower(base)]; ok {
+			info.Forms = []string{
+				"comparative: " + irr.comparative,
+				"superlative: " + irr.superlative,
+			}
+		} else {
+			info.Forms = []string{
+				"comparative: " + base + "er",
+				"superlative: am " + base + "sten",
+			}
 		}
 	}
 	if info.Example == "" {
 		info.Example = fmt.Sprintf("Es ist sehr %s.", base)
 	}
 	if info.Note == "" {
-		info.Note = "Regular pattern; some adjectives take an umlaut (alt → älter)"
+		if _, ok := irregularAdjectives[strings.ToLower(base)]; ok {
+			info.Note = "Irregular comparison (learn the comparative by heart)"
+		} else {
+			info.Note = "Regular pattern; some adjectives take an umlaut (alt → älter)"
+		}
+	}
+}
+
+func enrichAdverb(info *WordInfo) {
+	if info.Base == "" {
+		return
+	}
+	lower := strings.ToLower(info.Base)
+	if irr, ok := irregularAdverbs[lower]; ok {
+		info.Forms = []string{
+			"comparative: " + irr.comparative,
+			"superlative: " + irr.superlative,
+		}
+		info.Note = "Adverb with irregular comparison"
+	} else if info.Note == "" {
+		info.Note = "Adverb — does not take adjective endings"
+	}
+	if info.Example == "" {
+		if ex, ok := adverbExamples[lower]; ok {
+			info.Example = ex
+		} else {
+			info.Example = fmt.Sprintf("Ich komme %s.", info.Base)
+		}
+	}
+}
+
+func enrichNumber(info *WordInfo) {
+	if info.Base == "" {
+		return
+	}
+	if info.Note == "" {
+		info.Note = "Cardinal number — does not inflect like an adjective when counting"
+	}
+	if info.Example == "" {
+		info.Example = fmt.Sprintf("Das kostet %s Euro.", info.Base)
 	}
 }
 
@@ -229,6 +289,109 @@ func splitAlternates(s string) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+func classifyFunctionWord(s string) (WordInfo, bool) {
+	lower := strings.ToLower(s)
+	if _, ok := cardinalNumbers[lower]; ok {
+		return WordInfo{Kind: KindNumber, Base: lower, Display: s}, true
+	}
+	if _, ok := commonAdverbs[lower]; ok {
+		return WordInfo{Kind: KindAdverb, Base: lower, Display: s}, true
+	}
+	return WordInfo{}, false
+}
+
+type comparisonForms struct {
+	comparative string
+	superlative string
+}
+
+// irregularAdjectives overrides the naive "base+er / am base+sten" pattern for
+// high-frequency irregular and umlaut comparatives (gut → besser, alt → älter).
+var irregularAdjectives = map[string]comparisonForms{
+	"gut":     {"besser", "am besten"},
+	"hoch":    {"höher", "am höchsten"},
+	"viel":    {"mehr", "am meisten"},
+	"groß":    {"größer", "am größten"},
+	"alt":     {"älter", "am ältesten"},
+	"jung":    {"jünger", "am jüngsten"},
+	"lang":    {"länger", "am längsten"},
+	"kurz":    {"kürzer", "am kürzesten"},
+	"warm":    {"wärmer", "am wärmsten"},
+	"kalt":    {"kälter", "am kältesten"},
+	"stark":   {"stärker", "am stärksten"},
+	"schwach": {"schwächer", "am schwächsten"},
+	"klug":    {"klüger", "am klügsten"},
+	"dumm":    {"dümmer", "am dümmsten"},
+	"hart":    {"härter", "am härtesten"},
+	"arm":     {"ärmer", "am ärmsten"},
+	"gesund":  {"gesünder", "am gesündesten"},
+	"nah":     {"näher", "am nächsten"},
+	"dunkel":  {"dunkler", "am dunkelsten"},
+	"teuer":   {"teurer", "am teuersten"},
+	"sauer":   {"saurer", "am sauersten"},
+	"edel":    {"edler", "am edelsten"},
+}
+
+var irregularAdverbs = map[string]comparisonForms{
+	"gern":  {"lieber", "am liebsten"},
+	"gerne": {"lieber", "am liebsten"},
+	"oft":   {"öfter", "am häufigsten"},
+	"bald":  {"eher", "am ehesten"},
+	"wohl":  {"wohler", "am wohlsten"},
+}
+
+var adverbExamples = map[string]string{
+	"heute":    "Ich lerne heute Deutsch.",
+	"morgen":   "Ich komme morgen.",
+	"jetzt":    "Ich muss jetzt gehen.",
+	"gestern":  "Gestern war ich zu Hause.",
+	"immer":    "Ich lerne immer abends.",
+	"nie":      "Ich vergesse nie meinen Schlüssel.",
+	"oft":      "Wir gehen oft spazieren.",
+	"manchmal": "Manchmal trinke ich Tee.",
+	"hier":     "Ich wohne hier.",
+	"dort":     "Der Bahnhof ist dort.",
+	"gern":     "Ich trinke gern Kaffee.",
+	"gerne":    "Ich trinke gerne Kaffee.",
+	"oben":     "Die Wohnung liegt oben.",
+	"unten":    "Das Büro ist unten.",
+	"morgens":  "Morgens trinke ich Kaffee.",
+	"abends":   "Abends lese ich ein Buch.",
+}
+
+// commonAdverbs are high-frequency adverbs that would otherwise be classified
+// as adjectives, or — when they end in -en/-ern — as infinitives (gestern →
+// "ich gester", oben → "ich obe").
+var commonAdverbs = map[string]struct{}{
+	"heute": {}, "morgen": {}, "jetzt": {}, "gestern": {},
+	"übermorgen": {}, "vorgestern": {},
+	"immer": {}, "nie": {}, "oft": {}, "manchmal": {},
+	"hier": {}, "dort": {}, "da": {},
+	"morgens": {}, "mittags": {}, "abends": {}, "nachts": {},
+	"oben": {}, "unten": {}, "innen": {}, "außen": {},
+	"gern": {}, "gerne": {},
+	"auch": {}, "nur": {}, "schon": {}, "noch": {}, "sehr": {},
+	"bald": {}, "dann": {}, "später": {},
+	"einmal": {}, "zweimal": {}, "dreimal": {},
+	"vielleicht": {}, "leider": {}, "trotzdem": {}, "deshalb": {},
+	"draußen": {}, "drinnen": {}, "überall": {}, "zurück": {},
+	"zusammen": {}, "sofort": {}, "endlich": {}, "plötzlich": {},
+	"wohl": {},
+}
+
+// cardinalNumbers must be checked before isInfinitive: sieben, dreizehn,
+// vierzehn, … all end in -en and would otherwise get fake conjugations.
+var cardinalNumbers = map[string]struct{}{
+	"null": {}, "eins": {}, "zwei": {}, "drei": {}, "vier": {},
+	"fünf": {}, "sechs": {}, "sieben": {}, "acht": {}, "neun": {},
+	"zehn": {}, "elf": {}, "zwölf": {},
+	"dreizehn": {}, "vierzehn": {}, "fünfzehn": {}, "sechzehn": {},
+	"siebzehn": {}, "achtzehn": {}, "neunzehn": {},
+	"zwanzig": {}, "dreißig": {}, "vierzig": {}, "fünfzig": {},
+	"sechzig": {}, "siebzig": {}, "achtzig": {}, "neunzig": {},
+	"hundert": {}, "einhundert": {}, "tausend": {}, "eintausend": {},
 }
 
 // enAdjectives are common adjectives/adverbs that end in -en/-ern and would
@@ -285,6 +448,12 @@ func germanScore(s string) int {
 	if strings.ContainsAny(s, "äöüÄÖÜß") {
 		score += 2
 	}
+	if _, ok := cardinalNumbers[lower]; ok {
+		score += 2
+	}
+	if _, ok := commonAdverbs[lower]; ok {
+		score += 2
+	}
 	if strings.HasPrefix(lower, "to ") || strings.HasPrefix(lower, "the ") {
 		score -= 3
 	}
@@ -293,7 +462,7 @@ func germanScore(s string) int {
 
 func kindScore(k WordKind) int {
 	switch k {
-	case KindNoun, KindVerb, KindAdjective:
+	case KindNoun, KindVerb, KindAdjective, KindAdverb, KindNumber:
 		return 1
 	case KindPhrase:
 		return 0

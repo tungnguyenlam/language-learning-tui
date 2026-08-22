@@ -25,3 +25,21 @@ mobility-022	Welche Option passt? Wegen Bauarbeiten gibt es eine ___.	Umleitung	
 mobility-023	Welche Option passt? Der Aufzug macht den Bahnhof ___.	barrierefrei	Barrierefrei describes accessible places without physical barriers.	b2 mobility mcq	B2 Urban Mobility	MCQ:barrierefrei|||verspaetet|||dicht|||ausgebaut
 mobility-024	Die Stadt {{c1::baut}} das Straßenbahnnetz aus.	ausbauen	Trennbares Verb: ausbauen -> die Stadt baut ... aus.	b2 mobility cloze	B2 Urban Mobility	Cloze
 mobility-025	Wir {{c1::legen}} die Strecke mit dem Fahrrad zurueck.	eine Strecke zuruecklegen	Trennbares Verb: zuruecklegen -> wir legen ... zurueck.	b2 mobility cloze	B2 Urban Mobility	Cloze
+mobility-026	die Fahrradstraße	bicycle street	Autos sind hier Gast; Fahrräder haben Vorrang.	b2 mobility noun	B2 Urban Mobility
+mobility-027	der Fußgängerüberweg	pedestrian crossing	Am Fußgängerüberweg müssen Autos halten.	b2 mobility noun	B2 Urban Mobility
+mobility-028	die Umweltzone	low-emission zone	In der Umweltzone braucht man eine Plakette.	b2 mobility noun	B2 Urban Mobility
+mobility-029	der Pendler	commuter	Viele Pendler fahren mit der S-Bahn zur Arbeit.	b2 mobility noun	B2 Urban Mobility
+mobility-030	die Taktung	service frequency / headway	In der Stoßzeit ist die Taktung alle fünf Minuten.	b2 mobility noun	B2 Urban Mobility
+mobility-031	der Anschluss	connecting service	Der Anschluss nach Mainz fällt heute aus.	b2 mobility noun	B2 Urban Mobility
+mobility-032	die Verspätung	delay	Der Zug hat zehn Minuten Verspätung.	b1 b2 mobility noun	B2 Urban Mobility
+mobility-033	ausfallen	to be cancelled	Die S-Bahn fällt wegen einer Störung aus.	b2 mobility verb	B2 Urban Mobility
+mobility-034	die Sperrung	closure / blockage	Wegen der Sperrung müssen wir umfahren.	b2 mobility noun	B2 Urban Mobility
+mobility-035	der Stau	traffic jam	Im Berufsverkehr steht die A3 im Stau.	b1 b2 mobility noun	B2 Urban Mobility
+mobility-036	die Bushaltestelle	bus stop	Die nächste Bushaltestelle ist um die Ecke.	a2 b1 mobility noun	B2 Urban Mobility
+mobility-037	der Bahnsteig	platform	Der Zug nach Hamburg fährt von Bahnsteig 7.	b1 mobility noun	B2 Urban Mobility
+mobility-038	der Nahverkehr	local public transport	Das Deutschlandticket gilt im Nahverkehr.	b2 mobility noun	B2 Urban Mobility
+mobility-039	der Fernverkehr	long-distance transport	ICE und IC gehören zum Fernverkehr.	b2 mobility noun	B2 Urban Mobility
+mobility-040	die Mitfahrgelegenheit	ride share	Ich suche eine Mitfahrgelegenheit nach Berlin.	b2 mobility noun	B2 Urban Mobility
+mobility-041	die Park-and-Ride-Anlage	park-and-ride facility	Wir stellen das Auto auf der Park-and-Ride-Anlage ab.	b2 mobility noun	B2 Urban Mobility
+mobility-042	Welche Option passt? Der Zug hat zehn Minuten ___.	Verspätung	Verspätung is the delay itself; verspätet is the adjective.	b2 mobility mcq	B2 Urban Mobility	MCQ:Verspätung|||Umleitung|||Taktung|||Sperrung
+mobility-043	Die S-Bahn {{c1::fällt}} wegen einer Störung aus.	ausfallen	Trennbares Verb: ausfallen -> fällt ... aus.	b2 mobility cloze	B2 Urban Mobility	Cloze

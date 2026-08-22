@@ -31,17 +31,20 @@ def test_weather_deck_exists():
             agent.act("2")
             agent.wait_for_text("DECK LIST", timeout=5.0)
             
-            # Search for Weather deck
+            # Search for the unique TSV deck, not "Weather" (that also matches
+            # the Go deck "A1 Time & Weather").
             agent.act("/")
             agent.wait_for_text("Search:", timeout=2.0)
-            agent.act("Weather")
-            agent.act("<Enter>")
+            agent.act("Seasons")
+            agent.wait_until_stable()
             agent.wait_for_text("Weather & Seasons", timeout=10.0)
+            agent.act("<Enter>")
+            agent.wait_until_stable()
             
-            # Select the deck
+            # Select the highlighted deck
             agent.act("<Enter>")
             agent.wait_for_text("DASHBOARD", timeout=5.0)
-            agent.wait_for_text("Weather & Seasons", timeout=5.0)
+            agent.wait_for_text("A1 Weather & Seasons", timeout=5.0)
             
         finally:
             agent.close()

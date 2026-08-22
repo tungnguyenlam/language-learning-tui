@@ -1,3 +1,28 @@
+# 2026-08-22 (Grammar Hints: Numbers, Adverbs, Irregular Comparatives)
+
+Stopped numbers and time-adverbs from getting fake verb/adjective grammar
+hints, taught high-frequency irregular comparatives, and fixed weather plus
+thin unique Standard Content decks without touching `StarterDeck()`.
+
+- Cardinal numbers that end in `-en` (`sieben`, `dreizehn`, …) and adverbs
+  that end in `-en`/`-ern` (`gestern`, `oben`) are classified as NUM/ADV
+  instead of infinitives (`ich sieb`, `ich gester`).
+- Irregular adjectives show the real forms (`gut → besser`, `hoch → höher`,
+  `alt → älter`, `dunkel → dunkler`) instead of `guter` / `hocher`.
+- Weather TSV: `schneien` (not `schneiden`) for "to snow"; German-front
+  phrases; articles on time-of-day nouns; lowercase adjectives/adverbs/verbs.
+- Split `morgen` vs `der Morgen`; added teens 13–19; expanded a1-essential,
+  b1-workplace-office, and b2-urban-mobility to ~40 notes; weather E2E
+  searches `Seasons` so it does not select Time & Weather.
+
+### Verification
+
+- New wordinfo and embedded-deck tests passed.
+- `go test ./...` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import
+  (834,512 entries), smoke test, binary build, and core E2E suite (35 passed
+  in 36.66s). Extra: grammar-hint E2E (2 passed) and weather E2E (1 passed).
+
 # 2026-08-22 (Grammar Hints + Thin Deck Expansion)
 
 Stopped `-en`/`-ern` adjectives from being treated as infinitives in the

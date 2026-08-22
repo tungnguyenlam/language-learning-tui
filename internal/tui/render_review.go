@@ -44,8 +44,8 @@ func renderClozeAnswers(prompt string, choices []string, style lipgloss.Style) s
 // renderGrammarHint builds a compact 2-4 line "how is this word used?" block
 // shown under the revealed answer. It analyses the card's German side and,
 // based on the detected word kind, surfaces gender + case shape (nouns),
-// conjugations (verbs), or comparison forms (adjectives), plus a curated or
-// auto-generated example sentence.
+// conjugations (verbs), comparison forms (adjectives), or a usage note
+// (adverbs and numbers), plus a curated or auto-generated example sentence.
 func renderGrammarHint(card core.Card) string {
 	info := content.AnalyzeCard(card.Prompt, card.Answer)
 	if info.Kind == content.KindUnknown || info.Display == "" {
@@ -67,6 +67,10 @@ func renderGrammarHint(card core.Card) string {
 		kindColor = lipgloss.Color("214")
 	case content.KindAdjective:
 		kindColor = lipgloss.Color("117")
+	case content.KindAdverb:
+		kindColor = lipgloss.Color("213")
+	case content.KindNumber:
+		kindColor = lipgloss.Color("220")
 	case content.KindPhrase:
 		kindColor = lipgloss.Color("141")
 	}

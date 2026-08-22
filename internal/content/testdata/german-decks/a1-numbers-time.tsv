@@ -13,6 +13,13 @@ number-neun	neun	Nine	Numbers & Time	a1 numbers
 number-zehn	zehn	Ten	Numbers & Time	a1 numbers
 number-elf	elf	Eleven	Numbers & Time	a1 numbers
 number-zwölf	zwölf	Twelve	Numbers & Time	a1 numbers
+number-dreizehn	dreizehn	Thirteen	Numbers & Time	a1 numbers
+number-vierzehn	vierzehn	Fourteen	Numbers & Time	a1 numbers
+number-fünfzehn	fünfzehn	Fifteen	Numbers & Time	a1 numbers
+number-sechzehn	sechzehn	Sixteen	Numbers & Time	a1 numbers
+number-siebzehn	siebzehn	Seventeen	Numbers & Time	a1 numbers
+number-achtzehn	achtzehn	Eighteen	Numbers & Time	a1 numbers
+number-neunzehn	neunzehn	Nineteen	Numbers & Time	a1 numbers
 number-zwanzig	zwanzig	Twenty	Numbers & Time	a1 numbers
 number-dreißig	dreißig	Thirty	Numbers & Time	a1 numbers
 number-vierzig	vierzig	Forty	Numbers & Time	a1 numbers
@@ -35,7 +42,8 @@ time-tag	der Tag	Day	Numbers & Time	a1 numbers
 time-woche	die Woche	Week	Numbers & Time	a1 numbers
 time-monat	der Monat	Month	Numbers & Time	a1 numbers
 time-jahr	das Jahr	Year	Numbers & Time	a1 numbers
-time-morgen	morgen	Tomorrow/Morning	Numbers & Time	a1 numbers
+time-morgen	morgen	tomorrow	Adverb. Contrast: der Morgen = morning	a1 numbers
+time-der-morgen	der Morgen	morning	Plural: die Morgen	a1 numbers
 time-heute	heute	Today	Numbers & Time	a1 numbers
 time-gestern	gestern	Yesterday	Numbers & Time	a1 numbers
 time-abend	der Abend	Evening	Numbers & Time	a1 numbers

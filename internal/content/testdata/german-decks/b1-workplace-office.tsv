@@ -22,3 +22,24 @@ b1-work-verschieben	b1-workplace-office	einen Termin verschieben	to postpone an 
 b1-work-gehalt	b1-workplace-office	das Gehalt	salary	Plural: die Gehälter	b1,noun,work
 b1-work-steuern	b1-workplace-office	die Steuern (Pl.)	taxes		b1,noun,work
 b1-work-feierabend-machen	b1-workplace-office	Feierabend machen	to finish work for the day	Wir machen jetzt Feierabend.	b1,phrase,work
+b1-work-pause	b1-workplace-office	die Pause	break	Plural: die Pausen. Mittagspause = lunch break	b1,noun,work
+b1-work-ueberstunde	b1-workplace-office	die Überstunde	overtime hour	Plural: die Überstunden. Ich mache heute Überstunden.	b1,noun,work
+b1-work-homeoffice	b1-workplace-office	das Homeoffice	working from home	Ich arbeite im Homeoffice.	b1,noun,work
+b1-work-gleitzeit	b1-workplace-office	die Gleitzeit	flexitime	Bei uns gibt es Gleitzeit.	b1,noun,work
+b1-work-kernarbeitszeit	b1-workplace-office	die Kernarbeitszeit	core working hours	Die Kernarbeitszeit ist von 9 bis 15 Uhr.	b1,noun,work
+b1-work-probezeit	b1-workplace-office	die Probezeit	probationary period	Die Probezeit dauert sechs Monate.	b1,noun,work
+b1-work-arbeitsvertrag	b1-workplace-office	der Arbeitsvertrag	employment contract	Plural: die Arbeitsverträge	b1,noun,work
+b1-work-betriebsrat	b1-workplace-office	der Betriebsrat	works council	Der Betriebsrat vertritt die Mitarbeiter.	b1,noun,work
+b1-work-befoerdern	b1-workplace-office	befördern	to promote	Sie wurde zur Teamleiterin befördert.	b1,verb,work
+b1-work-projekt	b1-workplace-office	das Projekt	project	Plural: die Projekte	b1,noun,work
+b1-work-deadline	b1-workplace-office	die Deadline	deadline	Die Deadline ist Freitag.	b1,noun,work
+b1-work-drucker	b1-workplace-office	der Drucker	printer	Plural: die Drucker	b1,noun,work
+b1-work-besprechungsraum	b1-workplace-office	der Besprechungsraum	meeting room	Plural: die Besprechungsräume	b1,noun,work
+b1-work-gehaltsabrechnung	b1-workplace-office	die Gehaltsabrechnung	payslip	Plural: die Gehaltsabrechnungen	b1,noun,work
+b1-work-schicht	b1-workplace-office	die Schicht	shift	Ich habe heute Spätschicht.	b1,noun,work
+b1-work-feiertag	b1-workplace-office	der Feiertag	public holiday	Plural: die Feiertage	b1,noun,work
+b1-work-remote	b1-workplace-office	remote arbeiten	to work remotely	Viele Kollegen arbeiten remote.	b1,verb,work
+b1-work-teamleiter	b1-workplace-office	der Teamleiter	team lead (male)	Plural: die Teamleiter	b1,noun,work
+b1-work-weiterbildung	b1-workplace-office	die Weiterbildung	further training	Ich mache eine Weiterbildung.	b1,noun,work
+b1-work-aufgabe	b1-workplace-office	die Aufgabe	task / assignment	Plural: die Aufgaben	b1,noun,work
+b1-work-frist	b1-workplace-office	die Frist	deadline / time limit	Die Frist läuft morgen ab.	b1,noun,work

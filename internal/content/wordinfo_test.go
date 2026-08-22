@@ -57,6 +57,14 @@ func TestAnalyzeVerbsAndAdjectives(t *testing.T) {
 		{"golden", KindAdjective},
 		{"modern", KindAdjective},
 		{"nüchtern", KindAdjective},
+		{"heute", KindAdverb},
+		{"gestern", KindAdverb},
+		{"jetzt", KindAdverb},
+		{"oben", KindAdverb},
+		{"eins", KindNumber},
+		{"sieben", KindNumber},
+		{"dreizehn", KindNumber},
+		{"Heute", KindAdverb},
 	}
 	for _, c := range cases {
 		got := Analyze(c.front)
@@ -233,5 +241,92 @@ func TestEmptyInputReturnsEmpty(t *testing.T) {
 	info := Analyze("")
 	if info.Kind != KindUnknown {
 		t.Errorf("empty front kind = %v, want Unknown", info.Kind)
+	}
+}
+
+// TestAnalyzeNumbersNotVerbs guards teens and sieben, which end in -en and
+// were conjugated as fake infinitives (sieben → "ich sieb", dreizehn → "ich dreizeh").
+func TestAnalyzeNumbersNotVerbs(t *testing.T) {
+	for _, word := range []string{"null", "eins", "sieben", "dreizehn", "vierzehn", "zwanzig"} {
+		info := Enrich(Analyze(word))
+		if info.Kind != KindNumber {
+			t.Errorf("%q kind = %v, want NUM", word, info.Kind)
+		}
+		joined := strings.Join(info.Forms, " ")
+		if strings.Contains(joined, "ich ") {
+			t.Errorf("%q: got verb conjugation %v", word, info.Forms)
+		}
+		if strings.Contains(joined, "comparative:") {
+			t.Errorf("%q: got adjective comparison %v", word, info.Forms)
+		}
+		if info.Example == "" {
+			t.Errorf("%q: expected an example", word)
+		}
+	}
+}
+
+// TestAnalyzeAdverbsNotVerbsOrAdjectives guards -en/-ern adverbs (gestern,
+// oben) that were treated as infinitives, and starter time-words that got
+// fake comparatives like "heuteer".
+func TestAnalyzeAdverbsNotVerbsOrAdjectives(t *testing.T) {
+	for _, word := range []string{"gestern", "heute", "morgen", "jetzt", "oben", "unten", "außen"} {
+		info := Enrich(Analyze(word))
+		if info.Kind != KindAdverb {
+			t.Errorf("%q kind = %v, want ADV", word, info.Kind)
+		}
+		joined := strings.Join(info.Forms, " ")
+		if strings.Contains(joined, "ich ") {
+			t.Errorf("%q: got verb conjugation %v", word, info.Forms)
+		}
+		if word != "oft" && strings.Contains(joined, "comparative: "+word+"er") {
+			t.Errorf("%q: got naive adjective comparison %v", word, info.Forms)
+		}
+	}
+}
+
+func TestEnrichIrregularAdjectives(t *testing.T) {
+	cases := []struct {
+		word           string
+		wantFormFrag   string
+		forbidFormFrag string
+	}{
+		{"gut", "besser", "guter"},
+		{"hoch", "höher", "hocher"},
+		{"groß", "größer", "großer"},
+		{"alt", "älter", "alter"},
+		{"dunkel", "dunkler", "dunkeler"},
+		{"teuer", "teurer", "teuerer"},
+	}
+	for _, c := range cases {
+		info := Enrich(Analyze(c.word))
+		if info.Kind != KindAdjective {
+			t.Errorf("%q kind = %v, want ADJ", c.word, info.Kind)
+			continue
+		}
+		joined := strings.Join(info.Forms, " ")
+		if !strings.Contains(joined, c.wantFormFrag) {
+			t.Errorf("%q forms = %v, want substring %q", c.word, info.Forms, c.wantFormFrag)
+		}
+		if strings.Contains(joined, c.forbidFormFrag) {
+			t.Errorf("%q forms = %v, should not contain %q", c.word, info.Forms, c.forbidFormFrag)
+		}
+	}
+}
+
+func TestEnrichAdverbGernUsesLieber(t *testing.T) {
+	info := Enrich(Analyze("gern"))
+	if info.Kind != KindAdverb {
+		t.Fatalf("gern kind = %v, want ADV", info.Kind)
+	}
+	joined := strings.Join(info.Forms, " ")
+	if !strings.Contains(joined, "lieber") {
+		t.Errorf("gern forms = %v, want lieber", info.Forms)
+	}
+}
+
+func TestAnalyzeCardPicksGermanNumberOverEnglishSeven(t *testing.T) {
+	info := AnalyzeCard("seven", "sieben")
+	if info.Kind != KindNumber || info.Base != "sieben" {
+		t.Errorf("AnalyzeCard(seven/sieben) = %+v, want NUM sieben", info)
 	}
 }

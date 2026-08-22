@@ -16,8 +16,8 @@ func TestUrbanMobilityDeckIsEmbedded(t *testing.T) {
 	if deck.Name != "b2-urban-mobility" {
 		t.Fatalf("deck.Name = %q, want b2-urban-mobility", deck.Name)
 	}
-	if len(deck.Notes) < 25 {
-		t.Fatalf("len(deck.Notes) = %d, want at least 25", len(deck.Notes))
+	if len(deck.Notes) < 40 {
+		t.Fatalf("len(deck.Notes) = %d, want at least 40", len(deck.Notes))
 	}
 
 	var hasMCQ, hasCloze bool
@@ -128,6 +128,10 @@ func TestThinEmbeddedDecksHaveUsefulCoverage(t *testing.T) {
 		{"b1_proverbs", 35, "Glück im Unglück."},
 		{"a2_grammar_prepositions", 30, ""},
 		{"b2_environment", 25, "erneuerbare Energien"},
+		{"a1_essential", 40, "Ich heiße …"},
+		{"b1_workplace_office", 40, "die Probezeit"},
+		{"b2_urban_mobility", 40, "der Pendler"},
+		{"a1_numbers_time", 40, "dreizehn"},
 	}
 	for _, c := range cases {
 		deck, err := DeckByID(c.id)
@@ -215,5 +219,74 @@ func TestEmbeddedContentFixes(t *testing.T) {
 		if !found {
 			t.Errorf("a2_grammar_prepositions missing cloze for %q", prepWord)
 		}
+	}
+
+	weather, err := DeckByID("a1_weather_seasons")
+	if err != nil || weather == nil {
+		t.Fatalf("a1_weather_seasons: %v %v", weather, err)
+	}
+	var sawSchneien, sawEnglishSnowFront bool
+	for _, note := range weather.Notes {
+		if note.Front == "schneien" {
+			sawSchneien = true
+			if note.Back != "to snow" {
+				t.Errorf("schneien back = %q, want to snow", note.Back)
+			}
+		}
+		if note.Front == "Schneiden" && note.Back == "to snow" {
+			t.Error("a1_weather_seasons still uses schneiden for 'to snow'")
+		}
+		if note.Front == "It snows" || note.Front == "It rains" {
+			sawEnglishSnowFront = true
+		}
+	}
+	if !sawSchneien {
+		t.Error("expected schneien (to snow) in a1_weather_seasons")
+	}
+	if sawEnglishSnowFront {
+		t.Error("a1_weather_seasons still has English phrase fronts")
+	}
+
+	numbers, err := DeckByID("a1_numbers_time")
+	if err != nil || numbers == nil {
+		t.Fatalf("a1_numbers_time: %v %v", numbers, err)
+	}
+	var sawTomorrow, sawMorningNoun, sawAmbiguousMorgen bool
+	for _, note := range numbers.Notes {
+		if note.Front == "morgen" && strings.EqualFold(note.Back, "tomorrow") {
+			sawTomorrow = true
+		}
+		if note.Front == "der Morgen" {
+			sawMorningNoun = true
+		}
+		if note.Back == "Tomorrow/Morning" {
+			sawAmbiguousMorgen = true
+		}
+	}
+	if !sawTomorrow || !sawMorningNoun {
+		t.Errorf("a1_numbers_time should split morgen (tomorrow) and der Morgen (morning); tomorrow=%v morning=%v", sawTomorrow, sawMorningNoun)
+	}
+	if sawAmbiguousMorgen {
+		t.Error("a1_numbers_time still has ambiguous Tomorrow/Morning gloss")
+	}
+
+	essential, err := DeckByID("a1_essential")
+	if err != nil || essential == nil {
+		t.Fatalf("a1_essential: %v %v", essential, err)
+	}
+	var sawSoLala, sawEnglishSoSo bool
+	for _, note := range essential.Notes {
+		if note.Front == "so lala" {
+			sawSoLala = true
+		}
+		if note.Front == "So-so" {
+			sawEnglishSoSo = true
+		}
+	}
+	if !sawSoLala {
+		t.Error("expected German 'so lala' in a1_essential")
+	}
+	if sawEnglishSoSo {
+		t.Error("a1_essential still uses English 'So-so' as the front")
 	}
 }

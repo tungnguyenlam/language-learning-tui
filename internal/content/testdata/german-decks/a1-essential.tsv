@@ -25,7 +25,26 @@ a1-ess-glueckwunsch	Glückwunsch	congratulations	Celebration	a1 greeting
 a1-ess-prost	Prost	cheers (toast)	Drinking	a1 greeting
 a1-ess-ganz-gut	Ganz gut	quite good	Response to "how are you"	a1 essential
 a1-ess-nicht-schlecht	Nicht schlecht	not bad	Response to "how are you"	a1 essential
-a1-ess-soso	So-so	so-so	Response to "how are you"	a1 essential
+a1-ess-soso	so lala	so-so	Response to "how are you"	a1 essential
 a1-ess-schlecht	Schlecht	bad	Response to "how are you"	a1 essential
-a1-ess-verstehe-nicht	Verstehe nicht	I don't understand	Communication	a1 essential
+a1-ess-verstehe-nicht	Ich verstehe nicht	I don't understand	Communication	a1 essential
 a1-ess-sprechen-englisch	Sprechen Sie Englisch?	do you speak English?	Language inquiry	a1 essential
+a1-ess-ich-heisse	Ich heiße …	My name is …	Introduction	a1 essential
+a1-ess-wie-heisst-du	Wie heißt du?	What is your name?	Casual inquiry	a1 question
+a1-ess-woher-kommst-du	Woher kommst du?	Where are you from?	Casual inquiry	a1 question
+a1-ess-ich-komme-aus	Ich komme aus …	I come from …	Introduction	a1 essential
+a1-ess-sprechen-deutsch	Sprechen Sie Deutsch?	Do you speak German?	Language inquiry	a1 essential
+a1-ess-ein-bisschen	Ich spreche ein bisschen Deutsch	I speak a little German	Language	a1 essential
+a1-ess-wiederholen	Können Sie das bitte wiederholen?	Could you please repeat that?	Communication	a1 essential
+a1-ess-langsamer	Langsamer, bitte	Slower, please	Communication	a1 essential
+a1-ess-was-bedeutet	Was bedeutet das?	What does that mean?	Communication	a1 essential
+a1-ess-wie-bitte	Wie bitte?	Pardon? / Come again?	Communication	a1 essential
+a1-ess-wo-ist	Wo ist …?	Where is …?	Question	a1 essential
+a1-ess-ich-haette-gern	Ich hätte gern …	I would like …	Polite request	a1 essential
+a1-ess-rechnung	Die Rechnung, bitte	The bill, please	Restaurant	a1 essential
+a1-ess-hilfe	Hilfe!	Help!	Emergency	a1 essential
+a1-ess-noch-einmal	Noch einmal, bitte	Once more, please	Communication	a1 essential
+a1-ess-kein-problem	Kein Problem	No problem	Response	a1 essential
+a1-ess-gern-geschehen	Gern geschehen	You're welcome	Response	a1 essential
+a1-ess-tut-leid	Es tut mir leid	I'm sorry	Apology	a1 essential
+a1-ess-machs-gut	Mach's gut	Take care	Casual goodbye	a1 greeting
