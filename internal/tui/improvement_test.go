@@ -363,6 +363,34 @@ func TestResetDatabaseReportsReloadFailures(t *testing.T) {
 	}
 }
 
+func TestExportAPKGPropagatesDeckMetadataError(t *testing.T) {
+	repo := &mockRepo{
+		errDecks: errors.New("deck metadata unavailable"),
+		dueCards: []core.Card{{
+			ID:     "card-1",
+			NoteID: "note-1",
+			DeckID: "deck-1",
+			Prompt: "Hund",
+			Answer: "dog",
+		}},
+	}
+	m := NewModel(repo, &mockScheduler{})
+	m.exportPath = t.TempDir() + "/export.apkg"
+
+	cmd := m.exportAPKG()
+	if cmd == nil {
+		t.Fatal("exportAPKG returned nil command")
+	}
+	msg := cmd()
+	err, ok := msg.(error)
+	if !ok {
+		t.Fatalf("exportAPKG message = %T, want error", msg)
+	}
+	if got := err.Error(); !strings.Contains(got, "failed to load deck names for export: deck metadata unavailable") {
+		t.Fatalf("exportAPKG error = %q", got)
+	}
+}
+
 func TestReviewMetadataClickHitboxes(t *testing.T) {
 	repo := &mockRepo{
 		decks: []core.Deck{{ID: "deck-1", Name: "Deck One"}},

@@ -1,3 +1,23 @@
+# 2026-08-23 (Dictionary Render + Statistics/APKG Error Handling)
+
+Continued the correctness and hot-path performance pass.
+
+- Dictionary rendering now uses incrementally counted builders for its main and
+  detail buffers. This removes every repeated `strings.Count(b.String(), "\n")`
+  coordinate lookup from the render path while preserving output and hitboxes.
+- Statistics now propagate failures from the card-type breakdown query, scan,
+  and row iteration instead of silently returning an incomplete map.
+- APKG export now reports deck-metadata load failures rather than producing an
+  archive whose deck display names fall back to internal IDs.
+- Regression tests cover line counting with multi-line writes, malformed
+  card-type rows, and APKG metadata failures.
+
+### Verification
+
+- `go test ./internal/tui ./internal/storage/sqlite` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512
+  entries), smoke test, binary build, and core E2E suite (35 passed in 37.43s).
+
 # 2026-08-23 (Cram Mouse Alignment + Suppressed Error Fixes)
 
 Continued the correctness pass across the TUI and SQLite repository.

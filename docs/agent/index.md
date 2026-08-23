@@ -1,6 +1,6 @@
 # Agent Context Index
 
-Last updated: 2026-08-22
+Last updated: 2026-08-23
 
 ## Vision & Prompts
 
@@ -41,6 +41,9 @@ Last updated: 2026-08-22
 
 ## Verification Status
 
+- ✅ `./scripts/verify.sh` passed on 2026-08-23 after dictionary render line-count
+  optimization and statistics/APKG error propagation (Go tests, vet, dict.cc
+  import, smoke test, binary build, core E2E suite: 35 passed in 37.43s)
 - ✅ `./scripts/verify.sh` passed on 2026-08-22 after the local-day statistics
   fix (`ReviewsToday`/streaks) and dashboard/typing-diff render optimizations
   (Go tests, vet, dict.cc import, smoke test, binary build, core E2E suite: 35

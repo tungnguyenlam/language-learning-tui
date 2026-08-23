@@ -13,6 +13,23 @@ import (
 	"deutsch-tui/internal/core"
 )
 
+func TestLineCountingBuilderTracksEmbeddedNewlines(t *testing.T) {
+	var b lineCountingBuilder
+	parts := []string{"Dictionary", "\n\n", "one\ntwo\n", "tail"}
+	for _, part := range parts {
+		if _, err := b.WriteString(part); err != nil {
+			t.Fatalf("write %q: %v", part, err)
+		}
+	}
+
+	if got, want := b.String(), strings.Join(parts, ""); got != want {
+		t.Fatalf("rendered text = %q, want %q", got, want)
+	}
+	if got, want := b.Lines(), 4; got != want {
+		t.Fatalf("line count = %d, want %d", got, want)
+	}
+}
+
 func TestHighlightQuery(t *testing.T) {
 	style := lipgloss.NewStyle().Bold(true)
 

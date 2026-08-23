@@ -789,15 +789,20 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 	}
 	typeQuery += ` GROUP BY kind`
 	typeRows, err := s.db.QueryContext(ctx, typeQuery, typeArgs...)
-	if err == nil {
-		defer typeRows.Close()
-		for typeRows.Next() {
-			var kind string
-			var count int
-			if err := typeRows.Scan(&kind, &count); err == nil {
-				stats.CardTypes[core.CardKind(kind)] = count
-			}
+	if err != nil {
+		return stats, fmt.Errorf("query card type statistics: %w", err)
+	}
+	defer typeRows.Close()
+	for typeRows.Next() {
+		var kind string
+		var count int
+		if err := typeRows.Scan(&kind, &count); err != nil {
+			return stats, fmt.Errorf("scan card type statistics: %w", err)
 		}
+		stats.CardTypes[core.CardKind(kind)] = count
+	}
+	if err := typeRows.Err(); err != nil {
+		return stats, fmt.Errorf("iterate card type statistics: %w", err)
 	}
 
 	// Total and active decks

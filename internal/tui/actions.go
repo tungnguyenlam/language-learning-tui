@@ -412,10 +412,12 @@ func (m *Model) exportAPKG() tea.Cmd {
 		// Anki shows the deck name, so map our deck IDs onto their titles
 		// rather than exporting decks called "a1_food_drink".
 		deckNames := make(map[string]string)
-		if decks, err := m.repo.Decks(ctx); err == nil {
-			for _, d := range decks {
-				deckNames[d.ID] = d.Name
-			}
+		decks, err := m.repo.Decks(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to load deck names for export: %w", err)
+		}
+		for _, d := range decks {
+			deckNames[d.ID] = d.Name
 		}
 
 		index := make(map[string]int)

@@ -1635,3 +1635,32 @@ func TestStatisticsActiveDecksExcludesSuspended(t *testing.T) {
 		t.Fatalf("expected 0 active decks when all due cards are suspended, got %d", stats.ActiveDecks)
 	}
 }
+
+func TestStatisticsPropagatesCardTypeScanErrors(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open store: %v", err)
+	}
+	defer store.Close()
+
+	if _, err := store.db.ExecContext(ctx, `PRAGMA foreign_keys = OFF`); err != nil {
+		t.Fatalf("disable foreign keys: %v", err)
+	}
+	if _, err := store.db.ExecContext(ctx, `DROP TABLE cards`); err != nil {
+		t.Fatalf("drop cards table: %v", err)
+	}
+	// COUNT(*) remains valid, but decoding the grouped kind must fail. This
+	// models corrupt/incompatible persisted data after the first stats query.
+	if _, err := store.db.ExecContext(ctx, `CREATE VIEW cards AS SELECT 'card-1' AS id, NULL AS kind`); err != nil {
+		t.Fatalf("create malformed cards view: %v", err)
+	}
+
+	_, err = store.Statistics(ctx)
+	if err == nil {
+		t.Fatal("Statistics returned nil error for an undecodable card kind")
+	}
+	if !strings.Contains(err.Error(), "scan card type statistics") {
+		t.Fatalf("Statistics error = %q, want card-type scan context", err)
+	}
+}

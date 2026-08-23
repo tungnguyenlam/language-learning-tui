@@ -4,10 +4,10 @@ Last updated: 2026-08-23
 
 ## Current Milestone
 
-Bug-fix and performance pass (per the focus in `AGENTS.md`): Cram grade mouse
-targets now follow the actual rendered/wrapped controls, database reset reports
-post-reset reload failures, and related-dictionary queries no longer suppress
-SQLite failures.
+Bug-fix and performance pass (per the focus in `AGENTS.md`): audit the remaining
+TUI render hot paths and storage/export error paths. Dictionary line-coordinate
+lookups are now O(1), card-type statistics failures surface, and APKG export
+requires valid deck metadata.
 
 ## Exact Next Action
 
@@ -15,27 +15,20 @@ No unfinished executable work remains. Candidate future work:
 
 - Extract remaining view-local state off `Model` (screen files own render +
   keys only today).
-- The `render_dictionary.go` rescan cleanup (the last render file still using
-  `strings.Count(b.String(), "\n")`) is deprioritized: its `b`/`detailBuilder`
-  buffers hold only a small header/detail, so the O(n²)→O(n) gain is marginal
-  and the two-builder layout makes the refactor higher-risk than the other four
-  files.
+- Move history/settings persistence off synchronous TUI input handlers into
+  `tea.Cmd`s so a slow repository cannot stall keyboard or mouse handling.
 
 ## Completed This Pass
 
-- Bug fix: Cram's grade hitboxes assumed a centered card and counted source
-  newlines, but the card starts at the render context X and Lip Gloss may wrap
-  long prompt/answer/context text. Targets are now located from the actual
-  rendered card and remain aligned when controls wrap across rows.
-- Bug fix: `executeResetDatabase` ignored errors while reloading Decks and Due
-  Cards after a successful reset, falsely reporting a clean success with stale
-  UI state. Both reload failures now surface with operation context.
-- Bug fix: `FindRelatedEntries` discarded errors from its prefix, suffix, and
-  exact-match queries, turning database failures into empty related-word lists.
-  Query failures now propagate with branch-specific context.
-- Regression tests cover all four wrapped Cram grade targets, both reset reload
-  paths, and long/short related-entry lookup failures against a closed database.
-- `docs/backlog/done.md` updated continuously.
+- Performance: dictionary rendering now tracks builder line counts incrementally
+  instead of repeatedly allocating `String()` snapshots and rescanning the
+  growing buffers for every hitbox coordinate.
+- Bug fix: collection/deck statistics now propagate card-type query, scan, and
+  row-iteration errors rather than returning plausible but incomplete data.
+- Bug fix: APKG export now aborts with context when deck metadata cannot be
+  loaded instead of silently exporting internal deck IDs as display names.
+- Regression tests cover embedded-newline counting, malformed card-type rows,
+  and APKG deck-metadata failures.
 
 ## Top Issues
 
@@ -43,20 +36,17 @@ No unfinished executable work remains. Candidate future work:
 
 ## Acceptance Criteria
 
-- Cram's Again/Hard/Good/Easy mouse targets align with their visible labels even
-  when a narrow terminal wraps long card content or the Grade controls.
-- Database reset never reports success when its post-reset Decks or Due Cards
-  reload fails.
-- Related-entry lookup returns SQLite failures rather than an empty result.
-- `go test ./...` and `./scripts/verify.sh` stay green.
+- At least 2–3 concrete correctness or hot-path performance improvements land
+  with focused regression tests.
+- `go test ./...` and `./scripts/verify.sh` pass.
 
 ## Last Verification
 
-- `go test ./...` passed on 2026-08-23 after the Cram hitbox, reset error, and
-  related-dictionary error fixes.
+- Previous pass: `./scripts/verify.sh` passed on 2026-08-23 (35 E2E tests).
+- Current pass: `go test ./internal/tui ./internal/storage/sqlite` passed.
 - `./scripts/verify.sh` passed on 2026-08-23: Go tests, vet, offline dict.cc
   import (834,512 entries), smoke test, binary build, core E2E suite (35 passed
-  in 37.51s).
+  in 37.43s).
 
 ## Repository State
 

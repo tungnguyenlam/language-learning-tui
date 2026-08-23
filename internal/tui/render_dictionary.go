@@ -11,6 +11,23 @@ import (
 
 var dictHighlightStyle = lipgloss.NewStyle().Bold(true).Foreground(colorYellow)
 
+// lineCountingBuilder keeps render-coordinate lookups O(1). Calling String and
+// rescanning the entire buffer for every hitbox made dictionary rendering
+// quadratic as result details and history lists grew.
+type lineCountingBuilder struct {
+	strings.Builder
+	lines int
+}
+
+func (b *lineCountingBuilder) WriteString(s string) (int, error) {
+	b.lines += strings.Count(s, "\n")
+	return b.Builder.WriteString(s)
+}
+
+func (b *lineCountingBuilder) Lines() int {
+	return b.lines
+}
+
 var (
 	genderMascStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("39"))
 	genderFemStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color("212"))
@@ -208,11 +225,11 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		res := m.dictionaryResults[m.dictionaryCursor]
 		detailWidth := layout.Width
 
-		var b strings.Builder
+		var b lineCountingBuilder
 		b.WriteString(titleStyle.Render(fmt.Sprintf("Dictionary Details: %s", res.Word)))
 		b.WriteString("\n\n")
 
-		var detailBuilder strings.Builder
+		var detailBuilder lineCountingBuilder
 		titleText := res.Word
 		if m.dictionaryStarred != nil && m.dictionaryStarred[res.ID] {
 			titleText = lipgloss.NewStyle().Foreground(colorYellow).Render("★ ") + titleText
@@ -232,11 +249,11 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		}
 
 		audioLabel := "🔊 [Listen (a)]"
-		audioLineY := strings.Count(detailBuilder.String(), "\n")
+		audioLineY := detailBuilder.Lines()
 		detailBuilder.WriteString(lipgloss.NewStyle().Foreground(colorCyan).Bold(true).Render(audioLabel) + "\n")
 		maxRows := maxInt(3, layout.Height-4)
 		if audioLineY >= m.dictionaryDetailScroll && audioLineY < m.dictionaryDetailScroll+maxRows {
-			screenY := layout.Y + strings.Count(b.String(), "\n") + (audioLineY - m.dictionaryDetailScroll)
+			screenY := layout.Y + b.Lines() + (audioLineY - m.dictionaryDetailScroll)
 			wordToPlay := res.Word
 			m.hitboxes = append(m.hitboxes, Hitbox{
 				ID:     "dict-audio",
@@ -269,7 +286,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		}
 
 		if compoundParts := m.getCompoundBreakdown(res.Word); len(compoundParts) >= 2 {
-			lineY := strings.Count(detailBuilder.String(), "\n")
+			lineY := detailBuilder.Lines()
 			detailBuilder.WriteString(boldStyle.Render("Compound Breakdown:") + "\n")
 			var partWords []string
 			for _, p := range compoundParts {
@@ -279,7 +296,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 
 			maxRows := maxInt(3, layout.Height-4)
 			if lineY+1 >= m.dictionaryDetailScroll && lineY+1 < m.dictionaryDetailScroll+maxRows {
-				screenY := layout.Y + strings.Count(b.String(), "\n") + (lineY + 1 - m.dictionaryDetailScroll)
+				screenY := layout.Y + b.Lines() + (lineY + 1 - m.dictionaryDetailScroll)
 				currX := layout.X + 4
 				for idx, pWord := range partWords {
 					word := pWord
@@ -314,7 +331,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			}
 			detailBuilder.WriteString(boldStyle.Render("Related Words:") + "\n")
 			for i, related := range m.dictionaryRelatedEntries {
-				lineY := strings.Count(detailBuilder.String(), "\n")
+				lineY := detailBuilder.Lines()
 				line := "  • " + related.Word
 				if related.Gender != "" {
 					line += " {" + related.Gender + "}"
@@ -327,7 +344,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 				// Register hitbox if visible
 				maxRows := maxInt(3, layout.Height-4)
 				if lineY >= m.dictionaryDetailScroll && lineY < m.dictionaryDetailScroll+maxRows {
-					screenY := layout.Y + strings.Count(b.String(), "\n") + (lineY - m.dictionaryDetailScroll)
+					screenY := layout.Y + b.Lines() + (lineY - m.dictionaryDetailScroll)
 					relEntry := related
 					m.hitboxes = append(m.hitboxes, Hitbox{
 						ID:     fmt.Sprintf("dict-related-sc-%d", i),
@@ -351,7 +368,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		}
 		m.dictionaryDetailTotalLines = len(detailLines)
 
-		headerLines := strings.Count(b.String(), "\n")
+		headerLines := b.Lines()
 		maxResultsDetail := maxInt(3, layout.Height-headerLines-2)
 		m.dictionaryDetailVisibleRows = maxResultsDetail
 		if m.dictionaryDetailScroll > m.dictionaryDetailTotalLines-maxResultsDetail {
@@ -375,7 +392,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		renderedDetailLines := strings.Split(strings.TrimSuffix(visibleDetailBuilder.String(), "\n"), "\n")
 		detailLinesWithScroll := renderScrollbarColumn(renderedDetailLines, maxResultsDetail, m.dictionaryDetailTotalLines, m.dictionaryDetailScroll)
 		if m.dictionaryDetailTotalLines > maxResultsDetail {
-			detailStartLine := strings.Count(b.String(), "\n")
+			detailStartLine := b.Lines()
 			for i := 0; i < maxResultsDetail; i++ {
 				m.hitboxes = append(m.hitboxes, Hitbox{
 					ID:     fmt.Sprintf("dict-detail-scroll-%d", i),
@@ -394,7 +411,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		return b.String()
 	}
 
-	var b strings.Builder
+	var b lineCountingBuilder
 	if len(m.dictionaryResults) > 0 {
 		countSuffix := fmt.Sprintf(" (%d results)", len(m.dictionaryResults))
 		if len(m.dictionaryResults) >= 50 {
@@ -461,7 +478,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 	b.WriteString("\n\n")
 
 	// Render interactive filter pills row
-	filterLineY := strings.Count(b.String(), "\n")
+	filterLineY := b.Lines()
 	b.WriteString(renderFilterPillsRow(m, layout.X, layout.Y+filterLineY, ViewDictionary, layout.Width))
 	b.WriteString("\n\n")
 
@@ -476,7 +493,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 				b.WriteString("\n\n" + boldStyle.Render("Recent Searches:") + "  " + clearHistoryText + " " + mutedStyle.Render("(ctrl+x)") + "\n")
 
 				// Hitbox for "[Clear]" button
-				clearHistoryY := strings.Count(b.String(), "\n") - 1
+				clearHistoryY := b.Lines() - 1
 				m.hitboxes = append(m.hitboxes, Hitbox{
 					ID:     "dict-history-clear",
 					View:   ViewDictionary,
@@ -493,7 +510,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 
 				for i, q := range m.dictionarySearchHistory {
 					// Retrieve the current line count to calculate Y coordinate dynamically
-					lineY := strings.Count(b.String(), "\n")
+					lineY := b.Lines()
 					b.WriteString(fmt.Sprintf("  • %s\n", q))
 					// Save local variable q for the closure
 					queryText := q
@@ -515,7 +532,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			if len(m.dictionaryRecentlyViewed) > 0 {
 				clearRecentText := lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Render("[Clear]")
 				b.WriteString("\n" + boldStyle.Render("Recently Inspected Words:") + "  " + clearRecentText + "\n")
-				clearRecentY := strings.Count(b.String(), "\n") - 1
+				clearRecentY := b.Lines() - 1
 				m.hitboxes = append(m.hitboxes, Hitbox{
 					ID:     "dict-recent-clear",
 					View:   ViewDictionary,
@@ -529,7 +546,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 					},
 				})
 				for i, e := range m.dictionaryRecentlyViewed {
-					lineY := strings.Count(b.String(), "\n")
+					lineY := b.Lines()
 					wordStr := e.Word
 					if e.Gender != "" {
 						wordStr += " {" + e.Gender + "}"
@@ -558,7 +575,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 				discoverIcon := lipgloss.NewStyle().Foreground(lipgloss.Color("205")).Render("✦")
 				b.WriteString("\n" + discoverIcon + " " + boldStyle.Render("Discover:") + " " + mutedStyle.Render("random words to explore") + "\n")
 				for i, e := range m.dictionaryDiscoverEntries {
-					lineY := strings.Count(b.String(), "\n")
+					lineY := b.Lines()
 					wordStr := e.Word
 					if e.Gender != "" {
 						wordStr += " " + renderGender(e.Gender)
@@ -590,7 +607,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		return b.String()
 	}
 
-	headerLines := strings.Count(b.String(), "\n")
+	headerLines := b.Lines()
 	maxResults := maxInt(3, layout.Height-headerLines-2)
 	m.dictionaryListVisibleRows = maxResults
 	m.dictionaryDetailVisibleRows = maxResults
@@ -610,7 +627,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 
 		var listBuilder strings.Builder
 		contentWidth := listWidth - 2
-		listStartLine := strings.Count(b.String(), "\n")
+		listStartLine := b.Lines()
 		for i := m.dictionaryScroll; i < len(m.dictionaryResults) && i < m.dictionaryScroll+maxResults; i++ {
 			res := m.dictionaryResults[i]
 			prefix := "  "
@@ -690,7 +707,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		}
 		listWithScroll := strings.Join(listLinesWithScroll, "\n") + "\n"
 
-		var detailBuilder strings.Builder
+		var detailBuilder lineCountingBuilder
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 			res := m.dictionaryResults[m.dictionaryCursor]
 
@@ -715,7 +732,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			}
 
 			audioLabel := "🔊 [Listen (a)]"
-			audioLineY := strings.Count(detailBuilder.String(), "\n")
+			audioLineY := detailBuilder.Lines()
 			detailBuilder.WriteString(lipgloss.NewStyle().Foreground(colorCyan).Bold(true).Render(audioLabel) + "\n")
 			maxRows := maxInt(3, layout.Height-4)
 			if audioLineY >= m.dictionaryDetailScroll && audioLineY < m.dictionaryDetailScroll+maxRows {
@@ -754,7 +771,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 			}
 
 			if compoundParts := m.getCompoundBreakdown(res.Word); len(compoundParts) >= 2 {
-				lineY := strings.Count(detailBuilder.String(), "\n")
+				lineY := detailBuilder.Lines()
 				detailBuilder.WriteString(boldStyle.Render("Compound Breakdown:") + "\n")
 				var partWords []string
 				for _, p := range compoundParts {
@@ -800,7 +817,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 				}
 				detailBuilder.WriteString(boldStyle.Render("Related Words:") + "\n")
 				for i, related := range m.dictionaryRelatedEntries {
-					lineY := strings.Count(detailBuilder.String(), "\n")
+					lineY := detailBuilder.Lines()
 					line := "  • " + related.Word
 					if related.Gender != "" {
 						line += " {" + related.Gender + "}"
@@ -876,7 +893,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 		b.WriteString(joined)
 	} else {
 		// Single column layout
-		listStartLine := strings.Count(b.String(), "\n")
+		listStartLine := b.Lines()
 		contentWidth := layout.Width - 4
 		if contentWidth < 10 {
 			contentWidth = 10
@@ -997,7 +1014,7 @@ func (m *Model) renderSpotlightDictionary() string {
 		Width(boxWidth).
 		Height(boxHeight)
 
-	var b strings.Builder
+	var b lineCountingBuilder
 
 	title := " 🔍 SPOTLIGHT DICTIONARY "
 	if m.dictionarySearch != "" && len(m.dictionaryResults) > 0 {
@@ -1059,10 +1076,10 @@ func (m *Model) renderSpotlightDictionary() string {
 			},
 		})
 	}
-	overlayFilterLineY := strings.Count(b.String(), "\n")
+	overlayFilterLineY := b.Lines()
 	b.WriteString(renderFilterPillsRow(m, startX+2, startY+overlayFilterLineY+1, m.activeView, boxWidth-4) + "\n")
 
-	headerLines := strings.Count(b.String(), "\n") // Header: title + search bar + filter row
+	headerLines := b.Lines() // Header: title + search bar + filter row
 	interiorWidth := boxWidth - 4
 	if interiorWidth < 10 {
 		interiorWidth = 10
@@ -1098,7 +1115,7 @@ func (m *Model) renderSpotlightDictionary() string {
 				clearHistoryText := lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Render("[Clear]")
 				writeLine(boldStyle.Render("Recent Searches:") + "  " + clearHistoryText + " " + mutedStyle.Render("(ctrl+x)"))
 
-				clearHistoryLineY := strings.Count(b.String(), "\n") - 1
+				clearHistoryLineY := b.Lines() - 1
 				m.hitboxes = append(m.hitboxes, Hitbox{
 					ID:     "dict-overlay-history-clear",
 					View:   m.activeView,
@@ -1121,7 +1138,7 @@ func (m *Model) renderSpotlightDictionary() string {
 						writeLine(mutedStyle.Render("  …"))
 						break
 					}
-					lineY := strings.Count(b.String(), "\n")
+					lineY := b.Lines()
 					writeLine(fmt.Sprintf("  • %s", q))
 					queryText := q
 					m.hitboxes = append(m.hitboxes, Hitbox{
@@ -1148,7 +1165,7 @@ func (m *Model) renderSpotlightDictionary() string {
 			if len(m.dictionaryRecentlyViewed) > 0 && canWrite(2) {
 				clearRecentText := lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Render("[Clear]")
 				writeLine(boldStyle.Render("Recently Inspected Words:") + "  " + clearRecentText)
-				clearRecentLineY := strings.Count(b.String(), "\n") - 1
+				clearRecentLineY := b.Lines() - 1
 				m.hitboxes = append(m.hitboxes, Hitbox{
 					ID:     "dict-overlay-recent-clear",
 					View:   m.activeView,
@@ -1169,7 +1186,7 @@ func (m *Model) renderSpotlightDictionary() string {
 						writeLine(mutedStyle.Render("  …"))
 						break
 					}
-					lineY := strings.Count(b.String(), "\n")
+					lineY := b.Lines()
 					wordStr := e.Word
 					if e.Gender != "" {
 						wordStr += " {" + e.Gender + "}"
@@ -1211,7 +1228,7 @@ func (m *Model) renderSpotlightDictionary() string {
 						writeLine(mutedStyle.Render("  …"))
 						break
 					}
-					lineY := strings.Count(b.String(), "\n")
+					lineY := b.Lines()
 					wordStr := e.Word
 					if e.Gender != "" {
 						wordStr += " " + renderGender(e.Gender)
@@ -1257,7 +1274,7 @@ func (m *Model) renderSpotlightDictionary() string {
 		if m.dictionaryDetailView && m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 			res := m.dictionaryResults[m.dictionaryCursor]
 
-			var detailBuilder strings.Builder
+			var detailBuilder lineCountingBuilder
 			titleText := res.Word
 			if m.dictionaryStarred != nil && m.dictionaryStarred[res.ID] {
 				titleText = lipgloss.NewStyle().Foreground(colorYellow).Render("★ ") + titleText
@@ -1275,9 +1292,9 @@ func (m *Model) renderSpotlightDictionary() string {
 				detailBuilder.WriteString(meta + "\n")
 			}
 
-			detailStartLine := strings.Count(b.String(), "\n")
+			detailStartLine := b.Lines()
 			audioLabel := "🔊 [Listen (a)]"
-			audioLineY := strings.Count(detailBuilder.String(), "\n")
+			audioLineY := detailBuilder.Lines()
 			detailBuilder.WriteString(lipgloss.NewStyle().Foreground(colorCyan).Bold(true).Render(audioLabel) + "\n")
 			if audioLineY >= m.dictionaryDetailScroll && audioLineY < m.dictionaryDetailScroll+maxResults {
 				screenY := startY + 1 + detailStartLine + (audioLineY - m.dictionaryDetailScroll)
@@ -1316,9 +1333,9 @@ func (m *Model) renderSpotlightDictionary() string {
 				}
 			}
 
-			detailStartLine = strings.Count(b.String(), "\n")
+			detailStartLine = b.Lines()
 			if compoundParts := m.getCompoundBreakdown(res.Word); len(compoundParts) >= 2 {
-				lineY := strings.Count(detailBuilder.String(), "\n")
+				lineY := detailBuilder.Lines()
 				detailBuilder.WriteString(boldStyle.Render("Compound Breakdown:") + "\n")
 				var partWords []string
 				for _, p := range compoundParts {
@@ -1360,7 +1377,7 @@ func (m *Model) renderSpotlightDictionary() string {
 				}
 				detailBuilder.WriteString(boldStyle.Render("Related Words:") + "\n")
 				for i, related := range m.dictionaryRelatedEntries {
-					lineY := strings.Count(detailBuilder.String(), "\n")
+					lineY := detailBuilder.Lines()
 					line := "  • " + related.Word
 					if related.Gender != "" {
 						line += " {" + related.Gender + "}"
@@ -1421,7 +1438,7 @@ func (m *Model) renderSpotlightDictionary() string {
 		} else if interiorWidth > 70 {
 			listWidth := maxInt(25, minInt(40, interiorWidth*4/10))
 			detailWidth := interiorWidth - listWidth - 3
-			listStartLine := strings.Count(b.String(), "\n")
+			listStartLine := b.Lines()
 
 			var listBuilder strings.Builder
 			for i := m.dictionaryScroll; i < len(m.dictionaryResults) && i < m.dictionaryScroll+maxResults; i++ {
@@ -1480,7 +1497,7 @@ func (m *Model) renderSpotlightDictionary() string {
 			listLinesWithScroll := renderScrollbarColumn(listLines, maxResults, len(m.dictionaryResults), m.dictionaryScroll)
 			listWithScroll := strings.Join(listLinesWithScroll, "\n") + "\n"
 
-			var detailBuilder strings.Builder
+			var detailBuilder lineCountingBuilder
 			if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 				res := m.dictionaryResults[m.dictionaryCursor]
 				titleText := res.Word
@@ -1501,7 +1518,7 @@ func (m *Model) renderSpotlightDictionary() string {
 				}
 
 				audioLabel := "🔊 [Listen (a)]"
-				audioLineY := strings.Count(detailBuilder.String(), "\n")
+				audioLineY := detailBuilder.Lines()
 				detailBuilder.WriteString(lipgloss.NewStyle().Foreground(colorCyan).Bold(true).Render(audioLabel) + "\n")
 				if audioLineY >= m.dictionaryDetailScroll && audioLineY < m.dictionaryDetailScroll+maxResults {
 					screenY := startY + 1 + (audioLineY - m.dictionaryDetailScroll)
@@ -1532,7 +1549,7 @@ func (m *Model) renderSpotlightDictionary() string {
 					detailBuilder.WriteString(formatInflectionTable(res.WordClass, res.Gender, res.Forms, m.dictionarySearch))
 				}
 				if compoundParts := m.getCompoundBreakdown(res.Word); len(compoundParts) >= 2 {
-					lineY := strings.Count(detailBuilder.String(), "\n")
+					lineY := detailBuilder.Lines()
 					detailBuilder.WriteString(boldStyle.Render("Compound Breakdown:") + "\n")
 					var partWords []string
 					for _, p := range compoundParts {
@@ -1580,7 +1597,7 @@ func (m *Model) renderSpotlightDictionary() string {
 					}
 					detailBuilder.WriteString(boldStyle.Render("Related Words:") + "\n")
 					for i, related := range m.dictionaryRelatedEntries {
-						lineY := strings.Count(detailBuilder.String(), "\n")
+						lineY := detailBuilder.Lines()
 						line := "  • " + related.Word
 						if related.Gender != "" {
 							line += " {" + related.Gender + "}"
@@ -1646,7 +1663,7 @@ func (m *Model) renderSpotlightDictionary() string {
 			joined := lipgloss.JoinHorizontal(lipgloss.Top, listWithScroll, detailPanel)
 			b.WriteString(joined)
 		} else {
-			listStartLine := strings.Count(b.String(), "\n")
+			listStartLine := b.Lines()
 			var listBuilder strings.Builder
 			for i := m.dictionaryScroll; i < len(m.dictionaryResults) && i < m.dictionaryScroll+maxResults; i++ {
 				res := m.dictionaryResults[i]
@@ -1705,7 +1722,7 @@ func (m *Model) renderSpotlightDictionary() string {
 	}
 
 	targetBodyLines := boxHeight - 3
-	currentLines := strings.Count(b.String(), "\n")
+	currentLines := b.Lines()
 	if currentLines < targetBodyLines {
 		b.WriteString(strings.Repeat("\n", targetBodyLines-currentLines))
 	}
