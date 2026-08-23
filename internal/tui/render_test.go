@@ -42,6 +42,108 @@ func TestRenderDecksBug(t *testing.T) {
 	}
 }
 
+var benchmarkRenderedDecks string
+
+func BenchmarkRenderDecksLargeCollection(b *testing.B) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	model.activeView = ViewDecks
+	model.width = 120
+	model.height = 40
+	model.breakpoint = BreakpointWide
+	model.decks = make([]core.Deck, 5_000)
+	for i := range model.decks {
+		model.decks[i] = core.Deck{
+			ID:           fmt.Sprintf("deck-%d", i),
+			Name:         fmt.Sprintf("Deutsch Übungsdeck %d", i),
+			Description:  "A representative deck description with Unicode: Straße und Grüße.",
+			Tags:         []string{"german", "practice", fmt.Sprintf("level-%d", i%6)},
+			TotalCards:   200,
+			NewCards:     20,
+			DueCards:     35,
+			ReviewsToday: 12,
+			SuccessRate:  0.85,
+		}
+	}
+	model.deckCursor = len(model.decks) / 2
+	layout := model.activeViewContentLayout()
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		model.hitboxes = model.hitboxes[:0]
+		benchmarkRenderedDecks = model.renderDecks(layout)
+	}
+}
+
+func TestRenderDecksLargeCollectionKeepsVisibleUnicodeRowsAndHitboxes(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		width  int
+		height int
+	}{
+		{name: "compact", width: 48, height: 10},
+		{name: "wide", width: 120, height: 14},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			model := NewModel(&mockRepo{}, &mockScheduler{})
+			model.activeView = ViewDecks
+			model.decks = make([]core.Deck, 1_000)
+			for i := range model.decks {
+				model.decks[i] = core.Deck{
+					ID:          fmt.Sprintf("deck-%04d", i),
+					Name:        fmt.Sprintf("Sammlung %04d", i),
+					Description: fmt.Sprintf("Straße und Grüße: Beschreibung %04d", i),
+					Tags:        []string{"Deutsch", fmt.Sprintf("Niveau-%d", i%6)},
+					TotalCards:  100,
+					DueCards:    10,
+				}
+			}
+			model.deckCursor = 500
+			layout := viewportLayout{X: 3, Y: 2, Width: tc.width, Height: tc.height}
+
+			view := stripANSI(model.renderDecks(layout))
+			for _, want := range []string{"Sammlung 0500", "Beschreibung 0500", "Straße", "Grüße", "Deutsch"} {
+				if !strings.Contains(view, want) {
+					t.Fatalf("rendered view missing visible Unicode content %q:\n%s", want, view)
+				}
+			}
+			if strings.Contains(view, "Sammlung 0000") || strings.Contains(view, "Beschreibung 0000") {
+				t.Fatalf("rendered view contains off-screen first deck:\n%s", view)
+			}
+			if got, want := model.deckTotalLines, len(model.decks)*4; got != want {
+				t.Fatalf("deckTotalLines = %d, want %d", got, want)
+			}
+
+			var selectedHitbox *Hitbox
+			scrollHitboxes := 0
+			for i := range model.hitboxes {
+				hit := &model.hitboxes[i]
+				if hit.ID == "deck-select-500" {
+					selectedHitbox = hit
+				}
+				if strings.HasPrefix(hit.ID, "deck-scroll-") {
+					scrollHitboxes++
+					if hit.X != layout.X+layout.Width-1 {
+						t.Fatalf("scrollbar hitbox X = %d, want %d", hit.X, layout.X+layout.Width-1)
+					}
+				}
+			}
+			if selectedHitbox == nil || selectedHitbox.Action == nil {
+				t.Fatal("selected visible deck has no actionable hitbox")
+			}
+			availableHeight := maxInt(5, layout.Height-2-3)
+			if scrollHitboxes != availableHeight {
+				t.Fatalf("scrollbar hitboxes = %d, want %d", scrollHitboxes, availableHeight)
+			}
+
+			_ = selectedHitbox.Action()
+			if model.deck.ID != "deck-0500" || model.activeView != ViewDashboard {
+				t.Fatalf("visible hitbox selected deck %q and view %q", model.deck.ID, model.activeView)
+			}
+		})
+	}
+}
+
 func TestRenderSettingsScrollbarAlignment(t *testing.T) {
 	m := NewModel(&mockRepo{}, &mockScheduler{})
 	m.activeView = ViewSettings

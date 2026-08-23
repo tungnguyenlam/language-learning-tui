@@ -321,15 +321,80 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		cram    string
 	}
 
+	// Row positions are cheap to calculate from deck metadata. Do that first so
+	// the viewport can be established before any formatting or styling occurs.
+	// Large imported collections otherwise paid to render every off-screen row
+	// on every Bubble Tea message.
+	firstLineOfCursor := -1
+	totalLines := 0
+	for i, deck := range filteredDecks {
+		if i == m.deckCursor {
+			firstLineOfCursor = totalLines
+		}
+		totalLines++ // main row
+		if i == m.deckCursor && m.editingDeckLimits {
+			totalLines++
+		}
+		if deck.Description != "" {
+			totalLines++
+		}
+		if len(deck.Tags) > 0 {
+			totalLines++
+		}
+		totalLines++ // spacer row
+	}
+
+	availableHeight := layout.Height - lineY - 3
+	if availableHeight < 5 {
+		availableHeight = 5
+	}
+
+	if firstLineOfCursor != -1 {
+		if firstLineOfCursor < m.deckScroll {
+			m.deckScroll = firstLineOfCursor
+		} else if firstLineOfCursor >= m.deckScroll+availableHeight-2 {
+			m.deckScroll = firstLineOfCursor - availableHeight + 3
+		}
+	}
+	m.deckTotalLines = totalLines
+	m.deckScroll = clampInt(m.deckScroll, 0, maxInt(0, m.deckTotalLines-availableHeight))
+
+	visibleStart := m.deckScroll
+	visibleEnd := minInt(totalLines, visibleStart+availableHeight)
+	visibleLines := make([]lineInfo, maxInt(0, visibleEnd-visibleStart))
 	var content strings.Builder
-	var lines []lineInfo
+	lineIndex := 0
+	emit := func(text string, info lineInfo) {
+		if lineIndex >= visibleStart && lineIndex < visibleEnd {
+			content.WriteString(text)
+			content.WriteByte('\n')
+			visibleLines[lineIndex-visibleStart] = info
+		}
+		lineIndex++
+	}
 
 	for i, deck := range filteredDecks {
+		deckLineCount := 2 // main and spacer
+		if i == m.deckCursor && m.editingDeckLimits {
+			deckLineCount++
+		}
+		if deck.Description != "" {
+			deckLineCount++
+		}
+		if len(deck.Tags) > 0 {
+			deckLineCount++
+		}
+		if lineIndex+deckLineCount <= visibleStart {
+			lineIndex += deckLineCount
+			continue
+		}
+		if lineIndex >= visibleEnd {
+			break
+		}
+
 		prefix := "  "
-		style := lipgloss.NewStyle()
 		if i == m.deckCursor {
 			prefix = "> "
-			style = style.Bold(true).Foreground(colorPink)
 		}
 
 		selectMark := "[ ] "
@@ -398,20 +463,19 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		}
 
 		// Main line
-		lines = append(lines, lineInfo{deckIdx: i, kind: "main", label: label, study: currBtnStyle.Render(studyBtn), cram: currBtnStyle.Render(cramBtn)})
-		content.WriteString(label + currBtnStyle.Render(studyBtn) + currBtnStyle.Render(cramBtn) + "\n")
+		studyRendered := currBtnStyle.Render(studyBtn)
+		cramRendered := currBtnStyle.Render(cramBtn)
+		emit(label+studyRendered+cramRendered, lineInfo{deckIdx: i, kind: "main", label: label, study: studyRendered, cram: cramRendered})
 
 		if i == m.deckCursor && m.editingDeckLimits {
 			limitsLabel := fmt.Sprintf("     Limits: New %d, Review %d (h/l switch, +/- adjust)",
 				deck.NewCardsPerDay, deck.ReviewLimitPerDay)
-			lines = append(lines, lineInfo{deckIdx: i, kind: "limits"})
-			content.WriteString(limitsLabel + "\n")
+			emit(limitsLabel, lineInfo{deckIdx: i, kind: "limits"})
 		}
 
 		if deck.Description != "" {
 			desc := truncateLine(deck.Description, layout.Width-10)
-			lines = append(lines, lineInfo{deckIdx: i, kind: "desc"})
-			content.WriteString(fmt.Sprintf("     %s\n", mutedStyle.Render(desc)))
+			emit(fmt.Sprintf("     %s", mutedStyle.Render(desc)), lineInfo{deckIdx: i, kind: "desc"})
 		}
 		if len(deck.Tags) > 0 {
 			tags := strings.Join(deck.Tags, ", ")
@@ -422,35 +486,10 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 				}
 			*/
 			resTagsStyled := mutedStyle.Render(resTags)
-			lines = append(lines, lineInfo{deckIdx: i, kind: "tags"})
-			content.WriteString(fmt.Sprintf("     Tags: %s\n", resTagsStyled))
+			emit(fmt.Sprintf("     Tags: %s", resTagsStyled), lineInfo{deckIdx: i, kind: "tags"})
 		}
-		lines = append(lines, lineInfo{deckIdx: i, kind: "spacer"})
-		content.WriteString("\n")
+		emit("", lineInfo{deckIdx: i, kind: "spacer"})
 	}
-
-	availableHeight := layout.Height - lineY - 3
-	if availableHeight < 5 {
-		availableHeight = 5
-	}
-
-	// Auto-scroll to cursor
-	firstLineOfCursor := -1
-	for idx, li := range lines {
-		if li.deckIdx == m.deckCursor {
-			firstLineOfCursor = idx
-			break
-		}
-	}
-	if firstLineOfCursor != -1 {
-		if firstLineOfCursor < m.deckScroll {
-			m.deckScroll = firstLineOfCursor
-		} else if firstLineOfCursor >= m.deckScroll+availableHeight-2 {
-			m.deckScroll = firstLineOfCursor - availableHeight + 3
-		}
-	}
-	m.deckTotalLines = len(lines)
-	m.deckScroll = clampInt(m.deckScroll, 0, maxInt(0, m.deckTotalLines-availableHeight))
 
 	footer := ""
 	if m.searchingDecks {
@@ -478,10 +517,11 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		ScrollOffset: &m.deckScroll,
 		TotalLines:   &m.deckTotalLines,
 		OnLine: func(lineIndex int, lineCtx *RenderContext, content string) {
-			if lineIndex < 0 || lineIndex >= len(lines) {
+			visibleIndex := lineIndex - visibleStart
+			if visibleIndex < 0 || visibleIndex >= len(visibleLines) {
 				return
 			}
-			li := lines[lineIndex]
+			li := visibleLines[visibleIndex]
 			if li.kind == "main" {
 				deck := filteredDecks[li.deckIdx]
 				lineCtx.RegisterHitboxWithAction(fmt.Sprintf("deck-select-%d", li.deckIdx), lipgloss.Width(li.label), 1, func() tea.Cmd {

@@ -1,3 +1,21 @@
+# 2026-08-23 (Viewport-First Decks Rendering)
+
+Changed the Decks renderer to calculate cheap row positions for the collection
+first and format/style only the viewport's decks. A retained 5,000-deck
+benchmark improved from about 88-92 ms and 31 MB per render to about 233-235
+microseconds and 58 KB, with allocations falling from roughly 775,500 to 1,460.
+Focused coverage protects compact and wide scrolling, Unicode metadata,
+scrollbar placement, and visible deck mouse actions.
+
+### Verification
+
+- `go test ./internal/tui -count=1` passed.
+- `go test -race ./internal/tui -count=1` passed.
+- Focused Decks E2E and all nine responsive-layout cases passed.
+- `go test ./... -count=1` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512
+  entries), smoke test, binary build, and core E2E suite (35 passed in 37.18s).
+
 # 2026-08-23 (SQLite Migration Startup Reconnaissance)
 
 Benchmarked up-to-date migration bookkeeping before considering consolidation

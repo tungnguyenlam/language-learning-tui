@@ -4,17 +4,26 @@ Last updated: 2026-08-23
 
 ## Current Milestone
 
-Bounded storage performance pass complete; rotate to a new TUI hot-path area
-without revisiting already-measured storage candidates.
+Viewport-first Decks rendering is complete and verified; rotate to another
+previously unmeasured TUI render path.
 
 ## Exact Next Action
 
-Inspect one unmeasured TUI render path for repeated full-buffer conversion,
-sorting, styling of off-screen rows, or other per-message work. Establish a
-focused benchmark/allocation or complexity baseline before selecting a change.
+Inspect Practice Hub rendering for its current full-list styling before
+`AutoScrollViewport`, or choose a stronger unmeasured render candidate if a
+focused benchmark shows the fixed 12-item list is negligible.
 
 ## Completed This Pass
 
+- Benchmarked Decks rendering with 5,000 representative decks at about 88-92
+  ms/op, 31 MB/op, and 775,500 allocs/op.
+- Decks rendering now establishes row positions first and formats/styles only
+  viewport decks; the retained benchmark measures about 233-235 microseconds,
+  58 KB, and 1,460 allocations per render.
+- Added compact/wide regression coverage for scrolled Unicode metadata,
+  scrollbar placement/count, and visible row mouse actions.
+- Focused tests, the TUI race suite, repository Go tests, Decks/responsive E2E,
+  and the full verification gate pass.
 - Confirmed `recordDeckSearch` and every Decks history-clear path call
   `Repository.SetSetting` synchronously from input/hitbox handling and discard
   its error.
@@ -114,13 +123,21 @@ focused benchmark/allocation or complexity baseline before selecting a change.
 
 ## Acceptance Criteria
 
-- The next candidate comes from a previously unmeasured render path and has a
-  reproducible benchmark/allocation pattern or clear repeated-work argument.
-- Any optimization preserves rendered output, hitboxes, compact layouts, and
+- The next candidate is previously unmeasured and has a reproducible benchmark,
+  allocation pattern, or clear repeated-work argument.
+- Any optimization preserves output, scrolling, hitboxes, compact layouts, and
   Unicode behavior with focused coverage.
 
 ## Last Verification
 
+- Decks render batch: `go test ./internal/tui -count=1`,
+  `go test -race ./internal/tui -count=1`, and `go test ./... -count=1` passed
+  on 2026-08-23.
+- Decks render batch: focused Decks E2E and all nine responsive-layout cases
+  passed on 2026-08-23.
+- Decks render batch: `./scripts/verify.sh` passed on 2026-08-23; Go tests, vet,
+  offline dict.cc import (834,512 entries), smoke test, binary build, and core
+  E2E suite 35 passed in 37.18s.
 - `go test ./internal/tui -count=1` passed on 2026-08-23.
 - `go test -race ./internal/tui -count=1` passed on 2026-08-23.
 - `go test ./...` passed on 2026-08-23.
@@ -158,6 +175,16 @@ focused benchmark/allocation or complexity baseline before selecting a change.
   E2E suite 35 passed in 37.39s.
 
 ## Current Batch Evidence
+
+- `renderDecks` previously formatted and styled every filtered deck, built one
+  full rendered buffer plus per-line metadata, then `RenderList` splits that
+  buffer and displays only the viewport. The work is O(total rendered content)
+  per message even when only a few rows are visible.
+- The new 5,000-deck benchmark measured about 88-92 ms/op, 31 MB/op, and
+  775,500 allocs/op before the change.
+- Viewport-first row calculation now measures about 233-235 microseconds/op,
+  58 KB/op, and 1,460 allocs/op in the same benchmark (roughly 380x faster and
+  more than 99% fewer allocated bytes); focused Decks tests pass.
 
 - The Statistics view consumes only the last seven `CardsAddedPerDay` keys,
   while storage previously grouped the full `notes` table.
@@ -205,5 +232,5 @@ focused benchmark/allocation or complexity baseline before selecting a change.
 
 - Streak optimization is committed as `4e77712`, Cards Added statistics as
   `236c63f`, review-summary consolidation as `2161297`, and shared card
-  statistics as `5ea61d3`; the negative startup finding and next-area handoff
-  are ready for their documentation checkpoint.
+  statistics as `5ea61d3`; the viewport-first Decks render batch is fully
+  verified and ready to commit.
