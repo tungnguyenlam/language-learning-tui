@@ -4,17 +4,26 @@ Last updated: 2026-08-23
 
 ## Current Milestone
 
-Viewport-first Decks rendering is complete and verified; rotate to another
-previously unmeasured TUI render path.
+Statistics scrolling is corrected and verified; optimize its measured
+large-collection per-deck render path.
 
 ## Exact Next Action
 
-Inspect Practice Hub rendering for its current full-list styling before
-`AutoScrollViewport`, or choose a stronger unmeasured render candidate if a
-focused benchmark shows the fixed 12-item list is negligible.
+Reintroduce the temporary 5,000-deck Statistics benchmark, then represent the
+per-deck success section as virtual rows so only visible deck rows are styled.
+Preserve the now-explicit full-buffer content-offset behavior.
 
 ## Completed This Pass
 
+- Reproduced Statistics ignoring nonzero scroll offsets because `RenderList`
+  inferred content origin from line-count equality and its trailing newline
+  made the full buffer appear to be a viewport slice.
+- Added explicit `ContentOffset` semantics and declared the visible origin for
+  Browser, Cram, and Decks; Statistics and Settings retain the zero default.
+- Added shared-list full/sliced-buffer coverage and an integration test that
+  scrolls Statistics directly to a later deck-success row.
+- Focused tests, the TUI race suite, all Go packages, and full verification pass
+  for the scrolling correction.
 - Benchmarked Decks rendering with 5,000 representative decks at about 88-92
   ms/op, 31 MB/op, and 775,500 allocs/op.
 - Decks rendering now establishes row positions first and formats/styles only
@@ -123,13 +132,19 @@ focused benchmark shows the fixed 12-item list is negligible.
 
 ## Acceptance Criteria
 
-- The next candidate is previously unmeasured and has a reproducible benchmark,
-  allocation pattern, or clear repeated-work argument.
-- Any optimization preserves output, scrolling, hitboxes, compact layouts, and
-  Unicode behavior with focused coverage.
+- Statistics avoids formatting and styling off-screen per-deck success rows.
+- The 5,000-deck benchmark materially improves from the 26.1 ms/9.38 MB
+  baseline while output and scrolling remain unchanged.
+- Focused regression, affected package, race, and full verification pass.
 
 ## Last Verification
 
+- Explicit list-offset batch: focused list/Statistics tests,
+  `go test ./internal/tui -count=1`, `go test -race ./internal/tui -count=1`,
+  and `go test ./... -count=1` passed on 2026-08-23.
+- Explicit list-offset batch: `./scripts/verify.sh` passed on 2026-08-23; Go
+  tests, vet, offline dict.cc import (834,512 entries), smoke test, binary build,
+  and core E2E suite 35 passed in 37.76s.
 - Decks render batch: `go test ./internal/tui -count=1`,
   `go test -race ./internal/tui -count=1`, and `go test ./... -count=1` passed
   on 2026-08-23.
@@ -176,6 +191,15 @@ focused benchmark shows the fixed 12-item list is negligible.
 
 ## Current Batch Evidence
 
+- A 5,000-deck Statistics benchmark measured about 26.1 ms/op, 9.38 MB/op, and
+  232,345 allocs/op, confirming it as the next performance candidate.
+- During benchmark inspection, `statsTotalLines` was found to count the trailing
+  newline while `RenderList` trims it. The resulting one-line mismatch selects
+  the viewport-slice branch, which always reads content from row zero even when
+  `statsScroll` is nonzero.
+- Practice Hub's fixed 12-item full-list path measures about 0.54-0.57 ms/op,
+  202 KB/op, and 7,033 allocs/op. Its absolute cost is bounded, so no code was
+  changed and reconnaissance rotated to the unbounded Statistics deck list.
 - `renderDecks` previously formatted and styled every filtered deck, built one
   full rendered buffer plus per-line metadata, then `RenderList` splits that
   buffer and displays only the viewport. The work is O(total rendered content)
@@ -232,5 +256,5 @@ focused benchmark shows the fixed 12-item list is negligible.
 
 - Streak optimization is committed as `4e77712`, Cards Added statistics as
   `236c63f`, review-summary consolidation as `2161297`, and shared card
-  statistics as `5ea61d3`; the viewport-first Decks render batch is fully
-  verified and ready to commit.
+  statistics as `5ea61d3`. Viewport-first Decks rendering is committed as
+  `4b7f3bd`; the explicit list-offset fix is verified and ready to commit.

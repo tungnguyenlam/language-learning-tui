@@ -178,10 +178,11 @@ func (m *Model) renderBrowserAt(layout viewportLayout) string {
 	contentStr := content.String()
 
 	listView := m.RenderList(layout.WithHeight(availableHeight).WithY(ctx.currY), contentStr, ListOptions{
-		HitboxPrefix: "browser",
-		View:         ViewBrowser,
-		ScrollOffset: &m.browserScroll,
-		TotalLines:   &totalLines,
+		HitboxPrefix:  "browser",
+		View:          ViewBrowser,
+		ContentOffset: m.browserScroll,
+		ScrollOffset:  &m.browserScroll,
+		TotalLines:    &totalLines,
 	})
 	ctx.Write(listView)
 

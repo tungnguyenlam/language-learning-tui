@@ -1,3 +1,21 @@
+# 2026-08-23 (Explicit Scrollable-List Content Offsets)
+
+Fixed Statistics scrolling, which rendered the beginning of its content even
+when `statsScroll` was nonzero. `RenderList` no longer guesses whether content
+is a full buffer from slice lengths; all viewport-slice callers now declare the
+global origin of their first rendered line. Full-buffer Statistics and Settings
+use the zero default. Regression coverage protects both list modes and direct
+Statistics scrolling to a later per-deck row.
+
+### Verification
+
+- Focused shared-list and Statistics integration tests passed.
+- `go test ./internal/tui -count=1` passed.
+- `go test -race ./internal/tui -count=1` passed.
+- `go test ./... -count=1` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512
+  entries), smoke test, binary build, and core E2E suite (35 passed in 37.76s).
+
 # 2026-08-23 (Viewport-First Decks Rendering)
 
 Changed the Decks renderer to calculate cheap row positions for the collection

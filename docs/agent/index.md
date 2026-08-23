@@ -42,6 +42,9 @@ Last updated: 2026-08-23
 
 ## Verification Status
 
+- ✅ `./scripts/verify.sh` passed on 2026-08-23 after the explicit list-offset
+  scrolling fix (Go tests, vet, dict.cc import, smoke test, binary build, core
+  E2E suite: 35 passed in 37.76s)
 - ✅ `./scripts/verify.sh` passed on 2026-08-23 after viewport-first Decks
   rendering (Go tests, vet, dict.cc import, smoke test, binary build, core E2E
   suite: 35 passed in 37.18s)

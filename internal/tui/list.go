@@ -11,9 +11,13 @@ type ListOptions struct {
 	HitboxPrefix string
 	View         View
 	Footer       string
-	ScrollOffset *int
-	TotalLines   *int
-	Cursor       int
+	// ContentOffset is the global line index represented by content's first
+	// line. Full buffers use zero; viewport-only buffers must pass their scroll
+	// offset explicitly.
+	ContentOffset int
+	ScrollOffset  *int
+	TotalLines    *int
+	Cursor        int
 	// OnLine is called for each visible line to register hitboxes.
 	OnLine func(lineIdx int, ctx *RenderContext, content string)
 }
@@ -49,16 +53,11 @@ func (m *Model) RenderList(layout viewportLayout, content string, opts ListOptio
 
 	for i := 0; i < maxVisible; i++ {
 		lineIdx := i + scroll
+		contentIdx := lineIdx - opts.ContentOffset
 
 		var lineContent string
-		if len(lines) == totalLines {
-			if lineIdx < totalLines {
-				lineContent = lines[lineIdx]
-			}
-		} else {
-			if i < len(lines) {
-				lineContent = lines[i]
-			}
+		if contentIdx >= 0 && contentIdx < len(lines) {
+			lineContent = lines[contentIdx]
 		}
 
 		if opts.OnLine != nil && lineIdx < totalLines {

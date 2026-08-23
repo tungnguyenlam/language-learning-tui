@@ -245,10 +245,11 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 	contentStr := content.String()
 
 	listView := m.RenderList(layout.WithHeight(availableHeight).WithY(ctx.currY), contentStr, ListOptions{
-		HitboxPrefix: "cram",
-		View:         ViewCram,
-		ScrollOffset: &m.cramScroll,
-		TotalLines:   &totalLines,
+		HitboxPrefix:  "cram",
+		View:          ViewCram,
+		ContentOffset: m.cramScroll,
+		ScrollOffset:  &m.cramScroll,
+		TotalLines:    &totalLines,
 	})
 
 	ctx.Write(listView)

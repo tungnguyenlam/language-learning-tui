@@ -279,6 +279,34 @@ func TestRenderScrollbarColumnUnification(t *testing.T) {
 	}
 }
 
+func TestRenderListUsesExplicitContentOffset(t *testing.T) {
+	for _, tc := range []struct {
+		name          string
+		content       string
+		contentOffset int
+		scroll        int
+		want          string
+	}{
+		{name: "full buffer with trailing line mismatch", content: "zero\none\ntwo\n", contentOffset: 0, scroll: 1, want: "one"},
+		{name: "viewport slice", content: "two\nthree\n", contentOffset: 2, scroll: 2, want: "two"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			model := NewModel(&mockRepo{}, &mockScheduler{})
+			totalLines := 4
+			got := model.RenderList(viewportLayout{Width: 20, Height: 1}, tc.content, ListOptions{
+				HitboxPrefix:  "test",
+				View:          ViewStatistics,
+				ContentOffset: tc.contentOffset,
+				ScrollOffset:  &tc.scroll,
+				TotalLines:    &totalLines,
+			})
+			if line := strings.TrimSpace(stripANSI(got)); !strings.HasPrefix(line, tc.want) {
+				t.Fatalf("rendered line = %q, want content %q", line, tc.want)
+			}
+		})
+	}
+}
+
 func TestPracticeHubAutoScrollbarAndFullHeight(t *testing.T) {
 	m := NewModel(nil, nil)
 	m.width = 120

@@ -511,11 +511,12 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 	}
 
 	listView := m.RenderList(layout.WithHeight(availableHeight).WithY(layout.Y+lineY), content.String(), ListOptions{
-		HitboxPrefix: "deck",
-		View:         ViewDecks,
-		Footer:       footer,
-		ScrollOffset: &m.deckScroll,
-		TotalLines:   &m.deckTotalLines,
+		HitboxPrefix:  "deck",
+		View:          ViewDecks,
+		Footer:        footer,
+		ContentOffset: visibleStart,
+		ScrollOffset:  &m.deckScroll,
+		TotalLines:    &m.deckTotalLines,
 		OnLine: func(lineIndex int, lineCtx *RenderContext, content string) {
 			visibleIndex := lineIndex - visibleStart
 			if visibleIndex < 0 || visibleIndex >= len(visibleLines) {
