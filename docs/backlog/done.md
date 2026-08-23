@@ -1,3 +1,18 @@
+# 2026-08-23 (Async Dictionary Compound Precomputation)
+
+Removed compound-validation queries from Dictionary rendering and shortcut
+handling. Current-result decomposition now runs in a timeout-bound command,
+stores validated parts through a search-identity-guarded message, and keeps all
+four render variants cache-only. Stale compound results and errors are ignored.
+
+### Verification
+
+- Focused compound render/shortcut/identity tests passed.
+- `go test -race ./internal/tui -count=1` passed.
+- `go test ./...` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512
+  entries), smoke test, binary build, and core E2E suite (35 passed in 37.77s).
+
 # 2026-08-23 (Async Settings Persistence)
 
 Moved config and secrets callbacks out of Settings keyboard/mouse handlers into

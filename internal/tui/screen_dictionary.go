@@ -31,7 +31,7 @@ func (dictionaryScreen) HandleKey(m *Model, msg tea.KeyPressMsg) (tea.Cmd, bool)
 			if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 				entry := m.dictionaryResults[m.dictionaryCursor]
 				m.recordDictionaryView(entry)
-				relatedCmd := m.findRelatedEntries(entry.Word)
+				relatedCmd := tea.Batch(m.findRelatedEntries(entry.Word), m.loadCompoundBreakdown(entry.Word))
 				if cmd == nil {
 					cmd = relatedCmd
 				} else {

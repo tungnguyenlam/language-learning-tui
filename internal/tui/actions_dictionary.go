@@ -29,6 +29,13 @@ type dictRelatedEntriesMsg struct {
 	entries []core.DictionaryEntry
 }
 
+type compoundBreakdownMsg struct {
+	searchID int
+	word     string
+	parts    []content.CompoundPart
+	err      error
+}
+
 type dictDiscoverEntriesMsg struct {
 	entries []core.DictionaryEntry
 }
@@ -465,26 +472,46 @@ func (m *Model) cycleDictionaryHistory(direction int) tea.Cmd {
 }
 
 func (m *Model) getCompoundBreakdown(word string) []content.CompoundPart {
+	if word == "" || m.compoundCache == nil {
+		return nil
+	}
+	return m.compoundCache[word]
+}
+
+func (m *Model) loadCompoundBreakdown(word string) tea.Cmd {
+	word = strings.TrimSpace(word)
 	if word == "" {
 		return nil
 	}
-	if m.compoundCache == nil {
-		m.compoundCache = make(map[string][]content.CompoundPart)
+	if _, ok := m.compoundCache[word]; ok {
+		return nil
 	}
-	if parts, ok := m.compoundCache[word]; ok {
-		return parts
-	}
-
-	var validate content.WordValidator
-	if dictRepo, ok := m.repo.(core.DictionaryRepository); ok {
-		validate = func(w string) bool {
-			ok, _ := dictRepo.Exists(context.Background(), w)
-			return ok
+	searchID := m.dictionarySearchID
+	return func() tea.Msg {
+		var validate content.WordValidator
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if dictRepo, ok := m.repo.(core.DictionaryRepository); ok {
+			var validationErr error
+			validate = func(candidate string) bool {
+				if validationErr != nil {
+					return false
+				}
+				exists, err := dictRepo.Exists(ctx, candidate)
+				if err != nil {
+					validationErr = err
+					return false
+				}
+				return exists
+			}
+			parts := content.DecomposeCompound(word, validate)
+			if validationErr != nil {
+				return compoundBreakdownMsg{searchID: searchID, word: word, err: fmt.Errorf("load compound breakdown for %q: %w", word, validationErr)}
+			}
+			return compoundBreakdownMsg{searchID: searchID, word: word, parts: parts}
 		}
+		return compoundBreakdownMsg{searchID: searchID, word: word, parts: content.DecomposeCompound(word, nil)}
 	}
-	parts := content.DecomposeCompound(word, validate)
-	m.compoundCache[word] = parts
-	return parts
 }
 
 func (m *Model) saveDictionaryHistory() tea.Cmd {

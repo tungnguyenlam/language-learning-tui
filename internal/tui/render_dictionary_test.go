@@ -10,6 +10,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 	"deutsch-tui/internal/ai"
+	"deutsch-tui/internal/content"
 	"deutsch-tui/internal/core"
 )
 
@@ -1048,7 +1049,8 @@ func TestDictionaryKAndJKeyHandling(t *testing.T) {
 
 type mockDictRepo struct {
 	mockRepo
-	entries map[string]core.DictionaryEntry
+	entries     map[string]core.DictionaryEntry
+	existsCalls int
 }
 
 func (r *mockDictRepo) GetEntry(ctx context.Context, id string) (core.DictionaryEntry, error) {
@@ -1083,12 +1085,27 @@ func (r *mockDictRepo) RandomEntries(ctx context.Context, limit int) ([]core.Dic
 }
 
 func (r *mockDictRepo) Exists(ctx context.Context, word string) (bool, error) {
+	r.existsCalls++
 	for _, e := range r.entries {
 		if strings.EqualFold(e.Word, word) {
 			return true, nil
 		}
 	}
 	return false, nil
+}
+
+func loadCompoundForTest(t *testing.T, m *Model, word string) {
+	t.Helper()
+	cmd := m.loadCompoundBreakdown(word)
+	if cmd == nil {
+		t.Fatalf("expected compound load command for %q", word)
+	}
+	for _, msg := range executeCmd(cmd) {
+		m.Update(msg)
+	}
+	if m.isErrorStatus {
+		t.Fatalf("load compound %q: %s", word, m.status)
+	}
 }
 
 func TestDictionaryStarringAndFiltering(t *testing.T) {
@@ -1587,6 +1604,7 @@ func TestDictionaryNumberKeyNavigation(t *testing.T) {
 	}
 	m.dictionaryCursor = 0
 	m.dictionaryFocusResults = true
+	loadCompoundForTest(t, m, "Handschuh")
 
 	// Pressing '1' should jump search to 1st compound part "Hand"
 	cmd, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Text: "1", Code: '1'})
@@ -1600,12 +1618,57 @@ func TestDictionaryNumberKeyNavigation(t *testing.T) {
 	// Pressing '2' on Handschuh should jump search to 2nd compound part "Schuh"
 	m.dictionarySearch = "Handschuh"
 	m.dictionaryFocusResults = true
+	loadCompoundForTest(t, m, "Handschuh")
 	cmd, handled = (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Text: "2", Code: '2'})
 	if !handled || cmd == nil {
 		t.Fatalf("expected key '2' to be handled with search command")
 	}
 	if m.dictionarySearch != "Schuh" {
 		t.Fatalf("expected search to be 'Schuh', got %q", m.dictionarySearch)
+	}
+}
+
+func TestDictionaryRenderUsesOnlyPrecomputedCompoundBreakdowns(t *testing.T) {
+	repo := &mockDictRepo{entries: map[string]core.DictionaryEntry{
+		"1": {ID: "1", Word: "Handschuh", Translation: "glove"},
+		"2": {ID: "2", Word: "Hand", Translation: "hand"},
+		"3": {ID: "3", Word: "Schuh", Translation: "shoe"},
+	}}
+	m := NewModel(repo, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.width, m.height = 120, 40
+	m.dictionaryResults = []core.DictionaryEntry{repo.entries["1"]}
+	m.dictionaryCursor = 0
+
+	view := stripANSI(m.renderDictionary(m.activeViewContentLayout()))
+	if repo.existsCalls != 0 {
+		t.Fatalf("DictionaryRepository.Exists calls during render = %d, want 0", repo.existsCalls)
+	}
+	if strings.Contains(view, "Compound Breakdown:") {
+		t.Fatal("render should not synthesize an uncached compound breakdown")
+	}
+
+	loadCompoundForTest(t, m, "Handschuh")
+	if repo.existsCalls == 0 {
+		t.Fatal("compound command should validate candidates through the repository")
+	}
+	view = stripANSI(m.renderDictionary(m.activeViewContentLayout()))
+	if !strings.Contains(view, "Hand + Schuh") {
+		t.Fatalf("render missing precomputed compound breakdown:\n%s", view)
+	}
+
+	m.dictionarySearchID++
+	m.Update(compoundBreakdownMsg{
+		searchID: m.dictionarySearchID - 1,
+		word:     "Altwort",
+		parts:    []content.CompoundPart{{Word: "Alt"}, {Word: "Wort"}},
+		err:      errors.New("stale failure"),
+	})
+	if parts := m.getCompoundBreakdown("Altwort"); len(parts) != 0 {
+		t.Fatalf("stale compound response was cached: %#v", parts)
+	}
+	if m.isErrorStatus {
+		t.Fatal("stale compound error should not affect status")
 	}
 }
 
@@ -1624,6 +1687,7 @@ func TestMultiPartCompoundDecompositionAndHitboxes(t *testing.T) {
 	m.height = 40
 	m.dictionaryResults = []core.DictionaryEntry{repo.entries["1"]}
 	m.dictionaryCursor = 0
+	loadCompoundForTest(t, m, "Krankenhausarzt")
 
 	view := m.renderDictionary(m.activeViewContentLayout())
 	if !strings.Contains(view, "Kranken + Haus + Arzt") {
@@ -1664,6 +1728,7 @@ func TestSpotlightDictionaryDetailParity(t *testing.T) {
 	m.dictionaryResults = []core.DictionaryEntry{repo.entries["1"]}
 	m.dictionaryCursor = 0
 	m.dictionaryRelatedEntries = []core.DictionaryEntry{repo.entries["2"]}
+	loadCompoundForTest(t, m, "Handschuh")
 
 	view := stripANSI(m.renderSpotlightDictionary())
 	if !strings.Contains(view, "SPOTLIGHT DICTIONARY") {

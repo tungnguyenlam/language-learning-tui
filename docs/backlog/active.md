@@ -4,14 +4,14 @@ Last updated: 2026-08-23
 
 ## Current Milestone
 
-Bounded reconnaissance: identify the next evidence-backed correctness or
-hot-path performance batch after removing synchronous TUI persistence writes.
+Import/backup responsiveness: remove synchronous backup-directory reads from
+view navigation and restore-key handling.
 
 ## Exact Next Action
 
-Commit the verified Settings persistence batch, then inspect TUI handlers for
-remaining direct repository/filesystem/provider calls outside `tea.Cmd`s. If
-none remain, rotate to one measured rendering or SQLite query hot path.
+Commit the verified compound batch, then replace `refreshLastBackupPath` with a
+command/message flow used when entering Import and requesting Restore; preserve
+confirmation behavior and distinguish no-backup from filesystem errors.
 
 ## Completed This Pass
 
@@ -56,17 +56,35 @@ none remain, rotate to one measured rendering or SQLite query hot path.
   snapshot isolation, config/secrets errors, and race safety.
 - Full repository verification passed for Settings persistence; the batch is
   ready to commit.
+- Committed Settings persistence as `fc402fa`.
+- Reconnaissance found `getCompoundBreakdown` calls
+  `DictionaryRepository.Exists` synchronously on cache misses; four Dictionary
+  render sites call it, so first render performs SQLite work from `View()`.
+- Compound breakdown lookup is now cache-only in render/key paths; validated
+  decomposition runs in a two-second command after current search/cursor
+  changes and preserves related-entry/recent-view command batches.
+- Compound responses and errors carry the search identity, so stale enrichment
+  cannot populate cache or overwrite current status.
+- Regression coverage proves rendering makes zero `Exists` calls, precomputed
+  validated parts still render and drive shortcuts, and stale replies are
+  ignored; focused and race tests pass.
+- Full repository verification passed for async compound precomputation; the
+  batch is ready to commit.
+- Follow-up reconnaissance found `refreshLastBackupPath` calls `os.ReadDir`
+  synchronously when entering Import and when Restore has no cached path.
 
 ## Top Issues
 
+- Backup discovery performs filesystem I/O in Import navigation/key handlers.
+- Deck TSV export creates its output directory before returning a command.
 - View-local state still lives on `Model`; screen files own render + keys only.
 
 ## Acceptance Criteria
 
-- Reconnaissance produces a concrete reproduction/measurement or records that
-  the inspected area has no actionable violation.
-- The selected next batch is narrow, locally verifiable, and prioritized by the
-  bug-fix/performance ordering in `prompt/improve.md`.
+- Import navigation and Restore input perform no filesystem work directly.
+- Backup discovery errors surface while a legitimate no-backup state keeps the
+  existing guidance.
+- Focused tests, `go test ./...`, and `./scripts/verify.sh` pass.
 
 ## Last Verification
 
@@ -88,6 +106,10 @@ none remain, rotate to one measured rendering or SQLite query hot path.
   `go test -race ./internal/tui -count=1` passed on 2026-08-23.
 - Settings batch: `go test ./...` and `./scripts/verify.sh` passed on
   2026-08-23; core E2E suite 35 passed in 37.91s.
+- Compound batch: focused tests and `go test -race ./internal/tui -count=1`
+  passed on 2026-08-23.
+- Compound batch: `go test ./...` and `./scripts/verify.sh` passed on
+  2026-08-23; core E2E suite 35 passed in 37.77s.
 - Previous pass: `./scripts/verify.sh` passed on 2026-08-23 (35 E2E tests).
 - Current pass: `go test ./internal/tui ./internal/storage/sqlite` passed.
 - `./scripts/verify.sh` passed on 2026-08-23: Go tests, vet, offline dict.cc
@@ -98,4 +120,4 @@ none remain, rotate to one measured rendering or SQLite query hot path.
 
 ## Repository State
 
-- Settings persistence batch is verified and pending commit.
+- Compound precomputation is verified and pending commit.

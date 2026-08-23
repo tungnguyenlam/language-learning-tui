@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"deutsch-tui/internal/ai"
+	"deutsch-tui/internal/content"
 	"deutsch-tui/internal/core"
 
 	tea "charm.land/bubbletea/v2"
@@ -52,9 +53,24 @@ func (m *Model) handleAsyncMsg(msg tea.Msg) (tea.Cmd, bool) {
 		var cmd tea.Cmd
 		wide := m.width > 80
 		if (m.dictionaryDetailView || wide) && len(msg.results) > 0 {
-			cmd = m.findRelatedEntries(msg.results[0].Word)
+			cmd = tea.Batch(m.findRelatedEntries(msg.results[0].Word), m.loadCompoundBreakdown(msg.results[0].Word))
 		}
 		return cmd, true
+	case compoundBreakdownMsg:
+		if msg.searchID != m.dictionarySearchID {
+			return nil, true
+		}
+		if msg.err != nil {
+			m.isErrorStatus = true
+			m.status = friendlyError(msg.err)
+			m.logger.Error("Error occurred: %v", msg.err)
+			return nil, true
+		}
+		if m.compoundCache == nil {
+			m.compoundCache = make(map[string][]content.CompoundPart)
+		}
+		m.compoundCache[msg.word] = msg.parts
+		return nil, true
 	case dictHistoryLoadedMsg:
 		m.dictionarySearchHistory = msg
 		return nil, true

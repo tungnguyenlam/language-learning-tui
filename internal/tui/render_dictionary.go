@@ -675,7 +675,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 						m.dictionaryDetailScroll = 0
 						inspectCmd := m.inspectDictionaryCursor()
 						if m.dictionaryDetailVisible() {
-							return tea.Batch(inspectCmd, m.findRelatedEntries(m.dictionaryResults[idx].Word))
+							return tea.Batch(inspectCmd, m.findRelatedEntries(m.dictionaryResults[idx].Word), m.loadCompoundBreakdown(m.dictionaryResults[idx].Word))
 						}
 						return inspectCmd
 					}
@@ -946,7 +946,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 					if m.dictionaryCursor == idx {
 						m.dictionaryDetailView = true
 						m.dictionaryDetailScroll = 0
-						return tea.Batch(m.inspectDictionaryCursor(), m.findRelatedEntries(m.dictionaryResults[idx].Word))
+						return tea.Batch(m.inspectDictionaryCursor(), m.findRelatedEntries(m.dictionaryResults[idx].Word), m.loadCompoundBreakdown(m.dictionaryResults[idx].Word))
 					}
 					m.dictionaryCursor = idx
 					m.dictionaryDetailScroll = 0
@@ -1480,7 +1480,7 @@ func (m *Model) renderSpotlightDictionary() string {
 						m.dictionaryDetailScroll = 0
 						inspectCmd := m.inspectDictionaryCursor()
 						if m.dictionaryDetailVisible() && idx >= 0 && idx < len(m.dictionaryResults) {
-							return tea.Batch(inspectCmd, m.findRelatedEntries(m.dictionaryResults[idx].Word))
+							return tea.Batch(inspectCmd, m.findRelatedEntries(m.dictionaryResults[idx].Word), m.loadCompoundBreakdown(m.dictionaryResults[idx].Word))
 						}
 						return inspectCmd
 					},
@@ -1697,7 +1697,7 @@ func (m *Model) renderSpotlightDictionary() string {
 							m.dictionaryDetailScroll = 0
 							inspectCmd := m.inspectDictionaryCursor()
 							if idx >= 0 && idx < len(m.dictionaryResults) {
-								return tea.Batch(inspectCmd, m.findRelatedEntries(m.dictionaryResults[idx].Word))
+								return tea.Batch(inspectCmd, m.findRelatedEntries(m.dictionaryResults[idx].Word), m.loadCompoundBreakdown(m.dictionaryResults[idx].Word))
 							}
 							return inspectCmd
 						}
