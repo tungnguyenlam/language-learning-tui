@@ -1,3 +1,17 @@
+# 2026-08-23 (SQLite Migration Startup Reconnaissance)
+
+Benchmarked up-to-date migration bookkeeping before considering consolidation
+of its per-version applied checks. Across three 200-iteration runs, `Migrate`
+averaged about 59–87 microseconds in memory and 80–82 microseconds against a
+temporary file database. This is negligible one-time startup work, so the
+ordered transactional migration implementation was intentionally left
+unchanged and the temporary benchmark was removed.
+
+### Verification
+
+- `go test ./internal/storage/sqlite -run '^$' -bench 'BenchmarkMigrateUpToDate' -benchtime=200x -count=3` passed.
+- `git diff --check` passed after removing the temporary benchmark.
+
 # 2026-08-23 (Shared Card-State-Flag Statistics Scan)
 
 Combined maturity and card-flag statistics into one aggregate over the shared

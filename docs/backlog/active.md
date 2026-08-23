@@ -4,15 +4,14 @@ Last updated: 2026-08-23
 
 ## Current Milestone
 
-Bounded storage reconnaissance: evaluate repeated card/state/flag scans in
-`Statistics`.
+Bounded storage performance pass complete; rotate to a new TUI hot-path area
+without revisiting already-measured storage candidates.
 
 ## Exact Next Action
 
-Commit the verified shared-aggregate batch, then rotate from Statistics to a
-bounded SQLite startup pass: measure migration bookkeeping on an up-to-date
-temporary database and optimize only if repeated per-migration queries are
-material.
+Inspect one unmeasured TUI render path for repeated full-buffer conversion,
+sorting, styling of off-screen rows, or other per-message work. Establish a
+focused benchmark/allocation or complexity baseline before selecting a change.
 
 ## Completed This Pass
 
@@ -115,11 +114,10 @@ material.
 
 ## Acceptance Criteria
 
-- New/young/mature and bookmarked/due/next-24h/leech/suspended counts retain
-  global and deck semantics, including missing review-state/flag rows.
-- The selected implementation performs one shared card/state/flag scan instead
-  of two equivalent join passes and gains durable regression coverage.
-- Representative timing and layered verification are recorded.
+- The next candidate comes from a previously unmeasured render path and has a
+  reproducible benchmark/allocation pattern or clear repeated-work argument.
+- Any optimization preserves rendered output, hitboxes, compact layouts, and
+  Unicode behavior with focused coverage.
 
 ## Last Verification
 
@@ -192,6 +190,9 @@ material.
   and the single-card-scan plan; they pass.
 - `go test ./internal/storage/sqlite -count=1`, `go test ./... -count=1`, and
   `./scripts/verify.sh` pass; the core E2E suite reports 35 passed in 37.36s.
+- Up-to-date `Migrate` benchmarking across three 200-iteration runs measured
+  about 59–87 microseconds in memory and 80–82 microseconds file-backed. The
+  cost is marginal, so no migration-bookkeeping code was changed.
 - Previous pass: `./scripts/verify.sh` passed on 2026-08-23 (35 E2E tests).
 - Current pass: `go test ./internal/tui ./internal/storage/sqlite` passed.
 - `./scripts/verify.sh` passed on 2026-08-23: Go tests, vet, offline dict.cc
@@ -203,5 +204,6 @@ material.
 ## Repository State
 
 - Streak optimization is committed as `4e77712`, Cards Added statistics as
-  `236c63f`, and review-summary consolidation as `2161297`; only this next-cycle
-  card/state/flag batch remains and is fully verified for commit.
+  `236c63f`, review-summary consolidation as `2161297`, and shared card
+  statistics as `5ea61d3`; the negative startup finding and next-area handoff
+  are ready for their documentation checkpoint.
