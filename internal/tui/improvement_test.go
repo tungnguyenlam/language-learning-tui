@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	tea "charm.land/bubbletea/v2"
 	"deutsch-tui/internal/core"
@@ -224,6 +225,63 @@ func TestScrollableClippedInputs(t *testing.T) {
 	viewAI := m.renderAI(0, 0)
 	if strings.Contains(viewAI, m.aiInput) {
 		t.Fatal("Expected long topic input to be clipped in AI view")
+	}
+}
+
+func TestTypingModeGradeHitboxAlignsWithRenderedGradeLine(t *testing.T) {
+	m := NewModel(nil, nil)
+	m.width = 100
+	m.height = 30
+	m.activeView = ViewReview
+	m.dueCards = []core.Card{{ID: "c1", Prompt: "Haus", Answer: "house"}}
+	m.typingMode = true
+	m.typingChecked = true
+	m.typingCorrect = true
+	m.typedAnswer = "house"
+	m.revealState = RevealRevealed
+	m.revealProgress = 100
+
+	m.hitboxes = nil
+	view := m.renderReview(0, 0)
+
+	var againHitbox *Hitbox
+	for i := range m.hitboxes {
+		if m.hitboxes[i].ID == "grade-again" {
+			againHitbox = &m.hitboxes[i]
+			break
+		}
+	}
+	if againHitbox == nil {
+		t.Fatal("expected grade-again hitbox in typing mode")
+	}
+
+	plain := stripANSI(view)
+	lines := strings.Split(plain, "\n")
+	gradeRow, gradeLine := -1, ""
+	for i, ln := range lines {
+		if strings.Contains(strings.TrimSpace(ln), "Grade:") {
+			gradeRow, gradeLine = i, ln
+			break
+		}
+	}
+	if gradeRow == -1 {
+		t.Fatal("could not find rendered 'Grade:' row")
+	}
+
+	// The typing answer sits in its own bordered box, so the grade hitbox must
+	// be offset by that box's border+padding. Compare against the real rendered
+	// row and the rune-column of the "Again" button (box-drawing glyphs are
+	// multi-byte, so strings.Index yields bytes, not columns).
+	if againHitbox.Y != gradeRow {
+		t.Errorf("grade-again Y=%d, want %d (rendered Grade row)", againHitbox.Y, gradeRow)
+	}
+	byteIdx := strings.Index(gradeLine, "Again")
+	if byteIdx < 0 {
+		t.Fatalf("rendered Grade row missing 'Again': %q", gradeLine)
+	}
+	againCol := utf8.RuneCountInString(gradeLine[:byteIdx])
+	if againHitbox.X != againCol {
+		t.Errorf("grade-again X=%d, want %d (rendered Again column)", againHitbox.X, againCol)
 	}
 }
 

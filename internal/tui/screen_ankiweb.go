@@ -343,22 +343,27 @@ func (s *ankiWebScreen) Render(m *Model, layout viewportLayout) string {
 	layout = contentLayoutForStyle(style, layout.X, layout.Y)
 
 	var b strings.Builder
+	var lineY int
+	write := func(s string) {
+		b.WriteString(s)
+		lineY += strings.Count(s, "\n")
+	}
 	title := lipgloss.NewStyle().Bold(true).Foreground(colorCyan).Render("ANKIWEB SHARED DECKS")
-	b.WriteString(title + "  " + mutedStyle.Render("public library — nothing is uploaded") + "\n\n")
+	write(title + "  " + mutedStyle.Render("public library — nothing is uploaded") + "\n\n")
 
 	searchLabel := "Search: "
 	if s.editingQuery {
-		b.WriteString(searchLabel + editStyle.Render(s.query+"_") + "\n\n")
+		write(searchLabel + editStyle.Render(s.query+"_") + "\n\n")
 	} else if s.query == "" {
-		b.WriteString(searchLabel + mutedStyle.Render("(press / to search, e.g. \"german a1\")") + "\n\n")
+		write(searchLabel + mutedStyle.Render("(press / to search, e.g. \"german a1\")") + "\n\n")
 	} else {
-		b.WriteString(searchLabel + s.query + "\n\n")
+		write(searchLabel + s.query + "\n\n")
 	}
 
 	if s.busy != "" {
-		b.WriteString(infoStyle.Render(s.busy) + "\n\n")
+		write(infoStyle.Render(s.busy) + "\n\n")
 	} else if s.lastErr != "" {
-		b.WriteString(warnStyle.Render(wrapToWidth(s.lastErr, layout.Width)) + "\n\n")
+		write(warnStyle.Render(wrapToWidth(s.lastErr, layout.Width)) + "\n\n")
 	}
 
 	if len(s.results) == 0 {
@@ -428,7 +433,7 @@ func (s *ankiWebScreen) Render(m *Model, layout viewportLayout) string {
 		resultLines = append(resultLines, marker+nameStyle.Render(name)+pad+mutedStyle.Render(metaFor(deck)))
 	}
 
-	startY := layout.Y + strings.Count(b.String(), "\n")
+	startY := layout.Y + lineY
 	for i := s.scroll; i < len(s.results) && i < s.scroll+rows; i++ {
 		idx := i
 		rowY := startY + (i - s.scroll)

@@ -453,7 +453,7 @@ func (m *Model) normalizeAnswer(s string) string {
 		s = strings.ReplaceAll(s, "ö", "oe")
 		s = strings.ReplaceAll(s, "ü", "ue")
 	}
-	s = strings.ReplaceAll(s, "  ", " ")
+	s = strings.Join(strings.Fields(s), " ")
 	// Strip common punctuation from end
 	s = strings.TrimRight(s, ".!?,;:")
 	return s

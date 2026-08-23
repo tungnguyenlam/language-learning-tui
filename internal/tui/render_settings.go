@@ -54,13 +54,14 @@ func (m *Model) renderSettings(x, y int) string {
 	}
 	var lineMeta = make(map[int]lineInfo)
 
+	lineY := 0
 	addContent := func(s string, info *lineInfo) {
-		lines := strings.Split(s, "\n")
-		for _, l := range lines {
+		for _, l := range strings.Split(s, "\n") {
 			if info != nil {
-				lineMeta[strings.Count(content.String(), "\n")] = *info
+				lineMeta[lineY] = *info
 			}
 			content.WriteString(l + "\n")
+			lineY++
 		}
 	}
 

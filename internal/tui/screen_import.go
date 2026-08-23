@@ -151,8 +151,15 @@ func (s *importScreen) Render(m *Model, layout viewportLayout) string {
 	layout = contentLayoutForStyle(style, x, y)
 
 	var b strings.Builder
+	// Track the current line incrementally instead of rescanning the whole
+	// buffer with strings.Count per box (O(n²) on every render).
+	var lineY int
+	write := func(s string) {
+		b.WriteString(s)
+		lineY += strings.Count(s, "\n")
+	}
 	titleLabelStyle := lipgloss.NewStyle().Bold(true).Foreground(colorCyan).MarginBottom(1)
-	b.WriteString(titleLabelStyle.Render("Import / Export") + "\n\n")
+	write(titleLabelStyle.Render("Import / Export") + "\n\n")
 
 	importPathDisplay := m.importPath
 	exportPathDisplay := m.exportPath
@@ -170,7 +177,7 @@ func (s *importScreen) Render(m *Model, layout viewportLayout) string {
 
 	// Import Path
 	importLabel := importPathLabel
-	rowY := layout.Y + strings.Count(b.String(), "\n")
+	rowY := layout.Y + lineY
 	if s.editingImportPath && s.importCursor == 0 {
 		importLabel = "Import file: " + editStyle.Render(m.importPath+"_")
 	} else if s.importCursor == 0 {
@@ -186,11 +193,11 @@ func (s *importScreen) Render(m *Model, layout viewportLayout) string {
 		Width:  lipgloss.Width(importPathLabel) + 2,
 		Height: 1,
 	})
-	b.WriteString(importLabel + "\n")
+	write(importLabel + "\n")
 
 	// Export Path
 	exportLabel := exportPathLabel
-	rowY = layout.Y + strings.Count(b.String(), "\n")
+	rowY = layout.Y + lineY
 	if s.editingImportPath && s.importCursor == 1 {
 		exportLabel = "Export file: " + editStyle.Render(m.exportPath+"_")
 	} else if s.importCursor == 1 {
@@ -206,7 +213,7 @@ func (s *importScreen) Render(m *Model, layout viewportLayout) string {
 		Width:  lipgloss.Width(exportPathLabel) + 2,
 		Height: 1,
 	})
-	b.WriteString(exportLabel + "\n\n")
+	write(exportLabel + "\n\n")
 
 	// Export Deck Filter
 	exportDeckLabel := "Export Deck: "
@@ -225,11 +232,11 @@ func (s *importScreen) Render(m *Model, layout viewportLayout) string {
 			exportDeckLabel += "Unknown Deck"
 		}
 	}
-	rowY = layout.Y + strings.Count(b.String(), "\n")
+	rowY = layout.Y + lineY
 	if s.importCursor == 2 {
-		b.WriteString("> " + btnActiveStyle.Render(exportDeckLabel) + " (Use [ / ] to change)\n")
+		write("> " + btnActiveStyle.Render(exportDeckLabel) + " (Use [ / ] to change)\n")
 	} else {
-		b.WriteString("  " + exportDeckLabel + "\n")
+		write("  " + exportDeckLabel + "\n")
 	}
 	m.hitboxes = append(m.hitboxes, Hitbox{
 		ID:     "import-path-2",
@@ -245,13 +252,13 @@ func (s *importScreen) Render(m *Model, layout viewportLayout) string {
 	if m.exportTag == "" {
 		exportTagLabel += "(None)"
 	}
-	rowY = layout.Y + strings.Count(b.String(), "\n")
+	rowY = layout.Y + lineY
 	if s.editingExportTag {
-		b.WriteString("  Export Filter: " + editStyle.Render(m.exportTag+"_") + "\n\n")
+		write("  Export Filter: " + editStyle.Render(m.exportTag+"_") + "\n\n")
 	} else if s.importCursor == 3 {
-		b.WriteString("> " + btnActiveStyle.Render(exportTagLabel) + " (Press t to edit)\n\n")
+		write("> " + btnActiveStyle.Render(exportTagLabel) + " (Press t to edit)\n\n")
 	} else {
-		b.WriteString("  " + exportTagLabel + "\n\n")
+		write("  " + exportTagLabel + "\n\n")
 	}
 	m.hitboxes = append(m.hitboxes, Hitbox{
 		ID:     "import-path-3",
@@ -264,11 +271,11 @@ func (s *importScreen) Render(m *Model, layout viewportLayout) string {
 
 	// Export Status Filter
 	exportStatusLabel := "Export Status: " + m.exportFilter
-	rowY = layout.Y + strings.Count(b.String(), "\n")
+	rowY = layout.Y + lineY
 	if s.importCursor == 4 {
-		b.WriteString("> " + btnActiveStyle.Render(exportStatusLabel) + " (Use [ / ] to change)\n\n")
+		write("> " + btnActiveStyle.Render(exportStatusLabel) + " (Use [ / ] to change)\n\n")
 	} else {
-		b.WriteString("  " + exportStatusLabel + "\n\n")
+		write("  " + exportStatusLabel + "\n\n")
 	}
 	m.hitboxes = append(m.hitboxes, Hitbox{
 		ID:     "import-path-4",
@@ -280,20 +287,20 @@ func (s *importScreen) Render(m *Model, layout viewportLayout) string {
 	})
 
 	if strings.TrimSpace(m.importPath) == "" {
-		b.WriteString(warnStyle.Render("Import file is empty; set a path before importing.") + "\n")
+		write(warnStyle.Render("Import file is empty; set a path before importing.") + "\n")
 	}
 	if strings.TrimSpace(m.exportPath) == "" {
-		b.WriteString(warnStyle.Render("Export file is empty; set a path before exporting.") + "\n")
+		write(warnStyle.Render("Export file is empty; set a path before exporting.") + "\n")
 	}
 
 	backupLabel := "Progress backup: none yet"
 	if m.lastBackupPath != "" {
 		backupLabel = "Progress backup: " + filepath.Base(m.lastBackupPath)
 	}
-	b.WriteString(mutedStyle.Render(backupLabel) + "\n")
-	b.WriteString(mutedStyle.Render("Backups exclude the dictionary. Restore replaces decks and review history.") + "\n")
+	write(mutedStyle.Render(backupLabel) + "\n")
+	write(mutedStyle.Render("Backups exclude the dictionary. Restore replaces decks and review history.") + "\n")
 
-	b.WriteString("Actions:\n")
+	write("Actions:\n")
 	actions := []struct {
 		id    string
 		label string
@@ -313,7 +320,7 @@ func (s *importScreen) Render(m *Model, layout viewportLayout) string {
 	// Wrap on whole buttons. Letting the panel hard-wrap the row instead splits
 	// a label across lines, which both reads badly and leaves the button's
 	// hitbox pointing at the wrong cells.
-	rowY = layout.Y + strings.Count(b.String(), "\n")
+	rowY = layout.Y + lineY
 	currentX := layout.X
 	for i, a := range actions {
 		item := fmt.Sprintf("[%s] %s", a.key, a.label)
@@ -323,7 +330,7 @@ func (s *importScreen) Render(m *Model, layout viewportLayout) string {
 		// that trailing margin inside the panel too — otherwise it alone wraps
 		// and leaves a stray blank row.
 		if i > 0 && currentX+width+1 > layout.X+layout.Width {
-			b.WriteString("\n")
+			write("\n")
 			rowY++
 			currentX = layout.X
 		}

@@ -423,7 +423,7 @@ func (m *Model) renderReview(x, y int) string {
 			Border(lipgloss.NormalBorder()).
 			BorderForeground(lipgloss.Color("81")).
 			Padding(0, 1).
-			Width(maxInt(30, width-6))
+			Width(cardWidth - 2)
 
 		inputStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 		inputDisplay := m.typedAnswer + "_"
@@ -446,17 +446,22 @@ func (m *Model) renderReview(x, y int) string {
 				inputDisplay, answerStyle.Render(targetAnswer), extraDisplay,
 				keyStyle.Render("a"), gradeAgain+" "+keyStyle.Render("(1)"), keyStyle.Render("h"), gradeHard+" "+keyStyle.Render("(2)"), keyStyle.Render("g"), gradeGood+" "+keyStyle.Render("(3)"), keyStyle.Render("e"), gradeEasy+" "+keyStyle.Render("(4)"))
 			answer = typingBoxStyle.Render(typingContent)
-			answerYOffset = cardY + strings.Count(fmt.Sprintf("%s%s\nYour answer: %s\nCorrect: %s%s\n\nGrade: ", promptDisplay, mature, inputDisplay, targetAnswer, extraDisplay), "\n")
+			// The typing box adds its own border+padding around the grading row,
+			// so the grade hitboxes must account for those offsets (they are not
+			// covered by cardX/cardY, which map the outer card content box).
+			gradeX := cardX + typingBoxStyle.GetBorderLeftSize() + typingBoxStyle.GetPaddingLeft()
+			answerYOffset = cardY + typingBoxStyle.GetBorderTopSize() + typingBoxStyle.GetPaddingTop() +
+				strings.Count(fmt.Sprintf("%s%s\nYour answer: %s\nCorrect: %s%s\n\nGrade: ", promptDisplay, mature, inputDisplay, targetAnswer, extraDisplay), "\n")
 
 			labelAgain := fmt.Sprintf("Grade: %s ", keyStyle.Render("a"))
 			labelHard := fmt.Sprintf("Grade: %s %s | %s ", keyStyle.Render("a"), gradeAgain+" (1)", keyStyle.Render("h"))
 			labelGood := fmt.Sprintf("Grade: %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgain+" (1)", keyStyle.Render("h"), gradeHard+" (2)", keyStyle.Render("g"))
 			labelEasy := fmt.Sprintf("Grade: %s %s | %s %s | %s %s | %s ", keyStyle.Render("a"), gradeAgain+" (1)", keyStyle.Render("h"), gradeHard+" (2)", keyStyle.Render("g"), gradeGood+" (3)", keyStyle.Render("e"))
 
-			m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: cardX + lipgloss.Width(labelAgain), Y: answerYOffset, Width: gaW, Height: 1})
-			m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: cardX + lipgloss.Width(labelHard), Y: answerYOffset, Width: ghW, Height: 1})
-			m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: cardX + lipgloss.Width(labelGood), Y: answerYOffset, Width: ggW, Height: 1})
-			m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: cardX + lipgloss.Width(labelEasy), Y: answerYOffset, Width: geW, Height: 1})
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-again", View: ViewReview, X: gradeX + lipgloss.Width(labelAgain), Y: answerYOffset, Width: gaW, Height: 1})
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-hard", View: ViewReview, X: gradeX + lipgloss.Width(labelHard), Y: answerYOffset, Width: ghW, Height: 1})
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-good", View: ViewReview, X: gradeX + lipgloss.Width(labelGood), Y: answerYOffset, Width: ggW, Height: 1})
+			m.hitboxes = append(m.hitboxes, Hitbox{ID: "grade-easy", View: ViewReview, X: gradeX + lipgloss.Width(labelEasy), Y: answerYOffset, Width: geW, Height: 1})
 		} else {
 			typingContent := fmt.Sprintf("Type your answer:\n\n%s", inputStyle.Render(inputDisplay))
 			answer = typingBoxStyle.Render(typingContent)

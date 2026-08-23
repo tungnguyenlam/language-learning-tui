@@ -133,7 +133,12 @@ func (m *Model) renderHelpViewport(layout viewportLayout) string {
 
 func (m *Model) renderDecks(layout viewportLayout) string {
 	var b strings.Builder
-	b.WriteString(dashTitleStyle.Render("DECK LIST") + "\n\n")
+	var lineY int
+	write := func(s string) {
+		b.WriteString(s)
+		lineY += strings.Count(s, "\n")
+	}
+	write(dashTitleStyle.Render("DECK LIST") + "\n\n")
 
 	// Show filter if active or searching
 	if m.searchingDecks || m.deckFilter != "" {
@@ -168,7 +173,7 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 				ID:     "deck-search-clear",
 				View:   ViewDecks,
 				X:      layout.X + 2 + searchBarWidth - 3,
-				Y:      layout.Y + strings.Count(b.String(), "\n") + 1, // +1 for the top border
+				Y:      layout.Y + lineY + 1, // +1 for the top border
 				Width:  3,
 				Height: 1,
 				Action: func() tea.Cmd {
@@ -176,14 +181,14 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 					return nil
 				},
 			})
-			b.WriteString(searchBarText + "\n\n")
+			write(searchBarText + "\n\n")
 
 			if m.deckFilter == "" && len(m.deckSearchHistory) > 0 {
 				clearHistoryText := lipgloss.NewStyle().Foreground(lipgloss.Color("203")).Render("[Clear]")
-				b.WriteString(boldStyle.Render("Recent Searches:") + "  " + clearHistoryText + " " + mutedStyle.Render("(ctrl+x)") + "\n")
+				write(boldStyle.Render("Recent Searches:") + "  " + clearHistoryText + " " + mutedStyle.Render("(ctrl+x)") + "\n")
 
 				// Hitbox for "[Clear]" button
-				clearHistoryY := layout.Y + strings.Count(b.String(), "\n") - 1
+				clearHistoryY := layout.Y + lineY - 1
 				m.hitboxes = append(m.hitboxes, Hitbox{
 					ID:     "deck-history-clear",
 					View:   ViewDecks,
@@ -200,13 +205,13 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 
 				for i := len(m.deckSearchHistory) - 1; i >= 0; i-- {
 					q := m.deckSearchHistory[i]
-					lineY := layout.Y + strings.Count(b.String(), "\n")
-					b.WriteString(fmt.Sprintf("  • %s\n", q))
+					historyY := layout.Y + lineY
+					write(fmt.Sprintf("  • %s\n", q))
 					m.hitboxes = append(m.hitboxes, Hitbox{
 						ID:     fmt.Sprintf("deck-history-%d", i),
 						View:   ViewDecks,
 						X:      layout.X + 4,
-						Y:      lineY,
+						Y:      historyY,
 						Width:  lipgloss.Width(q),
 						Height: 1,
 						Action: func() tea.Cmd {
@@ -216,24 +221,24 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 						},
 					})
 				}
-				b.WriteString("\n")
+				write("\n")
 			}
 		} else {
-			b.WriteString(searchBar.Render(fmt.Sprintf("Filter: %s (Press / to edit)", m.deckFilter)) + "\n\n")
+			write(searchBar.Render(fmt.Sprintf("Filter: %s (Press / to edit)", m.deckFilter)) + "\n\n")
 		}
 	}
 
 	filteredDecks := m.filteredDecks()
 	if len(filteredDecks) == 0 {
 		if m.deckFilter != "" {
-			b.WriteString("No decks match search. Press Esc to clear.\n")
+			write("No decks match search. Press Esc to clear.\n")
 		} else {
-			b.WriteString("No decks found. Use Import to add notes.\n")
+			write("No decks found. Use Import to add notes.\n")
 		}
 		if m.searchingDecks {
-			b.WriteString("\nPress Enter or Esc to finish.")
+			write("\nPress Enter or Esc to finish.")
 		} else {
-			b.WriteString("\nPress Esc to clear filter.")
+			write("\nPress Esc to clear filter.")
 		}
 		return b.String()
 	}
@@ -425,7 +430,7 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		content.WriteString("\n")
 	}
 
-	availableHeight := layout.Height - strings.Count(b.String(), "\n") - 3
+	availableHeight := layout.Height - lineY - 3
 	if availableHeight < 5 {
 		availableHeight = 5
 	}
@@ -467,7 +472,7 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 		}
 	}
 
-	listView := m.RenderList(layout.WithHeight(availableHeight).WithY(layout.Y+strings.Count(b.String(), "\n")), content.String(), ListOptions{
+	listView := m.RenderList(layout.WithHeight(availableHeight).WithY(layout.Y+lineY), content.String(), ListOptions{
 		HitboxPrefix: "deck",
 		View:         ViewDecks,
 		Footer:       footer,

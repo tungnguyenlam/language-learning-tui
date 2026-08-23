@@ -23,6 +23,8 @@ func TestNormalizeAnswerNonStrict(t *testing.T) {
 		{"Der Hund.", "der hund"},
 		{"  ich  gehe  ", "ich gehe"},
 		{"Apfel!", "apfel"},
+		{"der   hund", "der hund"},
+		{"die\tkatze", "die katze"},
 	}
 	for _, c := range cases {
 		if got := m.normalizeAnswer(c.in); got != c.want {

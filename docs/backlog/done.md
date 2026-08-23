@@ -1,3 +1,39 @@
+# 2026-08-23 (Render Rescan Cleanup + Typing Review Fixes)
+
+Continued the bug-fix/performance pass.
+
+- Extended the incremental-line-count pattern (from `render_dashboard.go`) to
+  four more render paths that rescan the whole builder with
+  `strings.Count(b.String(), "\n")` for every box/element
+  (`render_settings.go`, `screen_import.go`, `render_views.go`,
+  `screen_ankiweb.go`). Each now tracks a running `lineY` counter; output is
+  byte-identical and the O(n²) rescans become O(n). `render_dictionary.go` was
+  deliberately left out: its rescan targets are small header/detail buffers, so
+  the marginal gain does not justify the churn in its two-builder layout.
+- Fixed the Review typing mode's revealed answer, which was garbled: the inner
+  typing box was `Width(maxInt(30, width-6))` (94 wide on a 100-col panel), wider
+  than the card's capped width (80), so its border wrapped across two lines and
+  collided with the card border. It is now `Width(cardWidth - 2)` so it fits
+  inside the card.
+- Fixed the typing-mode grade-button hitboxes (`grade-again/hard/good/easy`):
+  they ignored the typing box's own border+padding, so the click target was
+  shifted 1 row up and 2 columns left of the rendered Grade row. They now offset
+  by `GetBorderLeftSize()/GetPaddingLeft()` (X) and
+  `GetBorderTopSize()/GetPaddingTop()` (Y).
+- Fixed `Model.normalizeAnswer` collapsing spaces with a single
+  `strings.ReplaceAll(s, "  ", " ")` pass, which left runs of 3+ spaces intact
+  (`"a   b"` → `"a  b"`) and mis-graded correctly-typed answers. It now collapses
+  all whitespace runs via `strings.Join(strings.Fields(s), " ")`.
+- Regression tests: `TestTypingModeGradeHitboxAlignsWithRenderedGradeLine`
+  (compares the hitbox against the real rendered row/column of the "Again"
+  button) and new `TestNormalizeAnswerNonStrict` cases for multi-space and tab
+  input.
+
+### Verification
+
+- `go test ./...` passed; `go vet ./...` and `gofmt` clean.
+- `./scripts/verify.sh` passed (see active backlog).
+
 # 2026-08-22 (Local-Day Stats Fix + Render Hot-Path Performance)
 
 Bug fixes and performance pass per the new bug-fix/performance focus in
