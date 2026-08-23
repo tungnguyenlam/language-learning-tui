@@ -174,6 +174,7 @@ type Model struct {
 	draftCursor                    int
 	dataDir                        string
 	lastBackupPath                 string
+	backupPathLoadID               int
 	importPath                     string
 	exportPath                     string
 	exportDeckID                   string

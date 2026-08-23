@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -177,6 +178,63 @@ func TestRestoreProgressConfirmsThenReloads(t *testing.T) {
 	}
 	if !strings.Contains(model.status, "Restored 4 rows") {
 		t.Fatalf("status = %q, want restore confirmation", model.status)
+	}
+}
+
+func TestRestoreProgressDiscoversLatestBackupAsCommand(t *testing.T) {
+	repo := &mockBackupRepo{mockRepo: &mockRepo{}}
+	model := NewModelWithOptions(repo, &mockScheduler{}, ModelOptions{DataDir: t.TempDir()})
+	model.activeView = ViewImport
+	dir := model.backupDir()
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	backupPath := filepath.Join(dir, "backup-20260823-120000.db")
+	if err := os.WriteFile(backupPath, []byte("backup"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	cmd, handled := model.importScreen.HandleKey(model, tea.KeyPressMsg{Text: "U"})
+	if !handled || cmd == nil {
+		t.Fatal("restore without cached path should return discovery command")
+	}
+	if model.confirmingDelete {
+		t.Fatal("restore confirmation started before discovery command completed")
+	}
+	msgs := executeCmd(cmd)
+	if len(msgs) != 1 {
+		t.Fatalf("discovery messages = %d, want 1", len(msgs))
+	}
+	model.Update(msgs[0])
+	if model.lastBackupPath != backupPath || !model.confirmingDelete {
+		t.Fatalf("discovered path = %q, confirming=%v; want %q and true", model.lastBackupPath, model.confirmingDelete, backupPath)
+	}
+}
+
+func TestRestoreProgressDiscoveryHandlesEmptyErrorAndStaleResults(t *testing.T) {
+	model := NewModelWithOptions(&mockBackupRepo{mockRepo: &mockRepo{}}, &mockScheduler{}, ModelOptions{DataDir: t.TempDir()})
+	model.activeView = ViewImport
+
+	cmd := model.handleRestoreProgress()
+	for _, msg := range executeCmd(cmd) {
+		model.Update(msg)
+	}
+	if !strings.Contains(model.status, "No progress backup found") {
+		t.Fatalf("empty discovery status = %q", model.status)
+	}
+
+	model.backupPathLoadID = 2
+	model.Update(latestBackupPathMsg{id: 1, path: "/stale/backup.db", restore: true})
+	if model.lastBackupPath != "" || model.confirmingDelete {
+		t.Fatal("stale backup discovery should be ignored")
+	}
+
+	_, errorCmd := model.Update(latestBackupPathMsg{id: 2, restore: true, err: errors.New("permission denied")})
+	for _, msg := range executeCmd(errorCmd) {
+		model.Update(msg)
+	}
+	if !model.isErrorStatus || !strings.Contains(model.status, "discover progress backup") {
+		t.Fatalf("discovery error status = %q (error=%v)", model.status, model.isErrorStatus)
 	}
 }
 

@@ -1,3 +1,18 @@
+# 2026-08-23 (Async Progress-Backup Discovery)
+
+Moved backup-directory discovery out of Import navigation and uncached Restore
+input handling. Discovery now runs in an identity/view-guarded command; Restore
+confirmation begins after the latest result, missing backups keep the existing
+guidance, unexpected filesystem errors surface, and stale replies are ignored.
+
+### Verification
+
+- Focused Import/backup discovery tests passed.
+- `go test -race ./internal/tui -count=1` passed.
+- `go test ./...` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512
+  entries), smoke test, binary build, and core E2E suite (35 passed in 37.55s).
+
 # 2026-08-23 (Async Dictionary Compound Precomputation)
 
 Removed compound-validation queries from Dictionary rendering and shortcut

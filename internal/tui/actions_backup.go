@@ -2,6 +2,7 @@ package tui
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -21,6 +22,15 @@ type backupDoneMsg struct {
 	info    core.BackupInfo
 	decks   []core.Deck
 	cards   []core.Card
+}
+
+var errNoBackups = errors.New("no progress backups found")
+
+type latestBackupPathMsg struct {
+	id      int
+	path    string
+	err     error
+	restore bool
 }
 
 func (m *Model) backupDir() string {
@@ -51,24 +61,23 @@ func latestBackupFile(dir string) (string, error) {
 		}
 	}
 	if len(names) == 0 {
-		return "", fmt.Errorf("no backups found in %s", dir)
+		return "", fmt.Errorf("%w in %s", errNoBackups, dir)
 	}
 	sort.Strings(names)
 	return filepath.Join(dir, names[len(names)-1]), nil
 }
 
-func (m *Model) refreshLastBackupPath() {
+func (m *Model) loadLatestBackupPath(restore bool) tea.Cmd {
 	dir := m.backupDir()
-	if dir == "" {
-		m.lastBackupPath = ""
-		return
+	m.backupPathLoadID++
+	id := m.backupPathLoadID
+	return func() tea.Msg {
+		if dir == "" {
+			return latestBackupPathMsg{id: id, restore: restore, err: errNoBackups}
+		}
+		path, err := latestBackupFile(dir)
+		return latestBackupPathMsg{id: id, path: path, err: err, restore: restore}
 	}
-	path, err := latestBackupFile(dir)
-	if err != nil {
-		m.lastBackupPath = ""
-		return
-	}
-	m.lastBackupPath = path
 }
 
 func (m *Model) handleBackupProgress() tea.Cmd {
@@ -110,16 +119,37 @@ func (m *Model) handleRestoreProgress() tea.Cmd {
 	}
 	path := strings.TrimSpace(m.lastBackupPath)
 	if path == "" {
-		m.refreshLastBackupPath()
-		path = m.lastBackupPath
+		m.status = "Finding latest progress backup..."
+		return m.loadLatestBackupPath(true)
 	}
-	if path == "" {
-		m.status = "No progress backup found. Press B to create one."
-		return nil
-	}
+	return m.confirmRestoreProgress(path)
+}
+
+func (m *Model) confirmRestoreProgress(path string) tea.Cmd {
 	m.confirmingDelete = true
 	m.deleteAction = func() tea.Cmd { return m.executeRestore(path) }
 	m.status = fmt.Sprintf("RESTORE from %s? Replaces decks and progress. (y/n)", filepath.Base(path))
+	return nil
+}
+
+func (m *Model) handleLatestBackupPathMsg(msg latestBackupPathMsg) tea.Cmd {
+	if msg.id != m.backupPathLoadID || m.activeView != ViewImport {
+		return nil
+	}
+	if msg.err != nil {
+		m.lastBackupPath = ""
+		if errors.Is(msg.err, errNoBackups) || errors.Is(msg.err, os.ErrNotExist) {
+			if msg.restore {
+				m.status = "No progress backup found. Press B to create one."
+			}
+			return nil
+		}
+		return func() tea.Msg { return fmt.Errorf("discover progress backup: %w", msg.err) }
+	}
+	m.lastBackupPath = msg.path
+	if msg.restore {
+		return m.confirmRestoreProgress(msg.path)
+	}
 	return nil
 }
 

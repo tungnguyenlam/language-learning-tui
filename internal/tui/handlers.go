@@ -84,7 +84,7 @@ func (m *Model) updateView(view View) tea.Cmd {
 
 	if view == ViewImport {
 		m.exportDeckID = m.deck.ID
-		m.refreshLastBackupPath()
+		cmd = tea.Batch(cmd, m.loadLatestBackupPath(false))
 	}
 	if view == ViewStatistics {
 		return tea.Batch(cmd, m.loadStatistics())

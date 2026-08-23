@@ -94,6 +94,8 @@ func (m *Model) handleAsyncMsg(msg tea.Msg) (tea.Cmd, bool) {
 	case deckHistoryLoadedMsg:
 		m.deckSearchHistory = msg
 		return nil, true
+	case latestBackupPathMsg:
+		return m.handleLatestBackupPathMsg(msg), true
 	case spinnerTickMsg:
 		if m.drafting {
 			m.spinnerFrame++

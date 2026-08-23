@@ -4,14 +4,14 @@ Last updated: 2026-08-23
 
 ## Current Milestone
 
-Import/backup responsiveness: remove synchronous backup-directory reads from
-view navigation and restore-key handling.
+Deck export responsiveness: move output-directory creation inside the existing
+TSV export command.
 
 ## Exact Next Action
 
-Commit the verified compound batch, then replace `refreshLastBackupPath` with a
-command/message flow used when entering Import and requesting Restore; preserve
-confirmation behavior and distinguish no-backup from filesystem errors.
+Commit the verified backup-discovery batch, then add a regression proving
+`exportDeckTSVCmd` performs no filesystem work before its command executes and
+move `os.MkdirAll("exports")` into the timeout-bound command/error path.
 
 ## Completed This Pass
 
@@ -72,6 +72,15 @@ confirmation behavior and distinguish no-backup from filesystem errors.
   batch is ready to commit.
 - Follow-up reconnaissance found `refreshLastBackupPath` calls `os.ReadDir`
   synchronously when entering Import and when Restore has no cached path.
+- Committed async compound precomputation as `cbee406`.
+- Import entry and uncached Restore now return an identity/view-guarded backup
+  discovery command; confirmation starts only after the latest result arrives.
+- Missing backup directories/files keep the existing no-backup guidance,
+  unexpected filesystem errors reach the TUI error path, and stale discovery
+  replies are ignored.
+- Focused Import/backup tests and the TUI race suite pass.
+- Full repository verification passed for async backup discovery; the batch is
+  ready to commit.
 
 ## Top Issues
 
@@ -110,6 +119,10 @@ confirmation behavior and distinguish no-backup from filesystem errors.
   passed on 2026-08-23.
 - Compound batch: `go test ./...` and `./scripts/verify.sh` passed on
   2026-08-23; core E2E suite 35 passed in 37.77s.
+- Backup discovery batch: focused tests, `go test ./internal/tui -count=1`, and
+  `go test -race ./internal/tui -count=1` passed on 2026-08-23.
+- Backup discovery batch: `go test ./...` and `./scripts/verify.sh` passed on
+  2026-08-23; core E2E suite 35 passed in 37.55s.
 - Previous pass: `./scripts/verify.sh` passed on 2026-08-23 (35 E2E tests).
 - Current pass: `go test ./internal/tui ./internal/storage/sqlite` passed.
 - `./scripts/verify.sh` passed on 2026-08-23: Go tests, vet, offline dict.cc
@@ -120,4 +133,4 @@ confirmation behavior and distinguish no-backup from filesystem errors.
 
 ## Repository State
 
-- Compound precomputation is verified and pending commit.
+- Backup discovery is verified and pending commit.
