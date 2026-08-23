@@ -114,21 +114,17 @@ func main() {
 		ImportPath:          filepath.Join(dir, "import.tsv"),
 		ExportPath:          filepath.Join(dir, "export.tsv"),
 		Logger:              leveledLogger,
-		OnConfigChange: func(aiProvider string, tmpls map[string]map[string]string, autoPlayAudio bool, strictNormalization bool, revealSpeed int) {
+		OnConfigChange: func(aiProvider string, tmpls map[string]map[string]string, autoPlayAudio bool, strictNormalization bool, revealSpeed int) error {
 			pCfg.AIProvider = aiProvider
 			pCfg.AITemplates = tmpls
 			pCfg.AutoPlayAudio = autoPlayAudio
 			pCfg.StrictNormalization = strictNormalization
 			pCfg.RevealSpeed = revealSpeed
-			if err := app.SaveConfig(dir, *pCfg); err != nil {
-				leveledLogger.Error("save config: %v", err)
-			}
+			return app.SaveConfig(dir, *pCfg)
 		},
-		OnSecretsChange: func(s app.Secrets) {
+		OnSecretsChange: func(s app.Secrets) error {
 			*pSecrets = s
-			if err := app.SaveSecrets(dir, *pSecrets); err != nil {
-				leveledLogger.Error("save secrets: %v", err)
-			}
+			return app.SaveSecrets(dir, *pSecrets)
 		},
 	}))
 	if _, err := program.Run(); err != nil {

@@ -4,14 +4,14 @@ Last updated: 2026-08-23
 
 ## Current Milestone
 
-TUI responsiveness: move Settings config/secrets persistence callbacks out of
-synchronous keyboard and mouse input handlers.
+Bounded reconnaissance: identify the next evidence-backed correctness or
+hot-path performance batch after removing synchronous TUI persistence writes.
 
 ## Exact Next Action
 
-Change Settings persistence callbacks to return errors from asynchronous
-commands, snapshot mutable config/secrets before dispatch, and propagate every
-Settings keyboard and hitbox save command without changing immediate UI state.
+Commit the verified Settings persistence batch, then inspect TUI handlers for
+remaining direct repository/filesystem/provider calls outside `tea.Cmd`s. If
+none remain, rotate to one measured rendering or SQLite query hot path.
 
 ## Completed This Pass
 
@@ -46,20 +46,27 @@ Settings keyboard and hitbox save command without changing immediate UI state.
   focused regression and race coverage.
 - Full repository verification passed for the recent/star batch; it is ready to
   commit before Settings callback work begins.
+- Committed Dictionary recent/star persistence as `dfa303c`.
+- Settings config and secrets callbacks now execute in ordered commands, return
+  errors to the visible TUI path, and receive immutable snapshots (including a
+  deep copy of nested AI templates).
+- Provider/audio/normalization/reveal/template/credential keyboard and hitbox
+  paths now return their save commands while updating visible state immediately.
+- Focused tests cover deferred callbacks, latest-request suppression, mutable
+  snapshot isolation, config/secrets errors, and race safety.
+- Full repository verification passed for Settings persistence; the batch is
+  ready to commit.
 
 ## Top Issues
 
-- Dictionary search/recent-view/star persistence and Settings config/secrets
-  callbacks still perform synchronous writes from TUI handlers.
 - View-local state still lives on `Model`; screen files own render + keys only.
 
 ## Acceptance Criteria
 
-- Dictionary search/recent/star persistence performs no repository work until
-  returned `tea.Cmd`s execute.
-- Compound actions preserve both persistence and their primary command.
-- Concurrent saves cannot let an older snapshot overwrite newer state.
-- Repository errors reach the established TUI error status path.
+- Reconnaissance produces a concrete reproduction/measurement or records that
+  the inspected area has no actionable violation.
+- The selected next batch is narrow, locally verifiable, and prioritized by the
+  bug-fix/performance ordering in `prompt/improve.md`.
 
 ## Last Verification
 
@@ -77,6 +84,10 @@ Settings keyboard and hitbox save command without changing immediate UI state.
   `go test -race ./internal/tui -count=1` passed on 2026-08-23.
 - Dictionary recent/star batch: `go test ./...` and `./scripts/verify.sh` passed
   on 2026-08-23; core E2E suite 35 passed in 37.42s.
+- Settings batch: `go test ./internal/tui -count=1` and
+  `go test -race ./internal/tui -count=1` passed on 2026-08-23.
+- Settings batch: `go test ./...` and `./scripts/verify.sh` passed on
+  2026-08-23; core E2E suite 35 passed in 37.91s.
 - Previous pass: `./scripts/verify.sh` passed on 2026-08-23 (35 E2E tests).
 - Current pass: `go test ./internal/tui ./internal/storage/sqlite` passed.
 - `./scripts/verify.sh` passed on 2026-08-23: Go tests, vet, offline dict.cc
@@ -87,4 +98,4 @@ Settings keyboard and hitbox save command without changing immediate UI state.
 
 ## Repository State
 
-- Dictionary recent/star batch is verified and pending commit.
+- Settings persistence batch is verified and pending commit.

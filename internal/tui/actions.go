@@ -144,14 +144,52 @@ func (m *Model) setRevealSpeed(speed int) tea.Cmd {
 	if speed == 0 {
 		m.status = "Reveal animation disabled (instant)"
 	}
-	m.persistConfig()
-	return nil
+	return m.persistConfig()
 }
 
-func (m *Model) persistConfig() {
-	if m.onConfigChange != nil {
-		m.onConfigChange(m.aiProviderName, m.aiTemplates, m.autoPlayAudio, m.strictNormalization, m.revealSpeed)
+func (m *Model) persistConfig() tea.Cmd {
+	if m.onConfigChange == nil {
+		return nil
 	}
+	provider := m.aiProviderName
+	templates := cloneAITemplates(m.aiTemplates)
+	autoPlay := m.autoPlayAudio
+	strictNormalization := m.strictNormalization
+	revealSpeed := m.revealSpeed
+	return m.configSave.command(func() error {
+		if err := m.onConfigChange(provider, templates, autoPlay, strictNormalization, revealSpeed); err != nil {
+			return fmt.Errorf("save settings: %w", err)
+		}
+		return nil
+	})
+}
+
+func (m *Model) persistSecrets() tea.Cmd {
+	if m.onSecretsChange == nil {
+		return nil
+	}
+	secrets := m.aiSecrets
+	return m.secretsSave.command(func() error {
+		if err := m.onSecretsChange(secrets); err != nil {
+			return fmt.Errorf("save AI credentials: %w", err)
+		}
+		return nil
+	})
+}
+
+func cloneAITemplates(src map[string]map[string]string) map[string]map[string]string {
+	if src == nil {
+		return nil
+	}
+	dst := make(map[string]map[string]string, len(src))
+	for set, fields := range src {
+		clonedFields := make(map[string]string, len(fields))
+		for key, value := range fields {
+			clonedFields[key] = value
+		}
+		dst[set] = clonedFields
+	}
+	return dst
 }
 
 func (m *Model) setDeckLimits(deckID string, newLimit, reviewLimit int) tea.Cmd {
@@ -798,7 +836,7 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		m.aiProviderName = next
 		m.aiProvider = buildProvider(next, m.aiSecrets, m.aiTemplates, m.currentAITemplateSet())
 		m.status = fmt.Sprintf("Switched to %s AI provider", m.aiProviderName)
-		m.persistConfig()
+		return m.persistConfig()
 
 	case settingsFrontTemplateItem, settingsBackTemplateItem, settingsExampleTemplateItem:
 		activeSet := m.currentAITemplateSet()
@@ -821,7 +859,7 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 			status = "enabled"
 		}
 		m.status = fmt.Sprintf("Auto-play audio %s", status)
-		m.persistConfig()
+		return m.persistConfig()
 	case settingsStrictNormItem:
 		m.strictNormalization = !m.strictNormalization
 		status := "disabled"
@@ -829,7 +867,7 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 			status = "enabled"
 		}
 		m.status = fmt.Sprintf("Strict normalization %s", status)
-		m.persistConfig()
+		return m.persistConfig()
 	case settingsRevealSpeedItem:
 		if m.revealSpeed < 10 {
 			m.revealSpeed++
@@ -840,7 +878,7 @@ func (m *Model) handleSettingsEnter() tea.Cmd {
 		if m.revealSpeed == 0 {
 			m.status = "Reveal animation disabled (instant)"
 		}
-		m.persistConfig()
+		return m.persistConfig()
 	default:
 		if provider, key, ok := settingsCredAt(m.settingsCursor); ok {
 			m.editingSecretProvider = provider

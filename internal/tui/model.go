@@ -159,7 +159,7 @@ type Model struct {
 	editingSecretKey               string // "" or "api_key"/"model"/"base_url"
 	editingSecretProvider          string // "openai" or "anthropic"
 	originalSecretValue            string
-	onSecretsChange                func(app.Secrets)
+	onSecretsChange                func(app.Secrets) error
 	autoPlayAudio                  bool
 	revealSpeed                    int // 0: instant, 1-10
 	speechSynthesizer              audio.Synthesizer
@@ -179,7 +179,9 @@ type Model struct {
 	exportDeckID                   string
 	exportTag                      string
 	exportFilter                   string // e.g. "All", "Mature", "Learning"
-	onConfigChange                 func(string, map[string]map[string]string, bool, bool, int)
+	onConfigChange                 func(string, map[string]map[string]string, bool, bool, int) error
+	configSave                     orderedSave
+	secretsSave                    orderedSave
 	bookmarkFilter                 bool
 	dueLoadID                      int
 	originalTemplateValue          string
@@ -385,8 +387,8 @@ type ModelOptions struct {
 	DataDir             string
 	ImportPath          string
 	ExportPath          string
-	OnConfigChange      func(string, map[string]map[string]string, bool, bool, int)
-	OnSecretsChange     func(app.Secrets)
+	OnConfigChange      func(string, map[string]map[string]string, bool, bool, int) error
+	OnSecretsChange     func(app.Secrets) error
 	Logger              *app.LeveledLogger
 }
 

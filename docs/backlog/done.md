@@ -1,3 +1,18 @@
+# 2026-08-23 (Async Settings Persistence)
+
+Moved config and secrets callbacks out of Settings keyboard/mouse handlers into
+ordered Bubble Tea commands. Callbacks now return errors to the visible TUI
+path and receive immutable snapshots, including deep-copied nested templates;
+rapid updates cannot let an older save overwrite the latest settings.
+
+### Verification
+
+- Focused Settings persistence tests passed.
+- `go test -race ./internal/tui -count=1` passed.
+- `go test ./...` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512
+  entries), smoke test, binary build, and core E2E suite (35 passed in 37.91s).
+
 # 2026-08-23 (Async Dictionary Recent/Star Persistence)
 
 Moved recently inspected words and starred-entry writes out of Dictionary

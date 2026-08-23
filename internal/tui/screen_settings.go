@@ -79,8 +79,7 @@ func (settingsScreen) HandleKey(m *Model, msg tea.KeyPressMsg) (tea.Cmd, bool) {
 					ActiveSet: activeSet,
 				}
 			}
-			m.persistConfig()
-			return nil, true
+			return m.persistConfig(), true
 		case "esc":
 			// Restore original value on cancel
 			templateKey := m.templateKeyAtCursor()
@@ -93,8 +92,7 @@ func (settingsScreen) HandleKey(m *Model, msg tea.KeyPressMsg) (tea.Cmd, bool) {
 					ActiveSet: activeSet,
 				}
 			}
-			m.persistConfig()
-			return nil, true
+			return m.persistConfig(), true
 		case "backspace":
 			templateKey := m.templateKeyAtCursor()
 			val := m.aiTemplates[activeSet][templateKey]
@@ -173,7 +171,7 @@ func (m *Model) handleSecretEditKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		return nil, true
 	}
 
-	commit := func() {
+	commit := func() tea.Cmd {
 		if m.aiProviderName == "disabled" || m.aiProviderName == "offline" || m.aiProviderName == "template" {
 			if provider == "openai" && strings.TrimSpace(m.aiSecrets.OpenAI.APIKey) != "" {
 				m.aiProviderName = "openai"
@@ -184,10 +182,7 @@ func (m *Model) handleSecretEditKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 
 		// Rebuild the provider so the new credentials take effect immediately.
 		m.aiProvider = buildProvider(m.aiProviderName, m.aiSecrets, m.aiTemplates, m.currentAITemplateSet())
-		if m.onSecretsChange != nil {
-			m.onSecretsChange(m.aiSecrets)
-		}
-		m.persistConfig()
+		return tea.Batch(m.persistSecrets(), m.persistConfig())
 	}
 
 	switch msg.String() {
@@ -195,17 +190,17 @@ func (m *Model) handleSecretEditKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 		m.editingSecretKey = ""
 		m.editingSecretProvider = ""
 		m.originalSecretValue = ""
-		commit()
+		cmd := commit()
 		m.status = fmt.Sprintf("Saved %s %s", provider, key)
-		return nil, true
+		return cmd, true
 	case "esc":
 		m.setCredValue(provider, key, m.originalSecretValue)
 		m.editingSecretKey = ""
 		m.editingSecretProvider = ""
 		m.originalSecretValue = ""
-		commit()
+		cmd := commit()
 		m.status = "Edit cancelled"
-		return nil, true
+		return cmd, true
 	case "backspace":
 		val := m.getCredValue(provider, key)
 		if len(val) > 0 {
