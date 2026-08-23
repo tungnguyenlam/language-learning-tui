@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"charm.land/lipgloss/v2"
 	"deutsch-tui/internal/ankiweb"
@@ -102,6 +103,57 @@ func BenchmarkRenderDecksLargeCollection(b *testing.B) {
 	for range b.N {
 		model.hitboxes = model.hitboxes[:0]
 		benchmarkRenderedDecks = model.renderDecks(layout)
+	}
+}
+
+func BenchmarkRenderContextWrite(b *testing.B) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	layout := viewportLayout{X: 2, Y: 1, Width: 100, Height: 40}
+	sampleSingle := "A single line of text with some formatting and words"
+	sampleMulti := "Line 1 of multiline text\nLine 2 of multiline text\nLine 3 of multiline text\nLine 4 of multiline text"
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		ctx := NewRenderContext(model, layout, ViewBrowser)
+		for j := 0; j < 50; j++ {
+			ctx.Write(sampleSingle)
+			ctx.NewLine()
+			ctx.Write(sampleMulti)
+			ctx.NewLine()
+		}
+		_ = ctx.String()
+	}
+}
+
+func BenchmarkRenderBrowserLargeCollection(b *testing.B) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	model.activeView = ViewBrowser
+	model.width = 120
+	model.height = 40
+	model.breakpoint = BreakpointWide
+	model.browserCards = make([]core.Card, 5_000)
+	for i := range model.browserCards {
+		model.browserCards[i] = core.Card{
+			ID:           fmt.Sprintf("card-%d", i),
+			DeckID:       "deck-1",
+			Prompt:       fmt.Sprintf("German prompt phrase %d: Straße und Grüße", i),
+			Answer:       fmt.Sprintf("English translation %d: Street and greetings", i),
+			Tags:         []string{"noun", "a1", "travel"},
+			Reviews:      5,
+			Interval:     14,
+			Mature:       i%2 == 0,
+			LastReviewed: time.Now().UTC(),
+		}
+	}
+	model.browserCursor = len(model.browserCards) / 2
+	layout := model.activeViewContentLayout()
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		model.hitboxes = model.hitboxes[:0]
+		benchmarkRenderedDecks = model.renderBrowserAt(layout)
 	}
 }
 

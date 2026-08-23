@@ -35,13 +35,12 @@ func (c *RenderContext) Write(s string) {
 	}
 	c.buffer.WriteString(s)
 
-	// Split into lines to track Y accurately.
 	// Note: lipgloss.Width handles multi-line strings by taking the max width,
 	// but we need to track the LAST line's width for currX.
-	lines := strings.Split(s, "\n")
-	if len(lines) > 1 {
-		c.currY += len(lines) - 1
-		c.currX = c.layout.X + lipgloss.Width(lines[len(lines)-1])
+	lastNL := strings.LastIndexByte(s, '\n')
+	if lastNL != -1 {
+		c.currY += strings.Count(s, "\n")
+		c.currX = c.layout.X + lipgloss.Width(s[lastNL+1:])
 	} else {
 		c.currX += lipgloss.Width(s)
 	}

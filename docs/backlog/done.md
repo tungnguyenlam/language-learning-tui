@@ -1,3 +1,21 @@
+# 2026-08-23 (RenderContext Write Allocation Elimination)
+
+Optimized `RenderContext.Write` by replacing `strings.Split(s, "\n")` with
+zero-allocation index scanning (`strings.LastIndexByte` and `strings.Count`).
+`BenchmarkRenderContextWrite` dropped from 112 to 12 allocs/op (90% reduction),
+and views using `RenderContext` saw allocation reductions across the board
+(Statistics: 4,236 -> 4,123 allocs/op; Decks: 1,460 -> 1,385 allocs/op; Browser:
+1,561 -> 1,541 allocs/op). Added unit tests in `render_context_test.go` covering
+position tracking, visual widths, ANSI handling, and hitboxes.
+
+### Verification
+
+- `go test ./internal/tui -count=1` passed.
+- `go test -race ./internal/tui -count=1` passed.
+- `go test ./... -count=1` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512
+  entries), smoke test, binary build, and core E2E suite (35 passed in 37.28s).
+
 # 2026-08-23 (Virtualized Statistics Deck Success Rows)
 
 Added lazy visible-line providers to the shared list renderer and converted the

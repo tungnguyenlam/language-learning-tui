@@ -4,16 +4,31 @@ Last updated: 2026-08-23
 
 ## Current Milestone
 
-Decks and Statistics large-list render paths are optimized and verified; rotate
-to a different TUI rendering cost.
+RenderContext write allocations are eliminated and verified; rotate to
+reconnaissance of remaining hot paths or database queries.
 
 ## Exact Next Action
 
-Benchmark `RenderContext.Write` on a representative high-write view to quantify
-its per-call `strings.Split` and width tracking allocations. Change it only if
-the absolute cost is material and output/hitbox positions can be protected.
+Profile or benchmark Cram and Browser filter/search paths with large card
+collections to verify if query filtering or tag aggregation has any measurable
+latency or allocation bottlenecks.
 
 ## Completed This Pass
+
+- Benchmarked `RenderContext.Write` and quantified its per-call `strings.Split`
+  allocations (100 slice allocations per 100 Write calls; 112 allocs/op in
+  microbenchmark).
+- Optimized `RenderContext.Write` to count newlines and track the last line
+  visual width using `strings.LastIndexByte` and `strings.Count`, avoiding slice
+  allocations on every call.
+- Retained `BenchmarkRenderContextWrite` dropped from 112 to 12 allocs/op
+  (roughly 90% fewer allocations); views using `RenderContext` saw reduced
+  allocations (Statistics from 4,236 to 4,123 allocs/op, Decks from 1,460 to
+  1,385 allocs/op, Browser from 1,561 to 1,541 allocs/op).
+- Added comprehensive unit tests in `internal/tui/render_context_test.go`
+  protecting position tracking, Unicode widths, newline counts, hitbox
+  registration, and wrapping.
+- All Go tests, race tests, smoke tests, and the full verification gate pass.
 
 - Benchmarked 5,000-deck Statistics rendering at about 26.1 ms/op, 9.38 MB/op,
   and 232,345 allocs/op.
@@ -148,6 +163,12 @@ the absolute cost is material and output/hitbox positions can be protected.
 
 ## Last Verification
 
+- RenderContext allocation batch: `go test ./internal/tui -count=1`,
+  `go test -race ./internal/tui -count=1`, and `go test ./... -count=1` passed
+  on 2026-08-23.
+- RenderContext allocation batch: `./scripts/verify.sh` passed on 2026-08-23;
+  Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary
+  build, and core E2E suite 35 passed in 37.28s.
 - Statistics virtualization batch: `go test ./internal/tui -count=1`,
   `go test -race ./internal/tui -count=1`, and `go test ./... -count=1` passed
   on 2026-08-23.
