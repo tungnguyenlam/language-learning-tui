@@ -10,14 +10,20 @@ that can operate safely with little or no human supervision.
 
 ## Exact Next Action
 
-Review the rewritten prompt for consistency with `AGENTS.md` and continuity
-rules, validate Markdown formatting, update the completed backlog, and commit.
+No unfinished executable work remains. Candidate future work:
+
+- Extract remaining view-local state off `Model` (screen files own render +
+  keys only today).
+- Move history/settings persistence off synchronous TUI input handlers into
+  `tea.Cmd`s so a slow repository cannot stall keyboard or mouse handling.
 
 ## Completed This Pass
 
 - Rewritten prompt now defines autonomous pickup, evidence-based work selection,
   repeatable implementation/verification/commit cycles, failure recovery,
   engineering guardrails, and explicit pause conditions.
+- Empty backlogs now trigger bounded, rotating reconnaissance rather than an
+  early stop or an unbounded repository-wide audit.
 
 ## Top Issues
 
@@ -37,7 +43,10 @@ rules, validate Markdown formatting, update the completed backlog, and commit.
 - `./scripts/verify.sh` passed on 2026-08-23: Go tests, vet, offline dict.cc
   import (834,512 entries), smoke test, binary build, core E2E suite (35 passed
   in 37.43s).
+- Prompt-only pass: manual consistency review and `git diff --check` passed on
+  2026-08-23; no executable code changed.
 
 ## Repository State
 
-- Prompt and continuity documentation are modified and awaiting review/commit.
+- All prompt refinements and continuity documentation are committed; the
+  working tree is clean.

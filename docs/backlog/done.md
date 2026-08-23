@@ -1,3 +1,24 @@
+# 2026-08-23 (Continuous Autonomous Improvement Prompt)
+
+Reworked `prompt/improve.md` for long-running development with little or no
+human supervision.
+
+- Replaced the finite “make 2–3 improvements” session contract with a repeating
+  evidence → implementation → verification → documentation → commit loop where
+  every green batch is a checkpoint rather than a stop condition.
+- Added deterministic pickup, priority ordering, bounded reconnaissance for an
+  empty backlog, failure recovery, dirty-worktree safety, engineering
+  guardrails, layered verification, commit cadence, and explicit pause rules.
+- Human input is reserved for new authority, destructive work, unavailable
+  external state, or material product choices; safe local work proceeds
+  autonomously with repository-backed handoffs.
+
+### Verification
+
+- Manual consistency review against `AGENTS.md` and
+  `docs/agent/continuity.md` passed.
+- `git diff --check` passed; no executable code changed.
+
 # 2026-08-23 (Dictionary Render + Statistics/APKG Error Handling)
 
 Continued the correctness and hot-path performance pass.

@@ -12,9 +12,10 @@ pleasant to use. Find evidence-backed work, complete it in narrow verified
 batches, commit each successful batch, and immediately begin the next useful
 cycle. A passing batch is a checkpoint, not a reason to stop.
 
-Current repository priorities are bug fixing and performance optimization.
-Prefer correctness, data integrity, responsive hot paths, and regression
-coverage over new features or content unless the active backlog says otherwise.
+Follow the current focus declared in `AGENTS.md`; at present that is bug fixing
+and performance optimization. Prefer correctness, data integrity, responsive
+hot paths, and regression coverage over new features or content unless the
+active backlog says otherwise.
 
 ## Autonomous Operating Contract
 
@@ -67,8 +68,23 @@ this order unless stronger evidence justifies another choice:
 
 When several candidates remain, prefer the best combination of user impact,
 confidence in the diagnosis, low regression risk, and short verification time.
-Avoid broad speculative refactors. Put non-committed ideas in
+Avoid broad speculative refactors. Put uncommitted ideas in
 `docs/backlog/parking-lot.md`, not the active backlog.
+
+If the active backlog has no executable work, perform a bounded reconnaissance
+pass instead of stopping or scanning indefinitely:
+
+1. Check the build and focused package tests for an immediate failure signal.
+2. Inspect recent commits and nearby tests for incomplete edge-case coverage or
+   behavior that no longer matches its contract.
+3. Search one relevant area for ignored errors, unsafe indexes, stale async
+   replies, blocking work in TUI handlers, repeated render computation, or
+   unindexed/repeated database work.
+4. Inspect one user-visible workflow or existing E2E scenario for broken empty,
+   compact, mouse, keyboard, and error states.
+5. Write only actionable findings to the backlog, choose the strongest one, and
+   begin the loop. Rotate areas on later passes rather than auditing the same
+   files repeatedly.
 
 ## Continuous Improvement Loop
 
