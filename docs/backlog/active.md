@@ -4,16 +4,23 @@ Last updated: 2026-08-23
 
 ## Current Milestone
 
-RenderContext write allocations are eliminated and verified; rotate to
-reconnaissance of remaining hot paths or database queries.
+Deterministic tag cleanup and timezone test anchoring are verified; rotate to
+Cram and Browser filter profiling.
 
 ## Exact Next Action
 
-Profile or benchmark Cram and Browser filter/search paths with large card
-collections to verify if query filtering or tag aggregation has any measurable
-latency or allocation bottlenecks.
+Benchmark and profile `Cards` / `CardsWithFlag` query and card scan on large
+collections (20,000+ cards) with tag and search filters to detect any hot paths
+or redundant join overhead.
 
 ## Completed This Pass
+
+- Sorted `uniqueTags` deterministically in `CleanupTags` before writing back to
+  deck metadata, preventing arbitrary map iteration order in database records.
+- Enhanced `TestCleanupTags` to assert exact deterministic sorted tag slice.
+- Fixed `TestStreakWithLargeReviewCount` timestamp generation to anchor at
+  `localNoon`, preventing late-night test runs from crossing midnight boundaries.
+- All Go unit tests, SQLite race tests, and full verification suite pass.
 
 - Benchmarked `RenderContext.Write` and quantified its per-call `strings.Split`
   allocations (100 slice allocations per 100 Write calls; 112 allocs/op in
@@ -163,6 +170,12 @@ latency or allocation bottlenecks.
 
 ## Last Verification
 
+- Deterministic tag cleanup batch: `go test ./internal/storage/sqlite -count=1`,
+  `go test -race ./internal/storage/sqlite -count=1`, and `go test ./... -count=1`
+  passed on 2026-08-23.
+- Deterministic tag cleanup batch: `./scripts/verify.sh` passed on 2026-08-23;
+  Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary
+  build, and core E2E suite 35 passed in 36.56s.
 - RenderContext allocation batch: `go test ./internal/tui -count=1`,
   `go test -race ./internal/tui -count=1`, and `go test ./... -count=1` passed
   on 2026-08-23.

@@ -1,3 +1,19 @@
+# 2026-08-23 (Deterministic Deck Tag Cleanup and Streak Test Anchor)
+
+Sorted `uniqueTags` deterministically in `CleanupTags` before writing back to
+deck metadata, preventing arbitrary map iteration order in database records.
+Enhanced `TestCleanupTags` to assert exact deterministic sorted tag slice.
+Fixed `TestStreakWithLargeReviewCount` timestamp generation to anchor at
+`localNoon`, preventing late-night test runs from crossing midnight boundaries.
+
+### Verification
+
+- `go test ./internal/storage/sqlite -count=1` passed.
+- `go test -race ./internal/storage/sqlite -count=1` passed.
+- `go test ./... -count=1` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512
+  entries), smoke test, binary build, and core E2E suite (35 passed in 36.56s).
+
 # 2026-08-23 (RenderContext Write Allocation Elimination)
 
 Optimized `RenderContext.Write` by replacing `strings.Split(s, "\n")` with

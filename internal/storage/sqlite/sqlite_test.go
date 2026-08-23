@@ -1845,23 +1845,15 @@ func TestCleanupTags(t *testing.T) {
 		t.Fatalf("get deck: %v", err)
 	}
 
-	// Tags should be "will-be-kept" and "new-tag" (order may vary)
-	tagMap := make(map[string]bool)
-	for _, tag := range retrieved.Tags {
-		tagMap[tag] = true
+	// Tags should be deterministically sorted: ["new-tag", "will-be-kept"]
+	wantTags := []string{"new-tag", "will-be-kept"}
+	if len(retrieved.Tags) != len(wantTags) {
+		t.Fatalf("expected %d tags, got %v", len(wantTags), retrieved.Tags)
 	}
-
-	if len(tagMap) != 2 {
-		t.Errorf("expected 2 tags, got %v", retrieved.Tags)
-	}
-	if !tagMap["will-be-kept"] {
-		t.Errorf("missing tag 'will-be-kept'")
-	}
-	if !tagMap["new-tag"] {
-		t.Errorf("missing tag 'new-tag'")
-	}
-	if tagMap["unused"] {
-		t.Errorf("tag 'unused' should have been removed")
+	for i, want := range wantTags {
+		if retrieved.Tags[i] != want {
+			t.Errorf("tag[%d] = %q, want %q", i, retrieved.Tags[i], want)
+		}
 	}
 }
 
@@ -2034,17 +2026,18 @@ func TestStreakWithLargeReviewCount(t *testing.T) {
 	_ = store.UpsertNote(ctx, note)
 
 	cardID := note.Cards[0].ID
-	now := time.Now().UTC()
+	now := time.Now()
+	localNoon := time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, time.Local)
 
 	// Insert 50 reviews per day for 30 consecutive days (1500 reviews total)
 	for day := 29; day >= 0; day-- {
-		reviewDay := now.AddDate(0, 0, -day)
+		reviewDay := localNoon.AddDate(0, 0, -day)
 		for r := 0; r < 50; r++ {
 			_ = store.RecordReview(ctx, core.ReviewResult{
 				CardID:   cardID,
 				Grade:    core.GradeGood,
-				Reviewed: reviewDay.Add(time.Duration(r) * time.Minute),
-				Next:     core.ReviewState{CardID: cardID, Due: reviewDay.Add(24 * time.Hour)},
+				Reviewed: reviewDay.Add(time.Duration(r) * time.Minute).UTC(),
+				Next:     core.ReviewState{CardID: cardID, Due: reviewDay.Add(24 * time.Hour).UTC()},
 			})
 		}
 	}

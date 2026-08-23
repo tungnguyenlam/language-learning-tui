@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -1508,6 +1509,7 @@ func (s *Store) CleanupTags(ctx context.Context, deckID string) error {
 		for tag := range tagMap {
 			uniqueTags = append(uniqueTags, tag)
 		}
+		sort.Strings(uniqueTags)
 
 		_, err = tx.ExecContext(ctx, `UPDATE decks SET tags = ? WHERE id = ?`, strings.Join(uniqueTags, " "), deckID)
 		return err
