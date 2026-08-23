@@ -629,6 +629,131 @@ func TestCurrentStreakCountsLocalDays(t *testing.T) {
 	}
 }
 
+func TestCurrentStreakSkipsDuplicateReviewsAndStopsAtGap(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	deck := core.Deck{ID: "deck-streak-gap", Name: "Streak Gap"}
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+	note := core.Note{ID: "n-streak-gap", DeckID: deck.ID, Type: "flashcard", Front: "F", Back: "B"}
+	note.Cards = content.CardsForNote(note)
+	if err := store.UpsertNote(ctx, note); err != nil {
+		t.Fatalf("upsert note: %v", err)
+	}
+
+	now := time.Now()
+	localNoon := time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, time.Local)
+	for _, reviewedAt := range []time.Time{
+		localNoon,
+		localNoon.Add(time.Minute),
+		localNoon.AddDate(0, 0, -1),
+		localNoon.AddDate(0, 0, -3),
+	} {
+		if _, err := store.db.ExecContext(ctx, `
+			INSERT INTO reviews (card_id, grade, reviewed_at, due_at, interval_seconds, ease, reviews, lapses)
+			VALUES (?, ?, ?, ?, 0, 2.5, 1, 0)
+		`, note.Cards[0].ID, string(core.GradeGood), reviewedAt.UTC(), reviewedAt.Add(24*time.Hour).UTC()); err != nil {
+			t.Fatalf("insert review at %s: %v", reviewedAt, err)
+		}
+	}
+
+	streak, err := store.currentStreak(ctx, localNoon)
+	if err != nil {
+		t.Fatalf("current streak: %v", err)
+	}
+	if streak != 2 {
+		t.Fatalf("current streak = %d, want 2", streak)
+	}
+
+	deckStreak, err := store.deckCurrentStreak(ctx, deck.ID, localNoon)
+	if err != nil {
+		t.Fatalf("deck current streak: %v", err)
+	}
+	if deckStreak != 2 {
+		t.Fatalf("deck current streak = %d, want 2", deckStreak)
+	}
+}
+
+func TestCurrentStreakRemainsCappedAt365Days(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	deck := core.Deck{ID: "deck-streak-cap", Name: "Streak Cap"}
+	if err := store.UpsertDeck(ctx, deck); err != nil {
+		t.Fatalf("upsert deck: %v", err)
+	}
+	note := core.Note{ID: "n-streak-cap", DeckID: deck.ID, Type: "flashcard", Front: "F", Back: "B"}
+	note.Cards = content.CardsForNote(note)
+	if err := store.UpsertNote(ctx, note); err != nil {
+		t.Fatalf("upsert note: %v", err)
+	}
+
+	now := time.Now()
+	localNoon := time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, time.Local)
+	for day := 0; day < 400; day++ {
+		reviewedAt := localNoon.AddDate(0, 0, -day)
+		if _, err := store.db.ExecContext(ctx, `
+			INSERT INTO reviews (card_id, grade, reviewed_at, due_at, interval_seconds, ease, reviews, lapses)
+			VALUES (?, ?, ?, ?, 0, 2.5, 1, 0)
+		`, note.Cards[0].ID, string(core.GradeGood), reviewedAt.UTC(), reviewedAt.Add(24*time.Hour).UTC()); err != nil {
+			t.Fatalf("insert review for day %d: %v", day, err)
+		}
+	}
+
+	streak, err := store.currentStreak(ctx, localNoon)
+	if err != nil {
+		t.Fatalf("current streak: %v", err)
+	}
+	if streak != 365 {
+		t.Fatalf("current streak = %d, want capped value 365", streak)
+	}
+}
+
+func TestCurrentStreakQueryStreamsReviewedAtIndex(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	rows, err := store.db.QueryContext(ctx, "EXPLAIN QUERY PLAN "+currentStreakQuery)
+	if err != nil {
+		t.Fatalf("explain current streak query: %v", err)
+	}
+	defer rows.Close()
+
+	var details []string
+	for rows.Next() {
+		var id, parent, unused int
+		var detail string
+		if err := rows.Scan(&id, &parent, &unused, &detail); err != nil {
+			t.Fatalf("scan current streak query plan: %v", err)
+		}
+		details = append(details, detail)
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("iterate current streak query plan: %v", err)
+	}
+	plan := strings.Join(details, "\n")
+	if !strings.Contains(plan, "idx_reviews_reviewed_at") {
+		t.Fatalf("current streak query plan does not use reviewed-at index:\n%s", plan)
+	}
+	if strings.Contains(plan, "TEMP B-TREE") {
+		t.Fatalf("current streak query plan builds a temporary B-tree:\n%s", plan)
+	}
+}
+
 func TestDailyGoalPersistsInStatistics(t *testing.T) {
 	ctx := context.Background()
 	store, err := OpenMemory()

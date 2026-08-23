@@ -998,19 +998,23 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 	return stats, nil
 }
 
+const currentStreakQuery = `
+	SELECT reviewed_at
+	FROM reviews
+	WHERE reviewed_at IS NOT NULL
+	ORDER BY reviewed_at DESC
+`
+
+const deckCurrentStreakQuery = `
+	SELECT r.reviewed_at
+	FROM cards c
+	INNER JOIN reviews r ON r.card_id = c.id
+	WHERE c.deck_id = ? AND r.reviewed_at IS NOT NULL
+	ORDER BY r.reviewed_at DESC
+`
+
 func (s *Store) deckCurrentStreak(ctx context.Context, deckID string, now time.Time) (int, error) {
-	// Group by local date (not UTC substr) so the LIMIT covers 365 local days;
-	// a single local day can span two UTC dates and would otherwise consume two
-	// group slots, undercounting long streaks. Matches ReviewsPerDay semantics.
-	rows, err := s.db.QueryContext(ctx, `
-	SELECT MAX(reviewed_at) AS max_reviewed_at
-	FROM reviews r
-	INNER JOIN cards c ON c.id = r.card_id
-	WHERE c.deck_id = ? AND reviewed_at IS NOT NULL
-	GROUP BY date(substr(reviewed_at, 1, 19), 'localtime')
-	ORDER BY max_reviewed_at DESC
-	LIMIT 365
-`, deckID)
+	rows, err := s.db.QueryContext(ctx, deckCurrentStreakQuery, deckID)
 	if err != nil {
 		return 0, err
 	}
@@ -1020,8 +1024,16 @@ func (s *Store) deckCurrentStreak(ctx context.Context, deckID string, now time.T
 }
 
 func (s *Store) calculateStreak(rows *sql.Rows, now time.Time) (int, error) {
-	seen := make(map[string]bool)
-	var dates []time.Time
+	// The queries return newest reviews first. Calculate local calendar days in
+	// Go so SQLite can stream its reviewed_at index instead of scanning all
+	// reviews into temporary GROUP BY and ORDER BY B-trees. Duplicate reviews on
+	// one day are skipped, and a gap lets us stop reading immediately.
+	seen := make(map[string]struct{}, 365)
+	var previous time.Time
+	streak := 0
+	today := now.In(time.Local).Format("2006-01-02")
+	yesterday := now.In(time.Local).AddDate(0, 0, -1).Format("2006-01-02")
+
 	for rows.Next() {
 		var raw any
 		if err := rows.Scan(&raw); err != nil {
@@ -1039,40 +1051,38 @@ func (s *Store) calculateStreak(rows *sql.Rows, now time.Time) (int, error) {
 		if t.IsZero() {
 			continue
 		}
-		d := t.In(time.Local).Format("2006-01-02")
-		if !seen[d] {
-			seen[d] = true
-			dt, _ := time.ParseInLocation("2006-01-02", d, time.Local)
-			dates = append(dates, dt)
+		day := t.In(time.Local).Format("2006-01-02")
+		if _, ok := seen[day]; ok {
+			continue
+		}
+		seen[day] = struct{}{}
+		date, err := time.ParseInLocation("2006-01-02", day, time.Local)
+		if err != nil {
+			continue
+		}
+
+		if streak == 0 {
+			if day != today && day != yesterday {
+				return 0, rows.Close()
+			}
+			previous = date
+			streak = 1
+			continue
+		}
+
+		expected := previous.AddDate(0, 0, -1).Format("2006-01-02")
+		if day != expected {
+			return streak, rows.Close()
+		}
+		previous = date
+		streak++
+		if streak == 365 {
+			return streak, rows.Close()
 		}
 	}
 	if err := rows.Err(); err != nil {
 		return 0, err
 	}
-
-	if len(dates) == 0 {
-		return 0, nil
-	}
-
-	streak := 0
-	today := now.In(time.Local).Format("2006-01-02")
-	yesterday := now.In(time.Local).AddDate(0, 0, -1).Format("2006-01-02")
-
-	lastDate := dates[0].Format("2006-01-02")
-	if lastDate != today && lastDate != yesterday {
-		return 0, nil
-	}
-
-	streak = 1
-	for i := 1; i < len(dates); i++ {
-		expected := dates[i-1].AddDate(0, 0, -1).Format("2006-01-02")
-		if dates[i].Format("2006-01-02") == expected {
-			streak++
-		} else {
-			break
-		}
-	}
-
 	return streak, nil
 }
 
@@ -1112,14 +1122,7 @@ func parseSQLiteTime(s string) time.Time {
 }
 
 func (s *Store) currentStreak(ctx context.Context, now time.Time) (int, error) {
-	rows, err := s.db.QueryContext(ctx, `
-	SELECT MAX(reviewed_at) AS max_reviewed_at
-	FROM reviews
-	WHERE reviewed_at IS NOT NULL
-	GROUP BY date(substr(reviewed_at, 1, 19), 'localtime')
-	ORDER BY max_reviewed_at DESC
-	LIMIT 365
-`)
+	rows, err := s.db.QueryContext(ctx, currentStreakQuery)
 	if err != nil {
 		return 0, err
 	}

@@ -1,3 +1,20 @@
+# 2026-08-23 (Streaming SQLite Streak Calculation)
+
+Replaced SQLite's full-history local-date grouping for global and deck streaks
+with newest-first review streaming. The global query now reads the existing
+`idx_reviews_reviewed_at` index without temporary grouping/sorting, while Go
+deduplicates local calendar days and stops at the first gap or the existing
+365-day cap. On a synthetic 20,000-card/100,000-review database, representative
+`Statistics` time fell from about 709 ms to about 243 ms.
+
+### Verification
+
+- Focused streak correctness and query-plan tests passed.
+- `go test ./internal/storage/sqlite -count=1` passed.
+- `go test ./... -count=1` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512
+  entries), smoke test, binary build, and core E2E suite (35 passed in 37.39s).
+
 # 2026-08-23 (Async Deck TSV Directory Creation)
 
 Moved `exports/` directory creation from `exportDeckTSVCmd` construction into

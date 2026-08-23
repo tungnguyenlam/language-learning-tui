@@ -4,15 +4,14 @@ Last updated: 2026-08-23
 
 ## Current Milestone
 
-Bounded storage reconnaissance: rotate from TUI responsiveness to the SQLite
-review/startup hot paths.
+Optimize the SQLite statistics streak hot path demonstrated by representative
+query-plan and timing evidence.
 
 ## Exact Next Action
 
-Commit the verified Deck TSV batch, then read `internal/storage/AGENTS.md` and
-capture `EXPLAIN QUERY PLAN` evidence for `DueCards` and the dashboard statistics
-queries against a representative temporary database; select a change only if a
-scan/repeated-query cost is demonstrated.
+Commit the verified streak batch, then inspect the `CardsAddedPerDay` consumer
+contract and capture focused plan/timing evidence for its full-history
+date-grouping query before selecting the next storage change.
 
 ## Completed This Pass
 
@@ -92,6 +91,22 @@ scan/repeated-query cost is demonstrated.
 - Full repository verification passed for the Deck TSV directory batch; it is
   ready to commit.
 - Committed Deck TSV directory handling as `9f8c6ed`.
+- Storage reconnaissance seeded a temporary 20,000-card/100,000-review database
+  and ran `ANALYZE` plus `EXPLAIN QUERY PLAN` for `DueCards` and dashboard
+  statistics queries.
+- `DueCards` averaged about 18 ms despite its card scan; `Statistics` averaged
+  about 709 ms. Its current-streak query accounted for about 524 ms and showed
+  `SCAN reviews USING COVERING INDEX idx_reviews_reviewed_at` plus temporary
+  B-trees for both `GROUP BY` and `ORDER BY`.
+- Global and deck streak queries now stream newest reviews and calculate local
+  calendar days in Go, skipping duplicate same-day reviews and stopping at the
+  first gap or the existing 365-day cap.
+- Permanent regression coverage protects gap, duplicate, deck-scoped, cap, and
+  query-plan behavior; focused storage tests pass.
+- Representative `Statistics` time fell from about 709 ms to about 243 ms
+  (roughly 66%) with all returned fields preserved.
+- `go test ./internal/storage/sqlite -count=1`, `go test ./... -count=1`, and the
+  full repository verification gate pass for the streak batch.
 
 ## Top Issues
 
@@ -99,9 +114,12 @@ scan/repeated-query cost is demonstrated.
 
 ## Acceptance Criteria
 
-- Query-plan evidence is recorded for the selected storage hot path.
-- Any optimization preserves query results and gains regression/plan coverage;
-  if plans are already indexed, record that result and rotate areas.
+- Global and deck streaks retain local-calendar semantics, ignore duplicate
+  reviews on one day, stop at gaps, and remain capped at 365 days.
+- The global streak query reads `idx_reviews_reviewed_at` in descending order
+  without temporary grouping/sorting, protected by regression/plan coverage.
+- Representative `Statistics` timing improves materially without changing its
+  returned fields.
 
 ## Last Verification
 
@@ -135,6 +153,11 @@ scan/repeated-query cost is demonstrated.
   and `go test -race ./internal/tui -count=1` passed on 2026-08-23.
 - Deck TSV directory batch: `go test ./...` and `./scripts/verify.sh` passed on
   2026-08-23; core E2E suite 35 passed in 37.76s.
+- Streak batch: `go test ./internal/storage/sqlite -count=1` and
+  `go test ./... -count=1` passed on 2026-08-23.
+- Streak batch: `./scripts/verify.sh` passed on 2026-08-23; Go tests, vet,
+  offline dict.cc import (834,512 entries), smoke test, binary build, and core
+  E2E suite 35 passed in 37.39s.
 - Previous pass: `./scripts/verify.sh` passed on 2026-08-23 (35 E2E tests).
 - Current pass: `go test ./internal/tui ./internal/storage/sqlite` passed.
 - `./scripts/verify.sh` passed on 2026-08-23: Go tests, vet, offline dict.cc
@@ -145,5 +168,5 @@ scan/repeated-query cost is demonstrated.
 
 ## Repository State
 
-- All completed TUI responsiveness batches are committed; the worktree is
-  clean before storage reconnaissance.
+- The synthetic reconnaissance harness was removed; only the streak
+  implementation, permanent tests, and continuity documentation remain.
