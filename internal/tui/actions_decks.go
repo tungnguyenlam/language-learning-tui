@@ -77,10 +77,6 @@ func (m *Model) exportDeckTSVCmd(deckID string) tea.Cmd {
 		return nil
 	}
 	dir := "exports"
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		m.status = fmt.Sprintf("Failed to create export dir: %v", err)
-		return nil
-	}
 	safeName := strings.Map(func(r rune) rune {
 		if (r >= 'a' && r <= 'z') || (r >= 'A' && r <= 'Z') || (r >= '0' && r <= '9') || r == '_' || r == '-' {
 			return r
@@ -101,6 +97,9 @@ func (m *Model) exportDeckTSVCmd(deckID string) tea.Cmd {
 		}
 		if len(cards) == 0 {
 			return statusMsg{text: fmt.Sprintf("Deck %q has no cards to export", deckID)}
+		}
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			return fmt.Errorf("create deck export directory: %w", err)
 		}
 		seen := make(map[string]bool)
 		var notes []core.Note

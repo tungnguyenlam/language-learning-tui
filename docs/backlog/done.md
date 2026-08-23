@@ -1,3 +1,18 @@
+# 2026-08-23 (Async Deck TSV Directory Creation)
+
+Moved `exports/` directory creation from `exportDeckTSVCmd` construction into
+the timeout-bound export command. Input handling now performs no filesystem
+work, empty decks do not create unused directories, and creation failures reach
+the visible TUI error path.
+
+### Verification
+
+- Focused Deck export tests passed.
+- `go test -race ./internal/tui -count=1` passed.
+- `go test ./...` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512
+  entries), smoke test, binary build, and core E2E suite (35 passed in 37.76s).
+
 # 2026-08-23 (Async Progress-Backup Discovery)
 
 Moved backup-directory discovery out of Import navigation and uncached Restore

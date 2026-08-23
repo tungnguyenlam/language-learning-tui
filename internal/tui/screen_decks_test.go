@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"errors"
+	"os"
 	"strings"
 	"testing"
 
@@ -10,6 +11,53 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 )
+
+func TestDeckTSVExportCreatesDirectoryInsideCommand(t *testing.T) {
+	t.Chdir(t.TempDir())
+	repo := &mockRepo{dueCards: []core.Card{{
+		ID: "card-1", NoteID: "note-1", DeckID: "deck-1", Prompt: "Haus", Answer: "house",
+	}}}
+	model := NewModel(repo, &mockScheduler{})
+
+	cmd := model.exportDeckTSVCmd("deck-1")
+	if cmd == nil {
+		t.Fatal("deck export should return a command")
+	}
+	if _, err := os.Stat("exports"); !os.IsNotExist(err) {
+		t.Fatalf("exports directory exists before command execution: %v", err)
+	}
+	msgs := executeCmd(cmd)
+	if _, err := os.Stat("exports"); err != nil {
+		t.Fatalf("exports directory after command: %v", err)
+	}
+	foundStatus := false
+	for _, msg := range msgs {
+		if status, ok := msg.(statusMsg); ok && strings.Contains(status.text, "Exported 1 notes") {
+			foundStatus = true
+		}
+	}
+	if !foundStatus {
+		t.Fatalf("export messages = %#v, want success status", msgs)
+	}
+}
+
+func TestDeckTSVExportDirectoryErrorIsSurfaced(t *testing.T) {
+	t.Chdir(t.TempDir())
+	if err := os.WriteFile("exports", []byte("not a directory"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	repo := &mockRepo{dueCards: []core.Card{{
+		ID: "card-1", NoteID: "note-1", DeckID: "deck-1", Prompt: "Haus", Answer: "house",
+	}}}
+	model := NewModel(repo, &mockScheduler{})
+
+	for _, msg := range executeCmd(model.exportDeckTSVCmd("deck-1")) {
+		model.Update(msg)
+	}
+	if !model.isErrorStatus || !strings.Contains(model.status, "create deck export directory") {
+		t.Fatalf("status = %q (error=%v), want directory creation error", model.status, model.isErrorStatus)
+	}
+}
 
 func TestDeckSearchHistoryPersistenceRunsAsCommand(t *testing.T) {
 	repo := &mockRepo{}

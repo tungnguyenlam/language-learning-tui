@@ -4,14 +4,15 @@ Last updated: 2026-08-23
 
 ## Current Milestone
 
-Deck export responsiveness: move output-directory creation inside the existing
-TSV export command.
+Bounded storage reconnaissance: rotate from TUI responsiveness to the SQLite
+review/startup hot paths.
 
 ## Exact Next Action
 
-Commit the verified backup-discovery batch, then add a regression proving
-`exportDeckTSVCmd` performs no filesystem work before its command executes and
-move `os.MkdirAll("exports")` into the timeout-bound command/error path.
+Commit the verified Deck TSV batch, then read `internal/storage/AGENTS.md` and
+capture `EXPLAIN QUERY PLAN` evidence for `DueCards` and the dashboard statistics
+queries against a representative temporary database; select a change only if a
+scan/repeated-query cost is demonstrated.
 
 ## Completed This Pass
 
@@ -81,19 +82,25 @@ move `os.MkdirAll("exports")` into the timeout-bound command/error path.
 - Focused Import/backup tests and the TUI race suite pass.
 - Full repository verification passed for async backup discovery; the batch is
   ready to commit.
+- Committed async backup discovery as `b9ec6c0`.
+- Deck TSV export now creates `exports/` only inside its existing timeout-bound
+  command and returns directory failures through the TUI error path; empty
+  decks no longer create an unused output directory.
+- Regression coverage proves command construction performs no filesystem work
+  and directory-creation failures are visible; focused, package, and race tests
+  pass.
+- Full repository verification passed for the Deck TSV directory batch; it is
+  ready to commit.
 
 ## Top Issues
 
-- Backup discovery performs filesystem I/O in Import navigation/key handlers.
-- Deck TSV export creates its output directory before returning a command.
 - View-local state still lives on `Model`; screen files own render + keys only.
 
 ## Acceptance Criteria
 
-- Import navigation and Restore input perform no filesystem work directly.
-- Backup discovery errors surface while a legitimate no-backup state keeps the
-  existing guidance.
-- Focused tests, `go test ./...`, and `./scripts/verify.sh` pass.
+- Query-plan evidence is recorded for the selected storage hot path.
+- Any optimization preserves query results and gains regression/plan coverage;
+  if plans are already indexed, record that result and rotate areas.
 
 ## Last Verification
 
@@ -123,6 +130,10 @@ move `os.MkdirAll("exports")` into the timeout-bound command/error path.
   `go test -race ./internal/tui -count=1` passed on 2026-08-23.
 - Backup discovery batch: `go test ./...` and `./scripts/verify.sh` passed on
   2026-08-23; core E2E suite 35 passed in 37.55s.
+- Deck TSV directory batch: focused tests, `go test ./internal/tui -count=1`,
+  and `go test -race ./internal/tui -count=1` passed on 2026-08-23.
+- Deck TSV directory batch: `go test ./...` and `./scripts/verify.sh` passed on
+  2026-08-23; core E2E suite 35 passed in 37.76s.
 - Previous pass: `./scripts/verify.sh` passed on 2026-08-23 (35 E2E tests).
 - Current pass: `go test ./internal/tui ./internal/storage/sqlite` passed.
 - `./scripts/verify.sh` passed on 2026-08-23: Go tests, vet, offline dict.cc
@@ -133,4 +144,4 @@ move `os.MkdirAll("exports")` into the timeout-bound command/error path.
 
 ## Repository State
 
-- Backup discovery is verified and pending commit.
+- Deck TSV directory handling is verified and pending commit.
