@@ -4,31 +4,20 @@ Last updated: 2026-08-23
 
 ## Current Milestone
 
-Bug-fix and performance pass (per the focus in `AGENTS.md`): audit the remaining
-TUI render hot paths and storage/export error paths. Dictionary line-coordinate
-lookups are now O(1), card-type statistics failures surface, and APKG export
-requires valid deck metadata.
+Autonomous workflow improvement: reshape `prompt/improve.md` from a finite
+2–3-change session prompt into a continuous, evidence-driven development loop
+that can operate safely with little or no human supervision.
 
 ## Exact Next Action
 
-No unfinished executable work remains. Candidate future work:
-
-- Extract remaining view-local state off `Model` (screen files own render +
-  keys only today).
-- Move history/settings persistence off synchronous TUI input handlers into
-  `tea.Cmd`s so a slow repository cannot stall keyboard or mouse handling.
+Review the rewritten prompt for consistency with `AGENTS.md` and continuity
+rules, validate Markdown formatting, update the completed backlog, and commit.
 
 ## Completed This Pass
 
-- Performance: dictionary rendering now tracks builder line counts incrementally
-  instead of repeatedly allocating `String()` snapshots and rescanning the
-  growing buffers for every hitbox coordinate.
-- Bug fix: collection/deck statistics now propagate card-type query, scan, and
-  row-iteration errors rather than returning plausible but incomplete data.
-- Bug fix: APKG export now aborts with context when deck metadata cannot be
-  loaded instead of silently exporting internal deck IDs as display names.
-- Regression tests cover embedded-newline counting, malformed card-type rows,
-  and APKG deck-metadata failures.
+- Rewritten prompt now defines autonomous pickup, evidence-based work selection,
+  repeatable implementation/verification/commit cycles, failure recovery,
+  engineering guardrails, and explicit pause conditions.
 
 ## Top Issues
 
@@ -36,9 +25,10 @@ No unfinished executable work remains. Candidate future work:
 
 ## Acceptance Criteria
 
-- At least 2–3 concrete correctness or hot-path performance improvements land
-  with focused regression tests.
-- `go test ./...` and `./scripts/verify.sh` pass.
+- The prompt treats verified commits as checkpoints and instructs the agent to
+  continue while useful in-scope work remains.
+- It minimizes human questions without granting destructive or external scope.
+- It leaves deterministic repository-backed handoffs whenever execution pauses.
 
 ## Last Verification
 
@@ -50,4 +40,4 @@ No unfinished executable work remains. Candidate future work:
 
 ## Repository State
 
-- All session work is verified and committed; the working tree is clean.
+- Prompt and continuity documentation are modified and awaiting review/commit.
