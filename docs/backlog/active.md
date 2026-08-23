@@ -4,14 +4,14 @@ Last updated: 2026-08-23
 
 ## Current Milestone
 
-Bounded storage reconnaissance: evaluate the full-history cards-added
-statistics query used by the seven-day chart.
+Bounded storage reconnaissance: evaluate repeated full-history review
+aggregations in `Statistics`.
 
 ## Exact Next Action
 
-Commit the verified Cards Added batch, then measure the remaining repeated
-`reviews` aggregations in `Statistics` and select a consolidation only if it
-materially reduces full scans while preserving deck/global results.
+Commit the verified review-summary batch, then measure whether the remaining
+active-deck, maturity, and flag aggregates can share one card/review-state scan
+without changing global/deck statistics.
 
 ## Completed This Pass
 
@@ -114,12 +114,12 @@ materially reduces full scans while preserving deck/global results.
 
 ## Acceptance Criteria
 
-- `CardsAddedPerDay` returns correct global/deck counts within the seven local
-  dates consumed by the chart and no historical dates outside that window.
-- The global query excludes historical notes through an indexed created-time
-  range rather than scanning the full notes table.
-- Representative plan/timing evidence, regression coverage, and layered
-  verification are recorded.
+- Total reviews, per-grade counts, and success rate retain global and deck
+  semantics, including unexpected persisted grade values.
+- Global review aggregation uses one covering indexed pass without a temporary
+  grouping B-tree instead of three separate full-history queries.
+- Representative timing, query-plan coverage, and layered verification are
+  recorded.
 
 ## Last Verification
 
@@ -175,6 +175,15 @@ materially reduces full scans while preserving deck/global results.
   indexed query plan; they pass.
 - `go test ./internal/storage/sqlite -count=1`, `go test ./... -count=1`, and
   `./scripts/verify.sh` pass; the core E2E suite reports 35 passed in 37.69s.
+- Review-summary reconnaissance on 100,000 synthetic reviews measured about
+  14 ms for the separate success/grouped-grade scans (plus the total pass),
+  versus about 2.3 ms for one grouped pass over a covering grade index.
+- Migration 28 adds `idx_reviews_grade`; `Statistics` now derives total,
+  successful, and per-grade counts from that one grouped result. Focused tests
+  protect global/deck scoping, unexpected persisted grades, and a no-temp-B-tree
+  covering-index plan; they pass.
+- `go test ./internal/storage/sqlite -count=1`, `go test ./... -count=1`, and
+  `./scripts/verify.sh` pass; the core E2E suite reports 35 passed in 37.65s.
 - Previous pass: `./scripts/verify.sh` passed on 2026-08-23 (35 E2E tests).
 - Current pass: `go test ./internal/tui ./internal/storage/sqlite` passed.
 - `./scripts/verify.sh` passed on 2026-08-23: Go tests, vet, offline dict.cc
@@ -185,5 +194,5 @@ materially reduces full scans while preserving deck/global results.
 
 ## Repository State
 
-- Streak optimization is committed as `4e77712`; the verified Cards Added
-  batch is ready for its checkpoint commit.
+- Streak optimization is committed as `4e77712`, Cards Added statistics as
+  `236c63f`; the review-summary batch is fully verified and ready to commit.

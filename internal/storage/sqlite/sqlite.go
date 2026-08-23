@@ -848,17 +848,6 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 		return stats, err
 	}
 
-	// Total reviews
-	reviewsQuery := `SELECT COUNT(*) FROM reviews r`
-	var reviewsArgs []interface{}
-	if deckID != "" {
-		reviewsQuery += ` INNER JOIN cards c ON c.id = r.card_id WHERE c.deck_id = ?`
-		reviewsArgs = append(reviewsArgs, deckID)
-	}
-	err = s.db.QueryRowContext(ctx, reviewsQuery, reviewsArgs...).Scan(&stats.TotalReviews)
-	if err != nil {
-		return stats, err
-	}
 	stats.DailyGoal, err = s.dailyGoal(ctx)
 	if err != nil {
 		return stats, err
@@ -922,36 +911,22 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 		stats.CurrentStreak = streak
 	}
 
-	// Success rate (Grade != Again)
-	if stats.TotalReviews > 0 {
-		var successCount int
-		successQuery := `SELECT COUNT(*) FROM reviews r WHERE r.grade != ?`
-		successArgs := []interface{}{string(core.GradeAgain)}
-		if deckID != "" {
-			successQuery += ` AND EXISTS (SELECT 1 FROM cards c WHERE c.id = r.card_id AND c.deck_id = ?)`
-			successArgs = append(successArgs, deckID)
-		}
-		err = s.db.QueryRowContext(ctx, successQuery, successArgs...).Scan(&successCount)
-		if err != nil {
-			return stats, err
-		}
-		stats.SuccessRate = float64(successCount) / float64(stats.TotalReviews)
-	}
-
-	// Reviews by grade
-	gradeQuery := `SELECT r.grade, COUNT(*) FROM reviews r`
+	// One grouped pass supplies total reviews, success rate, and per-grade
+	// counts. The global form streams the covering grade index without a
+	// temporary grouping B-tree.
+	gradeQuery := reviewGradesQuery
 	var gradeArgs []interface{}
 	if deckID != "" {
-		gradeQuery += ` INNER JOIN cards c ON c.id = r.card_id WHERE c.deck_id = ?`
+		gradeQuery = deckReviewGradesQuery
 		gradeArgs = append(gradeArgs, deckID)
 	}
-	gradeQuery += ` GROUP BY r.grade`
 	rows, err := s.db.QueryContext(ctx, gradeQuery, gradeArgs...)
 	if err != nil {
 		return stats, err
 	}
 	defer rows.Close()
 
+	successfulReviews := 0
 	for rows.Next() {
 		var grade string
 		var count int
@@ -959,9 +934,16 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 			return stats, err
 		}
 		stats.Grades[core.ReviewGrade(grade)] = count
+		stats.TotalReviews += count
+		if grade != string(core.GradeAgain) {
+			successfulReviews += count
+		}
 	}
 	if err := rows.Err(); err != nil {
 		return stats, err
+	}
+	if stats.TotalReviews > 0 {
+		stats.SuccessRate = float64(successfulReviews) / float64(stats.TotalReviews)
 	}
 
 	// The Statistics view displays only the last seven local calendar days.
@@ -1027,6 +1009,20 @@ const deckCardsAddedPerDayQuery = `
 	JOIN cards c ON c.note_id = n.id
 	WHERE n.created_at >= ? AND n.created_at < ? AND n.deck_id = ?
 	GROUP BY add_date
+`
+
+const reviewGradesQuery = `
+	SELECT grade, COUNT(*)
+	FROM reviews
+	GROUP BY grade
+`
+
+const deckReviewGradesQuery = `
+	SELECT r.grade, COUNT(*)
+	FROM reviews r
+	INNER JOIN cards c ON c.id = r.card_id
+	WHERE c.deck_id = ?
+	GROUP BY r.grade
 `
 
 func (s *Store) deckCurrentStreak(ctx context.Context, deckID string, now time.Time) (int, error) {

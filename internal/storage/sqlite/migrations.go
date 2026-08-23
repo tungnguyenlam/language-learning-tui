@@ -218,4 +218,8 @@ var migrations = []migration{
 		ID:  27,
 		SQL: `CREATE INDEX IF NOT EXISTS idx_notes_created_at ON notes(created_at)`,
 	},
+	{
+		ID:  28,
+		SQL: `CREATE INDEX IF NOT EXISTS idx_reviews_grade ON reviews(grade)`,
+	},
 }

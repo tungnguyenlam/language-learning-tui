@@ -699,6 +699,124 @@ func TestCardsAddedPerDayQueryUsesCreatedAtIndex(t *testing.T) {
 	}
 }
 
+func TestStatisticsDerivesReviewSummaryFromGradeCounts(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	cardIDs := make(map[string]string)
+	for _, deck := range []core.Deck{
+		{ID: "review-summary-a", Name: "Review Summary A"},
+		{ID: "review-summary-b", Name: "Review Summary B"},
+	} {
+		if err := store.UpsertDeck(ctx, deck); err != nil {
+			t.Fatalf("upsert deck %s: %v", deck.ID, err)
+		}
+		note := core.Note{ID: deck.ID + "-note", DeckID: deck.ID, Type: "flashcard", Front: "F", Back: "B"}
+		note.Cards = content.CardsForNote(note)
+		if err := store.UpsertNote(ctx, note); err != nil {
+			t.Fatalf("upsert note for %s: %v", deck.ID, err)
+		}
+		cardIDs[deck.ID] = note.Cards[0].ID
+	}
+
+	now := time.Now().UTC()
+	grades := []struct {
+		deckID string
+		grade  core.ReviewGrade
+	}{
+		{"review-summary-a", core.GradeAgain},
+		{"review-summary-a", core.GradeGood},
+		{"review-summary-a", core.ReviewGrade("unexpected")},
+		{"review-summary-b", core.GradeEasy},
+		{"review-summary-b", core.GradeEasy},
+	}
+	for i, item := range grades {
+		if err := store.RecordReview(ctx, core.ReviewResult{
+			CardID:   cardIDs[item.deckID],
+			Grade:    item.grade,
+			Reviewed: now.Add(time.Duration(i) * time.Minute),
+			Next: core.ReviewState{
+				CardID: cardIDs[item.deckID],
+				Due:    now.Add(24 * time.Hour),
+				Ease:   2.5,
+			},
+		}); err != nil {
+			t.Fatalf("record %s review: %v", item.grade, err)
+		}
+	}
+
+	globalStats, err := store.Statistics(ctx)
+	if err != nil {
+		t.Fatalf("global statistics: %v", err)
+	}
+	if globalStats.TotalReviews != 5 || globalStats.SuccessRate != 4.0/5.0 {
+		t.Fatalf("global review summary = total %d, success %.3f; want 5, 0.8", globalStats.TotalReviews, globalStats.SuccessRate)
+	}
+	for grade, want := range map[core.ReviewGrade]int{
+		core.GradeAgain:                1,
+		core.GradeGood:                 1,
+		core.GradeEasy:                 2,
+		core.ReviewGrade("unexpected"): 1,
+	} {
+		if got := globalStats.Grades[grade]; got != want {
+			t.Fatalf("global grade %q count = %d, want %d", grade, got, want)
+		}
+	}
+
+	deckStats, err := store.DeckStatistics(ctx, "review-summary-a")
+	if err != nil {
+		t.Fatalf("deck statistics: %v", err)
+	}
+	if deckStats.TotalReviews != 3 || deckStats.SuccessRate != 2.0/3.0 {
+		t.Fatalf("deck review summary = total %d, success %.3f; want 3, %.3f", deckStats.TotalReviews, deckStats.SuccessRate, 2.0/3.0)
+	}
+	if deckStats.Grades[core.GradeAgain] != 1 || deckStats.Grades[core.GradeGood] != 1 || deckStats.Grades[core.ReviewGrade("unexpected")] != 1 {
+		t.Fatalf("deck grade counts = %v, want Again/Good/unexpected once", deckStats.Grades)
+	}
+	if deckStats.Grades[core.GradeEasy] != 0 {
+		t.Fatalf("deck grade counts include other deck: %v", deckStats.Grades)
+	}
+}
+
+func TestReviewGradesQueryUsesCoveringIndex(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	rows, err := store.db.QueryContext(ctx, "EXPLAIN QUERY PLAN "+reviewGradesQuery)
+	if err != nil {
+		t.Fatalf("explain review-grades query: %v", err)
+	}
+	defer rows.Close()
+
+	var details []string
+	for rows.Next() {
+		var id, parent, unused int
+		var detail string
+		if err := rows.Scan(&id, &parent, &unused, &detail); err != nil {
+			t.Fatalf("scan review-grades query plan: %v", err)
+		}
+		details = append(details, detail)
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("iterate review-grades query plan: %v", err)
+	}
+	plan := strings.Join(details, "\n")
+	if !strings.Contains(plan, "COVERING INDEX idx_reviews_grade") {
+		t.Fatalf("review-grades query plan does not use covering grade index:\n%s", plan)
+	}
+	if strings.Contains(plan, "TEMP B-TREE") {
+		t.Fatalf("review-grades query plan builds a temporary B-tree:\n%s", plan)
+	}
+}
+
 // Streaks count consecutive local calendar days. Reviews just after local
 // midnight fall on the previous UTC date in positive-offset zones, so grouping
 // by the UTC date substring must not split or drop days.

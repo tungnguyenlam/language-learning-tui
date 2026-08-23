@@ -1,3 +1,21 @@
+# 2026-08-23 (Single-Pass Review Summary Statistics)
+
+Consolidated total reviews, success rate, and per-grade counts into one grouped
+query. Migration 28 adds a covering `reviews(grade)` index, eliminating two
+extra full-history queries and the global grouping B-tree while retaining deck
+scoping and the existing treatment of unexpected stored grade values. On
+100,000 synthetic reviews, the relevant scans fell from about 14 ms plus a
+separate total pass to about 2.3 ms.
+
+### Verification
+
+- Focused global/deck result, unknown-grade, migration, and query-plan tests
+  passed.
+- `go test ./internal/storage/sqlite -count=1` passed.
+- `go test ./... -count=1` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512
+  entries), smoke test, binary build, and core E2E suite (35 passed in 37.65s).
+
 # 2026-08-23 (Indexed Seven-Day Cards Added Statistics)
 
 Fixed the Statistics Cards Added chart so Go-formatted note timestamps are
