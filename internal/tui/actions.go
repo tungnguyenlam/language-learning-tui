@@ -236,11 +236,15 @@ func (m *Model) executeResetDatabase() tea.Cmd {
 		if err := m.repo.Reset(ctx); err != nil {
 			return err
 		}
-		// Reset everything
-		decks, _ := m.repo.Decks(ctx)
-		cards, _ := m.repo.DueCards(ctx, time.Now(), 0)
+		decks, err := m.repo.Decks(ctx)
+		if err != nil {
+			return fmt.Errorf("reload decks after reset: %w", err)
+		}
+		cards, err := m.repo.DueCards(ctx, time.Now(), 0)
+		if err != nil {
+			return fmt.Errorf("reload due cards after reset: %w", err)
+		}
 
-		// Create a compound message or just trigger reloads
 		return importDoneMsg{decks: decks, cards: cards, count: 0, path: "Database Reset"}
 	}
 }

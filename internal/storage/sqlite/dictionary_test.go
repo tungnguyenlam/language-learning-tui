@@ -465,3 +465,19 @@ func TestDictionarySearchPunctuationOnlyNoFTSSyntaxError(t *testing.T) {
 		}
 	}
 }
+
+func TestFindRelatedEntriesReportsDatabaseFailure(t *testing.T) {
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	if err := store.Close(); err != nil {
+		t.Fatalf("close store: %v", err)
+	}
+
+	for _, word := range []string{"Haus", "Tag"} {
+		if _, err := store.FindRelatedEntries(context.Background(), word, 5); err == nil {
+			t.Errorf("FindRelatedEntries(%q) on a closed database returned nil error", word)
+		}
+	}
+}

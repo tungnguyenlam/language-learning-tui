@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -282,6 +283,83 @@ func TestTypingModeGradeHitboxAlignsWithRenderedGradeLine(t *testing.T) {
 	againCol := utf8.RuneCountInString(gradeLine[:byteIdx])
 	if againHitbox.X != againCol {
 		t.Errorf("grade-again X=%d, want %d (rendered Again column)", againHitbox.X, againCol)
+	}
+}
+
+func TestCramGradeHitboxAlignsWithWrappedRenderedGradeLine(t *testing.T) {
+	m := NewModel(nil, nil)
+	m.activeView = ViewCram
+	m.cramActive = true
+	m.cramRevealed = true
+	m.cramCards = []core.Card{{
+		ID:     "c1",
+		Prompt: "Welches deutsche Wort beschreibt ein sehr kleines gemütliches Haus am Waldrand?",
+		Answer: "das Häuschen am Waldrand mit einem besonders langen Antwortsatz",
+		Extra:  "Dieser ausführliche Kontext wird in einem schmalen Terminal über mehrere sichtbare Zeilen umgebrochen.",
+	}}
+
+	m.hitboxes = nil
+	view := m.renderCramAt(viewportLayout{Width: 52, Height: 30})
+
+	plain := stripANSI(view)
+	lines := strings.Split(plain, "\n")
+	for id, label := range map[string]string{
+		"cram-grade-again": "Again",
+		"cram-grade-hard":  "Hard",
+		"cram-grade-good":  "Good",
+		"cram-grade-easy":  "Easy",
+	} {
+		var hitbox *Hitbox
+		for i := range m.hitboxes {
+			if m.hitboxes[i].ID == id {
+				hitbox = &m.hitboxes[i]
+				break
+			}
+		}
+		if hitbox == nil {
+			t.Errorf("expected %s hitbox", id)
+			continue
+		}
+
+		wantRow, wantCol := -1, -1
+		for row := len(lines) - 1; row >= 0; row-- {
+			line := lines[row]
+			if byteIndex := strings.Index(line, label); byteIndex >= 0 {
+				wantRow = row
+				wantCol = utf8.RuneCountInString(line[:byteIndex])
+				break
+			}
+		}
+		if wantRow == -1 {
+			t.Errorf("rendered Cram card missing %q", label)
+			continue
+		}
+		if hitbox.Y != wantRow || hitbox.X != wantCol {
+			t.Errorf("%s at (%d,%d), want rendered position (%d,%d)", id, hitbox.X, hitbox.Y, wantCol, wantRow)
+		}
+	}
+}
+
+func TestResetDatabaseReportsReloadFailures(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		repo *mockRepo
+		want string
+	}{
+		{name: "decks", repo: &mockRepo{errDecks: errors.New("decks unavailable")}, want: "reload decks after reset: decks unavailable"},
+		{name: "due cards", repo: &mockRepo{errDueCards: errors.New("cards unavailable")}, want: "reload due cards after reset: cards unavailable"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			m := NewModel(tc.repo, &mockScheduler{})
+			msg := m.executeResetDatabase()()
+			err, ok := msg.(error)
+			if !ok {
+				t.Fatalf("reset reload message = %T, want error", msg)
+			}
+			if !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("reset reload error = %q, want %q", err, tc.want)
+			}
+		})
 	}
 }
 

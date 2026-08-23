@@ -59,6 +59,11 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		promptDisplay := promptStyle.Render(card.Prompt) + audioIndicator
 
 		var answer string
+		var gradeButtons []struct {
+			id    string
+			label string
+			grade core.ReviewGrade
+		}
 		if m.revealState == RevealFlipping {
 			answer = renderFlipAnimation(m, card, cardWidth)
 		} else if m.revealState == RevealRevealing {
@@ -100,42 +105,34 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 			keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 			answer += fmt.Sprintf("\n\nGrade: %s Again (1) | %s Hard (2) | %s Good (3) | %s Easy (4)",
 				keyStyle.Render("a"), keyStyle.Render("h"), keyStyle.Render("g"), keyStyle.Render("e"))
-
-			cardX := layout.X + (layout.Width-cardWidth)/2 + 3
-			cardY := layout.Y + 5
-			gradeYOffset := cardY + strings.Count(fmt.Sprintf("%s\n\n%s%s\n\nGrade: ", promptDisplay, card.Answer, extraDisplay), "\n")
-
-			gaW := lipgloss.Width(keyStyle.Render("a") + " Again (1)")
-			ghW := lipgloss.Width(keyStyle.Render("h") + " Hard (2)")
-			ggW := lipgloss.Width(keyStyle.Render("g") + " Good (3)")
-			geW := lipgloss.Width(keyStyle.Render("e") + " Easy (4)")
-
-			labelAgain := fmt.Sprintf("Grade: %s ", keyStyle.Render("a"))
-			labelHard := fmt.Sprintf("Grade: %s Again (1) | %s ", keyStyle.Render("a"), keyStyle.Render("h"))
-			labelGood := fmt.Sprintf("Grade: %s Again (1) | %s Hard (2) | %s ", keyStyle.Render("a"), keyStyle.Render("h"), keyStyle.Render("g"))
-			labelEasy := fmt.Sprintf("Grade: %s Again (1) | %s Hard (2) | %s Good (3) | %s ", keyStyle.Render("a"), keyStyle.Render("h"), keyStyle.Render("g"), keyStyle.Render("e"))
-
-			m.hitboxes = append(m.hitboxes, Hitbox{
-				ID: "cram-grade-again", View: ViewCram, X: cardX + lipgloss.Width(labelAgain), Y: gradeYOffset, Width: gaW, Height: 1,
-				Action: func() tea.Cmd { return m.gradeCramCard(core.GradeAgain) },
-			})
-			m.hitboxes = append(m.hitboxes, Hitbox{
-				ID: "cram-grade-hard", View: ViewCram, X: cardX + lipgloss.Width(labelHard), Y: gradeYOffset, Width: ghW, Height: 1,
-				Action: func() tea.Cmd { return m.gradeCramCard(core.GradeHard) },
-			})
-			m.hitboxes = append(m.hitboxes, Hitbox{
-				ID: "cram-grade-good", View: ViewCram, X: cardX + lipgloss.Width(labelGood), Y: gradeYOffset, Width: ggW, Height: 1,
-				Action: func() tea.Cmd { return m.gradeCramCard(core.GradeGood) },
-			})
-			m.hitboxes = append(m.hitboxes, Hitbox{
-				ID: "cram-grade-easy", View: ViewCram, X: cardX + lipgloss.Width(labelEasy), Y: gradeYOffset, Width: geW, Height: 1,
-				Action: func() tea.Cmd { return m.gradeCramCard(core.GradeEasy) },
-			})
+			gradeButtons = []struct {
+				id    string
+				label string
+				grade core.ReviewGrade
+			}{
+				{id: "cram-grade-again", label: "Again", grade: core.GradeAgain},
+				{id: "cram-grade-hard", label: "Hard", grade: core.GradeHard},
+				{id: "cram-grade-good", label: "Good", grade: core.GradeGood},
+				{id: "cram-grade-easy", label: "Easy", grade: core.GradeEasy},
+			}
 		} else {
 			answer = "Press Space or Enter to reveal."
 		}
 
-		ctx.WriteLine(cardStyle.Render(promptDisplay + "\n\n" + answer))
+		renderedCard := cardStyle.Render(promptDisplay + "\n\n" + answer)
+		for _, button := range gradeButtons {
+			x, y, ok := renderedTextPosition(renderedCard, button.label)
+			if !ok {
+				continue
+			}
+			grade := button.grade
+			m.hitboxes = append(m.hitboxes, Hitbox{
+				ID: button.id, View: ViewCram,
+				X: ctx.currX + x, Y: ctx.currY + y, Width: lipgloss.Width(button.label), Height: 1,
+				Action: func() tea.Cmd { return m.gradeCramCard(grade) },
+			})
+		}
+		ctx.WriteLine(renderedCard)
 
 		keyStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true)
 		ctx.WriteLine(fmt.Sprintf("\n%s play audio | %s to exit cram review.", keyStyle.Render("p"), keyStyle.Render("q")))
@@ -270,4 +267,20 @@ func (m *Model) renderCramAt(layout viewportLayout) string {
 		lipgloss.NewStyle().Foreground(lipgloss.Color("81")).Bold(true).Render("q")))
 
 	return ctx.String()
+}
+
+func renderedTextPosition(rendered, text string) (x, y int, ok bool) {
+	lines := strings.Split(rendered, "\n")
+	// Grade controls are the final matching labels in the card. Searching from
+	// the bottom avoids mistaking the same English word in the prompt or context
+	// for a button.
+	for row := len(lines) - 1; row >= 0; row-- {
+		line := lines[row]
+		plain := stripANSI(line)
+		byteIndex := strings.Index(plain, text)
+		if byteIndex >= 0 {
+			return lipgloss.Width(plain[:byteIndex]), row, true
+		}
+	}
+	return 0, 0, false
 }

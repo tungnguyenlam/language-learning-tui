@@ -1,3 +1,29 @@
+# 2026-08-23 (Cram Mouse Alignment + Suppressed Error Fixes)
+
+Continued the correctness pass across the TUI and SQLite repository.
+
+- Cram's Again/Hard/Good/Easy mouse hitboxes previously used hard-coded card
+  offsets plus source newline counts. Long prompt, answer, or context text could
+  wrap without affecting those counts, shifting the targets many rows above the
+  visible controls; the X calculation also assumed centering that the renderer
+  did not apply. Hitboxes are now derived from each label's position in the
+  rendered card, including border/padding and wrapped control rows.
+- Database reset no longer ignores Decks/Due Cards reload errors after clearing
+  the store. It returns contextual errors instead of emitting a successful
+  `importDoneMsg` backed by stale/empty fallback slices.
+- Related dictionary lookup no longer suppresses errors from its prefix,
+  suffix, or exact-match SQL paths, so a broken/closed store is distinguishable
+  from a legitimate empty related-word list.
+- Added regression coverage for all four grade controls in a narrow wrapped
+  card, both reset reload paths, and both long- and short-word related lookups
+  against a closed SQLite database.
+
+### Verification
+
+- `go test ./...` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512
+  entries), smoke test, binary build, and core E2E suite (35 passed in 37.51s).
+
 # 2026-08-23 (Render Rescan Cleanup + Typing Review Fixes)
 
 Continued the bug-fix/performance pass.

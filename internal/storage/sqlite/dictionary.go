@@ -527,7 +527,10 @@ func (s *Store) FindRelatedEntries(ctx context.Context, word string, limit int) 
 			ORDER BY length(word), word COLLATE NOCASE, id
 			LIMIT ?
 		`
-		ftsEntries, _ := s.queryDictionaryEntries(ctx, q, matchQuery, word, limit*3)
+		ftsEntries, err := s.queryDictionaryEntries(ctx, q, matchQuery, word, limit*3)
+		if err != nil {
+			return nil, fmt.Errorf("find related entries by prefix: %w", err)
+		}
 		entries = append(entries, ftsEntries...)
 
 		// Suffix matching is a fallback for compounds such as Krankenhaus for
@@ -540,7 +543,10 @@ func (s *Store) FindRelatedEntries(ctx context.Context, word string, limit int) 
 				WHERE word LIKE ? AND word != ?
 				LIMIT ?
 			`
-			suffixEntries, _ := s.queryDictionaryEntries(ctx, qSuffix, "%"+bareWord, word, limit*2)
+			suffixEntries, err := s.queryDictionaryEntries(ctx, qSuffix, "%"+bareWord, word, limit*2)
+			if err != nil {
+				return nil, fmt.Errorf("find related entries by suffix: %w", err)
+			}
 			entries = append(entries, suffixEntries...)
 		}
 	} else {
@@ -551,7 +557,10 @@ func (s *Store) FindRelatedEntries(ctx context.Context, word string, limit int) 
 			WHERE (lower(word) = lower(?) OR word LIKE ?) AND word != ?
 			LIMIT ?
 		`
-		exactEntries, _ := s.queryDictionaryEntries(ctx, qExact, bareWord, "%"+bareWord, word, limit*2)
+		exactEntries, err := s.queryDictionaryEntries(ctx, qExact, bareWord, "%"+bareWord, word, limit*2)
+		if err != nil {
+			return nil, fmt.Errorf("find related entries by exact match: %w", err)
+		}
 		entries = append(entries, exactEntries...)
 	}
 
