@@ -91,6 +91,7 @@ scan/repeated-query cost is demonstrated.
   pass.
 - Full repository verification passed for the Deck TSV directory batch; it is
   ready to commit.
+- Committed Deck TSV directory handling as `9f8c6ed`.
 
 ## Top Issues
 
@@ -144,4 +145,5 @@ scan/repeated-query cost is demonstrated.
 
 ## Repository State
 
-- Deck TSV directory handling is verified and pending commit.
+- All completed TUI responsiveness batches are committed; the worktree is
+  clean before storage reconnaissance.
