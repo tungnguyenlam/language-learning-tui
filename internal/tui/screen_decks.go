@@ -15,22 +15,21 @@ func (decksScreen) HandleKey(m *Model, msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	if m.searchingDecks {
 		switch msg.String() {
 		case "enter", "\r", "\n":
-			m.recordDeckSearch(m.deckFilter)
+			cmd := m.recordDeckSearch(m.deckFilter)
 			m.searchingDecks = false
 			m.applyDeckFilter()
 			filtered := m.filteredDecks()
 			if len(filtered) > 0 {
 				m.selectDeckByID(filtered[0].ID)
 			}
-			return nil, true
+			return cmd, true
 		case "esc", "\x1b":
 			m.searchingDecks = false
 			m.applyDeckFilter()
 			return nil, true
 		case "ctrl+x":
 			m.deckSearchHistory = nil
-			m.saveDeckHistory()
-			return nil, true
+			return m.saveDeckHistory(), true
 		case "backspace":
 			if len(m.deckFilter) > 0 {
 				m.deckFilter = trimLastRune(m.deckFilter)

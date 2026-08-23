@@ -11,20 +11,22 @@ import (
 )
 
 type mockRepo struct {
-	decks        []core.Deck
-	dueCards     []core.Card
-	upsertedDeck core.Deck
-	bookmarks    map[string]bool
-	suspended    map[string]bool
-	reviews      []core.ReviewResult
-	dailyGoal    int
-	errOnCardID  map[string]error
-	errDueCards  error
-	errDecks     error
-	errCards     error
-	settings     map[string]string
-	notes        map[string]core.Note
-	mu           sync.Mutex
+	decks           []core.Deck
+	dueCards        []core.Card
+	upsertedDeck    core.Deck
+	bookmarks       map[string]bool
+	suspended       map[string]bool
+	reviews         []core.ReviewResult
+	dailyGoal       int
+	errOnCardID     map[string]error
+	errDueCards     error
+	errDecks        error
+	errCards        error
+	errSetSetting   error
+	settings        map[string]string
+	setSettingCalls int
+	notes           map[string]core.Note
+	mu              sync.Mutex
 }
 
 func (m *mockRepo) UpsertDeck(ctx context.Context, deck core.Deck) error {
@@ -454,6 +456,10 @@ func (m *mockRepo) GetSetting(ctx context.Context, key string) (string, error) {
 func (m *mockRepo) SetSetting(ctx context.Context, key string, value string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
+	m.setSettingCalls++
+	if m.errSetSetting != nil {
+		return m.errSetSetting
+	}
 	if m.settings == nil {
 		m.settings = make(map[string]string)
 	}

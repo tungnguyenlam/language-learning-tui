@@ -10,6 +10,8 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"deutsch-tui/internal/ai"
@@ -197,6 +199,8 @@ type Model struct {
 	dictionarySearch               string
 	dictionarySearchHistory        []string
 	deckSearchHistory              []string
+	deckHistorySaveMu              sync.Mutex
+	deckHistorySaveID              atomic.Uint64
 	dictionarySearchID             int
 	dictionaryRelatedID            int
 	dictionarySearchTimerID        int

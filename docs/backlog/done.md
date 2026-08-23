@@ -1,3 +1,19 @@
+# 2026-08-23 (Async Deck Search-History Persistence)
+
+Moved Decks search-history writes out of keyboard and mouse handlers into
+Bubble Tea commands. Saves use immutable snapshots, a timeout, contextual error
+propagation, and latest-request serialization so overlapping commands cannot
+leave older history on disk. Added regression coverage for deferred writes,
+latest-snapshot behavior, visible storage failures, and the mouse clear path.
+
+### Verification
+
+- `go test ./internal/tui -count=1` passed.
+- `go test -race ./internal/tui -count=1` passed.
+- `go test ./...` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512
+  entries), smoke test, binary build, and core E2E suite (35 passed in 37.17s).
+
 # 2026-08-23 (Continuous Autonomous Improvement Prompt)
 
 Reworked `prompt/improve.md` for long-running development with little or no

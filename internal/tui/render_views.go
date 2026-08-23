@@ -198,8 +198,7 @@ func (m *Model) renderDecks(layout viewportLayout) string {
 					Height: 1,
 					Action: func() tea.Cmd {
 						m.deckSearchHistory = nil
-						m.saveDeckHistory()
-						return nil
+						return m.saveDeckHistory()
 					},
 				})
 

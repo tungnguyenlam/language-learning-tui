@@ -14,31 +14,44 @@ import (
 	"deutsch-tui/internal/core"
 )
 
-func (m *Model) recordDeckSearch(query string) {
+func (m *Model) recordDeckSearch(query string) tea.Cmd {
 	query = strings.TrimSpace(query)
 	if query == "" {
-		return
+		return nil
 	}
 	for i, q := range m.deckSearchHistory {
 		if q == query {
 			m.deckSearchHistory = append(m.deckSearchHistory[:i], m.deckSearchHistory[i+1:]...)
 			m.deckSearchHistory = append(m.deckSearchHistory, query)
-			m.saveDeckHistory()
-			return
+			return m.saveDeckHistory()
 		}
 	}
 	m.deckSearchHistory = append(m.deckSearchHistory, query)
 	if len(m.deckSearchHistory) > 5 {
 		m.deckSearchHistory = m.deckSearchHistory[1:]
 	}
-	m.saveDeckHistory()
+	return m.saveDeckHistory()
 }
 
-func (m *Model) saveDeckHistory() {
-	ctx := context.Background()
-	data, err := json.Marshal(m.deckSearchHistory)
-	if err == nil {
-		_ = m.repo.SetSetting(ctx, "deck_search_history", string(data))
+func (m *Model) saveDeckHistory() tea.Cmd {
+	history := append([]string(nil), m.deckSearchHistory...)
+	requestID := m.deckHistorySaveID.Add(1)
+	return func() tea.Msg {
+		m.deckHistorySaveMu.Lock()
+		defer m.deckHistorySaveMu.Unlock()
+		if requestID != m.deckHistorySaveID.Load() {
+			return nil
+		}
+		data, err := json.Marshal(history)
+		if err != nil {
+			return fmt.Errorf("encode deck search history: %w", err)
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if err := m.repo.SetSetting(ctx, "deck_search_history", string(data)); err != nil {
+			return fmt.Errorf("save deck search history: %w", err)
+		}
+		return nil
 	}
 }
 
