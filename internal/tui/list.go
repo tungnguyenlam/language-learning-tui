@@ -18,6 +18,9 @@ type ListOptions struct {
 	ScrollOffset  *int
 	TotalLines    *int
 	Cursor        int
+	// LineAt can lazily provide a rendered global line. Returning false falls
+	// back to content, which may hold placeholders for virtualized sections.
+	LineAt func(lineIdx int) (string, bool)
 	// OnLine is called for each visible line to register hitboxes.
 	OnLine func(lineIdx int, ctx *RenderContext, content string)
 }
@@ -56,7 +59,11 @@ func (m *Model) RenderList(layout viewportLayout, content string, opts ListOptio
 		contentIdx := lineIdx - opts.ContentOffset
 
 		var lineContent string
-		if contentIdx >= 0 && contentIdx < len(lines) {
+		provided := false
+		if opts.LineAt != nil {
+			lineContent, provided = opts.LineAt(lineIdx)
+		}
+		if !provided && contentIdx >= 0 && contentIdx < len(lines) {
 			lineContent = lines[contentIdx]
 		}
 

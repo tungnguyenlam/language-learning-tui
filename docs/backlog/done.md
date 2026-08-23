@@ -1,3 +1,22 @@
+# 2026-08-23 (Virtualized Statistics Deck Success Rows)
+
+Added lazy visible-line providers to the shared list renderer and converted the
+Statistics per-deck success section to logical placeholder rows. Only visible
+deck names, progress bars, colors, and percentages are now formatted. The
+retained 5,000-deck benchmark improved from about 26.1 ms and 9.38 MB per
+render to about 0.73 ms and 0.53 MB, with allocations falling from roughly
+232,345 to 4,235.
+
+### Verification
+
+- Lazy-provider, Statistics scrolling, and render tests passed.
+- `go test ./internal/tui -count=1` passed.
+- `go test -race ./internal/tui -count=1` passed.
+- `go test ./... -count=1` passed.
+- Responsive Statistics E2E passed at 40, 60, and 100 columns.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512
+  entries), smoke test, binary build, and core E2E suite (35 passed in 38.02s).
+
 # 2026-08-23 (Explicit Scrollable-List Content Offsets)
 
 Fixed Statistics scrolling, which rendered the beginning of its content even

@@ -147,27 +147,21 @@ func (m *Model) renderStatistics(layout viewportLayout) string {
 	}
 
 	// --- Success Rate per Deck ---
+	deckSuccessStart := -1
+	var successfulDeckIndices []int
 	if len(m.decks) > 1 {
-		deckSuccess := strings.Builder{}
-		deckSuccess.WriteString(titleStyle.Copy().Underline(true).Render("Success Rate per Deck") + "\n")
-		hasData := false
-		for _, d := range m.decks {
+		for i, d := range m.decks {
 			if d.ID == "" || d.SuccessRate <= 0 {
 				continue
 			}
-			hasData = true
-			successColor := "196"
-			if d.SuccessRate >= 0.85 {
-				successColor = "46"
-			} else if d.SuccessRate >= 0.70 {
-				successColor = "226"
-			}
-			successStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(successColor)).Bold(true)
-			bar := progressBar(20, d.SuccessRate, lipgloss.Color(successColor), lipgloss.Color("238"))
-			deckSuccess.WriteString(fmt.Sprintf("  %-20s %s %s\n", truncateLine(d.Name, 20), bar, successStyle.Render(fmt.Sprintf("%.1f%%", d.SuccessRate*100))))
+			successfulDeckIndices = append(successfulDeckIndices, i)
 		}
-		if hasData {
-			content.WriteString(deckSuccess.String() + "\n")
+		if len(successfulDeckIndices) > 0 {
+			content.WriteString(titleStyle.Copy().Underline(true).Render("Success Rate per Deck") + "\n")
+			deckSuccessStart = strings.Count(content.String(), "\n")
+			// Preserve one logical row per deck without formatting off-screen
+			// names, progress bars, colors, and percentages.
+			content.WriteString(strings.Repeat("\n", len(successfulDeckIndices)+1))
 		}
 	}
 
@@ -453,6 +447,22 @@ func (m *Model) renderStatistics(layout viewportLayout) string {
 		Footer:       footer,
 		ScrollOffset: &m.statsScroll,
 		TotalLines:   &m.statsTotalLines,
+		LineAt: func(lineIndex int) (string, bool) {
+			deckLine := lineIndex - deckSuccessStart
+			if deckSuccessStart < 0 || deckLine < 0 || deckLine >= len(successfulDeckIndices) {
+				return "", false
+			}
+			d := m.decks[successfulDeckIndices[deckLine]]
+			successColor := "196"
+			if d.SuccessRate >= 0.85 {
+				successColor = "46"
+			} else if d.SuccessRate >= 0.70 {
+				successColor = "226"
+			}
+			successStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(successColor)).Bold(true)
+			bar := progressBar(20, d.SuccessRate, lipgloss.Color(successColor), lipgloss.Color("238"))
+			return fmt.Sprintf("  %-20s %s %s", truncateLine(d.Name, 20), bar, successStyle.Render(fmt.Sprintf("%.1f%%", d.SuccessRate*100))), true
+		},
 	})
 
 	ctx.Write(listView)

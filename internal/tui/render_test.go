@@ -44,6 +44,36 @@ func TestRenderDecksBug(t *testing.T) {
 
 var benchmarkRenderedDecks string
 
+func BenchmarkRenderStatisticsLargeDeckCollection(b *testing.B) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	model.activeView = ViewStatistics
+	model.stats.TotalCards = 500_000
+	model.stats.TotalDecks = 5_000
+	model.stats.ActiveDecks = 5_000
+	model.stats.NewCards = 100_000
+	model.stats.YoungCards = 200_000
+	model.stats.MatureCards = 200_000
+	model.stats.TotalReviews = 1_000_000
+	model.stats.DailyGoal = 20
+	model.decks = make([]core.Deck, 5_000)
+	for i := range model.decks {
+		model.decks[i] = core.Deck{
+			ID:          fmt.Sprintf("deck-%d", i),
+			Name:        fmt.Sprintf("Deutsch Übungsdeck %d", i),
+			SuccessRate: 0.85,
+		}
+	}
+	model.statsScroll = len(model.decks) / 2
+	layout := viewportLayout{Width: 120, Height: 40}
+
+	b.ReportAllocs()
+	b.ResetTimer()
+	for range b.N {
+		model.hitboxes = model.hitboxes[:0]
+		benchmarkRenderedDecks = model.renderStatistics(layout)
+	}
+}
+
 func BenchmarkRenderDecksLargeCollection(b *testing.B) {
 	model := NewModel(&mockRepo{}, &mockScheduler{})
 	model.activeView = ViewDecks
@@ -304,6 +334,32 @@ func TestRenderListUsesExplicitContentOffset(t *testing.T) {
 				t.Fatalf("rendered line = %q, want content %q", line, tc.want)
 			}
 		})
+	}
+}
+
+func TestRenderListCallsLazyProviderOnlyForVisibleLines(t *testing.T) {
+	model := NewModel(&mockRepo{}, &mockScheduler{})
+	totalLines := 100
+	scroll := 40
+	var called []int
+	got := model.RenderList(viewportLayout{Width: 20, Height: 5}, "", ListOptions{
+		HitboxPrefix: "lazy",
+		View:         ViewStatistics,
+		ScrollOffset: &scroll,
+		TotalLines:   &totalLines,
+		LineAt: func(lineIndex int) (string, bool) {
+			called = append(called, lineIndex)
+			return fmt.Sprintf("lazy-%d", lineIndex), true
+		},
+	})
+
+	if got, want := fmt.Sprint(called), "[40 41 42 43 44]"; got != want {
+		t.Fatalf("lazy provider calls = %s, want %s", got, want)
+	}
+	for i := 40; i <= 44; i++ {
+		if !strings.Contains(stripANSI(got), fmt.Sprintf("lazy-%d", i)) {
+			t.Fatalf("render missing lazy line %d:\n%s", i, stripANSI(got))
+		}
 	}
 }
 

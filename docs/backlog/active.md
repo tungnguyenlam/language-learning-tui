@@ -4,17 +4,26 @@ Last updated: 2026-08-23
 
 ## Current Milestone
 
-Statistics scrolling is corrected and verified; optimize its measured
-large-collection per-deck render path.
+Decks and Statistics large-list render paths are optimized and verified; rotate
+to a different TUI rendering cost.
 
 ## Exact Next Action
 
-Reintroduce the temporary 5,000-deck Statistics benchmark, then represent the
-per-deck success section as virtual rows so only visible deck rows are styled.
-Preserve the now-explicit full-buffer content-offset behavior.
+Benchmark `RenderContext.Write` on a representative high-write view to quantify
+its per-call `strings.Split` and width tracking allocations. Change it only if
+the absolute cost is material and output/hitbox positions can be protected.
 
 ## Completed This Pass
 
+- Benchmarked 5,000-deck Statistics rendering at about 26.1 ms/op, 9.38 MB/op,
+  and 232,345 allocs/op.
+- Added lazy global-line providers to `RenderList` and represented the per-deck
+  success section with logical placeholder rows, so only visible rows perform
+  name truncation, progress-bar generation, and styling.
+- The retained benchmark now measures about 0.73 ms/op, 0.53 MB/op, and 4,235
+  allocs/op (roughly 36x faster and 94% fewer allocated bytes).
+- Lazy visible-line coverage, all TUI/race/Go tests, responsive Statistics E2E,
+  and the full verification gate pass.
 - Reproduced Statistics ignoring nonzero scroll offsets because `RenderList`
   inferred content origin from line-count equality and its trailing newline
   made the full buffer appear to be a viewport slice.
@@ -132,13 +141,21 @@ Preserve the now-explicit full-buffer content-offset behavior.
 
 ## Acceptance Criteria
 
-- Statistics avoids formatting and styling off-screen per-deck success rows.
-- The 5,000-deck benchmark materially improves from the 26.1 ms/9.38 MB
-  baseline while output and scrolling remain unchanged.
-- Focused regression, affected package, race, and full verification pass.
+- The next candidate has a reproducible benchmark/allocation profile and a
+  material absolute cost.
+- Any RenderContext change preserves newline tracking, ANSI/Unicode widths,
+  wrapped hitbox coordinates, and rendered output with focused coverage.
 
 ## Last Verification
 
+- Statistics virtualization batch: `go test ./internal/tui -count=1`,
+  `go test -race ./internal/tui -count=1`, and `go test ./... -count=1` passed
+  on 2026-08-23.
+- Statistics virtualization batch: responsive Statistics E2E passed at 40, 60,
+  and 100 columns on 2026-08-23.
+- Statistics virtualization batch: `./scripts/verify.sh` passed on 2026-08-23;
+  Go tests, vet, offline dict.cc import (834,512 entries), smoke test, binary
+  build, and core E2E suite 35 passed in 38.02s.
 - Explicit list-offset batch: focused list/Statistics tests,
   `go test ./internal/tui -count=1`, `go test -race ./internal/tui -count=1`,
   and `go test ./... -count=1` passed on 2026-08-23.
@@ -191,6 +208,9 @@ Preserve the now-explicit full-buffer content-offset behavior.
 
 ## Current Batch Evidence
 
+- Statistics virtual deck rows now measure about 0.73 ms/op, 0.53 MB/op, and
+  4,235 allocs/op on 5,000 decks, down from about 26.1 ms/op, 9.38 MB/op, and
+  232,345 allocs/op.
 - A 5,000-deck Statistics benchmark measured about 26.1 ms/op, 9.38 MB/op, and
   232,345 allocs/op, confirming it as the next performance candidate.
 - During benchmark inspection, `statsTotalLines` was found to count the trailing
@@ -257,4 +277,5 @@ Preserve the now-explicit full-buffer content-offset behavior.
 - Streak optimization is committed as `4e77712`, Cards Added statistics as
   `236c63f`, review-summary consolidation as `2161297`, and shared card
   statistics as `5ea61d3`. Viewport-first Decks rendering is committed as
-  `4b7f3bd`; the explicit list-offset fix is verified and ready to commit.
+  `4b7f3bd` and the explicit list-offset fix as `4723aab`; Statistics
+  virtualization is fully verified and ready to commit.
