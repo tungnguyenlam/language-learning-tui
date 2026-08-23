@@ -281,6 +281,7 @@ func (s *Store) upsertNoteTx(ctx context.Context, tx *sql.Tx, note core.Note) er
 	if createdAt.IsZero() {
 		createdAt = time.Now().UTC()
 	}
+	createdAt = createdAt.UTC()
 	_, err := tx.ExecContext(ctx, `
 		INSERT INTO notes (id, deck_id, front, back, extra, hint, audio, tags, created_at)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -963,19 +964,18 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 		return stats, err
 	}
 
-	// Cards added per day (last 30 days)
+	// The Statistics view displays only the last seven local calendar days.
+	// Bound this query to that window so old collections are not regrouped on
+	// every stats refresh.
 	stats.CardsAddedPerDay = make(map[string]int)
-	addedQuery := `
-		SELECT date(n.created_at, 'localtime') AS add_date, COUNT(c.id)
-		FROM notes n
-		JOIN cards c ON c.note_id = n.id
-	`
-	var addedArgs []interface{}
+	addedStart := localDayStartUTC(now.AddDate(0, 0, -6))
+	addedEnd := localDayStartUTC(now.AddDate(0, 0, 1))
+	addedQuery := cardsAddedPerDayQuery
+	addedArgs := []interface{}{addedStart, addedEnd}
 	if deckID != "" {
-		addedQuery += ` WHERE n.deck_id = ?`
+		addedQuery = deckCardsAddedPerDayQuery
 		addedArgs = append(addedArgs, deckID)
 	}
-	addedQuery += ` GROUP BY add_date`
 	addedRows, err := s.db.QueryContext(ctx, addedQuery, addedArgs...)
 	if err != nil {
 		return stats, err
@@ -1011,6 +1011,22 @@ const deckCurrentStreakQuery = `
 	INNER JOIN reviews r ON r.card_id = c.id
 	WHERE c.deck_id = ? AND r.reviewed_at IS NOT NULL
 	ORDER BY r.reviewed_at DESC
+`
+
+const cardsAddedPerDayQuery = `
+	SELECT date(substr(n.created_at, 1, 19), 'localtime') AS add_date, COUNT(c.id)
+	FROM notes n
+	JOIN cards c ON c.note_id = n.id
+	WHERE n.created_at >= ? AND n.created_at < ?
+	GROUP BY add_date
+`
+
+const deckCardsAddedPerDayQuery = `
+	SELECT date(substr(n.created_at, 1, 19), 'localtime') AS add_date, COUNT(c.id)
+	FROM notes n
+	JOIN cards c ON c.note_id = n.id
+	WHERE n.created_at >= ? AND n.created_at < ? AND n.deck_id = ?
+	GROUP BY add_date
 `
 
 func (s *Store) deckCurrentStreak(ctx context.Context, deckID string, now time.Time) (int, error) {

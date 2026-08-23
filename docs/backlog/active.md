@@ -4,14 +4,14 @@ Last updated: 2026-08-23
 
 ## Current Milestone
 
-Optimize the SQLite statistics streak hot path demonstrated by representative
-query-plan and timing evidence.
+Bounded storage reconnaissance: evaluate the full-history cards-added
+statistics query used by the seven-day chart.
 
 ## Exact Next Action
 
-Commit the verified streak batch, then inspect the `CardsAddedPerDay` consumer
-contract and capture focused plan/timing evidence for its full-history
-date-grouping query before selecting the next storage change.
+Commit the verified Cards Added batch, then measure the remaining repeated
+`reviews` aggregations in `Statistics` and select a consolidation only if it
+materially reduces full scans while preserving deck/global results.
 
 ## Completed This Pass
 
@@ -114,12 +114,12 @@ date-grouping query before selecting the next storage change.
 
 ## Acceptance Criteria
 
-- Global and deck streaks retain local-calendar semantics, ignore duplicate
-  reviews on one day, stop at gaps, and remain capped at 365 days.
-- The global streak query reads `idx_reviews_reviewed_at` in descending order
-  without temporary grouping/sorting, protected by regression/plan coverage.
-- Representative `Statistics` timing improves materially without changing its
-  returned fields.
+- `CardsAddedPerDay` returns correct global/deck counts within the seven local
+  dates consumed by the chart and no historical dates outside that window.
+- The global query excludes historical notes through an indexed created-time
+  range rather than scanning the full notes table.
+- Representative plan/timing evidence, regression coverage, and layered
+  verification are recorded.
 
 ## Last Verification
 
@@ -158,6 +158,23 @@ date-grouping query before selecting the next storage change.
 - Streak batch: `./scripts/verify.sh` passed on 2026-08-23; Go tests, vet,
   offline dict.cc import (834,512 entries), smoke test, binary build, and core
   E2E suite 35 passed in 37.39s.
+
+## Current Batch Evidence
+
+- The Statistics view consumes only the last seven `CardsAddedPerDay` keys,
+  while storage previously grouped the full `notes` table.
+- On 100,000 synthetic notes with 90% historical rows, the existing plan showed
+  `SCAN n` and took about 42 ms; a seven-day range with
+  `idx_notes_created_at` showed an indexed range search and took about 7 ms.
+- Regression setup exposed that `date(n.created_at, 'localtime')` cannot parse
+  Go-formatted timestamps, leaving the chart empty. The query now follows the
+  indexed timestamp notice by grouping `substr(created_at, 1, 19)`, and new
+  note creation timestamps are normalized to UTC.
+- Migration 27 adds the created-time index. Focused tests protect global/deck
+  seven-day counts, exclusion of older notes, migration application, and the
+  indexed query plan; they pass.
+- `go test ./internal/storage/sqlite -count=1`, `go test ./... -count=1`, and
+  `./scripts/verify.sh` pass; the core E2E suite reports 35 passed in 37.69s.
 - Previous pass: `./scripts/verify.sh` passed on 2026-08-23 (35 E2E tests).
 - Current pass: `go test ./internal/tui ./internal/storage/sqlite` passed.
 - `./scripts/verify.sh` passed on 2026-08-23: Go tests, vet, offline dict.cc
@@ -168,5 +185,5 @@ date-grouping query before selecting the next storage change.
 
 ## Repository State
 
-- The synthetic reconnaissance harness was removed; only the streak
-  implementation, permanent tests, and continuity documentation remain.
+- Streak optimization is committed as `4e77712`; the verified Cards Added
+  batch is ready for its checkpoint commit.

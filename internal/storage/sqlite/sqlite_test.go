@@ -585,6 +585,120 @@ func TestReviewsTodayAnchorsToLocalMidnight(t *testing.T) {
 	}
 }
 
+func TestStatisticsCardsAddedPerDayUsesDisplayedLocalWeek(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	for _, deck := range []core.Deck{
+		{ID: "added-a", Name: "Added A"},
+		{ID: "added-b", Name: "Added B"},
+	} {
+		if err := store.UpsertDeck(ctx, deck); err != nil {
+			t.Fatalf("upsert deck %s: %v", deck.ID, err)
+		}
+	}
+
+	now := time.Now()
+	localNoon := time.Date(now.Year(), now.Month(), now.Day(), 12, 0, 0, 0, time.Local)
+	addNote := func(id, deckID string, createdAt time.Time) {
+		t.Helper()
+		note := core.Note{
+			ID:        id,
+			DeckID:    deckID,
+			Type:      "flashcard",
+			Front:     id + " front",
+			Back:      id + " back",
+			CreatedAt: createdAt,
+		}
+		note.Cards = content.CardsForNote(note)
+		if err := store.UpsertNote(ctx, note); err != nil {
+			t.Fatalf("upsert note %s: %v", id, err)
+		}
+	}
+	addNote("added-today", "added-a", localNoon)
+	addNote("added-six-days", "added-a", localNoon.AddDate(0, 0, -6))
+	addNote("added-other-deck", "added-b", localNoon.AddDate(0, 0, -3))
+	addNote("added-too-old", "added-a", localNoon.AddDate(0, 0, -7))
+
+	globalStats, err := store.Statistics(ctx)
+	if err != nil {
+		t.Fatalf("global statistics: %v", err)
+	}
+	wantGlobal := map[string]int{
+		localNoon.Format("2006-01-02"):                   1,
+		localNoon.AddDate(0, 0, -6).Format("2006-01-02"): 1,
+		localNoon.AddDate(0, 0, -3).Format("2006-01-02"): 1,
+	}
+	if !equalStringIntMaps(globalStats.CardsAddedPerDay, wantGlobal) {
+		t.Fatalf("global cards added = %v, want %v", globalStats.CardsAddedPerDay, wantGlobal)
+	}
+
+	deckStats, err := store.DeckStatistics(ctx, "added-a")
+	if err != nil {
+		t.Fatalf("deck statistics: %v", err)
+	}
+	wantDeck := map[string]int{
+		localNoon.Format("2006-01-02"):                   1,
+		localNoon.AddDate(0, 0, -6).Format("2006-01-02"): 1,
+	}
+	if !equalStringIntMaps(deckStats.CardsAddedPerDay, wantDeck) {
+		t.Fatalf("deck cards added = %v, want %v", deckStats.CardsAddedPerDay, wantDeck)
+	}
+}
+
+func equalStringIntMaps(got, want map[string]int) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	for key, value := range want {
+		if got[key] != value {
+			return false
+		}
+	}
+	return true
+}
+
+func TestCardsAddedPerDayQueryUsesCreatedAtIndex(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	rows, err := store.db.QueryContext(
+		ctx,
+		"EXPLAIN QUERY PLAN "+cardsAddedPerDayQuery,
+		time.Now().AddDate(0, 0, -6),
+		time.Now().AddDate(0, 0, 1),
+	)
+	if err != nil {
+		t.Fatalf("explain cards-added query: %v", err)
+	}
+	defer rows.Close()
+
+	var details []string
+	for rows.Next() {
+		var id, parent, unused int
+		var detail string
+		if err := rows.Scan(&id, &parent, &unused, &detail); err != nil {
+			t.Fatalf("scan cards-added query plan: %v", err)
+		}
+		details = append(details, detail)
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("iterate cards-added query plan: %v", err)
+	}
+	plan := strings.Join(details, "\n")
+	if !strings.Contains(plan, "idx_notes_created_at") {
+		t.Fatalf("cards-added query plan does not use created-at index:\n%s", plan)
+	}
+}
+
 // Streaks count consecutive local calendar days. Reviews just after local
 // midnight fall on the previous UTC date in positive-offset zones, so grouping
 // by the UTC date substring must not split or drop days.

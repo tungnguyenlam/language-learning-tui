@@ -1,3 +1,20 @@
+# 2026-08-23 (Indexed Seven-Day Cards Added Statistics)
+
+Fixed the Statistics Cards Added chart so Go-formatted note timestamps are
+converted to local dates correctly. The query now reads only the seven local
+calendar days rendered by the chart, backed by migration 27's
+`notes(created_at)` index, and note creation timestamps are normalized to UTC.
+On 100,000 synthetic notes with 90% historical rows, the query improved from a
+full-table scan at about 42 ms to an indexed range at about 7 ms.
+
+### Verification
+
+- Focused global/deck result, migration, and query-plan tests passed.
+- `go test ./internal/storage/sqlite -count=1` passed.
+- `go test ./... -count=1` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512
+  entries), smoke test, binary build, and core E2E suite (35 passed in 37.69s).
+
 # 2026-08-23 (Streaming SQLite Streak Calculation)
 
 Replaced SQLite's full-history local-date grouping for global and deck streaks
