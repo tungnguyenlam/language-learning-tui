@@ -35,13 +35,7 @@ func (m *Model) recordDeckSearch(query string) tea.Cmd {
 
 func (m *Model) saveDeckHistory() tea.Cmd {
 	history := append([]string(nil), m.deckSearchHistory...)
-	requestID := m.deckHistorySaveID.Add(1)
-	return func() tea.Msg {
-		m.deckHistorySaveMu.Lock()
-		defer m.deckHistorySaveMu.Unlock()
-		if requestID != m.deckHistorySaveID.Load() {
-			return nil
-		}
+	return m.deckHistorySave.command(func() error {
 		data, err := json.Marshal(history)
 		if err != nil {
 			return fmt.Errorf("encode deck search history: %w", err)
@@ -52,7 +46,7 @@ func (m *Model) saveDeckHistory() tea.Cmd {
 			return fmt.Errorf("save deck search history: %w", err)
 		}
 		return nil
-	}
+	})
 }
 
 func (m *Model) loadDeckHistory() tea.Cmd {

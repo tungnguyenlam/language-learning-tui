@@ -420,7 +420,6 @@ func (m *Model) recordDictionarySearch(query string) {
 		if q == query {
 			m.dictionarySearchHistory = append(m.dictionarySearchHistory[:i], m.dictionarySearchHistory[i+1:]...)
 			m.dictionarySearchHistory = append(m.dictionarySearchHistory, query)
-			m.saveDictionaryHistory()
 			return
 		}
 	}
@@ -428,7 +427,6 @@ func (m *Model) recordDictionarySearch(query string) {
 	if len(m.dictionarySearchHistory) > 5 {
 		m.dictionarySearchHistory = m.dictionarySearchHistory[1:]
 	}
-	m.saveDictionaryHistory()
 }
 
 func (m *Model) cycleDictionaryHistory(direction int) tea.Cmd {
@@ -489,16 +487,23 @@ func (m *Model) getCompoundBreakdown(word string) []content.CompoundPart {
 	return parts
 }
 
-func (m *Model) saveDictionaryHistory() {
+func (m *Model) saveDictionaryHistory() tea.Cmd {
 	if m.repo == nil {
-		return
+		return nil
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	data, err := json.Marshal(m.dictionarySearchHistory)
-	if err == nil {
-		_ = m.repo.SetSetting(ctx, "dict_search_history", string(data))
-	}
+	history := append([]string(nil), m.dictionarySearchHistory...)
+	return m.dictionaryHistorySave.command(func() error {
+		data, err := json.Marshal(history)
+		if err != nil {
+			return fmt.Errorf("encode dictionary search history: %w", err)
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if err := m.repo.SetSetting(ctx, "dict_search_history", string(data)); err != nil {
+			return fmt.Errorf("save dictionary search history: %w", err)
+		}
+		return nil
+	})
 }
 
 func (m *Model) loadDictionaryHistory() tea.Cmd {

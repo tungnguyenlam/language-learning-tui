@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 	"unicode"
 
@@ -18,9 +19,13 @@ func (dictionaryScreen) Render(m *Model, layout viewportLayout) string {
 func (dictionaryScreen) HandleKey(m *Model, msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	oldCursor := m.dictionaryCursor
 	oldDetailView := m.dictionaryDetailView
+	oldHistory := append([]string(nil), m.dictionarySearchHistory...)
 
 	cmd, handled := m.doUpdateDictionaryKey(msg)
 	if handled {
+		if !slices.Equal(oldHistory, m.dictionarySearchHistory) {
+			cmd = tea.Batch(cmd, m.saveDictionaryHistory())
+		}
 		if m.dictionaryDetailVisible() && (m.dictionaryCursor != oldCursor || m.dictionaryDetailView != oldDetailView) {
 			if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 				entry := m.dictionaryResults[m.dictionaryCursor]
@@ -286,7 +291,6 @@ func (m *Model) doUpdateDictionaryKey(msg tea.KeyPressMsg) (tea.Cmd, bool) {
 	case "ctrl+x":
 		if len(m.dictionarySearchHistory) > 0 {
 			m.dictionarySearchHistory = nil
-			m.saveDictionaryHistory()
 			m.status = "Cleared recent searches"
 			return nil, true
 		}

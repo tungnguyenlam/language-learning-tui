@@ -1,3 +1,19 @@
+# 2026-08-23 (Async Dictionary Search-History Persistence)
+
+Moved Dictionary search-history writes out of input and navigation handling
+into ordered Bubble Tea commands. Full-view and Spotlight clear hitboxes now
+return their persistence work, navigation keeps destination load commands, and
+write failures reach the visible TUI error status. Extracted the ordering logic
+into a reusable per-value coordinator shared with Decks history.
+
+### Verification
+
+- Focused Dictionary/Decks persistence tests passed.
+- `go test -race ./internal/tui -count=1` passed.
+- `go test ./...` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512
+  entries), smoke test, binary build, and core E2E suite (35 passed in 37.20s).
+
 # 2026-08-23 (Async Deck Search-History Persistence)
 
 Moved Decks search-history writes out of keyboard and mouse handlers into

@@ -38,6 +38,7 @@ func (m *Model) updateView(view View) tea.Cmd {
 	var cmd tea.Cmd
 	if m.activeView == ViewDictionary && m.dictionarySearch != "" {
 		m.recordDictionarySearch(m.dictionarySearch)
+		cmd = tea.Batch(cmd, m.saveDictionaryHistory())
 	}
 	if view == ViewDictionary && m.activeView != ViewDictionary {
 		m.dictionaryPreviousView = m.activeView
@@ -86,7 +87,7 @@ func (m *Model) updateView(view View) tea.Cmd {
 		m.refreshLastBackupPath()
 	}
 	if view == ViewStatistics {
-		return m.loadStatistics()
+		return tea.Batch(cmd, m.loadStatistics())
 	}
 	if view == ViewBrowser {
 		m.browserSearch = ""
@@ -99,7 +100,7 @@ func (m *Model) updateView(view View) tea.Cmd {
 		m.browserCards = nil
 		m.browserDeckID = m.deck.ID
 		m.browserCursor = 0
-		return m.loadBrowserCards()
+		return tea.Batch(cmd, m.loadBrowserCards())
 	}
 	if view == ViewReview && m.sessionReviewed == 0 {
 		m.sessionStartTime = time.Now()
@@ -113,24 +114,24 @@ func (m *Model) updateView(view View) tea.Cmd {
 		m.cramRevealed = false
 		m.revealState = RevealIdle
 		m.revealProgress = 0
-		return m.loadCramCards()
+		return tea.Batch(cmd, m.loadCramCards())
 	}
 	if view == ViewPractice {
 		m.practiceSubView = PracticeSubViewHub
 		m.practiceHubCursor = 0
 		m.practiceScroll = 0
 		m.status = "Practice Hub: Choose a trainer"
-		return nil // Loaders are called when entering specific modes
+		return cmd // Loaders are called when entering specific modes
 	}
 
 	if view == ViewDashboard || view == ViewReview {
 		m.applyDeckFilter()
 		if view == ViewDashboard {
-			return tea.Batch(m.loadStatistics(), m.loadRecentDecks(), m.loadReviewsPerDay())
+			return tea.Batch(cmd, m.loadStatistics(), m.loadRecentDecks(), m.loadReviewsPerDay())
 		}
 	}
 
-	if view == ViewDictionary && cmd != nil {
+	if cmd != nil {
 		return cmd
 	}
 

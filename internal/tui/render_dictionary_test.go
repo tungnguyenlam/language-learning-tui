@@ -333,7 +333,9 @@ func TestDictionarySearchClearHitbox(t *testing.T) {
 			if hb.Action == nil {
 				t.Fatal("expected clear hitbox action to be set")
 			}
-			hb.Action() // Execute clear
+			if cmd := hb.Action(); cmd != nil {
+				t.Fatal("search clear hitbox should not return a command")
+			}
 			break
 		}
 	}
@@ -477,7 +479,14 @@ func TestDictionaryClearSearchHistory(t *testing.T) {
 			if hb.Action == nil {
 				t.Fatal("expected clear history hitbox action to be set")
 			}
-			hb.Action() // Execute clear
+			cmd := hb.Action()
+			if cmd == nil {
+				t.Fatal("expected clear history hitbox to return a persistence command")
+			}
+			if repo.setSettingCalls != 0 {
+				t.Fatalf("SetSetting calls during hitbox action = %d, want 0", repo.setSettingCalls)
+			}
+			executeCmd(cmd)
 			break
 		}
 	}
@@ -496,9 +505,10 @@ func TestDictionaryClearSearchHistory(t *testing.T) {
 	// Re-populate and test via ctrl+x keypress
 	m.dictionarySearchHistory = []string{"Banane"}
 	cmd, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'x', Mod: tea.ModCtrl})
-	if !handled || cmd != nil {
-		t.Fatal("expected ctrl+x to be handled by the Dictionary screen")
+	if !handled || cmd == nil {
+		t.Fatal("expected ctrl+x to return a persistence command")
 	}
+	executeCmd(cmd)
 
 	if len(m.dictionarySearchHistory) != 0 {
 		t.Errorf("expected search history to be cleared via ctrl+x, got %v", m.dictionarySearchHistory)
@@ -764,8 +774,10 @@ func TestSpotlightDictionaryHistoryHitboxesAreOverlayScoped(t *testing.T) {
 			if hb.Action == nil {
 				t.Fatal("expected history clear hitbox to use an action")
 			}
-			if cmd := hb.Action(); cmd != nil {
-				t.Fatal("history clear action should not return a command")
+			if cmd := hb.Action(); cmd == nil {
+				t.Fatal("history clear action should return a persistence command")
+			} else {
+				executeCmd(cmd)
 			}
 		case "dict-overlay-history-0":
 			foundHistory = true
@@ -794,7 +806,14 @@ func TestDictionaryPersistentSearchHistory(t *testing.T) {
 
 	// 1. Record search history
 	m.recordDictionarySearch("Käse")
+	staleCmd := m.saveDictionaryHistory()
 	m.recordDictionarySearch("Brot")
+	latestCmd := m.saveDictionaryHistory()
+	executeCmd(staleCmd)
+	executeCmd(latestCmd)
+	if repo.setSettingCalls != 1 {
+		t.Fatalf("SetSetting calls = %d, want only latest snapshot", repo.setSettingCalls)
+	}
 
 	val, err := repo.GetSetting(context.Background(), "dict_search_history")
 	if err != nil {
@@ -821,7 +840,11 @@ func TestDictionaryPersistentSearchHistory(t *testing.T) {
 
 	// 3. Clear history
 	m.activeView = ViewDictionary
-	m.Update(tea.KeyPressMsg{Code: 'x', Mod: tea.ModCtrl}) // ctrl+x
+	_, cmd = m.Update(tea.KeyPressMsg{Code: 'x', Mod: tea.ModCtrl}) // ctrl+x
+	if cmd == nil {
+		t.Fatal("expected ctrl+x to return a persistence command")
+	}
+	executeCmd(cmd)
 
 	val, err = repo.GetSetting(context.Background(), "dict_search_history")
 	if err != nil {
@@ -829,6 +852,53 @@ func TestDictionaryPersistentSearchHistory(t *testing.T) {
 	}
 	if val != "[]" && val != "" && val != "null" {
 		t.Fatalf("expected cleared history to be empty, got %q", val)
+	}
+}
+
+func TestDictionaryHistoryNavigationDefersSaveAndKeepsLoad(t *testing.T) {
+	repo := &mockRepo{}
+	m := NewModel(repo, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.dictionarySearch = "Haus"
+
+	cmd := m.updateView(ViewStatistics)
+	if cmd == nil {
+		t.Fatal("dictionary navigation should return persistence and load commands")
+	}
+	if repo.setSettingCalls != 0 {
+		t.Fatalf("SetSetting calls during navigation = %d, want 0", repo.setSettingCalls)
+	}
+
+	msgs := executeCmd(cmd)
+	if repo.setSettingCalls != 1 {
+		t.Fatalf("SetSetting calls after command = %d, want 1", repo.setSettingCalls)
+	}
+	foundStats := false
+	for _, msg := range msgs {
+		if _, ok := msg.(statsMsg); ok {
+			foundStats = true
+		}
+	}
+	if !foundStats {
+		t.Fatalf("navigation messages = %#v, want statistics load result", msgs)
+	}
+}
+
+func TestDictionaryHistoryPersistenceErrorIsSurfaced(t *testing.T) {
+	repo := &mockRepo{errSetSetting: errors.New("disk full")}
+	m := NewModel(repo, &mockScheduler{})
+	m.activeView = ViewDictionary
+	m.dictionarySearchHistory = []string{"Haus"}
+
+	cmd, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'x', Mod: tea.ModCtrl})
+	if !handled || cmd == nil {
+		t.Fatal("dictionary history clear should return a persistence command")
+	}
+	for _, msg := range executeCmd(cmd) {
+		m.Update(msg)
+	}
+	if !m.isErrorStatus || !strings.Contains(m.status, "save dictionary search history") {
+		t.Fatalf("status = %q (error=%v), want contextual persistence error", m.status, m.isErrorStatus)
 	}
 }
 

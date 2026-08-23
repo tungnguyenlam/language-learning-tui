@@ -503,8 +503,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 					Height: 1,
 					Action: func() tea.Cmd {
 						m.dictionarySearchHistory = nil
-						m.saveDictionaryHistory()
-						return nil
+						return m.saveDictionaryHistory()
 					},
 				})
 
@@ -1125,8 +1124,7 @@ func (m *Model) renderSpotlightDictionary() string {
 					Height: 1,
 					Action: func() tea.Cmd {
 						m.dictionarySearchHistory = nil
-						m.saveDictionaryHistory()
-						return nil
+						return m.saveDictionaryHistory()
 					},
 				})
 
