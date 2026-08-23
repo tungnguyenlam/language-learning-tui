@@ -1,3 +1,19 @@
+# 2026-08-23 (Shared Card-State-Flag Statistics Scan)
+
+Combined maturity and card-flag statistics into one aggregate over the shared
+one-to-one `cards`, `review_states`, and `card_flags` joins. This removes one
+full collection traversal while preserving new/young/mature, bookmarked due,
+next-24-hour, leech, and suspended semantics globally and per deck. On 100,000
+synthetic cards, the two passes took about 58 ms versus about 43 ms combined.
+
+### Verification
+
+- Focused global/deck result and single-card-scan plan tests passed.
+- `go test ./internal/storage/sqlite -count=1` passed.
+- `go test ./... -count=1` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512
+  entries), smoke test, binary build, and core E2E suite (35 passed in 37.36s).
+
 # 2026-08-23 (Single-Pass Review Summary Statistics)
 
 Consolidated total reviews, success rate, and per-grade counts into one grouped

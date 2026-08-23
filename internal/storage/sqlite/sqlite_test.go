@@ -817,6 +817,126 @@ func TestReviewGradesQueryUsesCoveringIndex(t *testing.T) {
 	}
 }
 
+func TestStatisticsSharesCardStateFlagAggregation(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	cardIDs := make(map[string]string)
+	deckAdded := make(map[string]bool)
+	addCard := func(id, deckID string) {
+		t.Helper()
+		if !deckAdded[deckID] {
+			if err := store.UpsertDeck(ctx, core.Deck{ID: deckID, Name: deckID}); err != nil {
+				t.Fatalf("upsert deck %s: %v", deckID, err)
+			}
+			deckAdded[deckID] = true
+		}
+		note := core.Note{ID: id, DeckID: deckID, Type: "flashcard", Front: id, Back: id + " back"}
+		note.Cards = content.CardsForNote(note)
+		if err := store.UpsertNote(ctx, note); err != nil {
+			t.Fatalf("upsert note %s: %v", id, err)
+		}
+		cardIDs[id] = note.Cards[0].ID
+	}
+	addCard("aggregate-new", "aggregate-a")
+	addCard("aggregate-young", "aggregate-a")
+	addCard("aggregate-mature", "aggregate-a")
+	addCard("aggregate-other", "aggregate-b")
+
+	now := time.Now().UTC()
+	for _, state := range []struct {
+		id       string
+		due      time.Time
+		interval time.Duration
+	}{
+		{"aggregate-young", now.Add(-time.Hour), 24 * time.Hour},
+		{"aggregate-mature", now.Add(12 * time.Hour), 30 * 24 * time.Hour},
+		{"aggregate-other", now.Add(12 * time.Hour), 24 * time.Hour},
+	} {
+		if _, err := store.db.ExecContext(ctx, `
+			INSERT INTO review_states (card_id, due_at, interval_seconds, ease, reviews, lapses)
+			VALUES (?, ?, ?, 2.5, 1, 0)
+		`, cardIDs[state.id], state.due, int64(state.interval.Seconds())); err != nil {
+			t.Fatalf("insert review state for %s: %v", state.id, err)
+		}
+	}
+	if _, err := store.db.ExecContext(ctx, `
+		INSERT INTO card_flags (card_id, bookmarked, leech, suspended)
+		VALUES (?, 1, 0, 0), (?, 0, 1, 1)
+	`, cardIDs["aggregate-young"], cardIDs["aggregate-mature"]); err != nil {
+		t.Fatalf("insert card flags: %v", err)
+	}
+
+	assertCounts := func(label string, stats core.Statistics, want [8]int) {
+		t.Helper()
+		got := [8]int{
+			stats.NewCards,
+			stats.YoungCards,
+			stats.MatureCards,
+			stats.BookmarkedCards,
+			stats.BookmarkedDue,
+			stats.Next24hDue,
+			stats.LeechCards,
+			stats.SuspendedCards,
+		}
+		if got != want {
+			t.Fatalf("%s card/state/flag counts = %v, want %v", label, got, want)
+		}
+	}
+
+	globalStats, err := store.Statistics(ctx)
+	if err != nil {
+		t.Fatalf("global statistics: %v", err)
+	}
+	assertCounts("global", globalStats, [8]int{1, 2, 1, 1, 1, 1, 1, 1})
+
+	deckStats, err := store.DeckStatistics(ctx, "aggregate-a")
+	if err != nil {
+		t.Fatalf("deck statistics: %v", err)
+	}
+	assertCounts("deck", deckStats, [8]int{1, 1, 1, 1, 1, 0, 1, 1})
+}
+
+func TestCardStateFlagStatsQueryScansCardsOnce(t *testing.T) {
+	ctx := context.Background()
+	store, err := OpenMemory()
+	if err != nil {
+		t.Fatalf("open memory store: %v", err)
+	}
+	defer store.Close()
+
+	now := time.Now().UTC()
+	rows, err := store.db.QueryContext(ctx, "EXPLAIN QUERY PLAN "+cardStateFlagStatsQuery, now, now, now.Add(24*time.Hour))
+	if err != nil {
+		t.Fatalf("explain card/state/flag query: %v", err)
+	}
+	defer rows.Close()
+
+	cardScans := 0
+	var details []string
+	for rows.Next() {
+		var id, parent, unused int
+		var detail string
+		if err := rows.Scan(&id, &parent, &unused, &detail); err != nil {
+			t.Fatalf("scan card/state/flag query plan: %v", err)
+		}
+		details = append(details, detail)
+		if strings.HasPrefix(detail, "SCAN c") {
+			cardScans++
+		}
+	}
+	if err := rows.Err(); err != nil {
+		t.Fatalf("iterate card/state/flag query plan: %v", err)
+	}
+	if cardScans != 1 {
+		t.Fatalf("card/state/flag query card scans = %d, want 1:\n%s", cardScans, strings.Join(details, "\n"))
+	}
+}
+
 // Streaks count consecutive local calendar days. Reviews just after local
 // midnight fall on the previous UTC date in positive-offset zones, so grouping
 // by the UTC date substring must not split or drop days.

@@ -4,14 +4,15 @@ Last updated: 2026-08-23
 
 ## Current Milestone
 
-Bounded storage reconnaissance: evaluate repeated full-history review
-aggregations in `Statistics`.
+Bounded storage reconnaissance: evaluate repeated card/state/flag scans in
+`Statistics`.
 
 ## Exact Next Action
 
-Commit the verified review-summary batch, then measure whether the remaining
-active-deck, maturity, and flag aggregates can share one card/review-state scan
-without changing global/deck statistics.
+Commit the verified shared-aggregate batch, then rotate from Statistics to a
+bounded SQLite startup pass: measure migration bookkeeping on an up-to-date
+temporary database and optimize only if repeated per-migration queries are
+material.
 
 ## Completed This Pass
 
@@ -114,12 +115,11 @@ without changing global/deck statistics.
 
 ## Acceptance Criteria
 
-- Total reviews, per-grade counts, and success rate retain global and deck
-  semantics, including unexpected persisted grade values.
-- Global review aggregation uses one covering indexed pass without a temporary
-  grouping B-tree instead of three separate full-history queries.
-- Representative timing, query-plan coverage, and layered verification are
-  recorded.
+- New/young/mature and bookmarked/due/next-24h/leech/suspended counts retain
+  global and deck semantics, including missing review-state/flag rows.
+- The selected implementation performs one shared card/state/flag scan instead
+  of two equivalent join passes and gains durable regression coverage.
+- Representative timing and layered verification are recorded.
 
 ## Last Verification
 
@@ -184,6 +184,14 @@ without changing global/deck statistics.
   covering-index plan; they pass.
 - `go test ./internal/storage/sqlite -count=1`, `go test ./... -count=1`, and
   `./scripts/verify.sh` pass; the core E2E suite reports 35 passed in 37.65s.
+- On 100,000 synthetic cards, separate maturity and flag passes took about
+  58 ms combined; one shared card/state/flag aggregate returned identical
+  values in about 43 ms (roughly 26% faster).
+- `Statistics` now scans those one-to-one joins once for all eight counters.
+  Focused global/deck tests cover absent join rows, due/suspended interactions,
+  and the single-card-scan plan; they pass.
+- `go test ./internal/storage/sqlite -count=1`, `go test ./... -count=1`, and
+  `./scripts/verify.sh` pass; the core E2E suite reports 35 passed in 37.36s.
 - Previous pass: `./scripts/verify.sh` passed on 2026-08-23 (35 E2E tests).
 - Current pass: `go test ./internal/tui ./internal/storage/sqlite` passed.
 - `./scripts/verify.sh` passed on 2026-08-23: Go tests, vet, offline dict.cc
@@ -195,4 +203,5 @@ without changing global/deck statistics.
 ## Repository State
 
 - Streak optimization is committed as `4e77712`, Cards Added statistics as
-  `236c63f`; the review-summary batch is fully verified and ready to commit.
+  `236c63f`, and review-summary consolidation as `2161297`; only this next-cycle
+  card/state/flag batch remains and is fully verified for commit.

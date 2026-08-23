@@ -829,21 +829,25 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 		stats.ActiveDecks = isActive
 	}
 
-	// Card maturity: New (no reviews), Young (interval < 21 days), Mature (interval >= 21 days)
-	maturityQuery := `
-		SELECT
-			COALESCE(SUM(CASE WHEN rs.reviews = 0 OR rs.reviews IS NULL THEN 1 ELSE 0 END), 0) as new,
-			COALESCE(SUM(CASE WHEN rs.reviews > 0 AND rs.interval_seconds < 1814400 THEN 1 ELSE 0 END), 0) as young,
-			COALESCE(SUM(CASE WHEN rs.reviews > 0 AND rs.interval_seconds >= 1814400 THEN 1 ELSE 0 END), 0) as mature
-		FROM cards c
-		LEFT JOIN review_states rs ON rs.card_id = c.id
-	`
-	var maturityArgs []interface{}
+	// Card maturity and flags share the same one-to-one card/state/flag joins.
+	// Aggregate them together so statistics refreshes traverse the collection
+	// once rather than repeating the joins for each family of counters.
+	cardStateFlagQuery := cardStateFlagStatsQuery
+	cardStateFlagArgs := []interface{}{now, now, now.Add(24 * time.Hour)}
 	if deckID != "" {
-		maturityQuery += ` WHERE c.deck_id = ?`
-		maturityArgs = append(maturityArgs, deckID)
+		cardStateFlagQuery = deckCardStateFlagStatsQuery
+		cardStateFlagArgs = append(cardStateFlagArgs, deckID)
 	}
-	err = s.db.QueryRowContext(ctx, maturityQuery, maturityArgs...).Scan(&stats.NewCards, &stats.YoungCards, &stats.MatureCards)
+	err = s.db.QueryRowContext(ctx, cardStateFlagQuery, cardStateFlagArgs...).Scan(
+		&stats.NewCards,
+		&stats.YoungCards,
+		&stats.MatureCards,
+		&stats.BookmarkedCards,
+		&stats.BookmarkedDue,
+		&stats.Next24hDue,
+		&stats.LeechCards,
+		&stats.SuspendedCards,
+	)
 	if err != nil {
 		return stats, err
 	}
@@ -866,33 +870,6 @@ func (s *Store) statistics(ctx context.Context, deckID string) (core.Statistics,
 		todayArgs = append(todayArgs, deckID)
 	}
 	err = s.db.QueryRowContext(ctx, todayQuery, todayArgs...).Scan(&stats.ReviewsToday)
-	if err != nil {
-		return stats, err
-	}
-
-	flagsQuery := `
-		SELECT
-			COALESCE(SUM(CASE WHEN cf.bookmarked = 1 THEN 1 ELSE 0 END), 0) as bookmarked,
-			COALESCE(SUM(CASE WHEN cf.bookmarked = 1 AND (rs.due_at IS NULL OR rs.due_at <= ?) AND COALESCE(cf.suspended, 0) = 0 THEN 1 ELSE 0 END), 0) as bookmarked_due,
-			COALESCE(SUM(CASE WHEN rs.due_at > ? AND rs.due_at <= ? AND COALESCE(cf.suspended, 0) = 0 THEN 1 ELSE 0 END), 0) as next_24h,
-			COALESCE(SUM(CASE WHEN cf.leech = 1 THEN 1 ELSE 0 END), 0) as leech,
-			COALESCE(SUM(CASE WHEN cf.suspended = 1 THEN 1 ELSE 0 END), 0) as suspended
-		FROM cards c
-		LEFT JOIN card_flags cf ON cf.card_id = c.id
-		LEFT JOIN review_states rs ON rs.card_id = c.id
-	`
-	flagsArgs := []interface{}{now, now, now.Add(24 * time.Hour)}
-	if deckID != "" {
-		flagsQuery += ` WHERE c.deck_id = ?`
-		flagsArgs = append(flagsArgs, deckID)
-	}
-	err = s.db.QueryRowContext(ctx, flagsQuery, flagsArgs...).Scan(
-		&stats.BookmarkedCards,
-		&stats.BookmarkedDue,
-		&stats.Next24hDue,
-		&stats.LeechCards,
-		&stats.SuspendedCards,
-	)
 	if err != nil {
 		return stats, err
 	}
@@ -1023,6 +1000,25 @@ const deckReviewGradesQuery = `
 	INNER JOIN cards c ON c.id = r.card_id
 	WHERE c.deck_id = ?
 	GROUP BY r.grade
+`
+
+const cardStateFlagStatsQuery = `
+	SELECT
+		COALESCE(SUM(CASE WHEN rs.reviews = 0 OR rs.reviews IS NULL THEN 1 ELSE 0 END), 0),
+		COALESCE(SUM(CASE WHEN rs.reviews > 0 AND rs.interval_seconds < 1814400 THEN 1 ELSE 0 END), 0),
+		COALESCE(SUM(CASE WHEN rs.reviews > 0 AND rs.interval_seconds >= 1814400 THEN 1 ELSE 0 END), 0),
+		COALESCE(SUM(CASE WHEN cf.bookmarked = 1 THEN 1 ELSE 0 END), 0),
+		COALESCE(SUM(CASE WHEN cf.bookmarked = 1 AND (rs.due_at IS NULL OR rs.due_at <= ?) AND COALESCE(cf.suspended, 0) = 0 THEN 1 ELSE 0 END), 0),
+		COALESCE(SUM(CASE WHEN rs.due_at > ? AND rs.due_at <= ? AND COALESCE(cf.suspended, 0) = 0 THEN 1 ELSE 0 END), 0),
+		COALESCE(SUM(CASE WHEN cf.leech = 1 THEN 1 ELSE 0 END), 0),
+		COALESCE(SUM(CASE WHEN cf.suspended = 1 THEN 1 ELSE 0 END), 0)
+	FROM cards c
+	LEFT JOIN review_states rs ON rs.card_id = c.id
+	LEFT JOIN card_flags cf ON cf.card_id = c.id
+`
+
+const deckCardStateFlagStatsQuery = cardStateFlagStatsQuery + `
+	WHERE c.deck_id = ?
 `
 
 func (s *Store) deckCurrentStreak(ctx context.Context, deckID string, now time.Time) (int, error) {
