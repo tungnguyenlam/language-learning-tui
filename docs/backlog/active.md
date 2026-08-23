@@ -20,9 +20,6 @@ No unfinished executable work remains. Candidate future work:
   buffers hold only a small header/detail, so the O(n²)→O(n) gain is marginal
   and the two-builder layout makes the refactor higher-risk than the other four
   files.
-- Revisit whether the remaining one-column grade-hitbox offset in the non-typing
-  Review paths (grade buttons point one column before the rendered label) is
-  worth normalizing across all card kinds.
 
 ## Completed This Pass
 
@@ -45,8 +42,6 @@ No unfinished executable work remains. Candidate future work:
 ## Top Issues
 
 - View-local state still lives on `Model`; screen files own render + keys only.
-- Non-typing Review grade hitboxes sit one column before the rendered label
-  (pre-existing, applies to every card kind).
 
 ## Acceptance Criteria
 
