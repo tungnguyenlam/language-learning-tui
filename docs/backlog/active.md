@@ -4,14 +4,14 @@ Last updated: 2026-08-23
 
 ## Current Milestone
 
-TUI responsiveness: move Dictionary history/recent/star persistence out of
+TUI responsiveness: move Settings config/secrets persistence callbacks out of
 synchronous keyboard and mouse input handlers.
 
 ## Exact Next Action
 
-Convert Dictionary recently-viewed and starred-entry writes/clears to ordered,
-snapshot-based commands; propagate commands through cursor inspection,
-keyboard actions, and hitboxes without dropping related loads/actions.
+Change Settings persistence callbacks to return errors from asynchronous
+commands, snapshot mutable config/secrets before dispatch, and propagate every
+Settings keyboard and hitbox save command without changing immediate UI state.
 
 ## Completed This Pass
 
@@ -36,6 +36,16 @@ keyboard actions, and hitboxes without dropping related loads/actions.
   `orderedSave` coordinator without changing its verified behavior.
 - Full verification passed for Dictionary search-history persistence; the batch
   is ready to commit before recently-viewed/starred work begins.
+- Committed Dictionary search history as `a17284a`.
+- Recently inspected words now mutate in memory during input and persist via
+  ordered snapshot commands returned by keyboard navigation and full/Spotlight
+  hitboxes; related-entry loads remain batched.
+- Star toggles now persist a deterministic sorted ID snapshot asynchronously;
+  active `:starred` filtering still refreshes in the same command batch.
+- Recent/star write failures now reach the established visible error path, with
+  focused regression and race coverage.
+- Full repository verification passed for the recent/star batch; it is ready to
+  commit before Settings callback work begins.
 
 ## Top Issues
 
@@ -63,6 +73,10 @@ keyboard actions, and hitboxes without dropping related loads/actions.
   `go test -race ./internal/tui -count=1` passed on 2026-08-23.
 - Dictionary search-history batch: `go test ./...` and `./scripts/verify.sh`
   passed on 2026-08-23; core E2E suite 35 passed in 37.20s.
+- Dictionary recent/star batch: focused tests and
+  `go test -race ./internal/tui -count=1` passed on 2026-08-23.
+- Dictionary recent/star batch: `go test ./...` and `./scripts/verify.sh` passed
+  on 2026-08-23; core E2E suite 35 passed in 37.42s.
 - Previous pass: `./scripts/verify.sh` passed on 2026-08-23 (35 E2E tests).
 - Current pass: `go test ./internal/tui ./internal/storage/sqlite` passed.
 - `./scripts/verify.sh` passed on 2026-08-23: Go tests, vet, offline dict.cc
@@ -73,4 +87,4 @@ keyboard actions, and hitboxes without dropping related loads/actions.
 
 ## Repository State
 
-- Dictionary search-history batch is verified and pending commit.
+- Dictionary recent/star batch is verified and pending commit.

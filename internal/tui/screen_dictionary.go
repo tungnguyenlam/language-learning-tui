@@ -20,6 +20,7 @@ func (dictionaryScreen) HandleKey(m *Model, msg tea.KeyPressMsg) (tea.Cmd, bool)
 	oldCursor := m.dictionaryCursor
 	oldDetailView := m.dictionaryDetailView
 	oldHistory := append([]string(nil), m.dictionarySearchHistory...)
+	oldRecentVersion := m.dictionaryRecentVersion
 
 	cmd, handled := m.doUpdateDictionaryKey(msg)
 	if handled {
@@ -37,6 +38,9 @@ func (dictionaryScreen) HandleKey(m *Model, msg tea.KeyPressMsg) (tea.Cmd, bool)
 					cmd = tea.Batch(cmd, relatedCmd)
 				}
 			}
+		}
+		if oldRecentVersion != m.dictionaryRecentVersion {
+			cmd = tea.Batch(cmd, m.saveDictionaryRecentlyViewed())
 		}
 	}
 	return cmd, handled

@@ -1,3 +1,19 @@
+# 2026-08-23 (Async Dictionary Recent/Star Persistence)
+
+Moved recently inspected words and starred-entry writes out of Dictionary
+input, cursor-inspection, and hitbox handlers into ordered snapshot commands.
+Related-entry loads and active `:starred` refreshes remain batched with saves;
+star IDs are serialized deterministically, and persistence failures now reach
+the visible TUI error status.
+
+### Verification
+
+- Focused recent/star persistence tests passed.
+- `go test -race ./internal/tui -count=1` passed.
+- `go test ./...` passed.
+- `./scripts/verify.sh` passed: Go tests, vet, offline dict.cc import (834,512
+  entries), smoke test, binary build, and core E2E suite (35 passed in 37.42s).
+
 # 2026-08-23 (Async Dictionary Search-History Persistence)
 
 Moved Dictionary search-history writes out of input and navigation handling

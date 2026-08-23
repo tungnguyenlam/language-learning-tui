@@ -528,22 +528,29 @@ func (m *Model) loadDictionaryHistory() tea.Cmd {
 	}
 }
 
-func (m *Model) saveDictionaryRecentlyViewed() {
+func (m *Model) saveDictionaryRecentlyViewed() tea.Cmd {
 	if m.repo == nil {
-		return
+		return nil
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	data, err := json.Marshal(m.dictionaryRecentlyViewed)
-	if err == nil {
-		_ = m.repo.SetSetting(ctx, "dict_recently_viewed", string(data))
-	}
+	entries := append([]core.DictionaryEntry(nil), m.dictionaryRecentlyViewed...)
+	return m.dictionaryRecentSave.command(func() error {
+		data, err := json.Marshal(entries)
+		if err != nil {
+			return fmt.Errorf("encode recently inspected words: %w", err)
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if err := m.repo.SetSetting(ctx, "dict_recently_viewed", string(data)); err != nil {
+			return fmt.Errorf("save recently inspected words: %w", err)
+		}
+		return nil
+	})
 }
 
 func (m *Model) clearDictionaryRecentlyViewed() {
 	m.dictionaryRecentlyViewed = nil
+	m.dictionaryRecentVersion++
 	m.status = "Cleared recently inspected words"
-	m.saveDictionaryRecentlyViewed()
 }
 
 func (m *Model) loadDictionaryRecentlyViewed() tea.Cmd {
@@ -741,15 +748,23 @@ func (m *Model) toggleStarDictionaryEntry(entry core.DictionaryEntry) tea.Cmd {
 		delete(m.dictionaryStarred, entry.ID)
 	}
 
-	var ids []string
+	ids := make([]string, 0, len(m.dictionaryStarred))
 	for id := range m.dictionaryStarred {
 		ids = append(ids, id)
 	}
-	data, err := json.Marshal(ids)
-	if err == nil {
-		ctx := context.Background()
-		_ = m.repo.SetSetting(ctx, "dict_starred_entries", string(data))
-	}
+	sort.Strings(ids)
+	saveCmd := m.dictionaryStarredSave.command(func() error {
+		data, err := json.Marshal(ids)
+		if err != nil {
+			return fmt.Errorf("encode starred dictionary entries: %w", err)
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if err := m.repo.SetSetting(ctx, "dict_starred_entries", string(data)); err != nil {
+			return fmt.Errorf("save starred dictionary entries: %w", err)
+		}
+		return nil
+	})
 
 	if starred {
 		m.status = fmt.Sprintf("★ Starred %q", entry.Word)
@@ -758,9 +773,9 @@ func (m *Model) toggleStarDictionaryEntry(entry core.DictionaryEntry) tea.Cmd {
 	}
 
 	if isFilterActive(m.dictionarySearch, ":starred") || isFilterActive(m.dictionarySearch, ":star") || isFilterActive(m.dictionarySearch, ":fav") {
-		return m.searchDictionary()
+		return tea.Batch(saveCmd, m.searchDictionary())
 	}
-	return nil
+	return saveCmd
 }
 
 func (m *Model) loadDictionaryStarred() tea.Cmd {
@@ -889,13 +904,15 @@ func (m *Model) dictionaryDetailVisible() bool {
 }
 
 // inspectDictionaryCursor records the selected entry when its detail pane is visible.
-func (m *Model) inspectDictionaryCursor() {
+func (m *Model) inspectDictionaryCursor() tea.Cmd {
 	if !m.dictionaryDetailVisible() {
-		return
+		return nil
 	}
 	if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 		m.recordDictionaryView(m.dictionaryResults[m.dictionaryCursor])
+		return m.saveDictionaryRecentlyViewed()
 	}
+	return nil
 }
 
 func (m *Model) recordDictionaryView(entry core.DictionaryEntry) {
@@ -912,7 +929,7 @@ func (m *Model) recordDictionaryView(entry core.DictionaryEntry) {
 	if len(m.dictionaryRecentlyViewed) > 10 {
 		m.dictionaryRecentlyViewed = m.dictionaryRecentlyViewed[:10]
 	}
-	m.saveDictionaryRecentlyViewed()
+	m.dictionaryRecentVersion++
 }
 
 // explainDictionaryEntry asks the AI tutor for a pedagogical explanation of a

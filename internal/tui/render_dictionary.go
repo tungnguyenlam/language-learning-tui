@@ -541,7 +541,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 					Height: 1,
 					Action: func() tea.Cmd {
 						m.clearDictionaryRecentlyViewed()
-						return nil
+						return m.saveDictionaryRecentlyViewed()
 					},
 				})
 				for i, e := range m.dictionaryRecentlyViewed {
@@ -673,10 +673,11 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 					if idx >= 0 && idx < len(m.dictionaryResults) {
 						m.dictionaryCursor = idx
 						m.dictionaryDetailScroll = 0
-						m.inspectDictionaryCursor()
+						inspectCmd := m.inspectDictionaryCursor()
 						if m.dictionaryDetailVisible() {
-							return m.findRelatedEntries(m.dictionaryResults[idx].Word)
+							return tea.Batch(inspectCmd, m.findRelatedEntries(m.dictionaryResults[idx].Word))
 						}
+						return inspectCmd
 					}
 					return nil
 				},
@@ -945,8 +946,7 @@ func (m *Model) renderDictionary(layout viewportLayout) string {
 					if m.dictionaryCursor == idx {
 						m.dictionaryDetailView = true
 						m.dictionaryDetailScroll = 0
-						m.inspectDictionaryCursor()
-						return m.findRelatedEntries(m.dictionaryResults[idx].Word)
+						return tea.Batch(m.inspectDictionaryCursor(), m.findRelatedEntries(m.dictionaryResults[idx].Word))
 					}
 					m.dictionaryCursor = idx
 					m.dictionaryDetailScroll = 0
@@ -1173,7 +1173,7 @@ func (m *Model) renderSpotlightDictionary() string {
 					Height: 1,
 					Action: func() tea.Cmd {
 						m.clearDictionaryRecentlyViewed()
-						return nil
+						return m.saveDictionaryRecentlyViewed()
 					},
 				})
 				for i, e := range m.dictionaryRecentlyViewed {
@@ -1478,11 +1478,11 @@ func (m *Model) renderSpotlightDictionary() string {
 					Action: func() tea.Cmd {
 						m.dictionaryCursor = idx
 						m.dictionaryDetailScroll = 0
-						m.inspectDictionaryCursor()
+						inspectCmd := m.inspectDictionaryCursor()
 						if m.dictionaryDetailVisible() && idx >= 0 && idx < len(m.dictionaryResults) {
-							return m.findRelatedEntries(m.dictionaryResults[idx].Word)
+							return tea.Batch(inspectCmd, m.findRelatedEntries(m.dictionaryResults[idx].Word))
 						}
-						return nil
+						return inspectCmd
 					},
 				})
 			}
@@ -1695,11 +1695,11 @@ func (m *Model) renderSpotlightDictionary() string {
 						if m.dictionaryCursor == idx {
 							m.dictionaryDetailView = true
 							m.dictionaryDetailScroll = 0
-							m.inspectDictionaryCursor()
+							inspectCmd := m.inspectDictionaryCursor()
 							if idx >= 0 && idx < len(m.dictionaryResults) {
-								return m.findRelatedEntries(m.dictionaryResults[idx].Word)
+								return tea.Batch(inspectCmd, m.findRelatedEntries(m.dictionaryResults[idx].Word))
 							}
-							return nil
+							return inspectCmd
 						}
 						m.dictionaryCursor = idx
 						m.dictionaryDetailScroll = 0

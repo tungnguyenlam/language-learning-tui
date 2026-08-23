@@ -975,10 +975,16 @@ func TestDictionaryCtrlEExplainAndFilterTagHelpers(t *testing.T) {
 		t.Fatal("expected explainDictionaryEntry command from ctrl+e")
 	}
 	// Offline provider returns a graceful non-chat message via explainMsg.
-	msg := cmd()
-	explain, ok := msg.(explainMsg)
-	if !ok {
-		t.Fatalf("expected explainMsg, got %T (%v)", msg, msg)
+	var explain explainMsg
+	foundExplain := false
+	for _, msg := range executeCmd(cmd) {
+		if candidate, ok := msg.(explainMsg); ok {
+			explain = candidate
+			foundExplain = true
+		}
+	}
+	if !foundExplain {
+		t.Fatal("expected explainMsg in ctrl+e command batch")
 	}
 	if explain.explanation == "" {
 		t.Fatal("expected non-empty explanation from offline provider")
@@ -1108,7 +1114,13 @@ func TestDictionaryStarringAndFiltering(t *testing.T) {
 	if !handled {
 		t.Fatal("expected 'b' to be handled when results focused")
 	}
-	_ = cmd
+	if cmd == nil {
+		t.Fatal("starring should return a persistence command")
+	}
+	if repo.setSettingCalls != 0 {
+		t.Fatalf("SetSetting calls during star input = %d, want 0", repo.setSettingCalls)
+	}
+	executeCmd(cmd)
 	if !m.dictionaryStarred["1"] {
 		t.Fatalf("expected entry '1' (Hund) to be starred")
 	}
@@ -1142,9 +1154,18 @@ func TestDictionaryStarringAndFiltering(t *testing.T) {
 	if !handled {
 		t.Fatal("expected ctrl+b to be handled")
 	}
-	_ = cmd
+	if cmd == nil {
+		t.Fatal("unstarring should return persistence and filtered-search commands")
+	}
+	executeCmd(cmd)
 	if m.dictionaryStarred["1"] {
 		t.Fatalf("expected entry '1' (Hund) to be unstarred")
+	}
+	if repo.setSettingCalls != 3 {
+		t.Fatalf("SetSetting calls after star, unstar, and filtered-query history = %d, want 3", repo.setSettingCalls)
+	}
+	if saved, _ := repo.GetSetting(context.Background(), "dict_starred_entries"); saved != "[]" {
+		t.Fatalf("persisted starred IDs = %q, want empty list after unstar", saved)
 	}
 }
 
@@ -1318,6 +1339,10 @@ func TestDictionaryRecentlyViewedAndDomainTags(t *testing.T) {
 	if len(m.dictionaryRecentlyViewed) != 2 || m.dictionaryRecentlyViewed[0].Word != "Anapher" {
 		t.Fatalf("unexpected recently viewed stack: %v", m.dictionaryRecentlyViewed)
 	}
+	if repo.setSettingCalls != 0 {
+		t.Fatalf("SetSetting calls during recent mutation = %d, want 0", repo.setSettingCalls)
+	}
+	executeCmd(m.saveDictionaryRecentlyViewed())
 
 	// Recent words are part of the learner's lookup workflow and survive a restart.
 	m2 := NewModel(repo, &mockScheduler{})
@@ -1350,10 +1375,14 @@ func TestDictionaryRecentlyViewedAndDomainTags(t *testing.T) {
 	m.dictionaryFocusResults = true
 	m.dictionaryDetailView = false
 	m.width = 120
-	_, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'j'})
+	cmd, handled := (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'j'})
 	if !handled {
 		t.Fatal("expected j navigation to be handled")
 	}
+	if cmd == nil {
+		t.Fatal("inspecting a new result should return persistence and related-entry commands")
+	}
+	executeCmd(cmd)
 	if len(m.dictionaryRecentlyViewed) == 0 || m.dictionaryRecentlyViewed[0].Word != "Katze" {
 		t.Fatalf("expected navigation to record Katze, got %v", m.dictionaryRecentlyViewed)
 	}
@@ -1387,7 +1416,15 @@ func TestDictionaryRecentlyViewedAndDomainTags(t *testing.T) {
 	for _, hb := range m.hitboxes {
 		if hb.ID == "dict-recent-clear" {
 			foundClear = true
-			hb.Action()
+			callsBeforeClear := repo.setSettingCalls
+			cmd = hb.Action()
+			if cmd == nil {
+				t.Fatal("recent clear hitbox should return a persistence command")
+			}
+			if repo.setSettingCalls != callsBeforeClear {
+				t.Fatalf("SetSetting calls changed during recent clear hitbox: %d -> %d", callsBeforeClear, repo.setSettingCalls)
+			}
+			executeCmd(cmd)
 			break
 		}
 	}
@@ -1400,13 +1437,42 @@ func TestDictionaryRecentlyViewedAndDomainTags(t *testing.T) {
 
 	m.dictionaryRecentlyViewed = []core.DictionaryEntry{entry1}
 	m.dictionarySearchHistory = nil
-	_, handled = (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'x', Mod: tea.ModCtrl})
+	cmd, handled = (dictionaryScreen{}).HandleKey(m, tea.KeyPressMsg{Code: 'x', Mod: tea.ModCtrl})
 	if !handled {
 		t.Fatal("expected ctrl+x to clear recently viewed when history empty")
 	}
+	if cmd == nil {
+		t.Fatal("ctrl+x recent clear should return a persistence command")
+	}
+	executeCmd(cmd)
 	if len(m.dictionaryRecentlyViewed) != 0 {
 		t.Fatalf("expected ctrl+x to clear recently viewed, got %v", m.dictionaryRecentlyViewed)
 	}
+}
+
+func TestDictionaryRecentAndStarPersistenceErrorsAreSurfaced(t *testing.T) {
+	t.Run("recently viewed", func(t *testing.T) {
+		repo := &mockRepo{errSetSetting: errors.New("disk full")}
+		m := NewModel(repo, &mockScheduler{})
+		m.recordDictionaryView(core.DictionaryEntry{ID: "1", Word: "Haus"})
+		for _, msg := range executeCmd(m.saveDictionaryRecentlyViewed()) {
+			m.Update(msg)
+		}
+		if !m.isErrorStatus || !strings.Contains(m.status, "save recently inspected words") {
+			t.Fatalf("status = %q (error=%v), want recent persistence error", m.status, m.isErrorStatus)
+		}
+	})
+
+	t.Run("starred", func(t *testing.T) {
+		repo := &mockRepo{errSetSetting: errors.New("read-only database")}
+		m := NewModel(repo, &mockScheduler{})
+		for _, msg := range executeCmd(m.toggleStarDictionaryEntry(core.DictionaryEntry{ID: "1", Word: "Haus"})) {
+			m.Update(msg)
+		}
+		if !m.isErrorStatus || !strings.Contains(m.status, "save starred dictionary entries") {
+			t.Fatalf("status = %q (error=%v), want starred persistence error", m.status, m.isErrorStatus)
+		}
+	})
 }
 
 func TestDictionaryExportTSVAndFilterPills(t *testing.T) {

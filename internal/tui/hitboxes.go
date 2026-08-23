@@ -91,7 +91,7 @@ func (m *Model) activateHitboxByID(id string) tea.Cmd {
 		return nil
 	case id == "dict-recent-clear" || id == "dict-overlay-recent-clear":
 		m.clearDictionaryRecentlyViewed()
-		return nil
+		return m.saveDictionaryRecentlyViewed()
 	case id == "dict-audio" || id == "dict-overlay-audio":
 		if m.dictionaryCursor >= 0 && m.dictionaryCursor < len(m.dictionaryResults) {
 			entry := m.dictionaryResults[m.dictionaryCursor]

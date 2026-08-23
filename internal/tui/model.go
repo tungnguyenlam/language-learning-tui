@@ -199,6 +199,9 @@ type Model struct {
 	deckSearchHistory              []string
 	deckHistorySave                orderedSave
 	dictionaryHistorySave          orderedSave
+	dictionaryRecentSave           orderedSave
+	dictionaryStarredSave          orderedSave
+	dictionaryRecentVersion        uint64
 	dictionarySearchID             int
 	dictionaryRelatedID            int
 	dictionarySearchTimerID        int
